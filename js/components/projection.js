@@ -4,10 +4,25 @@ import { createChart, COLORS, createVerticalGradient } from '../charts/chart-con
 export function render(store) {
   const params = store.get('parametres');
   const snapshots = computeProjection(store);
+  const groupKeys = snapshots.groupKeys || [];
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
   const evolutionPct = first?.patrimoineNet ? evolution / Math.abs(first.patrimoineNet) : 0;
+
+  // Color map for placement groups
+  const groupColors = {
+    'PEA ETF': 'text-emerald-400',
+    'PEA Actions': 'text-sky-400',
+    'PEA-PME ETF': 'text-teal-400',
+    'PEA-PME Actions': 'text-cyan-400',
+    'Assurance Vie': 'text-pink-400',
+    'CTO': 'text-orange-400',
+    'PER': 'text-indigo-400',
+    'Crypto': 'text-yellow-400',
+    'Autre': 'text-gray-400'
+  };
+  const defaultGroupColor = 'text-blue-400';
 
   return `
     <div class="space-y-6">
@@ -16,10 +31,20 @@ export function render(store) {
       <!-- Parameters -->
       <div class="card-dark rounded-xl p-6">
         <h2 class="text-lg font-semibold text-gray-200 mb-4">Paramètres de simulation</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1.5">Horizon (années)</label>
             <input type="number" id="param-years" value="${params.projectionYears}" min="1" max="50" step="1"
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Âge fin d'année</label>
+            <input type="number" id="param-age" value="${params.ageFinAnnee || 43}" min="18" max="100" step="1"
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Âge retraite taux plein</label>
+            <input type="number" id="param-retraite" value="${params.ageRetraite || 64}" min="55" max="70" step="1"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
@@ -89,7 +114,7 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Table -->
+      <!-- Detailed Table -->
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-5 border-b border-dark-400/30">
           <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
@@ -98,27 +123,43 @@ export function render(store) {
           <table class="w-full text-sm">
             <thead class="bg-dark-800/50 text-gray-500">
               <tr>
-                <th class="px-4 py-3 text-left">Année</th>
-                <th class="px-4 py-3 text-right">Immobilier</th>
-                <th class="px-4 py-3 text-right">Placements</th>
-                <th class="px-4 py-3 text-right">Épargne</th>
-                <th class="px-4 py-3 text-right">Total actifs</th>
-                <th class="px-4 py-3 text-right">Dette</th>
-                <th class="px-4 py-3 text-right font-semibold">Patrimoine net</th>
+                <th class="px-3 py-3 text-left">Année</th>
+                <th class="px-3 py-3 text-center">Âge</th>
+                <th class="px-3 py-3 text-right">Immobilier</th>
+                ${groupKeys.map(k => `<th class="px-3 py-3 text-right">${k}</th>`).join('')}
+                <th class="px-3 py-3 text-right">Épargne</th>
+                <th class="px-3 py-3 text-right">Intérêts annuels</th>
+                <th class="px-3 py-3 text-right">Cash après impôt</th>
+                <th class="px-3 py-3 text-right">Total actifs</th>
+                <th class="px-3 py-3 text-right">Dette</th>
+                <th class="px-3 py-3 text-right font-semibold">Patrimoine net</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
-              ${snapshots.map(s => `
-              <tr class="hover:bg-dark-600/30 transition ${s.annee === 0 ? 'bg-accent-blue/5' : ''}">
-                <td class="px-4 py-2 font-medium text-gray-300">${s.annee === 0 ? 'Actuel' : `+${s.annee} an${s.annee > 1 ? 's' : ''}`}</td>
-                <td class="px-4 py-2 text-right text-purple-400/80">${formatCurrency(s.immobilier)}</td>
-                <td class="px-4 py-2 text-right text-accent-green/80">${formatCurrency(s.placements)}</td>
-                <td class="px-4 py-2 text-right text-amber-400/80">${formatCurrency(s.epargne)}</td>
-                <td class="px-4 py-2 text-right text-gray-300">${formatCurrency(s.totalActifs)}</td>
-                <td class="px-4 py-2 text-right text-accent-red/70">${formatCurrency(s.totalDette)}</td>
-                <td class="px-4 py-2 text-right font-semibold ${s.patrimoineNet >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrency(s.patrimoineNet)}</td>
-              </tr>
-              `).join('')}
+              ${snapshots.map(s => {
+                const isRetirement = s.isRetraite;
+                const rowClass = isRetirement
+                  ? 'bg-amber-500/10 border-l-4 border-l-amber-400'
+                  : s.annee === 0
+                    ? 'bg-accent-blue/5'
+                    : '';
+                return `
+              <tr class="hover:bg-dark-600/30 transition ${rowClass}">
+                <td class="px-3 py-2 font-medium text-gray-300">
+                  ${s.annee === 0 ? 'Actuel' : `+${s.annee} an${s.annee > 1 ? 's' : ''}`}
+                  ${isRetirement ? '<span class="ml-1 text-xs text-amber-400 font-semibold">RETRAITE</span>' : ''}
+                </td>
+                <td class="px-3 py-2 text-center ${isRetirement ? 'text-amber-400 font-bold' : 'text-gray-400'}">${s.age} ans</td>
+                <td class="px-3 py-2 text-right text-purple-400/80">${formatCurrency(s.immobilier)}</td>
+                ${groupKeys.map(k => `<td class="px-3 py-2 text-right ${groupColors[k] || defaultGroupColor}">${formatCurrency(s.placementDetail[k] || 0)}</td>`).join('')}
+                <td class="px-3 py-2 text-right text-amber-400/80">${formatCurrency(s.epargne)}</td>
+                <td class="px-3 py-2 text-right ${s.interetsAnnuels > 0 ? 'text-lime-400/80' : 'text-gray-600'}">${s.annee === 0 ? '—' : formatCurrency(s.interetsAnnuels)}</td>
+                <td class="px-3 py-2 text-right ${s.cashApresImpot >= 0 ? 'text-teal-400/80' : 'text-accent-red/70'}">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-3 py-2 text-right text-gray-300">${formatCurrency(s.totalActifs)}</td>
+                <td class="px-3 py-2 text-right text-accent-red/70">${formatCurrency(s.totalDette)}</td>
+                <td class="px-3 py-2 text-right font-semibold ${s.patrimoineNet >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrency(s.patrimoineNet)}</td>
+              </tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -129,6 +170,7 @@ export function render(store) {
 
 export function mount(store, navigate) {
   const snapshots = computeProjection(store);
+  const groupKeys = snapshots.groupKeys || [];
   const labels = snapshots.map(s => s.annee === 0 ? 'Actuel' : `+${s.annee}`);
 
   // Line chart with gradient fills
@@ -136,7 +178,6 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('chart-projection');
     const ctx2d = canvas.getContext('2d');
 
-    // Gradient borders for lines
     const gradActifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
     gradActifs.addColorStop(0, '#00d4aa');
     gradActifs.addColorStop(1, '#38bdf8');
@@ -217,48 +258,56 @@ export function mount(store, navigate) {
     });
   }
 
-  // Stacked area with gradient fills
+  // Stacked area chart - now with detailed groups
   if (document.getElementById('chart-repartition-temps')) {
     const canvas = document.getElementById('chart-repartition-temps');
     const ctx2d = canvas.getContext('2d');
 
+    const chartColors = ['#a855f7', '#10b981', '#38bdf8', '#f472b6', '#f97316', '#818cf8', '#eab308', '#6b7280'];
+    const datasets = [];
+
+    // Immobilier
+    datasets.push({
+      label: 'Immobilier',
+      data: snapshots.map(s => s.immobilier),
+      borderColor: '#a855f7',
+      backgroundColor: createVerticalGradient(ctx2d, '#a855f7', 0.5, 0.05),
+      fill: true,
+      tension: 0.45,
+      pointRadius: 0,
+      borderWidth: 2
+    });
+
+    // Each placement group
+    groupKeys.forEach((k, i) => {
+      const color = chartColors[(i + 1) % chartColors.length];
+      datasets.push({
+        label: k,
+        data: snapshots.map(s => s.placementDetail[k] || 0),
+        borderColor: color,
+        backgroundColor: createVerticalGradient(ctx2d, color, 0.5, 0.05),
+        fill: true,
+        tension: 0.45,
+        pointRadius: 0,
+        borderWidth: 2
+      });
+    });
+
+    // Épargne
+    datasets.push({
+      label: 'Épargne',
+      data: snapshots.map(s => s.epargne),
+      borderColor: '#f59e0b',
+      backgroundColor: createVerticalGradient(ctx2d, '#f59e0b', 0.5, 0.05),
+      fill: true,
+      tension: 0.45,
+      pointRadius: 0,
+      borderWidth: 2
+    });
+
     createChart('chart-repartition-temps', {
       type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'Immobilier',
-            data: snapshots.map(s => s.immobilier),
-            borderColor: '#a855f7',
-            backgroundColor: createVerticalGradient(ctx2d, '#a855f7', 0.5, 0.05),
-            fill: true,
-            tension: 0.45,
-            pointRadius: 0,
-            borderWidth: 2
-          },
-          {
-            label: 'Placements',
-            data: snapshots.map(s => s.placements),
-            borderColor: '#00d4aa',
-            backgroundColor: createVerticalGradient(ctx2d, '#00d4aa', 0.5, 0.05),
-            fill: true,
-            tension: 0.45,
-            pointRadius: 0,
-            borderWidth: 2
-          },
-          {
-            label: 'Épargne',
-            data: snapshots.map(s => s.epargne),
-            borderColor: '#f59e0b',
-            backgroundColor: createVerticalGradient(ctx2d, '#f59e0b', 0.5, 0.05),
-            fill: true,
-            tension: 0.45,
-            pointRadius: 0,
-            borderWidth: 2
-          }
-        ]
-      },
+      data: { labels, datasets },
       options: {
         interaction: { intersect: false, mode: 'index' },
         scales: {
@@ -281,7 +330,9 @@ export function mount(store, navigate) {
 
   // Update params
   document.getElementById('btn-update-projection')?.addEventListener('click', () => {
-    store.set('parametres.projectionYears', parseInt(document.getElementById('param-years').value) || 20);
+    store.set('parametres.projectionYears', parseInt(document.getElementById('param-years').value) || 30);
+    store.set('parametres.ageFinAnnee', parseInt(document.getElementById('param-age').value) || 43);
+    store.set('parametres.ageRetraite', parseInt(document.getElementById('param-retraite').value) || 64);
     store.set('parametres.inflationRate', parseFloat(document.getElementById('param-inflation').value) || 0.02);
     store.set('parametres.rendementImmobilier', parseFloat(document.getElementById('param-rend-immo').value) || 0.02);
     store.set('parametres.rendementPlacements', parseFloat(document.getElementById('param-rend-plac').value) || 0.05);

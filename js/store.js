@@ -15,12 +15,14 @@ const defaultState = {
   depenses: [],
   parametres: {
     inflationRate: 0.02,
-    projectionYears: 20,
+    projectionYears: 30,
     situationFamiliale: 'celibataire',
     nbParts: 1,
     rendementImmobilier: 0.02,
     rendementPlacements: 0.05,
-    rendementEpargne: 0.02
+    rendementEpargne: 0.02,
+    ageFinAnnee: 43,
+    ageRetraite: 64
   }
 };
 

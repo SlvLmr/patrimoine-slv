@@ -95,16 +95,59 @@ export function closeModal() {
   if (modal) modal.remove();
 }
 
+// Group placement items by envelope+category display key
+function getPlacementGroupKey(p) {
+  const env = p.enveloppe || 'Autre';
+  const cat = p.categorie || '';
+  if (env === 'PEA' || env === 'PEA-PME') {
+    if (cat.includes('ETF')) return `${env} ETF`;
+    if (cat.includes('Action')) return `${env} Actions`;
+    return `${env} Autre`;
+  }
+  if (env === 'Assurance Vie (AV)') return 'Assurance Vie';
+  if (env === 'Compte-Titres (CTO)') return 'CTO';
+  return env;
+}
+
 // Projection engine
 export function computeProjection(store) {
   const state = store.getAll();
   const params = state.parametres;
-  const years = params.projectionYears || 20;
+  const years = params.projectionYears || 30;
   const inflation = params.inflationRate || 0.02;
+  const ageFinAnnee = params.ageFinAnnee || 43;
+  const ageRetraite = params.ageRetraite || 64;
 
   const totalImmo = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
-  const totalPlac = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
   const totalEpar = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
+
+  // Group placements by envelope/category
+  const placementGroups = {};
+  state.actifs.placements.forEach(p => {
+    const key = getPlacementGroupKey(p);
+    if (!placementGroups[key]) placementGroups[key] = { value: 0, rendement: 0, totalWeight: 0 };
+    const val = Number(p.valeur) || 0;
+    const rend = Number(p.rendement) || (params.rendementPlacements || 0.05);
+    placementGroups[key].value += val;
+    placementGroups[key].rendement += rend * val;
+    placementGroups[key].totalWeight += val;
+  });
+  // Compute weighted average rendement per group
+  const groupKeys = Object.keys(placementGroups).sort();
+  groupKeys.forEach(k => {
+    const g = placementGroups[k];
+    g.rendement = g.totalWeight > 0 ? g.rendement / g.totalWeight : (params.rendementPlacements || 0.05);
+  });
+
+  // Weighted average rendement for epargne
+  let eparRendTotal = 0, eparWeightTotal = 0;
+  state.actifs.epargne.forEach(e => {
+    const sol = Number(e.solde) || 0;
+    const taux = Number(e.tauxInteret) || (params.rendementEpargne || 0.02);
+    eparRendTotal += taux * sol;
+    eparWeightTotal += sol;
+  });
+  const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : (params.rendementEpargne || 0.02);
 
   let emprunts = state.passifs.emprunts.map(e => ({
     capitalRestant: Number(e.capitalRestant) || 0,
@@ -117,8 +160,6 @@ export function computeProjection(store) {
   const depensesMensuelles = state.depenses.reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
 
   const rendImmo = params.rendementImmobilier || 0.02;
-  const rendPlac = params.rendementPlacements || 0.05;
-  const rendEpar = params.rendementEpargne || 0.02;
 
   // Heritage injections by year offset
   const heritageItems = (state.heritage || []).filter(h => h.dateInjection && h.montant);
@@ -136,8 +177,10 @@ export function computeProjection(store) {
 
   const snapshots = [];
   let immo = totalImmo;
-  let plac = totalPlac;
   let epar = totalEpar;
+  // Clone group values for simulation
+  const groupValues = {};
+  groupKeys.forEach(k => { groupValues[k] = placementGroups[k].value; });
   let revenus = revenusMensuels;
   let depenses = depensesMensuelles;
 
@@ -153,17 +196,39 @@ export function computeProjection(store) {
       .filter(e => e.capitalRestant > 0)
       .reduce((s, e) => s + e.mensualite, 0);
 
-    const totalActifs = immo + plac + epar;
+    const totalPlacements = groupKeys.reduce((s, k) => s + groupValues[k], 0);
+    const totalActifs = immo + totalPlacements + epar;
     const patrimoineNet = totalActifs - totalDette;
+
+    // Compute interest earned this year (0 for year 0)
+    let interetsAnnuels = 0;
+    if (year > 0) {
+      interetsAnnuels = immo * rendImmo / (1 + rendImmo); // interest portion of current immo value
+      groupKeys.forEach(k => {
+        interetsAnnuels += groupValues[k] * placementGroups[k].rendement / (1 + placementGroups[k].rendement);
+      });
+      interetsAnnuels += epar * rendEpar / (1 + rendEpar);
+    }
+
+    // Cash après impôt = annual savings capacity
+    const cashApresImpot = Math.round((revenus - depenses - mensualitesTotales) * 12);
+
+    const detail = {};
+    groupKeys.forEach(k => { detail[k] = Math.round(groupValues[k]); });
 
     snapshots.push({
       annee: year,
+      age: ageFinAnnee + year,
+      isRetraite: (ageFinAnnee + year) === ageRetraite,
       immobilier: Math.round(immo),
-      placements: Math.round(plac),
+      placementDetail: detail,
+      placements: Math.round(totalPlacements),
       epargne: Math.round(epar),
       totalActifs: Math.round(totalActifs),
       totalDette: Math.round(totalDette),
       patrimoineNet: Math.round(patrimoineNet),
+      interetsAnnuels: Math.round(interetsAnnuels),
+      cashApresImpot,
       revenusMensuels: Math.round(revenus),
       depensesMensuelles: Math.round(depenses),
       mensualites: Math.round(mensualitesTotales),
@@ -172,13 +237,30 @@ export function computeProjection(store) {
 
     if (year === years) break;
 
+    // Grow assets
     immo *= (1 + rendImmo);
-    plac *= (1 + rendPlac);
+    groupKeys.forEach(k => {
+      groupValues[k] *= (1 + placementGroups[k].rendement);
+    });
     epar *= (1 + rendEpar);
 
+    // Distribute annual savings into placements (first group or general)
     const epargneMensuelle = revenus - depenses - mensualitesTotales;
     if (epargneMensuelle > 0) {
-      plac += epargneMensuelle * 12;
+      const epargneAnnuelle = epargneMensuelle * 12;
+      if (groupKeys.length > 0) {
+        // Distribute proportionally to current group values, or equally if all zero
+        const totalGroupVal = groupKeys.reduce((s, k) => s + groupValues[k], 0);
+        if (totalGroupVal > 0) {
+          groupKeys.forEach(k => {
+            groupValues[k] += epargneAnnuelle * (groupValues[k] / totalGroupVal);
+          });
+        } else {
+          groupKeys.forEach(k => {
+            groupValues[k] += epargneAnnuelle / groupKeys.length;
+          });
+        }
+      }
     }
 
     emprunts = emprunts.map(e => {
@@ -195,6 +277,10 @@ export function computeProjection(store) {
     revenus *= (1 + inflation);
     depenses *= (1 + inflation);
   }
+
+  // Attach metadata
+  snapshots.groupKeys = groupKeys;
+  snapshots.ageRetraite = ageRetraite;
 
   return snapshots;
 }
