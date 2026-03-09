@@ -30,11 +30,12 @@ const navItems = [
   { id: 'passifs', label: 'Passifs', icon: 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6' },
   { id: 'heritage', label: 'Héritage', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { id: '_sep1', separator: true },
-  { id: 'revenus-depenses', label: 'Revenus & Dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'suivi-depenses', label: 'Suivi de dépenses', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+  { id: 'revenus-depenses', label: 'Revenus', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
+  { id: '_sep2', separator: true },
   { id: 'projection', label: 'Projection', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
   { id: 'fiscalite', label: 'Fiscalité', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
-  { id: '_sep2', separator: true },
+  { id: '_sep3', separator: true },
   { id: 'enfants', label: 'Enfants', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' }
 ];
 
@@ -77,12 +78,12 @@ function initNav() {
   const nav = document.getElementById('nav-links');
   nav.innerHTML = navItems.map(item => {
     if (item.separator) {
-      return `<div class="my-2 mx-3 border-t border-dark-400/30"></div>`;
+      return `<div class="my-1.5 mx-3 h-px bg-gradient-to-r from-transparent via-dark-300/50 to-transparent"></div>`;
     }
     return `
     <a href="#${item.id}" data-nav="${item.id}"
-      class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm hover:bg-dark-600 hover:text-accent-green transition-colors text-gray-300">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      class="flex items-center gap-3 px-4 py-2 rounded-xl text-sm hover:bg-dark-600 hover:text-accent-green transition-colors text-gray-300">
+      <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${item.icon}"/>
       </svg>
       <span>${item.label}</span>
@@ -194,9 +195,22 @@ function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <div>
-        <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Simulateur patrimonial</p>
+      <div class="flex items-center gap-2.5">
+        <svg viewBox="0 0 28 28" class="w-7 h-7 flex-shrink-0" fill="none">
+          <defs>
+            <linearGradient id="hlogo" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00d4aa"/>
+              <stop offset="50%" stop-color="#06d6a0"/>
+              <stop offset="100%" stop-color="#5b7fff"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 20 Q7 20 10 14 T17 8 Q20 6 25 4" stroke="url(#hlogo)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <circle cx="25" cy="4" r="2" fill="#5b7fff"/>
+        </svg>
+        <div>
+          <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</h1>
+          <p class="text-xs text-gray-500 mt-0.5">Simulateur patrimonial</p>
+        </div>
       </div>
     `;
   }
@@ -204,7 +218,14 @@ function initLogo() {
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
-      <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</span>
+      <div class="flex items-center gap-2">
+        <svg viewBox="0 0 28 28" class="w-6 h-6" fill="none">
+          <defs><linearGradient id="hmlogo" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00d4aa"/><stop offset="100%" stop-color="#5b7fff"/></linearGradient></defs>
+          <path d="M3 20 Q7 20 10 14 T17 8 Q20 6 25 4" stroke="url(#hmlogo)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <circle cx="25" cy="4" r="2" fill="#5b7fff"/>
+        </svg>
+        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</span>
+      </div>
     `;
   }
 }
