@@ -239,29 +239,37 @@ function initLogo() {
   if (logoContainer) {
     logoContainer.innerHTML = `
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0">
-          <svg viewBox="0 0 24 24" class="w-5 h-5 text-dark-900" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
-          </svg>
+        <div class="logo-halo w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0 relative">
+          <span class="logo-symbol text-dark-900 font-bold text-lg select-none" style="font-family:'Space Grotesk',sans-serif"></span>
         </div>
-        <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1px" class="text-2xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent">Horizon</h1>
+        <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1px" class="text-2xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo">Horizon</h1>
       </div>
     `;
+    // Cycle currency symbols
+    const symbols = ['€', '$', '₿', '¥', '£'];
+    let idx = 0;
+    const symbolEl = logoContainer.querySelector('.logo-symbol');
+    if (symbolEl) {
+      symbolEl.textContent = symbols[0];
+      setInterval(() => {
+        idx = (idx + 1) % symbols.length;
+        symbolEl.style.opacity = '0';
+        setTimeout(() => {
+          symbolEl.textContent = symbols[idx];
+          symbolEl.style.opacity = '1';
+        }, 200);
+      }, 2500);
+    }
   }
   // Mobile
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
       <div class="flex items-center gap-2">
-        <svg viewBox="0 0 28 28" class="w-6 h-6" fill="none">
-          <defs><linearGradient id="hmlogo" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c9a76c"/><stop offset="100%" stop-color="#dbb88a"/></linearGradient></defs>
-          <path d="M3 20 Q7 20 10 14 T17 8 Q20 6 25 4" stroke="url(#hmlogo)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <circle cx="25" cy="4" r="2" fill="#dbb88a"/>
-        </svg>
-        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent">Horizon</span>
+        <div class="logo-halo w-8 h-8 rounded-lg bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0">
+          <span class="text-dark-900 font-bold text-sm select-none" style="font-family:'Space Grotesk',sans-serif">€</span>
+        </div>
+        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo">Horizon</span>
       </div>
     `;
   }

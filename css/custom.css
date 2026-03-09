@@ -121,6 +121,39 @@ input[type="number"] {
   transition: width 0.5s ease;
 }
 
+/* Logo halo effect */
+.logo-halo {
+  box-shadow:
+    0 0 12px rgba(201, 167, 108, 0.4),
+    0 0 30px rgba(201, 167, 108, 0.2),
+    0 0 50px rgba(219, 184, 138, 0.1);
+  animation: logoHaloPulse 3s ease-in-out infinite;
+}
+
+.logo-text-halo {
+  text-shadow: 0 0 20px rgba(201, 167, 108, 0.3);
+  filter: drop-shadow(0 0 8px rgba(201, 167, 108, 0.15));
+}
+
+.logo-symbol {
+  transition: opacity 0.2s ease;
+}
+
+@keyframes logoHaloPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(201, 167, 108, 0.4),
+      0 0 30px rgba(201, 167, 108, 0.2),
+      0 0 50px rgba(219, 184, 138, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(201, 167, 108, 0.6),
+      0 0 40px rgba(201, 167, 108, 0.3),
+      0 0 70px rgba(219, 184, 138, 0.15);
+  }
+}
+
 /* Print styles */
 @media print {
   #sidebar, #menu-toggle, .no-print {
