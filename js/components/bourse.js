@@ -99,8 +99,35 @@ function formatPrice(value, currency) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: currency || 'EUR', minimumFractionDigits: 2 }).format(value);
 }
 
-function renderMiniChart(canvasId, chartPoints, isUp) {
-  const color = isUp ? '#c9a76c' : '#b8976c';
+const pruLinePlugin = {
+  id: 'pruLine',
+  afterDraw(chart) {
+    const pru = chart.options.plugins.pruLine?.value;
+    if (!pru) return;
+    const yScale = chart.scales.y;
+    if (!yScale) return;
+    const yPixel = yScale.getPixelForValue(pru);
+    if (yPixel < chart.chartArea.top || yPixel > chart.chartArea.bottom) return;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = 'rgba(201, 167, 108, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.moveTo(chart.chartArea.left, yPixel);
+    ctx.lineTo(chart.chartArea.right, yPixel);
+    ctx.stroke();
+    // Label
+    ctx.fillStyle = 'rgba(201, 167, 108, 0.7)';
+    ctx.font = '9px Inter';
+    ctx.textAlign = 'right';
+    ctx.fillText('PRU', chart.chartArea.right - 2, yPixel - 3);
+    ctx.restore();
+  }
+};
+
+function renderMiniChart(canvasId, chartPoints, isUp, pru) {
+  const color = isUp ? '#22c55e' : '#ef4444';
   const labels = chartPoints.map(d => d.date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
   const values = chartPoints.map(d => d.close);
 
@@ -123,6 +150,7 @@ function renderMiniChart(canvasId, chartPoints, isUp) {
         }
       }]
     },
+    plugins: pru ? [pruLinePlugin] : [],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -130,6 +158,7 @@ function renderMiniChart(canvasId, chartPoints, isUp) {
       interaction: { intersect: false, mode: 'index' },
       plugins: {
         legend: { display: false },
+        pruLine: { value: pru || null },
         tooltip: {
           backgroundColor: 'rgba(11, 11, 15, 0.95)',
           titleColor: '#e8d5b0',
@@ -148,7 +177,10 @@ function renderMiniChart(canvasId, chartPoints, isUp) {
       },
       scales: {
         x: { display: false },
-        y: { display: false }
+        y: {
+          display: false,
+          ...(pru ? { suggestedMin: Math.min(pru, ...values) * 0.998, suggestedMax: Math.max(pru, ...values) * 1.002 } : {})
+        }
       }
     }
   });
@@ -205,8 +237,8 @@ export function render(store) {
       <!-- Quotes grid with mini charts -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="quotes-grid">
         ${watchlist.map(item => `
-        <div class="card-dark rounded-xl p-5 kpi-card relative group" id="quote-${sid(item.isin)}">
-          <button class="btn-remove-ticker absolute top-2 right-2 w-6 h-6 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition opacity-0 group-hover:opacity-100 flex items-center justify-center" data-isin="${item.isin}" title="Retirer">
+        <div class="card-dark rounded-xl p-5 kpi-card relative group" id="quote-${sid(item.isin)}" draggable="true" data-isin="${item.isin}" style="cursor:grab">
+          <button class="btn-remove-ticker absolute top-2 right-2 w-6 h-6 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition opacity-0 group-hover:opacity-100 flex items-center justify-center z-10" data-isin="${item.isin}" title="Retirer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
@@ -234,18 +266,18 @@ export function render(store) {
             const valTotale = Number(actif.valeur) || 0;
             return `
             <div class="mt-3 pt-3 border-t border-dark-400/20 space-y-1.5 portfolio-info">
-              <p class="text-[10px] uppercase tracking-wider text-gray-600 font-semibold mb-1">Mon portefeuille</p>
+              <p class="text-[10px] uppercase tracking-wider text-accent-amber/60 font-semibold mb-1">Mon portefeuille</p>
               <div class="flex justify-between text-xs">
-                <span class="text-gray-500">Parts</span>
-                <span class="text-gray-300 font-medium">${formatNum(qty, 4)}</span>
+                <span class="text-accent-amber/70">Parts</span>
+                <span class="text-accent-amber font-medium">${Number.isInteger(qty) ? formatNum(qty, 0) : formatNum(qty, 4)}</span>
               </div>
               <div class="flex justify-between text-xs">
-                <span class="text-gray-500">PRU</span>
-                <span class="text-gray-300 font-medium">${formatNum(pru)} €</span>
+                <span class="text-accent-amber/70">PRU</span>
+                <span class="text-accent-amber font-medium">${formatNum(pru)} €</span>
               </div>
               <div class="flex justify-between text-xs">
-                <span class="text-gray-500">Valeur totale</span>
-                <span class="text-accent-green font-semibold">${formatNum(valTotale)} €</span>
+                <span class="text-accent-amber/70">Valeur totale</span>
+                <span class="text-accent-amber font-semibold">${formatNum(valTotale)} €</span>
               </div>
             </div>`;
           })()}
@@ -253,49 +285,6 @@ export function render(store) {
         `).join('')}
       </div>
 
-      <!-- Detailed table -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 border-b border-dark-400/30">
-          <h2 class="text-lg font-semibold text-gray-200">Détail des cotations</h2>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-dark-800/50 text-gray-500">
-              <tr>
-                <th class="px-5 py-3 text-left">Nom</th>
-                <th class="px-5 py-3 text-left">ISIN</th>
-                <th class="px-5 py-3 text-left">Type</th>
-                <th class="px-5 py-3 text-right">Cours</th>
-                <th class="px-5 py-3 text-right">Variation</th>
-                <th class="px-5 py-3 text-right">Clôture préc.</th>
-                <th class="px-5 py-3 text-right">Parts</th>
-                <th class="px-5 py-3 text-right">PRU</th>
-                <th class="px-5 py-3 text-right">Valeur totale</th>
-              </tr>
-            </thead>
-            <tbody id="quotes-table-body" class="divide-y divide-dark-400/20">
-              ${watchlist.map(item => {
-                const actif = findMatchingActif(item, placements);
-                const qty = actif ? Number(actif.quantite) || 0 : 0;
-                const pru = actif ? Number(actif.pru) || 0 : 0;
-                const valTotale = actif ? Number(actif.valeur) || 0 : 0;
-                return `
-              <tr class="hover:bg-dark-600/30 transition" id="row-${sid(item.isin)}">
-                <td class="px-5 py-3 font-medium text-gray-200">${item.name}</td>
-                <td class="px-5 py-3 text-gray-400">${item.isin}</td>
-                <td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'ETF' ? 'bg-accent-green/10 text-accent-green' : item.type === 'Crypto' ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-blue/10 text-accent-blue'}">${item.type}</span></td>
-                <td class="px-5 py-3 text-right font-medium text-gray-300 quote-cell-price">—</td>
-                <td class="px-5 py-3 text-right quote-cell-change">—</td>
-                <td class="px-5 py-3 text-right text-gray-500 quote-cell-prev">—</td>
-                <td class="px-5 py-3 text-right text-gray-300">${qty ? formatNum(qty, 4) : '<span class="text-gray-600">—</span>'}</td>
-                <td class="px-5 py-3 text-right text-gray-300">${pru ? formatNum(pru) + ' €' : '<span class="text-gray-600">—</span>'}</td>
-                <td class="px-5 py-3 text-right font-medium ${valTotale ? 'text-accent-green' : 'text-gray-600'}">${valTotale ? formatNum(valTotale) + ' €' : '—'}</td>
-              </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
 
     <!-- Modal ajout titre -->
@@ -331,8 +320,9 @@ export function render(store) {
   `;
 }
 
-async function loadAllQuotes() {
+async function loadAllQuotes(store) {
   const watchlist = loadWatchlist();
+  const placements = store?.get?.('actifs.placements') || [];
   const statusEl = document.getElementById('market-status');
   const indicatorEl = document.getElementById('market-indicator');
 
@@ -348,6 +338,8 @@ async function loadAllQuotes() {
     const item = watchlist[i];
     const id = sid(item.isin);
     const quote = result.status === 'fulfilled' ? result.value : null;
+    const actif = findMatchingActif(item, placements);
+    const pru = actif ? Number(actif.pru) || 0 : 0;
 
     const card = document.getElementById(`quote-${id}`);
     if (card) {
@@ -360,18 +352,20 @@ async function loadAllQuotes() {
       const priceDiv = card.querySelector('.quote-price');
       if (quote) {
         loadedCount++;
-        const isUp = quote.change >= 0;
+        // Chart color: green if in profit (price > PRU), red if at loss
+        const isUp = pru > 0 ? quote.price >= pru : quote.change >= 0;
 
-        // Mini chart
+        // Mini chart with PRU line
         if (quote.chartPoints && quote.chartPoints.length > 1) {
-          renderMiniChart(`chart-${id}`, quote.chartPoints, isUp);
+          renderMiniChart(`chart-${id}`, quote.chartPoints, isUp, pru > 0 ? pru : null);
         }
 
+        const dayUp = quote.change >= 0;
         priceDiv.innerHTML = `
           <div class="flex items-center justify-between">
-            <span class="text-lg font-bold ${isUp ? 'text-accent-green' : 'text-accent-amber'}">${formatPrice(quote.price, quote.currency)}</span>
-            <span class="text-xs font-medium ${isUp ? 'text-accent-green' : 'text-accent-amber'}">
-              ${isUp ? '▲' : '▼'} ${isUp ? '+' : ''}${quote.changePct.toFixed(2)}%
+            <span class="text-lg font-bold ${isUp ? 'text-accent-green' : 'text-red-500'}">${formatPrice(quote.price, quote.currency)}</span>
+            <span class="text-xs font-medium ${dayUp ? 'text-accent-green' : 'text-red-500'}">
+              ${dayUp ? '▲' : '▼'} ${dayUp ? '+' : ''}${quote.changePct.toFixed(2)}%
             </span>
           </div>
         `;
@@ -380,16 +374,6 @@ async function loadAllQuotes() {
       }
     }
 
-    const row = document.getElementById(`row-${id}`);
-    if (row && quote) {
-      const isUp = quote.change >= 0;
-      row.querySelector('.quote-cell-price').innerHTML = `<span class="font-medium text-gray-200">${formatPrice(quote.price, quote.currency)}</span>`;
-      row.querySelector('.quote-cell-change').innerHTML = `
-        <span class="${isUp ? 'text-accent-green' : 'text-accent-amber'} font-medium">
-          ${isUp ? '+' : ''}${quote.change.toFixed(2)} (${isUp ? '+' : ''}${quote.changePct.toFixed(2)}%)
-        </span>`;
-      row.querySelector('.quote-cell-prev').textContent = formatPrice(quote.previousClose, quote.currency);
-    }
   });
 
   if (statusEl) {
@@ -404,10 +388,10 @@ async function loadAllQuotes() {
 }
 
 export function mount(store, navigate) {
-  loadAllQuotes();
+  loadAllQuotes(store);
 
   document.getElementById('btn-refresh-quotes')?.addEventListener('click', () => {
-    loadAllQuotes();
+    loadAllQuotes(store);
   });
 
   // Open add modal
@@ -454,4 +438,67 @@ export function mount(store, navigate) {
       }
     });
   });
+
+  // Drag and drop reordering
+  const grid = document.getElementById('quotes-grid');
+  if (grid) {
+    let draggedEl = null;
+
+    grid.addEventListener('dragstart', (e) => {
+      const card = e.target.closest('[draggable="true"]');
+      if (!card) return;
+      draggedEl = card;
+      card.style.opacity = '0.4';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    grid.addEventListener('dragend', (e) => {
+      const card = e.target.closest('[draggable="true"]');
+      if (card) card.style.opacity = '1';
+      grid.querySelectorAll('[draggable="true"]').forEach(c => c.classList.remove('ring', 'ring-accent-amber/40'));
+      draggedEl = null;
+    });
+
+    grid.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const target = e.target.closest('[draggable="true"]');
+      if (target && target !== draggedEl) {
+        grid.querySelectorAll('[draggable="true"]').forEach(c => c.classList.remove('ring', 'ring-accent-amber/40'));
+        target.classList.add('ring', 'ring-accent-amber/40');
+      }
+    });
+
+    grid.addEventListener('dragleave', (e) => {
+      const target = e.target.closest('[draggable="true"]');
+      if (target) target.classList.remove('ring', 'ring-accent-amber/40');
+    });
+
+    grid.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const target = e.target.closest('[draggable="true"]');
+      if (!target || !draggedEl || target === draggedEl) return;
+      target.classList.remove('ring', 'ring-accent-amber/40');
+
+      // Swap positions in DOM
+      const allCards = [...grid.querySelectorAll('[draggable="true"]')];
+      const fromIdx = allCards.indexOf(draggedEl);
+      const toIdx = allCards.indexOf(target);
+      if (fromIdx < 0 || toIdx < 0) return;
+
+      if (fromIdx < toIdx) {
+        grid.insertBefore(draggedEl, target.nextSibling);
+      } else {
+        grid.insertBefore(draggedEl, target);
+      }
+
+      // Persist new order
+      const watchlist = loadWatchlist();
+      const reordered = [...grid.querySelectorAll('[draggable="true"]')].map(card => {
+        const isin = card.dataset.isin;
+        return watchlist.find(w => w.isin === isin);
+      }).filter(Boolean);
+      saveWatchlist(reordered);
+    });
+  }
 }
