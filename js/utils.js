@@ -99,17 +99,33 @@ export function closeModal() {
 function getPlacementGroupKey(p) {
   const env = p.enveloppe || 'Autre';
   const cat = p.categorie || '';
-  if (env === 'PEA' || env === 'PEA-PME') {
-    if (cat.includes('ETF')) return `${env} ETF`;
-    if (cat.includes('Action')) return `${env} Actions`;
-    return `${env} Autre`;
+  if (env === 'PEA') {
+    if (cat.includes('ETF')) return 'PEA ETF';
+    if (cat.includes('Action')) return 'PEA Actions';
+    return 'PEA Autre';
   }
-  if (env === 'Assurance Vie (AV)') return 'Assurance Vie';
-  if (env === 'Compte-Titres (CTO)') return 'CTO';
-  return env;
+  if (env === 'AV') return 'Assurance Vie';
+  if (env === 'CTO') return 'CTO';
+  return env; // PER, Crypto, Autre
 }
 
-// Projection engine
+// Get the applicable DCA for a given year for a placement
+function getDcaForYear(placement, year) {
+  const baseDca = Number(placement.dcaMensuel) || 0;
+  const overrides = placement.dcaOverrides || [];
+  if (!overrides.length) return baseDca;
+
+  // Find the most recent override that applies (fromYear <= year)
+  let applicable = baseDca;
+  for (const ov of overrides) {
+    if (ov.fromYear <= year) {
+      applicable = Number(ov.dcaMensuel) || 0;
+    }
+  }
+  return applicable;
+}
+
+// Projection engine - per-placement simulation with DCA and Air Liquide
 export function computeProjection(store) {
   const state = store.getAll();
   const params = state.parametres;
@@ -117,27 +133,10 @@ export function computeProjection(store) {
   const inflation = params.inflationRate || 0.02;
   const ageFinAnnee = params.ageFinAnnee || 43;
   const ageRetraite = params.ageRetraite || 64;
+  const rendImmo = params.rendementImmobilier || 0.02;
 
   const totalImmo = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const totalEpar = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
-
-  // Group placements by envelope/category
-  const placementGroups = {};
-  state.actifs.placements.forEach(p => {
-    const key = getPlacementGroupKey(p);
-    if (!placementGroups[key]) placementGroups[key] = { value: 0, rendement: 0, totalWeight: 0 };
-    const val = Number(p.valeur) || 0;
-    const rend = Number(p.rendement) || (params.rendementPlacements || 0.05);
-    placementGroups[key].value += val;
-    placementGroups[key].rendement += rend * val;
-    placementGroups[key].totalWeight += val;
-  });
-  // Compute weighted average rendement per group
-  const groupKeys = Object.keys(placementGroups).sort();
-  groupKeys.forEach(k => {
-    const g = placementGroups[k];
-    g.rendement = g.totalWeight > 0 ? g.rendement / g.totalWeight : (params.rendementPlacements || 0.05);
-  });
 
   // Weighted average rendement for epargne
   let eparRendTotal = 0, eparWeightTotal = 0;
@@ -149,6 +148,28 @@ export function computeProjection(store) {
   });
   const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : (params.rendementEpargne || 0.02);
 
+  // Build per-placement simulation state
+  const placSims = state.actifs.placements.map(p => ({
+    groupKey: getPlacementGroupKey(p),
+    value: Number(p.valeur) || 0,
+    rendement: Number(p.rendement) || (params.rendementPlacements || 0.05),
+    dcaMensuel: Number(p.dcaMensuel) || 0,
+    dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
+    isAirLiquide: !!p.isAirLiquide,
+    loyaltyEligible: !!p.loyaltyEligible,
+    quantite: Number(p.quantite) || 0,
+    prixAction: (Number(p.quantite) > 0 && Number(p.valeur) > 0)
+      ? Number(p.valeur) / Number(p.quantite) : 0,
+    dividendeParAction: Number(p.dividendeParAction) || 3.30,
+    croissanceDividende: Number(p.croissanceDividende) || 0.08,
+    _source: p
+  }));
+
+  // Discover unique group keys from placements
+  const groupKeysSet = new Set();
+  placSims.forEach(ps => groupKeysSet.add(ps.groupKey));
+  const groupKeys = [...groupKeysSet].sort();
+
   let emprunts = state.passifs.emprunts.map(e => ({
     capitalRestant: Number(e.capitalRestant) || 0,
     tauxAnnuel: Number(e.tauxInteret) || 0,
@@ -158,8 +179,6 @@ export function computeProjection(store) {
 
   const revenusMensuels = state.revenus.reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
   const depensesMensuelles = state.depenses.reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
-
-  const rendImmo = params.rendementImmobilier || 0.02;
 
   // Heritage injections by year offset
   const heritageItems = (state.heritage || []).filter(h => h.dateInjection && h.montant);
@@ -178,14 +197,11 @@ export function computeProjection(store) {
   const snapshots = [];
   let immo = totalImmo;
   let epar = totalEpar;
-  // Clone group values for simulation
-  const groupValues = {};
-  groupKeys.forEach(k => { groupValues[k] = placementGroups[k].value; });
   let revenus = revenusMensuels;
   let depenses = depensesMensuelles;
 
   for (let year = 0; year <= years; year++) {
-    // Inject heritage for this year
+    // Inject heritage
     if (heritageByYear[year]) {
       immo += heritageByYear[year].immo;
       epar += heritageByYear[year].liq;
@@ -196,16 +212,23 @@ export function computeProjection(store) {
       .filter(e => e.capitalRestant > 0)
       .reduce((s, e) => s + e.mensualite, 0);
 
+    // Aggregate placement values by group
+    const groupValues = {};
+    groupKeys.forEach(k => { groupValues[k] = 0; });
+    placSims.forEach(ps => { groupValues[ps.groupKey] += ps.value; });
+
     const totalPlacements = groupKeys.reduce((s, k) => s + groupValues[k], 0);
     const totalActifs = immo + totalPlacements + epar;
     const patrimoineNet = totalActifs - totalDette;
 
-    // Compute interest earned this year (0 for year 0)
+    // Compute interest for this year
     let interetsAnnuels = 0;
     if (year > 0) {
-      interetsAnnuels = immo * rendImmo / (1 + rendImmo); // interest portion of current immo value
-      groupKeys.forEach(k => {
-        interetsAnnuels += groupValues[k] * placementGroups[k].rendement / (1 + placementGroups[k].rendement);
+      interetsAnnuels += immo * rendImmo / (1 + rendImmo);
+      placSims.forEach(ps => {
+        if (!ps.isAirLiquide) {
+          interetsAnnuels += ps.value * ps.rendement / (1 + ps.rendement);
+        }
       });
       interetsAnnuels += epar * rendEpar / (1 + rendEpar);
     }
@@ -237,32 +260,61 @@ export function computeProjection(store) {
 
     if (year === years) break;
 
-    // Grow assets
+    // --- Grow assets for next year ---
+
+    // Immobilier
     immo *= (1 + rendImmo);
-    groupKeys.forEach(k => {
-      groupValues[k] *= (1 + placementGroups[k].rendement);
-    });
+
+    // Épargne
     epar *= (1 + rendEpar);
 
-    // Distribute annual savings into placements (first group or general)
-    const epargneMensuelle = revenus - depenses - mensualitesTotales;
-    if (epargneMensuelle > 0) {
-      const epargneAnnuelle = epargneMensuelle * 12;
-      if (groupKeys.length > 0) {
-        // Distribute proportionally to current group values, or equally if all zero
-        const totalGroupVal = groupKeys.reduce((s, k) => s + groupValues[k], 0);
-        if (totalGroupVal > 0) {
-          groupKeys.forEach(k => {
-            groupValues[k] += epargneAnnuelle * (groupValues[k] / totalGroupVal);
-          });
-        } else {
-          groupKeys.forEach(k => {
-            groupValues[k] += epargneAnnuelle / groupKeys.length;
-          });
+    // Per-placement growth + DCA + Air Liquide
+    placSims.forEach(ps => {
+      if (ps.isAirLiquide) {
+        // Air Liquide special logic
+        const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
+
+        // Share price appreciation
+        ps.prixAction *= (1 + ps.rendement);
+
+        // Dividends (reinvested into more shares)
+        const dividendTotal = ps.quantite * ps.dividendeParAction * loyaltyMultiplier;
+        interetsAnnuels += dividendTotal; // count dividends as interest
+        if (ps.prixAction > 0) {
+          ps.quantite += dividendTotal / ps.prixAction; // reinvest dividends
+        }
+
+        // Free shares every 2 years (year 2, 4, 6...)
+        if (year > 0 && year % 2 === 0) {
+          const freeShares = Math.floor(ps.quantite / 10) * loyaltyMultiplier;
+          ps.quantite += freeShares;
+        }
+
+        // DCA: buy more shares monthly
+        const dca = getDcaForYear(ps, year + 1);
+        if (dca > 0 && ps.prixAction > 0) {
+          const annualDca = dca * 12;
+          ps.quantite += annualDca / ps.prixAction;
+        }
+
+        // Grow dividend per share
+        ps.dividendeParAction *= (1 + ps.croissanceDividende);
+
+        // Update value
+        ps.value = ps.quantite * ps.prixAction;
+
+      } else {
+        // Standard placement: rendement + DCA
+        ps.value *= (1 + ps.rendement);
+
+        const dca = getDcaForYear(ps, year + 1);
+        if (dca > 0) {
+          ps.value += dca * 12;
         }
       }
-    }
+    });
 
+    // Emprunts amortization
     emprunts = emprunts.map(e => {
       if (e.capitalRestant <= 0) return e;
       let capital = e.capitalRestant;

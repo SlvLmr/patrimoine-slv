@@ -64,8 +64,8 @@ input[type="number"] {
 
 /* Dark card glass effect */
 .card-dark {
-  background: rgba(22, 22, 49, 0.8);
-  border: 1px solid rgba(58, 58, 98, 0.4);
+  background: linear-gradient(135deg, rgba(26, 26, 62, 0.85), rgba(19, 19, 48, 0.9));
+  border: 1px solid rgba(66, 66, 117, 0.35);
   backdrop-filter: blur(12px);
 }
 

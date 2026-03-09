@@ -7,6 +7,8 @@ import * as Passifs from './components/passifs.js';
 import * as RevenusDepenses from './components/revenus-depenses.js';
 import * as Projection from './components/projection.js';
 import * as Fiscalite from './components/fiscalite.js';
+import * as Enfants from './components/enfants.js';
+import * as SuiviDepenses from './components/suivi-depenses.js';
 
 const store = Store.init();
 
@@ -16,18 +18,24 @@ const routes = {
   actifs: Actifs,
   passifs: Passifs,
   'revenus-depenses': RevenusDepenses,
+  'suivi-depenses': SuiviDepenses,
   projection: Projection,
-  fiscalite: Fiscalite
+  fiscalite: Fiscalite,
+  enfants: Enfants
 };
 
 const navItems = [
   { id: 'dashboard', label: 'Tableau de bord', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { id: 'heritage', label: 'Héritage', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { id: 'actifs', label: 'Actifs', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
   { id: 'passifs', label: 'Passifs', icon: 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6' },
+  { id: 'heritage', label: 'Héritage', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { id: '_sep1', separator: true },
   { id: 'revenus-depenses', label: 'Revenus & Dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
+  { id: 'suivi-depenses', label: 'Suivi de dépenses', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
   { id: 'projection', label: 'Projection', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-  { id: 'fiscalite', label: 'Fiscalité', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' }
+  { id: 'fiscalite', label: 'Fiscalité', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
+  { id: '_sep2', separator: true },
+  { id: 'enfants', label: 'Enfants', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' }
 ];
 
 function navigate(page) {
@@ -63,41 +71,23 @@ function renderPage() {
   updateProfileDisplay();
 }
 
-// Logo SVG
-function getLogo() {
-  return `
-    <svg viewBox="0 0 40 40" class="w-9 h-9" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="logo-grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#00d4aa"/>
-          <stop offset="100%" style="stop-color:#5b7fff"/>
-        </linearGradient>
-        <linearGradient id="logo-grad2" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" style="stop-color:#a855f7"/>
-          <stop offset="100%" style="stop-color:#ec4899"/>
-        </linearGradient>
-      </defs>
-      <rect x="2" y="2" width="36" height="36" rx="10" fill="#161631" stroke="url(#logo-grad1)" stroke-width="2"/>
-      <path d="M12 28 L12 18 L16 14 L20 20 L24 12 L28 16 L28 28" fill="url(#logo-grad1)" fill-opacity="0.2" stroke="url(#logo-grad1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M12 24 L17 19 L21 22 L28 15" stroke="url(#logo-grad2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <circle cx="28" cy="15" r="2.5" fill="url(#logo-grad2)"/>
-      <circle cx="12" cy="24" r="2" fill="url(#logo-grad1)"/>
-    </svg>
-  `;
-}
 
 // Build sidebar navigation
 function initNav() {
   const nav = document.getElementById('nav-links');
-  nav.innerHTML = navItems.map(item => `
+  nav.innerHTML = navItems.map(item => {
+    if (item.separator) {
+      return `<div class="my-2 mx-3 border-t border-dark-400/30"></div>`;
+    }
+    return `
     <a href="#${item.id}" data-nav="${item.id}"
       class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm hover:bg-dark-600 hover:text-accent-green transition-colors text-gray-300">
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${item.icon}"/>
       </svg>
       <span>${item.label}</span>
-    </a>
-  `).join('');
+    </a>`;
+  }).join('');
 }
 
 // Profile switcher
@@ -133,7 +123,13 @@ function initProfileSwitcher() {
           </button>
         `).join('')}
       </div>
-      <div class="border-t border-dark-400">
+      <div class="border-t border-dark-400 space-y-0">
+        <button id="btn-rename-profile" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          Renommer le profil
+        </button>
         <button id="btn-new-profile" class="w-full text-left px-4 py-2.5 text-sm text-accent-blue hover:bg-dark-600 transition flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -155,6 +151,17 @@ function initProfileSwitcher() {
           renderPage();
         }
       });
+    });
+
+    // Rename profile
+    dropdown.querySelector('#btn-rename-profile')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const newName = prompt('Nouveau nom du profil :', active.name);
+      if (newName && newName.trim()) {
+        store.renameProfile(active.id, newName.trim());
+        dropdown.remove();
+        updateProfileDisplay();
+      }
     });
 
     // New profile
@@ -182,36 +189,22 @@ function initProfileSwitcher() {
   });
 }
 
-// Initialize logo
+// Initialize app title (no logo)
 function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <div class="flex items-center gap-3">
-        ${getLogo()}
-        <div>
-          <h1 class="text-lg font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">Patrimoine SLV</h1>
-          <p class="text-xs text-gray-500">Simulateur patrimonial</p>
-        </div>
+      <div>
+        <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Simulateur patrimonial</p>
       </div>
     `;
   }
-  // Mobile logo
+  // Mobile
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg viewBox="0 0 40 40" class="w-7 h-7" fill="none">
-          <defs>
-            <linearGradient id="mlogo-g1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#00d4aa"/><stop offset="100%" style="stop-color:#5b7fff"/>
-            </linearGradient>
-          </defs>
-          <rect x="2" y="2" width="36" height="36" rx="10" fill="#161631" stroke="url(#mlogo-g1)" stroke-width="2"/>
-          <path d="M12 28 L12 18 L16 14 L20 20 L24 12 L28 16 L28 28" fill="url(#mlogo-g1)" fill-opacity="0.2" stroke="url(#mlogo-g1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="text-lg font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">Patrimoine SLV</span>
-      </div>
+      <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</span>
     `;
   }
 }
