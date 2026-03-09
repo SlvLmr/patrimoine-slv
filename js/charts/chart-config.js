@@ -1,9 +1,9 @@
 const chartInstances = new Map();
 
 export const COLORS = {
-  immobilier: '#b8976c',
+  immobilier: '#8b6914',
   placements: '#c9a76c',
-  epargne: '#dbb88a',
+  epargne: '#e8d5b0',
   dette: '#ff4757',
   patrimoine: '#e8d5b0',
   revenus: '#c9a76c',

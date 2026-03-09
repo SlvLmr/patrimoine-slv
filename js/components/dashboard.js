@@ -194,9 +194,9 @@ export function mount(store) {
     const labels = [];
     const gradColors = [];
     const gradientPairsMap = [
-      ['#b8976c', '#c9a76c'],  // bronze→gold for immobilier
+      ['#8b6914', '#b8976c'],  // deep amber→bronze for immobilier
       ['#c9a76c', '#dbb88a'],  // gold→light gold for placements
-      ['#dbb88a', '#e8d5b0'],  // light gold→cream for epargne
+      ['#e8d5b0', '#f5edd8'],  // cream→pale cream for epargne
     ];
     if (immoTotal > 0) { data.push(immoTotal); labels.push('Immobilier'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[0][0], gradientPairsMap[0][1])); }
     if (placTotal > 0) { data.push(placTotal); labels.push('Placements'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[1][0], gradientPairsMap[1][1])); }
