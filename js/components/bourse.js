@@ -3,20 +3,27 @@ import { createChart, createVerticalGradient } from '../charts/chart-config.js';
 const WATCHLIST_STORAGE_KEY = 'patrimoine-slv-watchlist';
 
 const DEFAULT_WATCHLIST = [
-  { isin: 'FR0011550185', ticker: 'EWLD.PA', name: 'Lyxor PEA MSCI World', type: 'ETF' },
-  { isin: 'FR0011550193', ticker: 'PSP5.PA', name: 'Lyxor PEA S&P 500', type: 'ETF' },
-  { isin: 'FR0013412020', ticker: 'PAEEM.PA', name: 'Amundi PEA Emerging Markets', type: 'ETF' },
-  { isin: 'IE00BK5BQT80', ticker: 'VWCE.DE', name: 'Vanguard FTSE All-World', type: 'ETF' },
-  { isin: null, ticker: 'AI.PA', name: 'Air Liquide', type: 'Action' },
-  { isin: null, ticker: 'SU.PA', name: 'Schneider Electric', type: 'Action' },
-  { isin: null, ticker: 'LR.PA', name: 'Legrand', type: 'Action' },
-  { isin: null, ticker: 'BTC-USD', name: 'Bitcoin', type: 'Crypto' }
+  { isin: 'FR0011550185', name: 'Lyxor PEA MSCI World', type: 'ETF' },
+  { isin: 'FR0011550193', name: 'Lyxor PEA S&P 500', type: 'ETF' },
+  { isin: 'FR0013412020', name: 'Amundi PEA Emerging Markets', type: 'ETF' },
+  { isin: 'IE00BK5BQT80', name: 'Vanguard FTSE All-World', type: 'ETF' },
+  { isin: 'FR0000120073', name: 'Air Liquide', type: 'Action' },
+  { isin: 'FR0000121972', name: 'Schneider Electric', type: 'Action' },
+  { isin: 'FR0010307819', name: 'Legrand', type: 'Action' }
 ];
 
 function loadWatchlist() {
   try {
     const raw = localStorage.getItem(WATCHLIST_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Migration: remove items without ISIN
+      const filtered = parsed.filter(w => w.isin);
+      if (filtered.length !== parsed.length) {
+        localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(filtered));
+      }
+      if (filtered.length > 0) return filtered;
+    }
   } catch {}
   return DEFAULT_WATCHLIST.map(w => ({ ...w }));
 }
@@ -25,11 +32,35 @@ function saveWatchlist(list) {
   localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(list));
 }
 
-function sid(ticker) {
-  return ticker.replace(/[^a-zA-Z0-9]/g, '');
+function sid(isin) {
+  return (isin || '').replace(/[^a-zA-Z0-9]/g, '');
 }
 
-async function fetchQuoteWithHistory(ticker) {
+// Resolve ISIN to Yahoo Finance ticker via search API
+const tickerCache = {};
+async function resolveIsinToTicker(isin) {
+  if (tickerCache[isin]) return tickerCache[isin];
+  try {
+    const searchUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(isin)}&quotesCount=1&newsCount=0`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(searchUrl)}`;
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
+    const quote = data.quotes?.[0];
+    if (quote?.symbol) {
+      tickerCache[isin] = quote.symbol;
+      return quote.symbol;
+    }
+  } catch (e) {
+    console.warn(`ISIN lookup failed for ${isin}:`, e);
+  }
+  return null;
+}
+
+async function fetchQuoteWithHistory(isin) {
+  const ticker = await resolveIsinToTicker(isin);
+  if (!ticker) return null;
+
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=1mo&interval=1d`;
   const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
   try {
@@ -54,9 +85,9 @@ async function fetchQuoteWithHistory(ticker) {
       close: closes[i]
     })).filter(d => d.close !== null);
 
-    return { price: currentPrice, previousClose, change, changePct, currency, chartPoints };
+    return { ticker, price: currentPrice, previousClose, change, changePct, currency, chartPoints };
   } catch (e) {
-    console.error(`Failed to fetch ${ticker}:`, e);
+    console.error(`Failed to fetch ${isin} (${ticker}):`, e);
     return null;
   }
 }
@@ -125,15 +156,13 @@ function renderMiniChart(canvasId, chartPoints, isUp) {
 
 function findMatchingActif(item, placements) {
   if (!placements || !placements.length) return null;
-  const tickerLower = item.ticker?.toLowerCase() || '';
-  const isinLower = item.isin?.toLowerCase() || '';
+  const isinLower = (item.isin || '').toLowerCase();
+  if (!isinLower) return null;
   return placements.find(p => {
     const pIsin = (p.isin || '').toLowerCase();
     const pNom = (p.nom || '').toLowerCase();
-    if (isinLower && pIsin && pIsin.includes(isinLower)) return true;
-    if (isinLower && pIsin && isinLower.includes(pIsin)) return true;
-    if (tickerLower && pIsin && pIsin.includes(tickerLower)) return true;
-    if (tickerLower && pNom && pNom.includes(tickerLower.split('.')[0])) return true;
+    if (pIsin && (pIsin.includes(isinLower) || isinLower.includes(pIsin))) return true;
+    if (pNom && pNom.includes(item.name?.toLowerCase()?.split(' ')[0] || '___')) return true;
     return false;
   }) || null;
 }
@@ -176,20 +205,20 @@ export function render(store) {
       <!-- Quotes grid with mini charts -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="quotes-grid">
         ${watchlist.map(item => `
-        <div class="card-dark rounded-xl p-5 kpi-card relative group" id="quote-${sid(item.ticker)}">
-          <button class="btn-remove-ticker absolute top-2 right-2 w-6 h-6 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-red/20 hover:text-accent-red transition opacity-0 group-hover:opacity-100 flex items-center justify-center" data-ticker="${item.ticker}" title="Retirer">
+        <div class="card-dark rounded-xl p-5 kpi-card relative group" id="quote-${sid(item.isin)}">
+          <button class="btn-remove-ticker absolute top-2 right-2 w-6 h-6 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition opacity-0 group-hover:opacity-100 flex items-center justify-center" data-isin="${item.isin}" title="Retirer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'ETF' ? 'bg-accent-green/10 text-accent-green' : item.type === 'Crypto' ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-blue/10 text-accent-blue'}">${item.type}</span>
-            <span class="text-xs text-gray-600">${item.ticker}</span>
+            <span class="text-xs text-gray-600 quote-ticker-label">—</span>
           </div>
           <p class="text-sm font-medium text-gray-200 mb-1 truncate">${item.name}</p>
-          ${item.isin ? `<p class="text-xs text-gray-600 mb-2">${item.isin}</p>` : '<p class="text-xs text-gray-600 mb-2">&nbsp;</p>'}
+          <p class="text-xs text-gray-600 mb-2">${item.isin}</p>
           <div class="quote-chart mb-2" style="height:80px">
-            <canvas id="chart-${sid(item.ticker)}"></canvas>
+            <canvas id="chart-${sid(item.isin)}"></canvas>
           </div>
           <div class="quote-price">
             <div class="flex items-center justify-between">
@@ -234,7 +263,7 @@ export function render(store) {
             <thead class="bg-dark-800/50 text-gray-500">
               <tr>
                 <th class="px-5 py-3 text-left">Nom</th>
-                <th class="px-5 py-3 text-left">Ticker</th>
+                <th class="px-5 py-3 text-left">ISIN</th>
                 <th class="px-5 py-3 text-left">Type</th>
                 <th class="px-5 py-3 text-right">Cours</th>
                 <th class="px-5 py-3 text-right">Variation</th>
@@ -251,9 +280,9 @@ export function render(store) {
                 const pru = actif ? Number(actif.pru) || 0 : 0;
                 const valTotale = actif ? Number(actif.valeur) || 0 : 0;
                 return `
-              <tr class="hover:bg-dark-600/30 transition" id="row-${sid(item.ticker)}">
+              <tr class="hover:bg-dark-600/30 transition" id="row-${sid(item.isin)}">
                 <td class="px-5 py-3 font-medium text-gray-200">${item.name}</td>
-                <td class="px-5 py-3 text-gray-400">${item.ticker}</td>
+                <td class="px-5 py-3 text-gray-400">${item.isin}</td>
                 <td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'ETF' ? 'bg-accent-green/10 text-accent-green' : item.type === 'Crypto' ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-blue/10 text-accent-blue'}">${item.type}</span></td>
                 <td class="px-5 py-3 text-right font-medium text-gray-300 quote-cell-price">—</td>
                 <td class="px-5 py-3 text-right quote-cell-change">—</td>
@@ -276,17 +305,13 @@ export function render(store) {
         <div class="relative bg-dark-800 border border-dark-400 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
           <h3 class="text-lg font-semibold text-gray-100">Ajouter un titre</h3>
           <div>
-            <label class="block text-sm text-gray-400 mb-1">Ticker Yahoo Finance</label>
-            <input id="input-ticker" type="text" placeholder="Ex: EWLD.PA, AAPL, BTC-USD" class="w-full bg-dark-700 border border-dark-400 rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
-            <p class="text-xs text-gray-600 mt-1">Format : ticker Yahoo (ex: EWLD.PA pour Euronext Paris)</p>
+            <label class="block text-sm text-gray-400 mb-1">Code ISIN</label>
+            <input id="input-isin" type="text" placeholder="Ex: FR0011550185" class="w-full bg-dark-700 border border-dark-400 rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
+            <p class="text-xs text-gray-600 mt-1">Le ticker Yahoo Finance sera résolu automatiquement depuis l'ISIN</p>
           </div>
           <div>
             <label class="block text-sm text-gray-400 mb-1">Nom (optionnel)</label>
             <input id="input-name" type="text" placeholder="Ex: Lyxor MSCI World" class="w-full bg-dark-700 border border-dark-400 rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-400 mb-1">ISIN (optionnel)</label>
-            <input id="input-isin" type="text" placeholder="Ex: FR0011550185" class="w-full bg-dark-700 border border-dark-400 rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
           </div>
           <div>
             <label class="block text-sm text-gray-400 mb-1">Type</label>
@@ -314,18 +339,24 @@ async function loadAllQuotes() {
   if (statusEl) statusEl.textContent = 'Chargement des cours...';
 
   const results = await Promise.allSettled(
-    watchlist.map(item => fetchQuoteWithHistory(item.ticker))
+    watchlist.map(item => fetchQuoteWithHistory(item.isin))
   );
 
   let loadedCount = 0;
 
   results.forEach((result, i) => {
     const item = watchlist[i];
-    const id = sid(item.ticker);
+    const id = sid(item.isin);
     const quote = result.status === 'fulfilled' ? result.value : null;
 
     const card = document.getElementById(`quote-${id}`);
     if (card) {
+      // Show resolved ticker
+      const tickerLabel = card.querySelector('.quote-ticker-label');
+      if (tickerLabel && quote?.ticker) {
+        tickerLabel.textContent = quote.ticker;
+      }
+
       const priceDiv = card.querySelector('.quote-price');
       if (quote) {
         loadedCount++;
@@ -338,14 +369,14 @@ async function loadAllQuotes() {
 
         priceDiv.innerHTML = `
           <div class="flex items-center justify-between">
-            <span class="text-lg font-bold ${isUp ? 'text-accent-green' : 'text-accent-red'}">${formatPrice(quote.price, quote.currency)}</span>
-            <span class="text-xs font-medium ${isUp ? 'text-accent-green' : 'text-accent-red'}">
+            <span class="text-lg font-bold ${isUp ? 'text-accent-green' : 'text-accent-amber'}">${formatPrice(quote.price, quote.currency)}</span>
+            <span class="text-xs font-medium ${isUp ? 'text-accent-green' : 'text-accent-amber'}">
               ${isUp ? '▲' : '▼'} ${isUp ? '+' : ''}${quote.changePct.toFixed(2)}%
             </span>
           </div>
         `;
       } else {
-        priceDiv.innerHTML = `<p class="text-sm text-accent-red/60">Erreur de chargement</p>`;
+        priceDiv.innerHTML = `<p class="text-sm text-accent-amber/60">Erreur de chargement</p>`;
       }
     }
 
@@ -354,7 +385,7 @@ async function loadAllQuotes() {
       const isUp = quote.change >= 0;
       row.querySelector('.quote-cell-price').innerHTML = `<span class="font-medium text-gray-200">${formatPrice(quote.price, quote.currency)}</span>`;
       row.querySelector('.quote-cell-change').innerHTML = `
-        <span class="${isUp ? 'text-accent-green' : 'text-accent-red'} font-medium">
+        <span class="${isUp ? 'text-accent-green' : 'text-accent-amber'} font-medium">
           ${isUp ? '+' : ''}${quote.change.toFixed(2)} (${isUp ? '+' : ''}${quote.changePct.toFixed(2)}%)
         </span>`;
       row.querySelector('.quote-cell-prev').textContent = formatPrice(quote.previousClose, quote.currency);
@@ -368,7 +399,7 @@ async function loadAllQuotes() {
   if (indicatorEl) {
     indicatorEl.className = loadedCount > 0
       ? 'w-2 h-2 rounded-full bg-accent-green'
-      : 'w-2 h-2 rounded-full bg-accent-red';
+      : 'w-2 h-2 rounded-full bg-accent-amber';
   }
 }
 
@@ -393,19 +424,18 @@ export function mount(store, navigate) {
 
   // Confirm add
   document.getElementById('btn-confirm-add')?.addEventListener('click', () => {
-    const ticker = document.getElementById('input-ticker')?.value?.trim();
-    if (!ticker) return;
-    const name = document.getElementById('input-name')?.value?.trim() || ticker;
-    const isin = document.getElementById('input-isin')?.value?.trim() || null;
+    const isin = document.getElementById('input-isin')?.value?.trim();
+    if (!isin) return;
+    const name = document.getElementById('input-name')?.value?.trim() || isin;
     const type = document.getElementById('input-type')?.value || 'ETF';
 
     const watchlist = loadWatchlist();
-    if (watchlist.some(w => w.ticker.toLowerCase() === ticker.toLowerCase())) {
-      alert('Ce ticker est déjà dans votre liste.');
+    if (watchlist.some(w => w.isin.toLowerCase() === isin.toLowerCase())) {
+      alert('Cet ISIN est déjà dans votre liste.');
       return;
     }
 
-    watchlist.push({ isin, ticker, name, type });
+    watchlist.push({ isin, name, type });
     saveWatchlist(watchlist);
     modal?.classList.add('hidden');
     navigate('bourse');
@@ -415,9 +445,9 @@ export function mount(store, navigate) {
   document.querySelectorAll('.btn-remove-ticker').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const ticker = btn.dataset.ticker;
+      const isin = btn.dataset.isin;
       const watchlist = loadWatchlist();
-      const updated = watchlist.filter(w => w.ticker !== ticker);
+      const updated = watchlist.filter(w => w.isin !== isin);
       if (updated.length < watchlist.length) {
         saveWatchlist(updated);
         navigate('bourse');
