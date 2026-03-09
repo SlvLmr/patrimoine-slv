@@ -1,25 +1,37 @@
 const chartInstances = new Map();
 
 export const COLORS = {
-  immobilier: '#6366f1',    // indigo
-  placements: '#10b981',    // emerald
+  immobilier: '#a855f7',    // purple
+  placements: '#00d4aa',    // green accent
   epargne: '#f59e0b',       // amber
-  dette: '#ef4444',         // red
-  patrimoine: '#3b82f6',    // blue
-  revenus: '#22c55e',       // green
-  depenses: '#f43f5e',      // rose
-  primary: '#6366f1',
-  secondary: '#a5b4fc',
-  grid: '#e5e7eb'
+  dette: '#ff4757',         // red
+  patrimoine: '#5b7fff',    // blue accent
+  revenus: '#00d4aa',       // green
+  depenses: '#ff4757',      // red
+  primary: '#5b7fff',
+  secondary: '#a855f7',
+  grid: 'rgba(58, 58, 98, 0.3)',
+  gridText: '#6b6b8d',
+  actions: '#06d6a0',
+  etf: '#38bdf8',
+  crypto: '#f97316',
+  obligations: '#818cf8'
 };
 
 export const PALETTE = [
-  '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6',
-  '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
+  '#a855f7', '#00d4aa', '#f59e0b', '#ff4757', '#5b7fff',
+  '#38bdf8', '#ec4899', '#06d6a0', '#f97316', '#818cf8'
 ];
 
+// Create gradient helper for charts
+export function createGradient(ctx, color1, color2, height = 300) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, color1);
+  gradient.addColorStop(1, color2);
+  return gradient;
+}
+
 export function createChart(canvasId, config) {
-  // Destroy existing instance
   if (chartInstances.has(canvasId)) {
     chartInstances.get(canvasId).destroy();
     chartInstances.delete(canvasId);
@@ -31,6 +43,10 @@ export function createChart(canvasId, config) {
   const defaults = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: {
+      duration: 800,
+      easing: 'easeInOutQuart'
+    },
     plugins: {
       legend: {
         position: 'bottom',
@@ -38,19 +54,25 @@ export function createChart(canvasId, config) {
           padding: 16,
           usePointStyle: true,
           pointStyleWidth: 10,
-          font: { size: 12 }
+          color: '#8888aa',
+          font: { size: 12, family: 'Inter' }
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        titleFont: { size: 13 },
-        bodyFont: { size: 12 },
+        backgroundColor: 'rgba(10, 10, 26, 0.95)',
+        titleColor: '#e0e0f0',
+        bodyColor: '#a0a0c0',
+        borderColor: 'rgba(58, 58, 98, 0.6)',
+        borderWidth: 1,
+        titleFont: { size: 13, family: 'Inter', weight: '600' },
+        bodyFont: { size: 12, family: 'Inter' },
         padding: 12,
-        cornerRadius: 8,
+        cornerRadius: 10,
+        displayColors: true,
         callbacks: {
           label: function(ctx) {
             const value = ctx.parsed.y ?? ctx.parsed ?? ctx.raw;
-            return `${ctx.dataset.label || ctx.label}: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value)}`;
+            return ` ${ctx.dataset.label || ctx.label}: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value)}`;
           }
         }
       }

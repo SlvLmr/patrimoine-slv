@@ -1,4 +1,4 @@
-/* Custom scrollbar */
+/* Custom scrollbar - dark theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -9,12 +9,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #252547;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #3a3a62;
 }
 
 /* Smooth transitions */
@@ -62,6 +62,65 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* Dark card glass effect */
+.card-dark {
+  background: rgba(22, 22, 49, 0.8);
+  border: 1px solid rgba(58, 58, 98, 0.4);
+  backdrop-filter: blur(12px);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #00d4aa, #5b7fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects */
+.glow-green {
+  box-shadow: 0 0 20px rgba(0, 212, 170, 0.15);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(91, 127, 255, 0.15);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(255, 71, 87, 0.1);
+}
+
+/* KPI card hover effect */
+.kpi-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Heritage net worth display */
+.net-worth-display {
+  background: linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(91, 127, 255, 0.1));
+  border: 1px solid rgba(0, 212, 170, 0.2);
+}
+
+/* Progress bar */
+.progress-bar {
+  background: rgba(37, 37, 71, 0.6);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
 /* Print styles */
 @media print {
   #sidebar, #menu-toggle, .no-print {
@@ -69,5 +128,9 @@ input[type="number"] {
   }
   #main-content {
     margin-left: 0 !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
   }
 }

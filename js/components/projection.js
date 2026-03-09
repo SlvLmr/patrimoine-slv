@@ -5,42 +5,45 @@ export function render(store) {
   const params = store.get('parametres');
   const snapshots = computeProjection(store);
   const last = snapshots[snapshots.length - 1];
+  const first = snapshots[0];
+  const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
+  const evolutionPct = first?.patrimoineNet ? evolution / Math.abs(first.patrimoineNet) : 0;
 
   return `
     <div class="space-y-6">
-      <h1 class="text-2xl font-bold text-gray-800">Projection patrimoniale</h1>
+      <h1 class="text-2xl font-bold text-gray-100">Projection patrimoniale</h1>
 
       <!-- Parameters -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Paramètres de simulation</h2>
+      <div class="card-dark rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Paramètres de simulation</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Horizon (années)</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Horizon (années)</label>
             <input type="number" id="param-years" value="${params.projectionYears}" min="1" max="50" step="1"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Inflation annuelle</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Inflation annuelle</label>
             <input type="number" id="param-inflation" value="${params.inflationRate}" min="0" max="0.2" step="0.005"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Rendement immobilier</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement immobilier</label>
             <input type="number" id="param-rend-immo" value="${params.rendementImmobilier}" min="0" max="0.3" step="0.005"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Rendement placements</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement placements</label>
             <input type="number" id="param-rend-plac" value="${params.rendementPlacements}" min="0" max="0.3" step="0.005"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Rendement épargne</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement épargne</label>
             <input type="number" id="param-rend-epar" value="${params.rendementEpargne}" min="0" max="0.3" step="0.005"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div class="flex items-end">
-            <button id="btn-update-projection" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+            <button id="btn-update-projection" class="w-full px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium">
               Recalculer
             </button>
           </div>
@@ -49,46 +52,51 @@ export function render(store) {
 
       <!-- Summary -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <p class="text-sm text-gray-500 mb-1">Patrimoine net aujourd'hui</p>
-          <p class="text-2xl font-bold text-gray-800">${formatCurrency(snapshots[0]?.patrimoineNet || 0)}</p>
+        <div class="card-dark rounded-xl p-5 kpi-card">
+          <p class="text-sm text-gray-400 mb-2">Patrimoine net aujourd'hui</p>
+          <p class="text-2xl font-bold text-gray-200">${formatCurrency(first?.patrimoineNet || 0)}</p>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <p class="text-sm text-gray-500 mb-1">Patrimoine net dans ${params.projectionYears} ans</p>
-          <p class="text-2xl font-bold text-indigo-600">${formatCurrency(last?.patrimoineNet || 0)}</p>
+        <div class="card-dark rounded-xl p-5 kpi-card glow-blue">
+          <p class="text-sm text-gray-400 mb-2">Dans ${params.projectionYears} ans</p>
+          <p class="text-2xl font-bold gradient-text">${formatCurrency(last?.patrimoineNet || 0)}</p>
         </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <p class="text-sm text-gray-500 mb-1">Évolution</p>
-          <p class="text-2xl font-bold text-emerald-600">
-            ${snapshots[0]?.patrimoineNet ? `+${formatCurrency((last?.patrimoineNet || 0) - snapshots[0].patrimoineNet)}` : '—'}
-          </p>
+        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
+          <p class="text-sm text-gray-400 mb-2">Évolution</p>
+          <div class="flex items-center gap-3">
+            <p class="text-2xl font-bold ${evolution >= 0 ? 'text-accent-green' : 'text-accent-red'}">
+              ${evolution >= 0 ? '+' : ''}${formatCurrency(evolution)}
+            </p>
+            ${evolutionPct ? `
+            <span class="text-sm px-2 py-0.5 rounded-full ${evolution >= 0 ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-red/10 text-accent-red'}">
+              ${evolution >= 0 ? '+' : ''}${(evolutionPct * 100).toFixed(0)}%
+            </span>` : ''}
+          </div>
         </div>
       </div>
 
-      <!-- Chart -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Évolution du patrimoine</h2>
+      <!-- Charts -->
+      <div class="card-dark rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Évolution du patrimoine</h2>
         <div class="h-80">
           <canvas id="chart-projection"></canvas>
         </div>
       </div>
 
-      <!-- Stacked area chart -->
-      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Répartition des actifs dans le temps</h2>
+      <div class="card-dark rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-200 mb-4">Répartition des actifs dans le temps</h2>
         <div class="h-80">
           <canvas id="chart-repartition-temps"></canvas>
         </div>
       </div>
 
       <!-- Table -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100">
-          <h2 class="text-lg font-semibold text-gray-700">Détail année par année</h2>
+      <div class="card-dark rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-dark-400/30">
+          <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
-            <thead class="bg-gray-50 text-gray-500">
+            <thead class="bg-dark-800/50 text-gray-500">
               <tr>
                 <th class="px-4 py-3 text-left">Année</th>
                 <th class="px-4 py-3 text-right">Immobilier</th>
@@ -99,16 +107,16 @@ export function render(store) {
                 <th class="px-4 py-3 text-right font-semibold">Patrimoine net</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-50">
+            <tbody class="divide-y divide-dark-400/20">
               ${snapshots.map(s => `
-              <tr class="hover:bg-gray-50 ${s.annee === 0 ? 'bg-indigo-50/50' : ''}">
-                <td class="px-4 py-2 font-medium">${s.annee === 0 ? 'Actuel' : `+${s.annee} an${s.annee > 1 ? 's' : ''}`}</td>
-                <td class="px-4 py-2 text-right">${formatCurrency(s.immobilier)}</td>
-                <td class="px-4 py-2 text-right">${formatCurrency(s.placements)}</td>
-                <td class="px-4 py-2 text-right">${formatCurrency(s.epargne)}</td>
-                <td class="px-4 py-2 text-right">${formatCurrency(s.totalActifs)}</td>
-                <td class="px-4 py-2 text-right text-red-500">${formatCurrency(s.totalDette)}</td>
-                <td class="px-4 py-2 text-right font-semibold ${s.patrimoineNet >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatCurrency(s.patrimoineNet)}</td>
+              <tr class="hover:bg-dark-600/30 transition ${s.annee === 0 ? 'bg-accent-blue/5' : ''}">
+                <td class="px-4 py-2 font-medium text-gray-300">${s.annee === 0 ? 'Actuel' : `+${s.annee} an${s.annee > 1 ? 's' : ''}`}</td>
+                <td class="px-4 py-2 text-right text-purple-400/80">${formatCurrency(s.immobilier)}</td>
+                <td class="px-4 py-2 text-right text-accent-green/80">${formatCurrency(s.placements)}</td>
+                <td class="px-4 py-2 text-right text-amber-400/80">${formatCurrency(s.epargne)}</td>
+                <td class="px-4 py-2 text-right text-gray-300">${formatCurrency(s.totalActifs)}</td>
+                <td class="px-4 py-2 text-right text-accent-red/70">${formatCurrency(s.totalDette)}</td>
+                <td class="px-4 py-2 text-right font-semibold ${s.patrimoineNet >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrency(s.patrimoineNet)}</td>
               </tr>
               `).join('')}
             </tbody>
@@ -123,7 +131,7 @@ export function mount(store, navigate) {
   const snapshots = computeProjection(store);
   const labels = snapshots.map(s => s.annee === 0 ? 'Actuel' : `+${s.annee}`);
 
-  // Line chart
+  // Line chart - dark theme
   if (document.getElementById('chart-projection')) {
     createChart('chart-projection', {
       type: 'line',
@@ -134,38 +142,48 @@ export function mount(store, navigate) {
             label: 'Total actifs',
             data: snapshots.map(s => s.totalActifs),
             borderColor: COLORS.placements,
-            backgroundColor: COLORS.placements + '20',
+            backgroundColor: COLORS.placements + '15',
             fill: false,
-            tension: 0.3,
-            pointRadius: 2
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2
           },
           {
             label: 'Dette',
             data: snapshots.map(s => s.totalDette),
             borderColor: COLORS.dette,
-            backgroundColor: COLORS.dette + '20',
+            backgroundColor: COLORS.dette + '15',
             fill: false,
-            tension: 0.3,
-            pointRadius: 2
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2
           },
           {
             label: 'Patrimoine net',
             data: snapshots.map(s => s.patrimoineNet),
             borderColor: COLORS.patrimoine,
-            backgroundColor: COLORS.patrimoine + '20',
+            backgroundColor: COLORS.patrimoine + '15',
             fill: true,
-            tension: 0.3,
-            pointRadius: 2,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4,
             borderWidth: 3
           }
         ]
       },
       options: {
+        interaction: { intersect: false, mode: 'index' },
         scales: {
-          x: { grid: { display: false } },
+          x: {
+            grid: { display: false },
+            ticks: { color: COLORS.gridText }
+          },
           y: {
             grid: { color: COLORS.grid },
             ticks: {
+              color: COLORS.gridText,
               callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
             }
           }
@@ -174,7 +192,7 @@ export function mount(store, navigate) {
     });
   }
 
-  // Stacked area
+  // Stacked area - dark theme
   if (document.getElementById('chart-repartition-temps')) {
     createChart('chart-repartition-temps', {
       type: 'line',
@@ -185,38 +203,46 @@ export function mount(store, navigate) {
             label: 'Immobilier',
             data: snapshots.map(s => s.immobilier),
             borderColor: COLORS.immobilier,
-            backgroundColor: COLORS.immobilier + '40',
+            backgroundColor: COLORS.immobilier + '30',
             fill: true,
-            tension: 0.3,
-            pointRadius: 0
+            tension: 0.4,
+            pointRadius: 0,
+            borderWidth: 1.5
           },
           {
             label: 'Placements',
             data: snapshots.map(s => s.placements),
             borderColor: COLORS.placements,
-            backgroundColor: COLORS.placements + '40',
+            backgroundColor: COLORS.placements + '30',
             fill: true,
-            tension: 0.3,
-            pointRadius: 0
+            tension: 0.4,
+            pointRadius: 0,
+            borderWidth: 1.5
           },
           {
             label: 'Épargne',
             data: snapshots.map(s => s.epargne),
             borderColor: COLORS.epargne,
-            backgroundColor: COLORS.epargne + '40',
+            backgroundColor: COLORS.epargne + '30',
             fill: true,
-            tension: 0.3,
-            pointRadius: 0
+            tension: 0.4,
+            pointRadius: 0,
+            borderWidth: 1.5
           }
         ]
       },
       options: {
+        interaction: { intersect: false, mode: 'index' },
         scales: {
-          x: { grid: { display: false } },
+          x: {
+            grid: { display: false },
+            ticks: { color: COLORS.gridText }
+          },
           y: {
             stacked: true,
             grid: { color: COLORS.grid },
             ticks: {
+              color: COLORS.gridText,
               callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
             }
           }

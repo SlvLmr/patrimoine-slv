@@ -47,25 +47,25 @@ export function formatDate(dateStr) {
   return d.toLocaleDateString('fr-FR');
 }
 
-// Modal helper
+// Modal helper - dark Finary theme
 export function openModal(title, bodyHtml, onConfirm) {
   const existing = document.getElementById('app-modal');
   if (existing) existing.remove();
 
   const modal = document.createElement('div');
   modal.id = 'app-modal';
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
   modal.innerHTML = `
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-      <div class="p-6 border-b border-gray-100">
-        <h3 class="text-lg font-semibold text-gray-800">${title}</h3>
+    <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-dark-400/50">
+      <div class="p-6 border-b border-dark-400/50">
+        <h3 class="text-lg font-semibold text-gray-100">${title}</h3>
       </div>
       <div class="p-6" id="modal-body">
         ${bodyHtml}
       </div>
-      <div class="p-4 border-t border-gray-100 flex justify-end gap-3">
-        <button id="modal-cancel" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition">Annuler</button>
-        <button id="modal-confirm" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Confirmer</button>
+      <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3">
+        <button id="modal-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500">Annuler</button>
+        <button id="modal-confirm" class="px-5 py-2 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium">Confirmer</button>
       </div>
     </div>
   `;
@@ -81,6 +81,11 @@ export function openModal(title, bodyHtml, onConfirm) {
       modal.remove();
     });
   }
+
+  setTimeout(() => {
+    const firstInput = modal.querySelector('input, select');
+    if (firstInput) firstInput.focus();
+  }, 100);
 
   return modal;
 }
@@ -123,7 +128,6 @@ export function computeProjection(store) {
   let depenses = depensesMensuelles;
 
   for (let year = 0; year <= years; year++) {
-    // Compute remaining debt
     let totalDette = emprunts.reduce((s, e) => s + Math.max(0, e.capitalRestant), 0);
     let mensualitesTotales = emprunts
       .filter(e => e.capitalRestant > 0)
@@ -148,18 +152,15 @@ export function computeProjection(store) {
 
     if (year === years) break;
 
-    // Growth
     immo *= (1 + rendImmo);
     plac *= (1 + rendPlac);
     epar *= (1 + rendEpar);
 
-    // Add annual savings to placements
     const epargneMensuelle = revenus - depenses - mensualitesTotales;
     if (epargneMensuelle > 0) {
       plac += epargneMensuelle * 12;
     }
 
-    // Amortize loans (simplified: reduce capital by 12 months of payments minus interest)
     emprunts = emprunts.map(e => {
       if (e.capitalRestant <= 0) return e;
       let capital = e.capitalRestant;
@@ -171,7 +172,6 @@ export function computeProjection(store) {
       return { ...e, capitalRestant: capital, dureeRestanteMois: Math.max(0, e.dureeRestanteMois - 12) };
     });
 
-    // Income grows with inflation, expenses too
     revenus *= (1 + inflation);
     depenses *= (1 + inflation);
   }
@@ -199,7 +199,6 @@ export async function computeTax(revenuImposable, nbParts) {
 
     const impotBrut = Math.round(impotParPart * nbParts);
 
-    // Décote
     let decote = 0;
     const seuil = nbParts <= 1 ? data.decote.seuil_celibataire : data.decote.seuil_couple;
     if (impotBrut < seuil) {
@@ -210,7 +209,6 @@ export async function computeTax(revenuImposable, nbParts) {
     const impotNet = Math.max(0, impotBrut - decote);
     const tauxMoyen = revenuImposable > 0 ? impotNet / revenuImposable : 0;
 
-    // Taux marginal
     let tauxMarginal = 0;
     for (const tranche of tranches) {
       const max = tranche.max ?? Infinity;
@@ -238,13 +236,14 @@ export async function computeTax(revenuImposable, nbParts) {
   }
 }
 
-// Input field helper
+// Input field helper - dark theme
 export function inputField(name, label, value = '', type = 'text', extra = '') {
   return `
     <div class="mb-4">
-      <label for="${name}" class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+      <label for="${name}" class="block text-sm font-medium text-gray-300 mb-1.5">${label}</label>
       <input type="${type}" name="${name}" id="field-${name}" value="${value}"
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" ${extra}>
+        class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 placeholder-gray-600
+        focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition" ${extra}>
     </div>
   `;
 }
@@ -257,9 +256,10 @@ export function selectField(name, label, options, selected = '') {
   }).join('');
   return `
     <div class="mb-4">
-      <label for="${name}" class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+      <label for="${name}" class="block text-sm font-medium text-gray-300 mb-1.5">${label}</label>
       <select name="${name}" id="field-${name}"
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+        class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200
+        focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
         ${opts}
       </select>
     </div>
