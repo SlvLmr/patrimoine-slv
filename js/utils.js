@@ -120,6 +120,20 @@ export function computeProjection(store) {
   const rendPlac = params.rendementPlacements || 0.05;
   const rendEpar = params.rendementEpargne || 0.02;
 
+  // Heritage injections by year offset
+  const heritageItems = (state.heritage || []).filter(h => h.dateInjection && h.montant);
+  const currentYear = new Date().getFullYear();
+  const heritageByYear = {};
+  heritageItems.forEach(h => {
+    const injectionYear = new Date(h.dateInjection).getFullYear();
+    const yearOffset = injectionYear - currentYear;
+    if (yearOffset >= 0 && yearOffset <= years) {
+      if (!heritageByYear[yearOffset]) heritageByYear[yearOffset] = { immo: 0, liq: 0 };
+      if (h.type === 'Immobilier') heritageByYear[yearOffset].immo += Number(h.montant) || 0;
+      else heritageByYear[yearOffset].liq += Number(h.montant) || 0;
+    }
+  });
+
   const snapshots = [];
   let immo = totalImmo;
   let plac = totalPlac;
@@ -128,6 +142,12 @@ export function computeProjection(store) {
   let depenses = depensesMensuelles;
 
   for (let year = 0; year <= years; year++) {
+    // Inject heritage for this year
+    if (heritageByYear[year]) {
+      immo += heritageByYear[year].immo;
+      epar += heritageByYear[year].liq;
+    }
+
     let totalDette = emprunts.reduce((s, e) => s + Math.max(0, e.capitalRestant), 0);
     let mensualitesTotales = emprunts
       .filter(e => e.capitalRestant > 0)

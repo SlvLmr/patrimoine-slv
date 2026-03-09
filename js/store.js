@@ -10,6 +10,7 @@ const defaultState = {
   passifs: {
     emprunts: []
   },
+  heritage: [],
   revenus: [],
   depenses: [],
   parametres: {

@@ -1,308 +1,256 @@
-import { formatCurrency, formatPercent, computeProjection } from '../utils.js';
-import { createChart, COLORS, PALETTE } from '../charts/chart-config.js';
+import { formatCurrency, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js';
+import { createChart, COLORS, createVerticalGradient } from '../charts/chart-config.js';
+
+function heritageTotal(items) {
+  return items.reduce((s, i) => s + (Number(i.montant) || 0), 0);
+}
+
+function heritageTotalByType(items, type) {
+  return items.filter(i => i.type === type).reduce((s, i) => s + (Number(i.montant) || 0), 0);
+}
 
 export function render(store) {
-  const totalActifs = store.totalActifs();
-  const totalPassifs = store.totalPassifs();
-  const patrimoineNet = store.patrimoineNet();
-  const state = store.getAll();
-  const capacite = store.capaciteEpargne();
+  const items = store.get('heritage') || [];
+  const total = heritageTotal(items);
+  const totalImmo = heritageTotalByType(items, 'Immobilier');
+  const totalLiq = heritageTotalByType(items, 'Liquidité');
 
-  const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
-  const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
-  const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
-
-  // Calculate total investment returns
-  const totalPRU = state.actifs.placements.reduce((s, i) => s + (Number(i.pru || i.valeur) * (Number(i.quantite) || 1)), 0);
-  const totalCurrentVal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
-  const totalPV = totalCurrentVal - (totalPRU || totalCurrentVal);
-  const pvPercent = totalPRU > 0 ? totalPV / totalPRU : 0;
-
-  // Group placements by type
-  const placByType = {};
-  state.actifs.placements.forEach(p => {
-    const type = p.type || 'Autre';
-    if (!placByType[type]) placByType[type] = 0;
-    placByType[type] += Number(p.valeur) || 0;
+  // Group by provenance (origin person)
+  const byProvenance = {};
+  items.forEach(item => {
+    const key = item.provenance || 'Non précisé';
+    if (!byProvenance[key]) byProvenance[key] = [];
+    byProvenance[key].push(item);
   });
-
-  // Group placements by envelope
-  const envelopes = {};
-  state.actifs.placements.forEach(p => {
-    const env = p.enveloppe || p.type || 'Autre';
-    if (!envelopes[env]) envelopes[env] = { total: 0, items: [] };
-    envelopes[env].total += Number(p.valeur) || 0;
-    envelopes[env].items.push(p);
-  });
-
-  // Projection summary (5 years)
-  const snapshots = computeProjection(store);
-  const snap5 = snapshots.find(s => s.annee === 5) || snapshots[snapshots.length - 1];
-  const snap10 = snapshots.find(s => s.annee === 10) || snapshots[snapshots.length - 1];
-
-  const hasData = totalActifs > 0 || totalPassifs > 0;
-
-  // Allocation data for breakdown
-  const allAssets = [];
-  state.actifs.immobilier.forEach(i => allAssets.push({ nom: i.nom, valeur: Number(i.valeurActuelle) || 0, type: 'Immobilier', color: COLORS.immobilier }));
-  state.actifs.placements.forEach(i => allAssets.push({ nom: i.nom, valeur: Number(i.valeur) || 0, type: i.type || 'Placement', color: COLORS.placements }));
-  state.actifs.epargne.forEach(i => allAssets.push({ nom: i.nom, valeur: Number(i.solde) || 0, type: 'Épargne', color: COLORS.epargne }));
-  allAssets.sort((a, b) => b.valeur - a.valeur);
 
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-100">Héritage & Patrimoine</h1>
-        <p class="text-sm text-gray-500">Vue complète de votre patrimoine</p>
+        <h1 class="text-2xl font-bold text-gray-100">Héritage</h1>
+        <button id="btn-add-heritage"
+          class="px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Ajouter un héritage
+        </button>
       </div>
 
-      <!-- Main Net Worth Hero -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-dark-700 via-dark-600 to-dark-700 border border-dark-400/30 p-8">
-        <div class="absolute inset-0 bg-gradient-to-br from-accent-green/5 via-transparent to-accent-blue/5"></div>
-        <div class="relative z-10">
-          <div class="text-center mb-8">
-            <p class="text-sm text-gray-400 mb-2 uppercase tracking-widest font-medium">Patrimoine Net Total</p>
-            <p class="text-6xl font-bold gradient-text mb-2">${formatCurrency(patrimoineNet)}</p>
-            ${totalPV !== 0 ? `
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full ${totalPV >= 0 ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-red/10 text-accent-red'} text-sm">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${totalPV >= 0 ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'}"/>
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="card-dark rounded-xl p-5 kpi-card">
+          <p class="text-sm text-gray-400 mb-2">Héritage total estimé</p>
+          <p class="text-2xl font-bold gradient-text">${formatCurrency(total)}</p>
+        </div>
+        <div class="card-dark rounded-xl p-5 kpi-card glow-purple">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-3 h-3 rounded-full" style="background: ${COLORS.immobilier}"></div>
+            <p class="text-sm text-gray-400">Immobilier</p>
+          </div>
+          <p class="text-2xl font-bold text-purple-400">${formatCurrency(totalImmo)}</p>
+        </div>
+        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-3 h-3 rounded-full" style="background: ${COLORS.placements}"></div>
+            <p class="text-sm text-gray-400">Liquidités</p>
+          </div>
+          <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalLiq)}</p>
+        </div>
+      </div>
+
+      ${items.length > 0 ? `
+      <!-- Chart -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card-dark rounded-xl p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">Répartition par type</h2>
+          <div class="h-56">
+            <canvas id="chart-heritage-type"></canvas>
+          </div>
+        </div>
+        <div class="card-dark rounded-xl p-6">
+          <h2 class="text-lg font-semibold text-gray-200 mb-4">Timeline des héritages</h2>
+          <div class="h-56">
+            <canvas id="chart-heritage-timeline"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grouped by provenance -->
+      ${Object.entries(byProvenance).map(([provenance, provItems]) => {
+        const provTotal = heritageTotal(provItems);
+        return `
+      <div class="card-dark rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-dark-400/30 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-accent-blue/20 to-purple-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
               </svg>
-              <span>${totalPV >= 0 ? '+' : ''}${formatCurrency(totalPV)} (${formatPercent(pvPercent)})</span>
             </div>
-            ` : ''}
-          </div>
-
-          <!-- Summary metrics -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="text-center p-4 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-gray-500 mb-1 uppercase">Actifs totaux</p>
-              <p class="text-xl font-bold text-accent-green">${formatCurrency(totalActifs)}</p>
-            </div>
-            <div class="text-center p-4 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-gray-500 mb-1 uppercase">Dettes</p>
-              <p class="text-xl font-bold text-accent-red">${formatCurrency(totalPassifs)}</p>
-            </div>
-            <div class="text-center p-4 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-gray-500 mb-1 uppercase">Dans 5 ans</p>
-              <p class="text-xl font-bold text-accent-blue">${formatCurrency(snap5?.patrimoineNet || 0)}</p>
-            </div>
-            <div class="text-center p-4 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-gray-500 mb-1 uppercase">Dans 10 ans</p>
-              <p class="text-xl font-bold text-purple-400">${formatCurrency(snap10?.patrimoineNet || 0)}</p>
+            <div>
+              <h2 class="text-lg font-semibold text-gray-200">${provenance}</h2>
+              <p class="text-xs text-gray-500">${provItems.length} élément${provItems.length > 1 ? 's' : ''}</p>
             </div>
           </div>
+          <p class="text-lg font-bold gradient-text">${formatCurrency(provTotal)}</p>
         </div>
-      </div>
-
-      ${hasData ? `
-      <!-- Allocation Overview -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Doughnut -->
-        <div class="card-dark rounded-xl p-6">
-          <h2 class="text-lg font-semibold text-gray-200 mb-4">Allocation globale</h2>
-          <div class="h-56">
-            <canvas id="chart-heritage-alloc"></canvas>
-          </div>
-        </div>
-
-        <!-- Category bars -->
-        <div class="card-dark rounded-xl p-6">
-          <h2 class="text-lg font-semibold text-gray-200 mb-4">Par catégorie</h2>
-          <div class="space-y-4">
-            ${[
-              { label: 'Immobilier', val: immoTotal, color: COLORS.immobilier, icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3' },
-              { label: 'Placements', val: placTotal, color: COLORS.placements, icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
-              { label: 'Épargne', val: eparTotal, color: COLORS.epargne, icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' }
-            ].map(cat => `
-            <div class="group">
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: ${cat.color}20">
-                    <svg class="w-4 h-4" style="color: ${cat.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${cat.icon}"/>
-                    </svg>
-                  </div>
-                  <span class="text-sm text-gray-300">${cat.label}</span>
-                </div>
-                <div class="text-right">
-                  <span class="text-sm font-medium text-gray-200">${formatCurrency(cat.val)}</span>
-                  <span class="text-xs text-gray-500 ml-1">${totalActifs > 0 ? ((cat.val / totalActifs) * 100).toFixed(0) + '%' : '0%'}</span>
-                </div>
+        <div class="divide-y divide-dark-400/20">
+          ${provItems.map(item => `
+          <div class="p-4 hover:bg-dark-600/30 transition flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${item.type === 'Immobilier' ? COLORS.immobilier : COLORS.placements}20">
+                <svg class="w-5 h-5" style="color: ${item.type === 'Immobilier' ? COLORS.immobilier : COLORS.placements}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  ${item.type === 'Immobilier'
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'}
+                </svg>
               </div>
-              <div class="progress-bar h-1.5">
-                <div class="progress-bar-fill h-full" style="width: ${totalActifs > 0 ? (cat.val / totalActifs) * 100 : 0}%; background: ${cat.color}"></div>
+              <div>
+                <p class="text-sm font-medium text-gray-200">${item.nom}</p>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'Immobilier' ? 'bg-purple-500/10 text-purple-400' : 'bg-accent-green/10 text-accent-green'}">${item.type}</span>
+                  ${item.dateInjection ? `<span class="text-xs text-gray-500">Prévu : ${formatDate(item.dateInjection)}</span>` : ''}
+                </div>
+                ${item.description ? `<p class="text-xs text-gray-500 mt-1">${item.description}</p>` : ''}
               </div>
             </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- Projection mini -->
-        <div class="card-dark rounded-xl p-6">
-          <h2 class="text-lg font-semibold text-gray-200 mb-4">Projection à 10 ans</h2>
-          <div class="h-56">
-            <canvas id="chart-heritage-projection"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Type breakdown for placements -->
-      ${Object.keys(placByType).length > 0 ? `
-      <div class="card-dark rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Détail des placements par type</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          ${Object.entries(placByType).map(([type, val], i) => `
-          <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-400/20 hover:border-dark-300/40 transition">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-3 h-3 rounded-full" style="background: ${PALETTE[i % PALETTE.length]}"></div>
-              <span class="text-sm font-medium text-gray-300">${type}</span>
-            </div>
-            <p class="text-xl font-bold text-gray-100">${formatCurrency(val)}</p>
-            <p class="text-xs text-gray-500 mt-1">${totalActifs > 0 ? ((val / totalActifs) * 100).toFixed(1) : 0}% du patrimoine</p>
-          </div>
-          `).join('')}
-        </div>
-      </div>
-      ` : ''}
-
-      <!-- Envelopes detail -->
-      ${Object.keys(envelopes).length > 0 ? `
-      <div class="card-dark rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Enveloppes d'investissement</h2>
-        <div class="space-y-4">
-          ${Object.entries(envelopes).map(([env, data], i) => `
-          <div class="bg-dark-800/50 rounded-xl p-4 border border-dark-400/20">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${PALETTE[i % PALETTE.length]}20">
-                  <span class="text-sm font-bold" style="color: ${PALETTE[i % PALETTE.length]}">${env.slice(0, 2).toUpperCase()}</span>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-200">${env}</p>
-                  <p class="text-xs text-gray-500">${data.items.length} ligne${data.items.length > 1 ? 's' : ''}</p>
-                </div>
+            <div class="flex items-center gap-3">
+              <p class="text-lg font-semibold text-gray-100">${formatCurrency(item.montant)}</p>
+              <div class="flex gap-1">
+                <button data-edit-heritage="${item.id}" class="p-1.5 rounded-lg hover:bg-dark-500 transition text-gray-500 hover:text-accent-blue" title="Modifier">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button data-delete-heritage="${item.id}" class="p-1.5 rounded-lg hover:bg-dark-500 transition text-gray-500 hover:text-accent-red" title="Supprimer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
               </div>
-              <p class="text-lg font-bold text-gray-100">${formatCurrency(data.total)}</p>
-            </div>
-            ${data.items.length > 0 ? `
-            <div class="space-y-2">
-              ${data.items.map(item => {
-                const pv = item.quantite && item.pru ? (Number(item.valeur) - Number(item.pru) * Number(item.quantite)) : 0;
-                return `
-                <div class="flex items-center justify-between py-2 border-t border-dark-400/20">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-400">${item.nom}</span>
-                    ${item.isin ? `<span class="text-xs text-gray-600">${item.isin}</span>` : ''}
-                  </div>
-                  <div class="flex items-center gap-4">
-                    ${pv !== 0 ? `
-                    <span class="text-xs px-2 py-0.5 rounded-full ${pv >= 0 ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-red/10 text-accent-red'}">${pv >= 0 ? '+' : ''}${formatCurrency(pv)}</span>
-                    ` : ''}
-                    <span class="text-sm font-medium text-gray-200">${formatCurrency(item.valeur)}</span>
-                  </div>
-                </div>
-                `;
-              }).join('')}
-            </div>
-            ` : ''}
-          </div>
-          `).join('')}
-        </div>
-      </div>
-      ` : ''}
-
-      <!-- All assets ranked -->
-      <div class="card-dark rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Tous vos actifs par valeur</h2>
-        <div class="space-y-2">
-          ${allAssets.slice(0, 15).map((asset, i) => `
-          <div class="flex items-center gap-4 py-3 ${i > 0 ? 'border-t border-dark-400/20' : ''}">
-            <span class="text-gray-600 text-sm w-6">#${i + 1}</span>
-            <div class="w-3 h-3 rounded-full flex-shrink-0" style="background: ${asset.color}"></div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-200 truncate">${asset.nom}</p>
-              <p class="text-xs text-gray-500">${asset.type}</p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-200">${formatCurrency(asset.valeur)}</p>
-              <p class="text-xs text-gray-500">${totalActifs > 0 ? ((asset.valeur / totalActifs) * 100).toFixed(1) : 0}%</p>
             </div>
           </div>
           `).join('')}
         </div>
       </div>
+        `;
+      }).join('')}
 
-      <!-- Debt section -->
-      ${totalPassifs > 0 ? `
-      <div class="card-dark rounded-xl p-6 glow-red">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Endettement</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-          <div class="text-center p-4 rounded-xl bg-dark-800/50">
-            <p class="text-xs text-gray-500 mb-1 uppercase">Dette totale</p>
-            <p class="text-xl font-bold text-accent-red">${formatCurrency(totalPassifs)}</p>
-          </div>
-          <div class="text-center p-4 rounded-xl bg-dark-800/50">
-            <p class="text-xs text-gray-500 mb-1 uppercase">Ratio dette/actifs</p>
-            <p class="text-xl font-bold ${totalActifs > 0 && totalPassifs / totalActifs > 0.5 ? 'text-accent-red' : 'text-accent-green'}">${totalActifs > 0 ? formatPercent(totalPassifs / totalActifs) : '0%'}</p>
-          </div>
-          <div class="text-center p-4 rounded-xl bg-dark-800/50">
-            <p class="text-xs text-gray-500 mb-1 uppercase">Mensualités</p>
-            <p class="text-xl font-bold text-gray-200">${formatCurrency(state.passifs.emprunts.reduce((s, e) => s + (Number(e.mensualite) || 0), 0))}<span class="text-sm font-normal text-gray-500">/mois</span></p>
-          </div>
-        </div>
-        ${state.passifs.emprunts.map(e => `
-        <div class="flex items-center justify-between py-3 border-t border-dark-400/20">
-          <div>
-            <p class="text-sm text-gray-200">${e.nom}</p>
-            <p class="text-xs text-gray-500">${e.dureeRestanteMois || 0} mois restants — ${formatPercent(e.tauxInteret || 0)}</p>
-          </div>
-          <div class="text-right">
-            <p class="text-sm font-medium text-accent-red">${formatCurrency(e.capitalRestant)}</p>
-            <p class="text-xs text-gray-500">${formatCurrency(e.mensualite)}/mois</p>
-          </div>
-        </div>
-        `).join('')}
-      </div>
-      ` : ''}
       ` : `
+      <!-- Empty state -->
       <div class="card-dark rounded-xl p-12 text-center">
-        <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-accent-green/20 to-accent-blue/20 flex items-center justify-center mb-6">
-          <svg class="w-10 h-10 text-accent-green/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-accent-blue/20 to-purple-500/20 flex items-center justify-center mb-6">
+          <svg class="w-10 h-10 text-accent-blue/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
-        <h2 class="text-xl font-semibold text-gray-300 mb-2">Aucune donnée patrimoniale</h2>
-        <p class="text-gray-500 max-w-md mx-auto">Commencez par ajouter vos actifs, passifs et revenus pour visualiser votre patrimoine global.</p>
+        <h2 class="text-xl font-semibold text-gray-300 mb-2">Aucun héritage enregistré</h2>
+        <p class="text-gray-500 max-w-md mx-auto mb-6">Ajoutez ici les biens et liquidités que vous prévoyez de recevoir en héritage, avec une date estimée d'injection dans votre patrimoine.</p>
+        <button id="btn-add-heritage-empty"
+          class="px-5 py-2.5 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm inline-flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Ajouter mon premier héritage
+        </button>
       </div>
       `}
     </div>
   `;
 }
 
-export function mount(store) {
-  const state = store.getAll();
-  const totalActifs = store.totalActifs();
-  const totalPassifs = store.totalPassifs();
+function openHeritageModal(store, navigate, editItem = null) {
+  const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
+  const body = `
+    ${inputField('nom', 'Nom / Description', editItem?.nom || '', 'text', 'placeholder="Ex: Maison familiale, Assurance-vie maman..."')}
+    ${selectField('type', 'Type', [
+      { value: 'Immobilier', label: 'Immobilier' },
+      { value: 'Liquidité', label: 'Liquidité' }
+    ], editItem?.type || 'Immobilier')}
+    ${inputField('montant', 'Montant estimé (€)', editItem?.montant || '', 'number', 'min="0" step="1000" placeholder="150000"')}
+    ${inputField('provenance', 'Provenance (personne)', editItem?.provenance || '', 'text', 'placeholder="Ex: Parents, Grand-mère..."')}
+    ${inputField('dateInjection', 'Date estimée d\'injection', editItem?.dateInjection || '', 'date')}
+    <div class="mb-4">
+      <label for="field-description" class="block text-sm font-medium text-gray-300 mb-1.5">Notes (optionnel)</label>
+      <textarea name="description" id="field-description" rows="2"
+        class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 placeholder-gray-600
+        focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition"
+        placeholder="Détails supplémentaires...">${editItem?.description || ''}</textarea>
+    </div>
+  `;
 
-  if (totalActifs === 0 && totalPassifs === 0) return;
+  openModal(title, body, () => {
+    const modal = document.getElementById('app-modal');
+    const data = getFormData(modal.querySelector('#modal-body'));
+    // Get textarea manually since getFormData might miss it
+    const desc = modal.querySelector('#field-description')?.value || '';
+    data.description = desc;
 
-  const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
-  const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
-  const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
+    if (!data.nom || !data.montant) return;
 
-  // Allocation doughnut
-  if (document.getElementById('chart-heritage-alloc')) {
-    const data = [];
-    const labels = [];
-    const colors = [];
-    if (immoTotal > 0) { data.push(immoTotal); labels.push('Immobilier'); colors.push(COLORS.immobilier); }
-    if (placTotal > 0) { data.push(placTotal); labels.push('Placements'); colors.push(COLORS.placements); }
-    if (eparTotal > 0) { data.push(eparTotal); labels.push('Épargne'); colors.push(COLORS.epargne); }
-    if (totalPassifs > 0) { data.push(totalPassifs); labels.push('Dettes'); colors.push(COLORS.dette); }
+    if (editItem) {
+      store.updateItem('heritage', editItem.id, data);
+    } else {
+      store.addItem('heritage', data);
+    }
+    navigate('heritage');
+  });
+}
 
-    if (data.length > 0) {
-      createChart('chart-heritage-alloc', {
+export function mount(store, navigate) {
+  const items = store.get('heritage') || [];
+
+  // Add buttons
+  const addBtn = document.getElementById('btn-add-heritage');
+  const addBtnEmpty = document.getElementById('btn-add-heritage-empty');
+
+  const openAdd = () => openHeritageModal(store, navigate);
+  addBtn?.addEventListener('click', openAdd);
+  addBtnEmpty?.addEventListener('click', openAdd);
+
+  // Edit buttons
+  document.querySelectorAll('[data-edit-heritage]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = items.find(i => i.id === btn.dataset.editHeritage);
+      if (item) openHeritageModal(store, navigate, item);
+    });
+  });
+
+  // Delete buttons
+  document.querySelectorAll('[data-delete-heritage]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (confirm('Supprimer cet élément d\'héritage ?')) {
+        store.removeItem('heritage', btn.dataset.deleteHeritage);
+        navigate('heritage');
+      }
+    });
+  });
+
+  // Charts
+  if (items.length > 0) {
+    // Doughnut by type
+    const totalImmo = heritageTotalByType(items, 'Immobilier');
+    const totalLiq = heritageTotalByType(items, 'Liquidité');
+
+    if (document.getElementById('chart-heritage-type') && (totalImmo > 0 || totalLiq > 0)) {
+      const canvas = document.getElementById('chart-heritage-type');
+      const ctx = canvas.getContext('2d');
+      const data = [];
+      const labels = [];
+      const colors = [];
+
+      if (totalImmo > 0) {
+        data.push(totalImmo);
+        labels.push('Immobilier');
+        colors.push(COLORS.immobilier);
+      }
+      if (totalLiq > 0) {
+        data.push(totalLiq);
+        labels.push('Liquidités');
+        colors.push(COLORS.placements);
+      }
+
+      createChart('chart-heritage-type', {
         type: 'doughnut',
         data: {
           labels,
@@ -330,49 +278,66 @@ export function mount(store) {
         }
       });
     }
-  }
 
-  // Mini projection chart
-  if (document.getElementById('chart-heritage-projection')) {
-    const snapshots = computeProjection(store);
-    const s10 = snapshots.filter(s => s.annee <= 10);
-    const labels = s10.map(s => s.annee === 0 ? 'Auj.' : `+${s.annee}`);
+    // Timeline bar chart - heritage by year
+    if (document.getElementById('chart-heritage-timeline')) {
+      const canvas = document.getElementById('chart-heritage-timeline');
+      const ctx = canvas.getContext('2d');
 
-    createChart('chart-heritage-projection', {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Patrimoine net',
-          data: s10.map(s => s.patrimoineNet),
-          borderColor: COLORS.patrimoine,
-          backgroundColor: COLORS.patrimoine + '15',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          borderWidth: 2.5
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false }
+      // Group by year
+      const byYear = {};
+      items.forEach(item => {
+        const year = item.dateInjection ? new Date(item.dateInjection).getFullYear() : 'Non daté';
+        if (!byYear[year]) byYear[year] = { immo: 0, liq: 0 };
+        if (item.type === 'Immobilier') byYear[year].immo += Number(item.montant) || 0;
+        else byYear[year].liq += Number(item.montant) || 0;
+      });
+
+      const years = Object.keys(byYear).sort();
+      const immoData = years.map(y => byYear[y].immo);
+      const liqData = years.map(y => byYear[y].liq);
+
+      createChart('chart-heritage-timeline', {
+        type: 'bar',
+        data: {
+          labels: years,
+          datasets: [
+            {
+              label: 'Immobilier',
+              data: immoData,
+              backgroundColor: COLORS.immobilier + 'cc',
+              borderColor: COLORS.immobilier,
+              borderWidth: 1,
+              borderRadius: 6
+            },
+            {
+              label: 'Liquidités',
+              data: liqData,
+              backgroundColor: COLORS.placements + 'cc',
+              borderColor: COLORS.placements,
+              borderWidth: 1,
+              borderRadius: 6
+            }
+          ]
         },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: COLORS.gridText, font: { size: 10 } }
-          },
-          y: {
-            grid: { color: COLORS.grid },
-            ticks: {
-              color: COLORS.gridText,
-              font: { size: 10 },
-              callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
+        options: {
+          scales: {
+            x: {
+              stacked: true,
+              grid: { display: false },
+              ticks: { color: COLORS.gridText }
+            },
+            y: {
+              stacked: true,
+              grid: { color: COLORS.grid },
+              ticks: {
+                color: COLORS.gridText,
+                callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
+              }
             }
           }
         }
-      }
-    });
+      });
+    }
   }
 }
