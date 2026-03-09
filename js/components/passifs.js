@@ -60,7 +60,7 @@ export function render(store) {
             </div>
             <h2 class="text-lg font-semibold text-gray-200">Emprunts</h2>
           </div>
-          <button id="btn-add-emprunt" class="px-4 py-2 bg-gradient-to-r from-accent-red to-rose-500 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+          <button id="btn-add-emprunt" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
         </div>
         ${emprunts.length > 0 ? `
         <div class="overflow-x-auto">
@@ -116,7 +116,7 @@ export function mount(store, navigate) {
     ${inputField('nom', "Nom de l'emprunt", item.nom || '', 'text', 'placeholder="Ex: Prêt immobilier RP"')}
     ${inputField('capitalInitial', 'Capital initial (€)', item.capitalInitial || '', 'number', 'step="1000"')}
     ${inputField('capitalRestant', 'Capital restant dû (€)', item.capitalRestant || '', 'number', 'step="1000"')}
-    ${inputField('tauxInteret', 'Taux d\'intérêt annuel', item.tauxInteret || '0.02', 'number', 'step="0.001" min="0" max="1"')}
+    ${inputField('tauxInteret', 'Taux d\'intérêt annuel (%)', ((parseFloat(item.tauxInteret) || 0.02) * 100).toFixed(2), 'number', 'step="0.1" min="0" max="100"')}
     ${inputField('mensualite', 'Mensualité (€)', item.mensualite || '', 'number', 'step="10"')}
     ${inputField('dureeRestanteMois', 'Durée restante (mois)', item.dureeRestanteMois || '', 'number', 'step="1"')}
     ${inputField('dateDebut', 'Date de début', item.dateDebut || '', 'date')}
@@ -125,6 +125,7 @@ export function mount(store, navigate) {
   document.getElementById('btn-add-emprunt')?.addEventListener('click', () => {
     openModal('Ajouter un emprunt', empruntForm(), () => {
       const data = getFormData(document.getElementById('modal-body'));
+      data.tauxInteret = (data.tauxInteret || 0) / 100;
       store.addItem('passifs.emprunts', data);
       navigate('passifs');
     });
@@ -137,6 +138,7 @@ export function mount(store, navigate) {
       if (!item) return;
       openModal("Modifier l'emprunt", empruntForm(item), () => {
         const data = getFormData(document.getElementById('modal-body'));
+        data.tauxInteret = (data.tauxInteret || 0) / 100;
         store.updateItem('passifs.emprunts', id, data);
         navigate('passifs');
       });

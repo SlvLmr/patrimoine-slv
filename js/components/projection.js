@@ -12,17 +12,15 @@ export function render(store) {
 
   // Color map for placement groups
   const groupColors = {
-    'PEA ETF': 'text-emerald-400',
-    'PEA Actions': 'text-sky-400',
-    'PEA-PME ETF': 'text-teal-400',
-    'PEA-PME Actions': 'text-cyan-400',
-    'Assurance Vie': 'text-pink-400',
-    'CTO': 'text-orange-400',
-    'PER': 'text-indigo-400',
-    'Crypto': 'text-yellow-400',
+    'PEA ETF': 'text-accent-green',
+    'PEA Actions': 'text-accent-amber',
+    'Assurance Vie': 'text-accent-cyan',
+    'CTO': 'text-accent-blue',
+    'PER': 'text-accent-green',
+    'Crypto': 'text-accent-amber',
     'Autre': 'text-gray-400'
   };
-  const defaultGroupColor = 'text-blue-400';
+  const defaultGroupColor = 'text-accent-green';
 
   return `
     <div class="space-y-6">
@@ -48,27 +46,27 @@ export function render(store) {
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Inflation annuelle</label>
-            <input type="number" id="param-inflation" value="${params.inflationRate}" min="0" max="0.2" step="0.005"
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Inflation annuelle (%)</label>
+            <input type="number" id="param-inflation" value="${((params.inflationRate || 0) * 100).toFixed(1)}" min="0" max="20" step="0.5"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement immobilier</label>
-            <input type="number" id="param-rend-immo" value="${params.rendementImmobilier}" min="0" max="0.3" step="0.005"
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement immobilier (%)</label>
+            <input type="number" id="param-rend-immo" value="${((params.rendementImmobilier || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement placements</label>
-            <input type="number" id="param-rend-plac" value="${params.rendementPlacements}" min="0" max="0.3" step="0.005"
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement placements (%)</label>
+            <input type="number" id="param-rend-plac" value="${((params.rendementPlacements || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement épargne</label>
-            <input type="number" id="param-rend-epar" value="${params.rendementEpargne}" min="0" max="0.3" step="0.005"
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement épargne (%)</label>
+            <input type="number" id="param-rend-epar" value="${((params.rendementEpargne || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div class="flex items-end">
-            <button id="btn-update-projection" class="w-full px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium">
+            <button id="btn-update-projection" class="w-full px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-lg hover:opacity-90 transition font-medium">
               Recalculer
             </button>
           </div>
@@ -139,7 +137,7 @@ export function render(store) {
               ${snapshots.map(s => {
                 const isRetirement = s.isRetraite;
                 const rowClass = isRetirement
-                  ? 'bg-amber-500/10 border-l-4 border-l-amber-400'
+                  ? 'bg-accent-amber/10 border-l-4 border-l-accent-amber'
                   : s.annee === 0
                     ? 'bg-accent-blue/5'
                     : '';
@@ -147,14 +145,14 @@ export function render(store) {
               <tr class="hover:bg-dark-600/30 transition ${rowClass}">
                 <td class="px-3 py-2 font-medium text-gray-300">
                   ${s.annee === 0 ? 'Actuel' : `+${s.annee} an${s.annee > 1 ? 's' : ''}`}
-                  ${isRetirement ? '<span class="ml-1 text-xs text-amber-400 font-semibold">RETRAITE</span>' : ''}
+                  ${isRetirement ? '<span class="ml-1 text-xs text-accent-amber font-semibold">RETRAITE</span>' : ''}
                 </td>
-                <td class="px-3 py-2 text-center ${isRetirement ? 'text-amber-400 font-bold' : 'text-gray-400'}">${s.age} ans</td>
-                <td class="px-3 py-2 text-right text-purple-400/80">${formatCurrency(s.immobilier)}</td>
+                <td class="px-3 py-2 text-center ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-400'}">${s.age} ans</td>
+                <td class="px-3 py-2 text-right text-accent-green">${formatCurrency(s.immobilier)}</td>
                 ${groupKeys.map(k => `<td class="px-3 py-2 text-right ${groupColors[k] || defaultGroupColor}">${formatCurrency(s.placementDetail[k] || 0)}</td>`).join('')}
-                <td class="px-3 py-2 text-right text-amber-400/80">${formatCurrency(s.epargne)}</td>
-                <td class="px-3 py-2 text-right ${s.interetsAnnuels > 0 ? 'text-lime-400/80' : 'text-gray-600'}">${s.annee === 0 ? '—' : formatCurrency(s.interetsAnnuels)}</td>
-                <td class="px-3 py-2 text-right ${s.cashApresImpot >= 0 ? 'text-teal-400/80' : 'text-accent-red/70'}">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-3 py-2 text-right text-accent-amber">${formatCurrency(s.epargne)}</td>
+                <td class="px-3 py-2 text-right ${s.interetsAnnuels > 0 ? 'text-accent-cyan' : 'text-gray-600'}">${s.annee === 0 ? '—' : formatCurrency(s.interetsAnnuels)}</td>
+                <td class="px-3 py-2 text-right ${s.cashApresImpot >= 0 ? 'text-accent-green' : 'text-accent-red/70'}">${formatCurrency(s.cashApresImpot)}</td>
                 <td class="px-3 py-2 text-right text-gray-300">${formatCurrency(s.totalActifs)}</td>
                 <td class="px-3 py-2 text-right text-accent-red/70">${formatCurrency(s.totalDette)}</td>
                 <td class="px-3 py-2 text-right font-semibold ${s.patrimoineNet >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrency(s.patrimoineNet)}</td>
@@ -179,16 +177,16 @@ export function mount(store, navigate) {
     const ctx2d = canvas.getContext('2d');
 
     const gradActifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
-    gradActifs.addColorStop(0, '#00d4aa');
-    gradActifs.addColorStop(1, '#38bdf8');
+    gradActifs.addColorStop(0, '#c9a76c');
+    gradActifs.addColorStop(1, '#dbb88a');
 
     const gradDette = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
     gradDette.addColorStop(0, '#ff4757');
-    gradDette.addColorStop(1, '#ec4899');
+    gradDette.addColorStop(1, '#ff6b6b');
 
     const gradNet = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
-    gradNet.addColorStop(0, '#5b7fff');
-    gradNet.addColorStop(1, '#a855f7');
+    gradNet.addColorStop(0, '#dbb88a');
+    gradNet.addColorStop(1, '#e8d5b0');
 
     createChart('chart-projection', {
       type: 'line',
@@ -199,12 +197,12 @@ export function mount(store, navigate) {
             label: 'Total actifs',
             data: snapshots.map(s => s.totalActifs),
             borderColor: gradActifs,
-            backgroundColor: createVerticalGradient(ctx2d, '#00d4aa', 0.25, 0.0),
+            backgroundColor: createVerticalGradient(ctx2d, '#c9a76c', 0.25, 0.0),
             fill: true,
             tension: 0.45,
             pointRadius: 0,
             pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#00d4aa',
+            pointHoverBackgroundColor: '#c9a76c',
             pointHoverBorderColor: '#fff',
             pointHoverBorderWidth: 2,
             borderWidth: 2.5
@@ -227,12 +225,12 @@ export function mount(store, navigate) {
             label: 'Patrimoine net',
             data: snapshots.map(s => s.patrimoineNet),
             borderColor: gradNet,
-            backgroundColor: createVerticalGradient(ctx2d, '#5b7fff', 0.3, 0.0),
+            backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.3, 0.0),
             fill: true,
             tension: 0.45,
             pointRadius: 0,
             pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#5b7fff',
+            pointHoverBackgroundColor: '#dbb88a',
             pointHoverBorderColor: '#fff',
             pointHoverBorderWidth: 2,
             borderWidth: 3
@@ -263,15 +261,15 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('chart-repartition-temps');
     const ctx2d = canvas.getContext('2d');
 
-    const chartColors = ['#a855f7', '#10b981', '#38bdf8', '#f472b6', '#f97316', '#818cf8', '#eab308', '#6b7280'];
+    const chartColors = ['#b8976c', '#c9a76c', '#dbb88a', '#a08553', '#d4b07a', '#e8d5b0', '#c4985a', '#8b7355'];
     const datasets = [];
 
     // Immobilier
     datasets.push({
       label: 'Immobilier',
       data: snapshots.map(s => s.immobilier),
-      borderColor: '#a855f7',
-      backgroundColor: createVerticalGradient(ctx2d, '#a855f7', 0.5, 0.05),
+      borderColor: '#b8976c',
+      backgroundColor: createVerticalGradient(ctx2d, '#b8976c', 0.5, 0.05),
       fill: true,
       tension: 0.45,
       pointRadius: 0,
@@ -297,8 +295,8 @@ export function mount(store, navigate) {
     datasets.push({
       label: 'Épargne',
       data: snapshots.map(s => s.epargne),
-      borderColor: '#f59e0b',
-      backgroundColor: createVerticalGradient(ctx2d, '#f59e0b', 0.5, 0.05),
+      borderColor: '#dbb88a',
+      backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.5, 0.05),
       fill: true,
       tension: 0.45,
       pointRadius: 0,
@@ -333,10 +331,10 @@ export function mount(store, navigate) {
     store.set('parametres.projectionYears', parseInt(document.getElementById('param-years').value) || 30);
     store.set('parametres.ageFinAnnee', parseInt(document.getElementById('param-age').value) || 43);
     store.set('parametres.ageRetraite', parseInt(document.getElementById('param-retraite').value) || 64);
-    store.set('parametres.inflationRate', parseFloat(document.getElementById('param-inflation').value) || 0.02);
-    store.set('parametres.rendementImmobilier', parseFloat(document.getElementById('param-rend-immo').value) || 0.02);
-    store.set('parametres.rendementPlacements', parseFloat(document.getElementById('param-rend-plac').value) || 0.05);
-    store.set('parametres.rendementEpargne', parseFloat(document.getElementById('param-rend-epar').value) || 0.02);
+    store.set('parametres.inflationRate', (parseFloat(document.getElementById('param-inflation').value) || 2) / 100);
+    store.set('parametres.rendementImmobilier', (parseFloat(document.getElementById('param-rend-immo').value) || 2) / 100);
+    store.set('parametres.rendementPlacements', (parseFloat(document.getElementById('param-rend-plac').value) || 5) / 100);
+    store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
     navigate('projection');
   });
 }

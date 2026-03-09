@@ -66,7 +66,7 @@ export function render(store) {
               <div class="w-3 h-3 rounded-full bg-accent-green"></div>
               <h2 class="text-lg font-semibold text-gray-200">Revenus</h2>
             </div>
-            <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-teal-500 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+            <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
           </div>
           ${revenus.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
@@ -94,7 +94,7 @@ export function render(store) {
               <div class="w-3 h-3 rounded-full bg-accent-red"></div>
               <h2 class="text-lg font-semibold text-gray-200">Dépenses</h2>
             </div>
-            <button id="btn-add-depense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-rose-500 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+            <button id="btn-add-depense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
           </div>
           ${depenses.length > 0 ? `
           <div class="divide-y divide-dark-400/20">

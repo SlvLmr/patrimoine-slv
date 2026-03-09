@@ -52,7 +52,7 @@ export function render(store) {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-100">Suivi de dépenses</h1>
-        <button id="btn-add-expense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-rose-500 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une dépense</button>
+        <button id="btn-add-expense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une dépense</button>
       </div>
 
       <!-- KPIs -->
@@ -64,7 +64,7 @@ export function render(store) {
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card">
           <p class="text-sm text-gray-400 mb-2">${monthLabel}</p>
-          <p class="text-2xl font-bold text-amber-400">${formatCurrency(monthTotal)}</p>
+          <p class="text-2xl font-bold text-accent-amber">${formatCurrency(monthTotal)}</p>
           <p class="text-xs text-gray-500 mt-1">${monthItems.length} dépense${monthItems.length > 1 ? 's' : ''}</p>
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card">
@@ -84,7 +84,7 @@ export function render(store) {
             <div class="flex items-center gap-3">
               <span class="text-xs text-gray-400 w-24 truncate">${cat}</span>
               <div class="flex-1 h-2 bg-dark-600 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-accent-red to-amber-400 rounded-full" style="width:${pct}%"></div>
+                <div class="h-full bg-gradient-to-r from-accent-red to-accent-amber rounded-full" style="width:${pct}%"></div>
               </div>
               <span class="text-xs font-medium text-gray-300 w-20 text-right">${formatCurrency(total)}</span>
             </div>`;

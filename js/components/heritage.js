@@ -28,7 +28,7 @@ export function render(store) {
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-100">Héritage</h1>
         <button id="btn-add-heritage"
-          class="px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm flex items-center gap-2">
+          class="px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-lg hover:opacity-90 transition font-medium text-sm flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
@@ -42,19 +42,19 @@ export function render(store) {
           <p class="text-sm text-gray-400 mb-2">Héritage total estimé</p>
           <p class="text-2xl font-bold gradient-text">${formatCurrency(total)}</p>
         </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-purple">
+        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-3 h-3 rounded-full" style="background: ${COLORS.immobilier}"></div>
             <p class="text-sm text-gray-400">Immobilier</p>
           </div>
-          <p class="text-2xl font-bold text-purple-400">${formatCurrency(totalImmo)}</p>
+          <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalImmo)}</p>
         </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
+        <div class="card-dark rounded-xl p-5 kpi-card glow-blue">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-3 h-3 rounded-full" style="background: ${COLORS.placements}"></div>
             <p class="text-sm text-gray-400">Liquidités</p>
           </div>
-          <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalLiq)}</p>
+          <p class="text-2xl font-bold text-accent-amber">${formatCurrency(totalLiq)}</p>
         </div>
       </div>
 
@@ -82,8 +82,8 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-5 border-b border-dark-400/30 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-accent-blue/20 to-purple-500/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-accent-green/20 to-accent-amber/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
               </svg>
             </div>
@@ -108,7 +108,7 @@ export function render(store) {
               <div>
                 <p class="text-sm font-medium text-gray-200">${item.nom}</p>
                 <div class="flex items-center gap-2 mt-0.5">
-                  <span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'Immobilier' ? 'bg-purple-500/10 text-purple-400' : 'bg-accent-green/10 text-accent-green'}">${item.type}</span>
+                  <span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'Immobilier' ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-amber/10 text-accent-amber'}">${item.type}</span>
                   ${item.dateInjection ? `<span class="text-xs text-gray-500">Prévu : ${formatDate(item.dateInjection)}</span>` : ''}
                 </div>
                 ${item.description ? `<p class="text-xs text-gray-500 mt-1">${item.description}</p>` : ''}
@@ -117,7 +117,7 @@ export function render(store) {
             <div class="flex items-center gap-3">
               <p class="text-lg font-semibold text-gray-100">${formatCurrency(item.montant)}</p>
               <div class="flex gap-1">
-                <button data-edit-heritage="${item.id}" class="p-1.5 rounded-lg hover:bg-dark-500 transition text-gray-500 hover:text-accent-blue" title="Modifier">
+                <button data-edit-heritage="${item.id}" class="p-1.5 rounded-lg hover:bg-dark-500 transition text-gray-500 hover:text-accent-green" title="Modifier">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                   </svg>
@@ -139,15 +139,15 @@ export function render(store) {
       ` : `
       <!-- Empty state -->
       <div class="card-dark rounded-xl p-12 text-center">
-        <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-accent-blue/20 to-purple-500/20 flex items-center justify-center mb-6">
-          <svg class="w-10 h-10 text-accent-blue/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-accent-green/20 to-accent-amber/20 flex items-center justify-center mb-6">
+          <svg class="w-10 h-10 text-accent-green/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
         <h2 class="text-xl font-semibold text-gray-300 mb-2">Aucun héritage enregistré</h2>
         <p class="text-gray-500 max-w-md mx-auto mb-6">Ajoutez ici les biens et liquidités que vous prévoyez de recevoir en héritage, avec une date estimée d'injection dans votre patrimoine.</p>
         <button id="btn-add-heritage-empty"
-          class="px-5 py-2.5 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm inline-flex items-center gap-2">
+          class="px-5 py-2.5 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-lg hover:opacity-90 transition font-medium text-sm inline-flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
@@ -174,7 +174,7 @@ function openHeritageModal(store, navigate, editItem = null) {
       <label for="field-description" class="block text-sm font-medium text-gray-300 mb-1.5">Notes (optionnel)</label>
       <textarea name="description" id="field-description" rows="2"
         class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 placeholder-gray-600
-        focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition"
+        focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
         placeholder="Détails supplémentaires...">${editItem?.description || ''}</textarea>
     </div>
   `;
@@ -182,7 +182,6 @@ function openHeritageModal(store, navigate, editItem = null) {
   openModal(title, body, () => {
     const modal = document.getElementById('app-modal');
     const data = getFormData(modal.querySelector('#modal-body'));
-    // Get textarea manually since getFormData might miss it
     const desc = modal.querySelector('#field-description')?.value || '';
     data.description = desc;
 
@@ -200,7 +199,6 @@ function openHeritageModal(store, navigate, editItem = null) {
 export function mount(store, navigate) {
   const items = store.get('heritage') || [];
 
-  // Add buttons
   const addBtn = document.getElementById('btn-add-heritage');
   const addBtnEmpty = document.getElementById('btn-add-heritage-empty');
 
@@ -208,7 +206,6 @@ export function mount(store, navigate) {
   addBtn?.addEventListener('click', openAdd);
   addBtnEmpty?.addEventListener('click', openAdd);
 
-  // Edit buttons
   document.querySelectorAll('[data-edit-heritage]').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = items.find(i => i.id === btn.dataset.editHeritage);
@@ -216,7 +213,6 @@ export function mount(store, navigate) {
     });
   });
 
-  // Delete buttons
   document.querySelectorAll('[data-delete-heritage]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (confirm('Supprimer cet élément d\'héritage ?')) {
@@ -228,40 +224,20 @@ export function mount(store, navigate) {
 
   // Charts
   if (items.length > 0) {
-    // Doughnut by type
     const totalImmo = heritageTotalByType(items, 'Immobilier');
     const totalLiq = heritageTotalByType(items, 'Liquidité');
 
     if (document.getElementById('chart-heritage-type') && (totalImmo > 0 || totalLiq > 0)) {
-      const canvas = document.getElementById('chart-heritage-type');
-      const ctx = canvas.getContext('2d');
       const data = [];
       const labels = [];
       const colors = [];
 
-      if (totalImmo > 0) {
-        data.push(totalImmo);
-        labels.push('Immobilier');
-        colors.push(COLORS.immobilier);
-      }
-      if (totalLiq > 0) {
-        data.push(totalLiq);
-        labels.push('Liquidités');
-        colors.push(COLORS.placements);
-      }
+      if (totalImmo > 0) { data.push(totalImmo); labels.push('Immobilier'); colors.push(COLORS.immobilier); }
+      if (totalLiq > 0) { data.push(totalLiq); labels.push('Liquidités'); colors.push(COLORS.placements); }
 
       createChart('chart-heritage-type', {
         type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{
-            data,
-            backgroundColor: colors,
-            borderWidth: 0,
-            hoverOffset: 8,
-            borderRadius: 4
-          }]
-        },
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 8, borderRadius: 4 }] },
         options: {
           cutout: '70%',
           plugins: {
@@ -279,12 +255,7 @@ export function mount(store, navigate) {
       });
     }
 
-    // Timeline bar chart - heritage by year
     if (document.getElementById('chart-heritage-timeline')) {
-      const canvas = document.getElementById('chart-heritage-timeline');
-      const ctx = canvas.getContext('2d');
-
-      // Group by year
       const byYear = {};
       items.forEach(item => {
         const year = item.dateInjection ? new Date(item.dateInjection).getFullYear() : 'Non daté';
@@ -294,47 +265,19 @@ export function mount(store, navigate) {
       });
 
       const years = Object.keys(byYear).sort();
-      const immoData = years.map(y => byYear[y].immo);
-      const liqData = years.map(y => byYear[y].liq);
-
       createChart('chart-heritage-timeline', {
         type: 'bar',
         data: {
           labels: years,
           datasets: [
-            {
-              label: 'Immobilier',
-              data: immoData,
-              backgroundColor: COLORS.immobilier + 'cc',
-              borderColor: COLORS.immobilier,
-              borderWidth: 1,
-              borderRadius: 6
-            },
-            {
-              label: 'Liquidités',
-              data: liqData,
-              backgroundColor: COLORS.placements + 'cc',
-              borderColor: COLORS.placements,
-              borderWidth: 1,
-              borderRadius: 6
-            }
+            { label: 'Immobilier', data: years.map(y => byYear[y].immo), backgroundColor: COLORS.immobilier + 'cc', borderColor: COLORS.immobilier, borderWidth: 1, borderRadius: 6 },
+            { label: 'Liquidités', data: years.map(y => byYear[y].liq), backgroundColor: COLORS.placements + 'cc', borderColor: COLORS.placements, borderWidth: 1, borderRadius: 6 }
           ]
         },
         options: {
           scales: {
-            x: {
-              stacked: true,
-              grid: { display: false },
-              ticks: { color: COLORS.gridText }
-            },
-            y: {
-              stacked: true,
-              grid: { color: COLORS.grid },
-              ticks: {
-                color: COLORS.gridText,
-                callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
-              }
-            }
+            x: { stacked: true, grid: { display: false }, ticks: { color: COLORS.gridText } },
+            y: { stacked: true, grid: { color: COLORS.grid }, ticks: { color: COLORS.gridText, callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v) } }
           }
         }
       });

@@ -11,7 +11,7 @@ export function render(store) {
     <div class="space-y-6">
       <h1 class="text-2xl font-bold text-gray-100">Estimation fiscale</h1>
 
-      <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-sm text-amber-300/80">
+      <div class="bg-accent-amber/10 border border-accent-amber/20 rounded-xl p-4 text-sm text-accent-amber">
         Cette estimation est fournie à titre indicatif uniquement et ne constitue pas un conseil fiscal.
         Consultez un professionnel pour votre situation réelle.
       </div>
@@ -42,7 +42,7 @@ export function render(store) {
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div class="flex items-end">
-            <button id="btn-calc-tax" class="w-full px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium">
+            <button id="btn-calc-tax" class="w-full px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-lg hover:opacity-90 transition font-medium">
               Calculer
             </button>
           </div>
@@ -68,7 +68,7 @@ function renderResults(result) {
       </div>
       <div class="card-dark rounded-xl p-5 kpi-card glow-purple">
         <p class="text-sm text-gray-400 mb-2">Taux marginal</p>
-        <p class="text-2xl font-bold text-purple-400">${formatPercent(result.tauxMarginal)}</p>
+        <p class="text-2xl font-bold text-accent-amber">${formatPercent(result.tauxMarginal)}</p>
       </div>
       <div class="card-dark rounded-xl p-5 kpi-card">
         <p class="text-sm text-gray-400 mb-2">Quotient familial</p>

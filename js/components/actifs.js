@@ -50,7 +50,7 @@ function buildPlacementFormBody(item) {
       ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
     </div>
     ${inputField('valeur', 'Valeur totale actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
-    ${inputField('rendement', 'Rendement annuel estimé', item.rendement || 0.05, 'number', 'step="0.005" min="0" max="1"')}
+    ${inputField('rendement', 'Rendement annuel estimé (%)', ((item.rendement || 0.05) * 100).toFixed(1), 'number', 'step="0.5" min="0" max="100"')}
 
     <div class="mt-2 pt-3 border-t border-dark-400/30">
       <p class="text-sm font-medium text-gray-300 mb-3">Investissement programmé</p>
@@ -75,7 +75,7 @@ function buildPlacementFormBody(item) {
       </div>
       <div id="air-liquide-fields" class="${item.isAirLiquide ? '' : 'hidden'}">
         ${inputField('dividendeParAction', 'Dividende par action (€)', item.dividendeParAction || '3.30', 'number', 'step="0.01"')}
-        ${inputField('croissanceDividende', 'Croissance dividende/an (%)', item.croissanceDividende || '0.08', 'number', 'step="0.01" min="0" max="1"')}
+        ${inputField('croissanceDividende', 'Croissance dividende/an (%)', ((parseFloat(item.croissanceDividende) || 0.08) * 100).toFixed(1), 'number', 'step="1" min="0" max="100"')}
         <div class="flex items-center gap-3 mb-4">
           <input type="checkbox" id="field-loyaltyEligible" class="w-4 h-4 rounded bg-dark-800 border-dark-400" ${item.loyaltyEligible ? 'checked' : ''}>
           <label for="field-loyaltyEligible" class="text-sm text-gray-300">Prime de fidélité (+10% dividendes & actions gratuites)</label>
@@ -163,14 +163,14 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-8 h-8 rounded-lg bg-accent-green/20 flex items-center justify-center">
+              <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
             </div>
             <h2 class="text-lg font-semibold text-gray-200">Immobilier</h2>
           </div>
-          <button id="btn-add-immo" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+          <button id="btn-add-immo" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
         </div>
         ${immobilier.length > 0 ? `
         <div class="overflow-x-auto">
@@ -219,7 +219,7 @@ export function render(store) {
             <h2 class="text-lg font-semibold text-gray-200">Placements financiers</h2>
             <span class="text-xs text-gray-500 bg-dark-600 px-2 py-0.5 rounded-full">${placements.length} ligne${placements.length > 1 ? 's' : ''}</span>
           </div>
-          <button id="btn-add-plac" class="px-4 py-2 bg-gradient-to-r from-accent-green to-teal-500 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+          <button id="btn-add-plac" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
         </div>
 
         ${placements.length > 0 ? `
@@ -256,7 +256,7 @@ export function render(store) {
                     <td class="px-5 py-3">
                       <div class="flex items-center gap-2">
                         <span class="font-medium text-gray-200">${i.nom}</span>
-                        ${i.isAirLiquide ? '<span class="text-xs bg-sky-500/15 text-sky-400 px-1.5 py-0.5 rounded">AI</span>' : ''}
+                        ${i.isAirLiquide ? '<span class="text-xs bg-accent-green/15 text-accent-green px-1.5 py-0.5 rounded">AI</span>' : ''}
                       </div>
                       ${i.categorie ? `<span class="text-xs text-gray-600">${i.categorie}</span>` : ''}
                     </td>
@@ -289,14 +289,14 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-8 h-8 rounded-lg bg-accent-amber/20 flex items-center justify-center">
+              <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
               </svg>
             </div>
             <h2 class="text-lg font-semibold text-gray-200">Épargne</h2>
           </div>
-          <button id="btn-add-epar" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+          <button id="btn-add-epar" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
         </div>
         ${epargne.length > 0 ? `
         <div class="overflow-x-auto">
@@ -317,14 +317,14 @@ export function render(store) {
                 return `
               <tr class="hover:bg-dark-600/30 transition">
                 <td class="px-5 py-3 font-medium text-gray-200">${i.nom}</td>
-                <td class="px-5 py-3 text-right font-medium text-amber-400">${formatCurrency(i.solde)}</td>
+                <td class="px-5 py-3 text-right font-medium text-accent-amber">${formatCurrency(i.solde)}</td>
                 <td class="px-5 py-3 text-right text-gray-400">${formatPercent(i.tauxInteret || 0)}</td>
                 <td class="px-5 py-3 text-right text-gray-500">${i.plafond ? formatCurrency(i.plafond) : '—'}</td>
                 <td class="px-5 py-3 text-right">
                   ${i.plafond ? `
                   <div class="flex items-center gap-2 justify-end">
                     <div class="progress-bar h-1.5 w-16">
-                      <div class="progress-bar-fill h-full bg-amber-500" style="width: ${fillPct}%"></div>
+                      <div class="progress-bar-fill h-full bg-accent-amber" style="width: ${fillPct}%"></div>
                     </div>
                     <span class="text-xs text-gray-500">${fillPct.toFixed(0)}%</span>
                   </div>
@@ -401,6 +401,8 @@ export function mount(store, navigate) {
     const modal = openModal('Ajouter un placement', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.type = data.enveloppe;
+      data.rendement = (data.rendement || 0) / 100;
+      data.croissanceDividende = (data.croissanceDividende || 0) / 100;
       data.dcaOverrides = collectDcaOverrides();
       data.isAirLiquide = document.getElementById('field-isAirLiquide')?.checked || false;
       data.loyaltyEligible = document.getElementById('field-loyaltyEligible')?.checked || false;
@@ -419,6 +421,8 @@ export function mount(store, navigate) {
       const modal = openModal('Modifier le placement', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         data.type = data.enveloppe;
+        data.rendement = (data.rendement || 0) / 100;
+        data.croissanceDividende = (data.croissanceDividende || 0) / 100;
         data.dcaOverrides = collectDcaOverrides();
         data.isAirLiquide = document.getElementById('field-isAirLiquide')?.checked || false;
         data.loyaltyEligible = document.getElementById('field-loyaltyEligible')?.checked || false;
@@ -443,11 +447,12 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('nom', 'Nom du compte', '', 'text', 'placeholder="Ex: Livret A"')}
       ${inputField('solde', 'Solde actuel (€)', '', 'number', 'step="100"')}
-      ${inputField('tauxInteret', 'Taux d\'intérêt annuel', '0.03', 'number', 'step="0.001" min="0" max="1"')}
+      ${inputField('tauxInteret', 'Taux d\'intérêt annuel (%)', '3.0', 'number', 'step="0.1" min="0" max="100"')}
       ${inputField('plafond', 'Plafond (€)', '22950', 'number', 'step="100"')}
     `;
     openModal('Ajouter un compte d\'épargne', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
+      data.tauxInteret = (data.tauxInteret || 0) / 100;
       store.addItem('actifs.epargne', data);
       navigate('actifs');
     });
@@ -461,11 +466,12 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Nom du compte', item.nom)}
         ${inputField('solde', 'Solde actuel (€)', item.solde, 'number', 'step="100"')}
-        ${inputField('tauxInteret', 'Taux d\'intérêt annuel', item.tauxInteret || 0.03, 'number', 'step="0.001" min="0" max="1"')}
+        ${inputField('tauxInteret', 'Taux d\'intérêt annuel (%)', ((item.tauxInteret || 0.03) * 100).toFixed(1), 'number', 'step="0.1" min="0" max="100"')}
         ${inputField('plafond', 'Plafond (€)', item.plafond || 22950, 'number', 'step="100"')}
       `;
       openModal('Modifier le compte d\'épargne', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
+        data.tauxInteret = (data.tauxInteret || 0) / 100;
         store.updateItem('actifs.epargne', id, data);
         navigate('actifs');
       });
