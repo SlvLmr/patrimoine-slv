@@ -1,0 +1,18 @@
+{
+  "annee": 2025,
+  "description": "Barème progressif de l'impôt sur le revenu (revenus 2024)",
+  "tranches": [
+    { "min": 0, "max": 11294, "taux": 0 },
+    { "min": 11295, "max": 28797, "taux": 0.11 },
+    { "min": 28798, "max": 82341, "taux": 0.30 },
+    { "min": 82342, "max": 177106, "taux": 0.41 },
+    { "min": 177107, "max": null, "taux": 0.45 }
+  ],
+  "pfu": 0.30,
+  "csg_crds": 0.172,
+  "decote": {
+    "seuil_celibataire": 1929,
+    "seuil_couple": 3191,
+    "coeff": 0.4525
+  }
+}

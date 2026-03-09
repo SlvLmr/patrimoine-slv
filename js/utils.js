@@ -1,0 +1,277 @@
+const currencyFormatter = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0
+});
+
+const currencyFormatterCents = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+const percentFormatter = new Intl.NumberFormat('fr-FR', {
+  style: 'percent',
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 2
+});
+
+const numberFormatter = new Intl.NumberFormat('fr-FR');
+
+export function formatCurrency(value) {
+  return currencyFormatter.format(value);
+}
+
+export function formatCurrencyCents(value) {
+  return currencyFormatterCents.format(value);
+}
+
+export function formatPercent(value) {
+  return percentFormatter.format(value);
+}
+
+export function formatNumber(value) {
+  return numberFormatter.format(value);
+}
+
+export function parseNumberInput(str) {
+  if (typeof str === 'number') return str;
+  return parseFloat(String(str).replace(/\s/g, '').replace(',', '.')) || 0;
+}
+
+export function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('fr-FR');
+}
+
+// Modal helper
+export function openModal(title, bodyHtml, onConfirm) {
+  const existing = document.getElementById('app-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'app-modal';
+  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800">${title}</h3>
+      </div>
+      <div class="p-6" id="modal-body">
+        ${bodyHtml}
+      </div>
+      <div class="p-4 border-t border-gray-100 flex justify-end gap-3">
+        <button id="modal-cancel" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition">Annuler</button>
+        <button id="modal-confirm" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Confirmer</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('#modal-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  if (onConfirm) {
+    modal.querySelector('#modal-confirm').addEventListener('click', () => {
+      onConfirm();
+      modal.remove();
+    });
+  }
+
+  return modal;
+}
+
+export function closeModal() {
+  const modal = document.getElementById('app-modal');
+  if (modal) modal.remove();
+}
+
+// Projection engine
+export function computeProjection(store) {
+  const state = store.getAll();
+  const params = state.parametres;
+  const years = params.projectionYears || 20;
+  const inflation = params.inflationRate || 0.02;
+
+  const totalImmo = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
+  const totalPlac = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+  const totalEpar = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
+
+  let emprunts = state.passifs.emprunts.map(e => ({
+    capitalRestant: Number(e.capitalRestant) || 0,
+    tauxAnnuel: Number(e.tauxInteret) || 0,
+    mensualite: Number(e.mensualite) || 0,
+    dureeRestanteMois: Number(e.dureeRestanteMois) || 0
+  }));
+
+  const revenusMensuels = state.revenus.reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
+  const depensesMensuelles = state.depenses.reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
+
+  const rendImmo = params.rendementImmobilier || 0.02;
+  const rendPlac = params.rendementPlacements || 0.05;
+  const rendEpar = params.rendementEpargne || 0.02;
+
+  const snapshots = [];
+  let immo = totalImmo;
+  let plac = totalPlac;
+  let epar = totalEpar;
+  let revenus = revenusMensuels;
+  let depenses = depensesMensuelles;
+
+  for (let year = 0; year <= years; year++) {
+    // Compute remaining debt
+    let totalDette = emprunts.reduce((s, e) => s + Math.max(0, e.capitalRestant), 0);
+    let mensualitesTotales = emprunts
+      .filter(e => e.capitalRestant > 0)
+      .reduce((s, e) => s + e.mensualite, 0);
+
+    const totalActifs = immo + plac + epar;
+    const patrimoineNet = totalActifs - totalDette;
+
+    snapshots.push({
+      annee: year,
+      immobilier: Math.round(immo),
+      placements: Math.round(plac),
+      epargne: Math.round(epar),
+      totalActifs: Math.round(totalActifs),
+      totalDette: Math.round(totalDette),
+      patrimoineNet: Math.round(patrimoineNet),
+      revenusMensuels: Math.round(revenus),
+      depensesMensuelles: Math.round(depenses),
+      mensualites: Math.round(mensualitesTotales),
+      capaciteEpargne: Math.round(revenus - depenses - mensualitesTotales)
+    });
+
+    if (year === years) break;
+
+    // Growth
+    immo *= (1 + rendImmo);
+    plac *= (1 + rendPlac);
+    epar *= (1 + rendEpar);
+
+    // Add annual savings to placements
+    const epargneMensuelle = revenus - depenses - mensualitesTotales;
+    if (epargneMensuelle > 0) {
+      plac += epargneMensuelle * 12;
+    }
+
+    // Amortize loans (simplified: reduce capital by 12 months of payments minus interest)
+    emprunts = emprunts.map(e => {
+      if (e.capitalRestant <= 0) return e;
+      let capital = e.capitalRestant;
+      for (let m = 0; m < 12; m++) {
+        const interetMensuel = capital * (e.tauxAnnuel / 12);
+        const amortissement = Math.min(capital, e.mensualite - interetMensuel);
+        capital = Math.max(0, capital - amortissement);
+      }
+      return { ...e, capitalRestant: capital, dureeRestanteMois: Math.max(0, e.dureeRestanteMois - 12) };
+    });
+
+    // Income grows with inflation, expenses too
+    revenus *= (1 + inflation);
+    depenses *= (1 + inflation);
+  }
+
+  return snapshots;
+}
+
+// Tax calculation
+export async function computeTax(revenuImposable, nbParts) {
+  try {
+    const resp = await fetch('./data/tax-brackets.json');
+    const data = await resp.json();
+    const tranches = data.tranches;
+
+    const quotient = revenuImposable / nbParts;
+    let impotParPart = 0;
+
+    for (const tranche of tranches) {
+      const max = tranche.max ?? Infinity;
+      if (quotient > tranche.min) {
+        const taxable = Math.min(quotient, max) - tranche.min;
+        impotParPart += taxable * tranche.taux;
+      }
+    }
+
+    const impotBrut = Math.round(impotParPart * nbParts);
+
+    // Décote
+    let decote = 0;
+    const seuil = nbParts <= 1 ? data.decote.seuil_celibataire : data.decote.seuil_couple;
+    if (impotBrut < seuil) {
+      decote = Math.round(seuil * data.decote.coeff - impotBrut * data.decote.coeff);
+      decote = Math.max(0, decote);
+    }
+
+    const impotNet = Math.max(0, impotBrut - decote);
+    const tauxMoyen = revenuImposable > 0 ? impotNet / revenuImposable : 0;
+
+    // Taux marginal
+    let tauxMarginal = 0;
+    for (const tranche of tranches) {
+      const max = tranche.max ?? Infinity;
+      if (quotient >= tranche.min && quotient <= max) {
+        tauxMarginal = tranche.taux;
+        break;
+      }
+    }
+
+    return {
+      revenuImposable,
+      nbParts,
+      quotientFamilial: Math.round(quotient),
+      impotBrut,
+      decote,
+      impotNet,
+      tauxMoyen,
+      tauxMarginal,
+      tranches: data.tranches,
+      pfu: data.pfu
+    };
+  } catch (e) {
+    console.error('Erreur calcul fiscal:', e);
+    return null;
+  }
+}
+
+// Input field helper
+export function inputField(name, label, value = '', type = 'text', extra = '') {
+  return `
+    <div class="mb-4">
+      <label for="${name}" class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+      <input type="${type}" name="${name}" id="field-${name}" value="${value}"
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" ${extra}>
+    </div>
+  `;
+}
+
+export function selectField(name, label, options, selected = '') {
+  const opts = options.map(o => {
+    const val = typeof o === 'string' ? o : o.value;
+    const text = typeof o === 'string' ? o : o.label;
+    return `<option value="${val}" ${val === selected ? 'selected' : ''}>${text}</option>`;
+  }).join('');
+  return `
+    <div class="mb-4">
+      <label for="${name}" class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+      <select name="${name}" id="field-${name}"
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+        ${opts}
+      </select>
+    </div>
+  `;
+}
+
+export function getFormData(container) {
+  const data = {};
+  container.querySelectorAll('input, select, textarea').forEach(el => {
+    if (el.name) {
+      data[el.name] = el.type === 'number' ? parseNumberInput(el.value) : el.value;
+    }
+  });
+  return data;
+}
