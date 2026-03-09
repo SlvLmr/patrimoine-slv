@@ -83,7 +83,7 @@ function initNav() {
     return `
     <a href="#${item.id}" data-nav="${item.id}"
       class="flex items-center gap-3 px-4 py-2 rounded-xl text-sm hover:bg-dark-600 hover:text-accent-green transition-colors text-gray-300">
-      <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${item.icon}"/>
       </svg>
       <span>${item.label}</span>
