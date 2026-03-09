@@ -69,7 +69,7 @@ function formatPrice(value, currency) {
 }
 
 function renderMiniChart(canvasId, chartPoints, isUp) {
-  const color = isUp ? '#c9a76c' : '#ff4757';
+  const color = isUp ? '#c9a76c' : '#b8976c';
   const labels = chartPoints.map(d => d.date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }));
   const values = chartPoints.map(d => d.close);
 
@@ -123,8 +123,28 @@ function renderMiniChart(canvasId, chartPoints, isUp) {
   });
 }
 
+function findMatchingActif(item, placements) {
+  if (!placements || !placements.length) return null;
+  const tickerLower = item.ticker?.toLowerCase() || '';
+  const isinLower = item.isin?.toLowerCase() || '';
+  return placements.find(p => {
+    const pIsin = (p.isin || '').toLowerCase();
+    const pNom = (p.nom || '').toLowerCase();
+    if (isinLower && pIsin && pIsin.includes(isinLower)) return true;
+    if (isinLower && pIsin && isinLower.includes(pIsin)) return true;
+    if (tickerLower && pIsin && pIsin.includes(tickerLower)) return true;
+    if (tickerLower && pNom && pNom.includes(tickerLower.split('.')[0])) return true;
+    return false;
+  }) || null;
+}
+
+function formatNum(v, decimals = 2) {
+  return Number(v || 0).toLocaleString('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
 export function render(store) {
   const watchlist = loadWatchlist();
+  const placements = store?.get?.('actifs.placements') || [];
 
   return `
     <div class="space-y-6">
@@ -177,6 +197,29 @@ export function render(store) {
               <span class="text-xs text-gray-500">—</span>
             </div>
           </div>
+          ${(() => {
+            const actif = findMatchingActif(item, placements);
+            if (!actif || (!actif.quantite && !actif.pru)) return '';
+            const qty = Number(actif.quantite) || 0;
+            const pru = Number(actif.pru) || 0;
+            const valTotale = Number(actif.valeur) || 0;
+            return `
+            <div class="mt-3 pt-3 border-t border-dark-400/20 space-y-1.5 portfolio-info">
+              <p class="text-[10px] uppercase tracking-wider text-gray-600 font-semibold mb-1">Mon portefeuille</p>
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-500">Parts</span>
+                <span class="text-gray-300 font-medium">${formatNum(qty, 4)}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-500">PRU</span>
+                <span class="text-gray-300 font-medium">${formatNum(pru)} €</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-500">Valeur totale</span>
+                <span class="text-accent-green font-semibold">${formatNum(valTotale)} €</span>
+              </div>
+            </div>`;
+          })()}
         </div>
         `).join('')}
       </div>
@@ -196,10 +239,18 @@ export function render(store) {
                 <th class="px-5 py-3 text-right">Cours</th>
                 <th class="px-5 py-3 text-right">Variation</th>
                 <th class="px-5 py-3 text-right">Clôture préc.</th>
+                <th class="px-5 py-3 text-right">Parts</th>
+                <th class="px-5 py-3 text-right">PRU</th>
+                <th class="px-5 py-3 text-right">Valeur totale</th>
               </tr>
             </thead>
             <tbody id="quotes-table-body" class="divide-y divide-dark-400/20">
-              ${watchlist.map(item => `
+              ${watchlist.map(item => {
+                const actif = findMatchingActif(item, placements);
+                const qty = actif ? Number(actif.quantite) || 0 : 0;
+                const pru = actif ? Number(actif.pru) || 0 : 0;
+                const valTotale = actif ? Number(actif.valeur) || 0 : 0;
+                return `
               <tr class="hover:bg-dark-600/30 transition" id="row-${sid(item.ticker)}">
                 <td class="px-5 py-3 font-medium text-gray-200">${item.name}</td>
                 <td class="px-5 py-3 text-gray-400">${item.ticker}</td>
@@ -207,8 +258,11 @@ export function render(store) {
                 <td class="px-5 py-3 text-right font-medium text-gray-300 quote-cell-price">—</td>
                 <td class="px-5 py-3 text-right quote-cell-change">—</td>
                 <td class="px-5 py-3 text-right text-gray-500 quote-cell-prev">—</td>
-              </tr>
-              `).join('')}
+                <td class="px-5 py-3 text-right text-gray-300">${qty ? formatNum(qty, 4) : '<span class="text-gray-600">—</span>'}</td>
+                <td class="px-5 py-3 text-right text-gray-300">${pru ? formatNum(pru) + ' €' : '<span class="text-gray-600">—</span>'}</td>
+                <td class="px-5 py-3 text-right font-medium ${valTotale ? 'text-accent-green' : 'text-gray-600'}">${valTotale ? formatNum(valTotale) + ' €' : '—'}</td>
+              </tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>
