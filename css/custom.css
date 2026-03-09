@@ -121,6 +121,24 @@ input[type="number"] {
   transition: width 0.5s ease;
 }
 
+/* Live dot indicator (nav sidebar) */
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff4757;
+  margin-left: auto;
+  flex-shrink: 0;
+  position: relative;
+  animation: liveDotBlink 1.5s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+}
+
+@keyframes liveDotBlink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(255, 71, 87, 0.6); }
+  50% { opacity: 0.3; box-shadow: 0 0 2px rgba(255, 71, 87, 0.2); }
+}
+
 /* Logo halo effect */
 .logo-halo {
   box-shadow:
