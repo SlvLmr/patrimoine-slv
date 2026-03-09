@@ -1,5 +1,5 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, getFormData } from '../utils.js';
-import { createChart, COLORS } from '../charts/chart-config.js';
+import { createChart, COLORS, createVerticalGradient } from '../charts/chart-config.js';
 
 export function render(store) {
   const params = store.get('parametres');
@@ -131,8 +131,24 @@ export function mount(store, navigate) {
   const snapshots = computeProjection(store);
   const labels = snapshots.map(s => s.annee === 0 ? 'Actuel' : `+${s.annee}`);
 
-  // Line chart - dark theme
+  // Line chart with gradient fills
   if (document.getElementById('chart-projection')) {
+    const canvas = document.getElementById('chart-projection');
+    const ctx2d = canvas.getContext('2d');
+
+    // Gradient borders for lines
+    const gradActifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
+    gradActifs.addColorStop(0, '#00d4aa');
+    gradActifs.addColorStop(1, '#38bdf8');
+
+    const gradDette = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
+    gradDette.addColorStop(0, '#ff4757');
+    gradDette.addColorStop(1, '#ec4899');
+
+    const gradNet = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
+    gradNet.addColorStop(0, '#5b7fff');
+    gradNet.addColorStop(1, '#a855f7');
+
     createChart('chart-projection', {
       type: 'line',
       data: {
@@ -141,34 +157,43 @@ export function mount(store, navigate) {
           {
             label: 'Total actifs',
             data: snapshots.map(s => s.totalActifs),
-            borderColor: COLORS.placements,
-            backgroundColor: COLORS.placements + '15',
-            fill: false,
-            tension: 0.4,
+            borderColor: gradActifs,
+            backgroundColor: createVerticalGradient(ctx2d, '#00d4aa', 0.25, 0.0),
+            fill: true,
+            tension: 0.45,
             pointRadius: 0,
-            pointHoverRadius: 4,
-            borderWidth: 2
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#00d4aa',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
+            borderWidth: 2.5
           },
           {
             label: 'Dette',
             data: snapshots.map(s => s.totalDette),
-            borderColor: COLORS.dette,
-            backgroundColor: COLORS.dette + '15',
-            fill: false,
-            tension: 0.4,
+            borderColor: gradDette,
+            backgroundColor: createVerticalGradient(ctx2d, '#ff4757', 0.15, 0.0),
+            fill: true,
+            tension: 0.45,
             pointRadius: 0,
-            pointHoverRadius: 4,
-            borderWidth: 2
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#ff4757',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
+            borderWidth: 2.5
           },
           {
             label: 'Patrimoine net',
             data: snapshots.map(s => s.patrimoineNet),
-            borderColor: COLORS.patrimoine,
-            backgroundColor: COLORS.patrimoine + '15',
+            borderColor: gradNet,
+            backgroundColor: createVerticalGradient(ctx2d, '#5b7fff', 0.3, 0.0),
             fill: true,
-            tension: 0.4,
+            tension: 0.45,
             pointRadius: 0,
-            pointHoverRadius: 4,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#5b7fff',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
             borderWidth: 3
           }
         ]
@@ -192,8 +217,11 @@ export function mount(store, navigate) {
     });
   }
 
-  // Stacked area - dark theme
+  // Stacked area with gradient fills
   if (document.getElementById('chart-repartition-temps')) {
+    const canvas = document.getElementById('chart-repartition-temps');
+    const ctx2d = canvas.getContext('2d');
+
     createChart('chart-repartition-temps', {
       type: 'line',
       data: {
@@ -202,32 +230,32 @@ export function mount(store, navigate) {
           {
             label: 'Immobilier',
             data: snapshots.map(s => s.immobilier),
-            borderColor: COLORS.immobilier,
-            backgroundColor: COLORS.immobilier + '30',
+            borderColor: '#a855f7',
+            backgroundColor: createVerticalGradient(ctx2d, '#a855f7', 0.5, 0.05),
             fill: true,
-            tension: 0.4,
+            tension: 0.45,
             pointRadius: 0,
-            borderWidth: 1.5
+            borderWidth: 2
           },
           {
             label: 'Placements',
             data: snapshots.map(s => s.placements),
-            borderColor: COLORS.placements,
-            backgroundColor: COLORS.placements + '30',
+            borderColor: '#00d4aa',
+            backgroundColor: createVerticalGradient(ctx2d, '#00d4aa', 0.5, 0.05),
             fill: true,
-            tension: 0.4,
+            tension: 0.45,
             pointRadius: 0,
-            borderWidth: 1.5
+            borderWidth: 2
           },
           {
             label: 'Épargne',
             data: snapshots.map(s => s.epargne),
-            borderColor: COLORS.epargne,
-            backgroundColor: COLORS.epargne + '30',
+            borderColor: '#f59e0b',
+            backgroundColor: createVerticalGradient(ctx2d, '#f59e0b', 0.5, 0.05),
             fill: true,
-            tension: 0.4,
+            tension: 0.45,
             pointRadius: 0,
-            borderWidth: 1.5
+            borderWidth: 2
           }
         ]
       },

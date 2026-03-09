@@ -1,5 +1,5 @@
 import { formatCurrency, formatPercent } from '../utils.js';
-import { createChart, COLORS, PALETTE } from '../charts/chart-config.js';
+import { createChart, COLORS, PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient } from '../charts/chart-config.js';
 
 export function render(store) {
   const totalActifs = store.totalActifs();
@@ -186,14 +186,23 @@ export function mount(store) {
 
   if (totalActifs === 0 && totalPassifs === 0) return;
 
-  // Doughnut chart - dark theme
+  // Doughnut chart with gradient slices
   if (document.getElementById('chart-repartition')) {
+    const canvas = document.getElementById('chart-repartition');
+    const ctx2d = canvas.getContext('2d');
     const data = [];
     const labels = [];
-    const colors = [];
-    if (immoTotal > 0) { data.push(immoTotal); labels.push('Immobilier'); colors.push(COLORS.immobilier); }
-    if (placTotal > 0) { data.push(placTotal); labels.push('Placements'); colors.push(COLORS.placements); }
-    if (eparTotal > 0) { data.push(eparTotal); labels.push('Épargne'); colors.push(COLORS.epargne); }
+    const gradColors = [];
+    const borderColors = [];
+    const gradientPairsMap = [
+      ['#a855f7', '#ec4899'],  // purple→pink for immobilier
+      ['#00d4aa', '#38bdf8'],  // green→cyan for placements
+      ['#f59e0b', '#ff4757'],  // amber→red for epargne
+    ];
+    let idx = 0;
+    if (immoTotal > 0) { data.push(immoTotal); labels.push('Immobilier'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[0][0], gradientPairsMap[0][1])); borderColors.push(gradientPairsMap[0][0]); idx++; }
+    if (placTotal > 0) { data.push(placTotal); labels.push('Placements'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[1][0], gradientPairsMap[1][1])); borderColors.push(gradientPairsMap[1][0]); idx++; }
+    if (eparTotal > 0) { data.push(eparTotal); labels.push('Épargne'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[2][0], gradientPairsMap[2][1])); borderColors.push(gradientPairsMap[2][0]); idx++; }
 
     if (data.length > 0) {
       createChart('chart-repartition', {
@@ -202,14 +211,14 @@ export function mount(store) {
           labels,
           datasets: [{
             data,
-            backgroundColor: colors,
+            backgroundColor: gradColors,
             borderWidth: 0,
-            hoverOffset: 8,
+            hoverOffset: 10,
             borderRadius: 4
           }]
         },
         options: {
-          cutout: '70%',
+          cutout: '68%',
           plugins: {
             tooltip: {
               callbacks: {
@@ -226,15 +235,24 @@ export function mount(store) {
     }
   }
 
-  // Bar chart - dark theme
+  // Bar chart with gradient fills
   if (document.getElementById('chart-actifs-passifs')) {
+    const canvas = document.getElementById('chart-actifs-passifs');
+    const ctx2d = canvas.getContext('2d');
+    const gradActifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
+    gradActifs.addColorStop(0, '#00d4aa');
+    gradActifs.addColorStop(1, '#5b7fff');
+    const gradPassifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
+    gradPassifs.addColorStop(0, '#ff4757');
+    gradPassifs.addColorStop(1, '#ec4899');
+
     createChart('chart-actifs-passifs', {
       type: 'bar',
       data: {
         labels: ['Actifs', 'Passifs'],
         datasets: [{
           data: [totalActifs, totalPassifs],
-          backgroundColor: [COLORS.placements, COLORS.dette],
+          backgroundColor: [gradActifs, gradPassifs],
           borderRadius: 8,
           barThickness: 60
         }]

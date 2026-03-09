@@ -44,7 +44,7 @@ function renderPage() {
   contentEl.innerHTML = component.render(store);
   component.mount(store, navigate);
 
-  // Update active nav - dark theme
+  // Update active nav
   document.querySelectorAll('[data-nav]').forEach(el => {
     const isActive = el.dataset.nav === hash;
     el.classList.toggle('bg-dark-600', isActive);
@@ -58,9 +58,35 @@ function renderPage() {
   const overlay = document.getElementById('sidebar-overlay');
   if (sidebar) sidebar.classList.add('-translate-x-full', 'lg:translate-x-0');
   if (overlay) overlay.classList.add('hidden');
+
+  // Update profile display
+  updateProfileDisplay();
 }
 
-// Build sidebar navigation - dark theme
+// Logo SVG
+function getLogo() {
+  return `
+    <svg viewBox="0 0 40 40" class="w-9 h-9" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logo-grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00d4aa"/>
+          <stop offset="100%" style="stop-color:#5b7fff"/>
+        </linearGradient>
+        <linearGradient id="logo-grad2" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#a855f7"/>
+          <stop offset="100%" style="stop-color:#ec4899"/>
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="36" height="36" rx="10" fill="#161631" stroke="url(#logo-grad1)" stroke-width="2"/>
+      <path d="M12 28 L12 18 L16 14 L20 20 L24 12 L28 16 L28 28" fill="url(#logo-grad1)" fill-opacity="0.2" stroke="url(#logo-grad1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 24 L17 19 L21 22 L28 15" stroke="url(#logo-grad2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="28" cy="15" r="2.5" fill="url(#logo-grad2)"/>
+      <circle cx="12" cy="24" r="2" fill="url(#logo-grad1)"/>
+    </svg>
+  `;
+}
+
+// Build sidebar navigation
 function initNav() {
   const nav = document.getElementById('nav-links');
   nav.innerHTML = navItems.map(item => `
@@ -72,6 +98,122 @@ function initNav() {
       <span>${item.label}</span>
     </a>
   `).join('');
+}
+
+// Profile switcher
+function updateProfileDisplay() {
+  const el = document.getElementById('profile-name');
+  if (el) {
+    const profile = store.getActiveProfile();
+    el.textContent = profile?.name || 'Mon patrimoine';
+  }
+}
+
+function initProfileSwitcher() {
+  const container = document.getElementById('profile-switcher');
+  if (!container) return;
+
+  container.addEventListener('click', (e) => {
+    const existing = document.getElementById('profile-dropdown');
+    if (existing) { existing.remove(); return; }
+
+    const profiles = store.getProfiles();
+    const active = store.getActiveProfile();
+
+    const dropdown = document.createElement('div');
+    dropdown.id = 'profile-dropdown';
+    dropdown.className = 'absolute left-0 right-0 top-full mt-1 bg-dark-700 border border-dark-400 rounded-xl shadow-2xl z-50 overflow-hidden';
+    dropdown.innerHTML = `
+      <div class="max-h-48 overflow-y-auto">
+        ${profiles.map(p => `
+          <button data-switch-profile="${p.id}"
+            class="w-full text-left px-4 py-2.5 text-sm hover:bg-dark-600 transition flex items-center justify-between ${p.id === active.id ? 'text-accent-green' : 'text-gray-300'}">
+            <span>${p.name}</span>
+            ${p.id === active.id ? '<span class="w-2 h-2 rounded-full bg-accent-green"></span>' : ''}
+          </button>
+        `).join('')}
+      </div>
+      <div class="border-t border-dark-400">
+        <button id="btn-new-profile" class="w-full text-left px-4 py-2.5 text-sm text-accent-blue hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Nouveau profil
+        </button>
+      </div>
+    `;
+
+    container.appendChild(dropdown);
+
+    // Switch profile
+    dropdown.querySelectorAll('[data-switch-profile]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const id = btn.dataset.switchProfile;
+        if (store.switchProfile(id)) {
+          dropdown.remove();
+          renderPage();
+        }
+      });
+    });
+
+    // New profile
+    dropdown.querySelector('#btn-new-profile')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const name = prompt('Nom du nouveau profil :');
+      if (name && name.trim()) {
+        const id = store.createProfile(name.trim());
+        store.switchProfile(id);
+        dropdown.remove();
+        renderPage();
+      }
+    });
+
+    // Close on outside click
+    setTimeout(() => {
+      const closeHandler = (ev) => {
+        if (!dropdown.contains(ev.target) && !container.contains(ev.target)) {
+          dropdown.remove();
+          document.removeEventListener('click', closeHandler);
+        }
+      };
+      document.addEventListener('click', closeHandler);
+    }, 10);
+  });
+}
+
+// Initialize logo
+function initLogo() {
+  const logoContainer = document.getElementById('sidebar-logo');
+  if (logoContainer) {
+    logoContainer.innerHTML = `
+      <div class="flex items-center gap-3">
+        ${getLogo()}
+        <div>
+          <h1 class="text-lg font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">Patrimoine SLV</h1>
+          <p class="text-xs text-gray-500">Simulateur patrimonial</p>
+        </div>
+      </div>
+    `;
+  }
+  // Mobile logo
+  const mobileLogo = document.getElementById('mobile-logo');
+  if (mobileLogo) {
+    mobileLogo.innerHTML = `
+      <div class="flex items-center gap-2">
+        <svg viewBox="0 0 40 40" class="w-7 h-7" fill="none">
+          <defs>
+            <linearGradient id="mlogo-g1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#00d4aa"/><stop offset="100%" style="stop-color:#5b7fff"/>
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="36" height="36" rx="10" fill="#161631" stroke="url(#mlogo-g1)" stroke-width="2"/>
+          <path d="M12 28 L12 18 L16 14 L20 20 L24 12 L28 16 L28 28" fill="url(#mlogo-g1)" fill-opacity="0.2" stroke="url(#mlogo-g1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="text-lg font-bold bg-gradient-to-r from-accent-green to-accent-blue bg-clip-text text-transparent">Patrimoine SLV</span>
+      </div>
+    `;
+  }
 }
 
 // Mobile menu toggle
@@ -99,7 +241,8 @@ function initDataManagement() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `patrimoine-slv-${new Date().toISOString().slice(0, 10)}.json`;
+    const profile = store.getActiveProfile();
+    a.download = `patrimoine-${profile.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   });
@@ -125,7 +268,8 @@ function initDataManagement() {
   });
 
   document.getElementById('btn-reset')?.addEventListener('click', () => {
-    if (confirm('Réinitialiser toutes les données ? Cette action est irréversible.')) {
+    const profile = store.getActiveProfile();
+    if (confirm(`Réinitialiser le profil "${profile.name}" ? Cette action est irréversible.`)) {
       store.reset();
       renderPage();
     }
@@ -134,7 +278,9 @@ function initDataManagement() {
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
+  initLogo();
   initNav();
+  initProfileSwitcher();
   initMobileMenu();
   initDataManagement();
   renderPage();
