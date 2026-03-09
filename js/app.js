@@ -1,5 +1,7 @@
 import { Store } from './store.js';
+import { isConfigured, onAuth, getCurrentUser, logout as firebaseLogout } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
+import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as Dashboard from './components/dashboard.js';
 import * as Heritage from './components/heritage.js';
 import * as Actifs from './components/actifs.js';
@@ -39,6 +41,8 @@ const navItems = [
   { id: 'enfants', label: 'Enfants', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' }
 ];
 
+let appStarted = false;
+
 function navigate(page) {
   window.location.hash = page;
 }
@@ -70,6 +74,9 @@ function renderPage() {
 
   // Update profile display
   updateProfileDisplay();
+
+  // Update user bar
+  updateUserBar();
 }
 
 
@@ -97,6 +104,39 @@ function updateProfileDisplay() {
   if (el) {
     const profile = store.getActiveProfile();
     el.textContent = profile?.name || 'Mon patrimoine';
+  }
+}
+
+// User bar (connected user info + logout)
+function updateUserBar() {
+  const container = document.getElementById('user-bar');
+  if (!container) return;
+  const user = getCurrentUser();
+  if (user) {
+    container.innerHTML = renderUserBar(user);
+    container.querySelector('#btn-logout')?.addEventListener('click', async () => {
+      if (confirm('Se déconnecter ? Tes données locales seront conservées.')) {
+        await firebaseLogout();
+        window.location.reload();
+      }
+    });
+  } else {
+    // Show login button if Firebase is configured but user not logged in
+    if (isConfigured()) {
+      container.innerHTML = `
+        <button id="btn-login-sidebar" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-accent-blue hover:bg-dark-600 rounded-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+          </svg>
+          Se connecter
+        </button>
+      `;
+      container.querySelector('#btn-login-sidebar')?.addEventListener('click', () => {
+        showLoginScreen();
+      });
+    } else {
+      container.innerHTML = '';
+    }
   }
 }
 
@@ -190,7 +230,7 @@ function initProfileSwitcher() {
   });
 }
 
-// Initialize app title (no logo)
+// Initialize app title
 function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
@@ -199,16 +239,15 @@ function initLogo() {
         <svg viewBox="0 0 28 28" class="w-7 h-7 flex-shrink-0" fill="none">
           <defs>
             <linearGradient id="hlogo" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#00d4aa"/>
-              <stop offset="50%" stop-color="#06d6a0"/>
-              <stop offset="100%" stop-color="#5b7fff"/>
+              <stop offset="0%" stop-color="#c9a76c"/>
+              <stop offset="100%" stop-color="#dbb88a"/>
             </linearGradient>
           </defs>
           <path d="M3 20 Q7 20 10 14 T17 8 Q20 6 25 4" stroke="url(#hlogo)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <circle cx="25" cy="4" r="2" fill="#5b7fff"/>
+          <circle cx="25" cy="4" r="2" fill="#dbb88a"/>
         </svg>
         <div>
-          <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</h1>
+          <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent">Horizon</h1>
           <p class="text-xs text-gray-500 mt-0.5">Simulateur patrimonial</p>
         </div>
       </div>
@@ -220,11 +259,11 @@ function initLogo() {
     mobileLogo.innerHTML = `
       <div class="flex items-center gap-2">
         <svg viewBox="0 0 28 28" class="w-6 h-6" fill="none">
-          <defs><linearGradient id="hmlogo" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00d4aa"/><stop offset="100%" stop-color="#5b7fff"/></linearGradient></defs>
+          <defs><linearGradient id="hmlogo" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c9a76c"/><stop offset="100%" stop-color="#dbb88a"/></linearGradient></defs>
           <path d="M3 20 Q7 20 10 14 T17 8 Q20 6 25 4" stroke="url(#hmlogo)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <circle cx="25" cy="4" r="2" fill="#5b7fff"/>
+          <circle cx="25" cy="4" r="2" fill="#dbb88a"/>
         </svg>
-        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-blue bg-clip-text text-transparent">Horizon</span>
+        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent">Horizon</span>
       </div>
     `;
   }
@@ -290,14 +329,81 @@ function initDataManagement() {
   });
 }
 
+// Show login screen (replaces the whole page)
+function showLoginScreen() {
+  // Hide sidebar and main content
+  document.getElementById('sidebar').style.display = 'none';
+  document.getElementById('sidebar-overlay').style.display = 'none';
+
+  const mainContent = document.getElementById('main-content');
+  mainContent.classList.remove('lg:ml-64');
+  mainContent.querySelector('header')?.classList.add('hidden');
+
+  const contentEl = document.getElementById('app-content');
+  contentEl.className = '';
+  contentEl.innerHTML = renderLoginScreen();
+
+  mountLoginScreen(
+    // onSuccess: user logged in
+    async () => {
+      // Sync from cloud
+      const synced = await store.syncFromCloud();
+      // Re-init the app
+      store.init();
+      showApp();
+    },
+    // onSkip: continue without account
+    () => {
+      showApp();
+    }
+  );
+}
+
+// Show the main app (after login or skip)
+function showApp() {
+  document.getElementById('sidebar').style.display = '';
+  document.getElementById('sidebar-overlay').style.display = '';
+
+  const mainContent = document.getElementById('main-content');
+  mainContent.classList.add('lg:ml-64');
+  mainContent.querySelector('header')?.classList.remove('hidden');
+
+  const contentEl = document.getElementById('app-content');
+  contentEl.className = 'p-4 sm:p-6 lg:p-8 max-w-7xl';
+
+  if (!appStarted) {
+    initLogo();
+    initNav();
+    initProfileSwitcher();
+    initMobileMenu();
+    initDataManagement();
+    appStarted = true;
+  }
+
+  renderPage();
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
-  initLogo();
-  initNav();
-  initProfileSwitcher();
-  initMobileMenu();
-  initDataManagement();
-  renderPage();
+  if (isConfigured()) {
+    // Firebase is configured: check auth state
+    onAuth(async (user) => {
+      if (user) {
+        // Already logged in — sync and show app
+        await store.syncFromCloud();
+        store.init();
+        showApp();
+      } else {
+        // Not logged in — show login screen
+        showLoginScreen();
+      }
+    });
+  } else {
+    // No Firebase — go straight to app (local only)
+    showApp();
+  }
 });
 
-window.addEventListener('hashchange', renderPage);
+window.addEventListener('hashchange', () => {
+  if (appStarted) renderPage();
+});

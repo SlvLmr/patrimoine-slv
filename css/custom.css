@@ -9,12 +9,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #252547;
+  background: #2c2c33;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a62;
+  background: #38383f;
 }
 
 /* Smooth transitions */
@@ -64,14 +64,14 @@ input[type="number"] {
 
 /* Dark card glass effect */
 .card-dark {
-  background: linear-gradient(135deg, rgba(26, 26, 62, 0.85), rgba(19, 19, 48, 0.9));
-  border: 1px solid rgba(66, 66, 117, 0.35);
+  background: linear-gradient(135deg, rgba(26, 26, 31, 0.9), rgba(17, 17, 21, 0.95));
+  border: 1px solid rgba(56, 56, 63, 0.35);
   backdrop-filter: blur(12px);
 }
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #00d4aa, #5b7fff);
+  background: linear-gradient(135deg, #c9a76c, #dbb88a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -79,15 +79,15 @@ input[type="number"] {
 
 /* Glow effects */
 .glow-green {
-  box-shadow: 0 0 20px rgba(0, 212, 170, 0.15);
+  box-shadow: 0 0 20px rgba(201, 167, 108, 0.15);
 }
 
 .glow-blue {
-  box-shadow: 0 0 20px rgba(91, 127, 255, 0.15);
+  box-shadow: 0 0 20px rgba(160, 133, 83, 0.15);
 }
 
 .glow-purple {
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+  box-shadow: 0 0 20px rgba(184, 151, 108, 0.15);
 }
 
 .glow-red {
@@ -105,13 +105,13 @@ input[type="number"] {
 
 /* Heritage net worth display */
 .net-worth-display {
-  background: linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(91, 127, 255, 0.1));
-  border: 1px solid rgba(0, 212, 170, 0.2);
+  background: linear-gradient(135deg, rgba(201, 167, 108, 0.1), rgba(160, 133, 83, 0.1));
+  border: 1px solid rgba(201, 167, 108, 0.2);
 }
 
 /* Progress bar */
 .progress-bar {
-  background: rgba(37, 37, 71, 0.6);
+  background: rgba(44, 44, 51, 0.6);
   border-radius: 999px;
   overflow: hidden;
 }

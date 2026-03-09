@@ -1,3 +1,5 @@
+import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud } from './firebase-config.js';
+
 const PROFILES_KEY = 'patrimoine-slv-profiles';
 const ACTIVE_PROFILE_KEY = 'patrimoine-slv-active-profile';
 
@@ -13,6 +15,7 @@ const defaultState = {
   heritage: [],
   revenus: [],
   depenses: [],
+  suiviDepenses: [],
   parametres: {
     inflationRate: 0.02,
     projectionYears: 30,
@@ -30,7 +33,7 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-// Profile management
+// Profile management (local)
 function getProfiles() {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
@@ -43,6 +46,9 @@ function getProfiles() {
 
 function saveProfiles(profiles) {
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  // Cloud sync (fire and forget)
+  const user = getCurrentUser();
+  if (user) saveProfilesToCloud(user.uid, profiles);
 }
 
 function getActiveProfileId() {
@@ -66,7 +72,7 @@ function migrateOldData() {
   if (oldData && profiles.length === 0) {
     const profileId = generateId();
     const profile = { id: profileId, name: 'Mon patrimoine', createdAt: new Date().toISOString() };
-    saveProfiles([profile]);
+    localStorage.setItem(PROFILES_KEY, JSON.stringify([profile]));
     setActiveProfileId(profileId);
     localStorage.setItem(getStorageKey(profileId), oldData);
     localStorage.removeItem(oldKey);
@@ -97,6 +103,9 @@ function loadState(profileId) {
 function saveState(profileId, state) {
   try {
     localStorage.setItem(getStorageKey(profileId), JSON.stringify(state));
+    // Cloud sync (fire and forget)
+    const user = getCurrentUser();
+    if (user) saveToCloud(user.uid, profileId, state);
   } catch (e) {
     console.error('Erreur de sauvegarde:', e);
     alert('Erreur: espace de stockage insuffisant.');
@@ -106,6 +115,7 @@ function saveState(profileId, state) {
 const Store = {
   _state: null,
   _profileId: null,
+  _onChangeCallbacks: [],
 
   init() {
     // Migrate old data if needed
@@ -118,7 +128,7 @@ const Store = {
     if (profiles.length === 0) {
       const id = generateId();
       profiles = [{ id, name: 'Mon patrimoine', createdAt: new Date().toISOString() }];
-      saveProfiles(profiles);
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
       activeId = id;
       setActiveProfileId(id);
     }
@@ -132,6 +142,62 @@ const Store = {
     this._profileId = activeId;
     this._state = loadState(activeId);
     return this;
+  },
+
+  // Cloud sync: load all data from cloud and replace local
+  async syncFromCloud() {
+    const user = getCurrentUser();
+    if (!user) return false;
+
+    try {
+      // Load profiles from cloud
+      const cloudProfiles = await loadProfilesFromCloud(user.uid);
+      if (cloudProfiles && cloudProfiles.length > 0) {
+        localStorage.setItem(PROFILES_KEY, JSON.stringify(cloudProfiles));
+
+        // Load each profile's data
+        for (const p of cloudProfiles) {
+          const cloudData = await loadFromCloud(user.uid, p.id);
+          if (cloudData) {
+            localStorage.setItem(getStorageKey(p.id), JSON.stringify(cloudData));
+          }
+        }
+
+        // Re-init with cloud data
+        const activeId = cloudProfiles[0].id;
+        this._profileId = activeId;
+        setActiveProfileId(activeId);
+        this._state = loadState(activeId);
+        return true;
+      }
+
+      // No cloud data yet — push local to cloud
+      await this.syncToCloud();
+      return false;
+    } catch (e) {
+      console.error('Sync from cloud error:', e);
+      return false;
+    }
+  },
+
+  // Push all local data to cloud
+  async syncToCloud() {
+    const user = getCurrentUser();
+    if (!user) return false;
+
+    try {
+      const profiles = getProfiles();
+      await saveProfilesToCloud(user.uid, profiles);
+
+      for (const p of profiles) {
+        const data = loadState(p.id);
+        await saveToCloud(user.uid, p.id, data);
+      }
+      return true;
+    } catch (e) {
+      console.error('Sync to cloud error:', e);
+      return false;
+    }
   },
 
   // Profile methods
@@ -149,7 +215,6 @@ const Store = {
     const id = generateId();
     profiles.push({ id, name, createdAt: new Date().toISOString() });
     saveProfiles(profiles);
-    // Initialize empty state for new profile
     saveState(id, JSON.parse(JSON.stringify(defaultState)));
     return id;
   },
@@ -174,7 +239,7 @@ const Store = {
 
   deleteProfile(id) {
     let profiles = getProfiles();
-    if (profiles.length <= 1) return false; // Can't delete last profile
+    if (profiles.length <= 1) return false;
     profiles = profiles.filter(p => p.id !== id);
     saveProfiles(profiles);
     localStorage.removeItem(getStorageKey(id));
@@ -279,7 +344,6 @@ const Store = {
   importData(json) {
     try {
       const parsed = JSON.parse(json);
-      // Support both old format and new profile format
       const data = parsed.data || parsed;
       this._state = { ...JSON.parse(JSON.stringify(defaultState)), ...data };
       saveState(this._profileId, this._state);

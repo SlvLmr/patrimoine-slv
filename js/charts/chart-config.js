@@ -1,38 +1,38 @@
 const chartInstances = new Map();
 
 export const COLORS = {
-  immobilier: '#a855f7',
-  placements: '#00d4aa',
-  epargne: '#f59e0b',
+  immobilier: '#b8976c',
+  placements: '#c9a76c',
+  epargne: '#dbb88a',
   dette: '#ff4757',
-  patrimoine: '#5b7fff',
-  revenus: '#00d4aa',
+  patrimoine: '#e8d5b0',
+  revenus: '#c9a76c',
   depenses: '#ff4757',
-  primary: '#5b7fff',
-  secondary: '#a855f7',
-  grid: 'rgba(58, 58, 98, 0.25)',
-  gridText: '#6b6b8d',
-  actions: '#06d6a0',
-  etf: '#38bdf8',
-  crypto: '#f97316',
-  obligations: '#818cf8'
+  primary: '#c9a76c',
+  secondary: '#b8976c',
+  grid: 'rgba(56, 56, 63, 0.25)',
+  gridText: '#6b6b75',
+  actions: '#dbb88a',
+  etf: '#c9a76c',
+  crypto: '#f59e0b',
+  obligations: '#a08553'
 };
 
-// Vibrant gradient pairs for charts (like the reference image)
+// Warm gradient pairs for charts
 export const GRADIENT_PAIRS = [
-  ['#00d4aa', '#38bdf8'],   // green → cyan
-  ['#a855f7', '#ec4899'],   // purple → pink
-  ['#f59e0b', '#ff4757'],   // amber → red
-  ['#5b7fff', '#a855f7'],   // blue → purple
-  ['#06d6a0', '#00d4aa'],   // teal → green
-  ['#ec4899', '#f97316'],   // pink → orange
-  ['#38bdf8', '#5b7fff'],   // cyan → blue
-  ['#f97316', '#f59e0b'],   // orange → amber
+  ['#c9a76c', '#dbb88a'],   // gold → light gold
+  ['#b8976c', '#d4b07a'],   // bronze → warm gold
+  ['#a08553', '#c9a76c'],   // dark gold → gold
+  ['#dbb88a', '#e8d5b0'],   // light gold → cream
+  ['#f59e0b', '#dbb88a'],   // amber → light gold
+  ['#c9a76c', '#b8976c'],   // gold → bronze
+  ['#d4b07a', '#e8d5b0'],   // warm → cream
+  ['#a08553', '#b8976c'],   // dark → bronze
 ];
 
 export const PALETTE = [
-  '#a855f7', '#00d4aa', '#f59e0b', '#ff4757', '#5b7fff',
-  '#38bdf8', '#ec4899', '#06d6a0', '#f97316', '#818cf8'
+  '#c9a76c', '#dbb88a', '#b8976c', '#a08553', '#e8d5b0',
+  '#d4b07a', '#f59e0b', '#c4985a', '#8b7355', '#d9c4a0'
 ];
 
 // Create vertical gradient for line/area fills
@@ -83,15 +83,15 @@ export function createChart(canvasId, config) {
           padding: 16,
           usePointStyle: true,
           pointStyleWidth: 10,
-          color: '#8888aa',
+          color: '#88888a',
           font: { size: 12, family: 'Inter' }
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(10, 10, 26, 0.95)',
-        titleColor: '#e0e0f0',
-        bodyColor: '#a0a0c0',
-        borderColor: 'rgba(58, 58, 98, 0.6)',
+        backgroundColor: 'rgba(11, 11, 15, 0.95)',
+        titleColor: '#e8d5b0',
+        bodyColor: '#a0a0a5',
+        borderColor: 'rgba(56, 56, 63, 0.6)',
         borderWidth: 1,
         titleFont: { size: 13, family: 'Inter', weight: '600' },
         bodyFont: { size: 12, family: 'Inter' },
