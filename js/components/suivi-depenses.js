@@ -28,18 +28,6 @@ function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function updateSolde(store, compte, delta) {
-  const ccId = compte === 'CIC' ? 'cc-cic' : 'cc-trade';
-  const label = compte === 'CIC' ? 'Live CIC' : 'Live Trade Republic';
-  const ccs = store.get('actifs.comptesCourants') || [];
-  let cc = ccs.find(c => c.id === ccId);
-  if (!cc) {
-    cc = { id: ccId, nom: label, solde: 0 };
-    ccs.push(cc);
-  }
-  cc.solde = (Number(cc.solde) || 0) + delta;
-  store.set('actifs.comptesCourants', ccs);
-}
 
 export function render(store) {
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
@@ -50,8 +38,17 @@ export function render(store) {
     { id: 'cc-cic', nom: 'Live CIC', solde: 0 },
     { id: 'cc-trade', nom: 'Live Trade Republic', solde: 0 }
   ];
-  const soldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
-  const soldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
+  const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
+  const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
+
+  // Compute live solde = base + revenus - depenses
+  const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const soldeCIC = baseSoldeCIC + revCIC - depCIC;
+
+  const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const soldeTR = baseSoldeTR + revTR - depTR;
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
@@ -203,7 +200,7 @@ export function mount(store, navigate) {
       const revenus = store.get('suiviRevenus') || [];
       revenus.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviRevenus', revenus);
-      updateSolde(store, data.compte, Number(data.montant) || 0);
+
       navigate('suivi-depenses');
     });
   });
@@ -258,7 +255,7 @@ export function mount(store, navigate) {
       const items = store.get('suiviDepenses') || [];
       items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
-      updateSolde(store, data.compte, -(Number(data.montant) || 0));
+
       navigate('suivi-depenses');
     });
   });
@@ -267,8 +264,6 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.delExpense;
       const items = store.get('suiviDepenses') || [];
-      const item = items.find(i => i.id === id);
-      if (item) updateSolde(store, item.compte, Number(item.montant) || 0);
       store.set('suiviDepenses', items.filter(i => i.id !== id));
       navigate('suivi-depenses');
     });
@@ -278,8 +273,6 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.delRevenu;
       const revenus = store.get('suiviRevenus') || [];
-      const rev = revenus.find(r => r.id === id);
-      if (rev) updateSolde(store, rev.compte, -(Number(rev.montant) || 0));
       store.set('suiviRevenus', revenus.filter(r => r.id !== id));
       navigate('suivi-depenses');
     });
