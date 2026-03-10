@@ -78,9 +78,9 @@ const defaultState = {
     rendementEpargne: 0.02,
     ageFinAnnee: 43,
     ageRetraite: 64,
-    anneeRetraiteTauxPlein: 2048,
+    ageRetraiteTauxPlein: 65,
     pensionTauxPlein: 2642,
-    anneeRetraiteTauxLegal: 2047,
+    ageRetraiteTauxLegal: 64,
     pensionTauxLegal: 2442,
     ageRetraiteSouhaitee: 60
   }

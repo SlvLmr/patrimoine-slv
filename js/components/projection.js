@@ -67,16 +67,16 @@ export function render(store) {
               </div>
               <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-400/5 border border-amber-400/20">
                 <span class="text-[9px] text-amber-400/80">Légal</span>
-                <input type="number" id="param-retraite-legal-annee" value="${params.anneeRetraiteTauxLegal || 2047}" min="2025" max="2080" step="1"
-                  class="w-12 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
+                <input type="number" id="param-retraite-legal-age" value="${params.ageRetraiteTauxLegal || 64}" min="55" max="70" step="1"
+                  class="w-10 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
                 <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
                   class="w-14 px-0.5 py-0 text-[11px] bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center font-medium">
                 <span class="text-[8px] text-gray-600">€</span>
               </div>
               <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-400/5 border border-cyan-400/20">
                 <span class="text-[9px] text-cyan-400/80">Plein</span>
-                <input type="number" id="param-retraite-plein-annee" value="${params.anneeRetraiteTauxPlein || 2048}" min="2025" max="2080" step="1"
-                  class="w-12 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
+                <input type="number" id="param-retraite-plein-age" value="${params.ageRetraiteTauxPlein || 65}" min="55" max="70" step="1"
+                  class="w-10 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
                 <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
                   class="w-14 px-0.5 py-0 text-[11px] bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-medium">
                 <span class="text-[8px] text-gray-600">€</span>
@@ -342,8 +342,8 @@ export function mount(store, navigate) {
     const currentYear = new Date().getFullYear();
     const ageFinAnnee = params.ageFinAnnee || 43;
 
-    const retraiteTauxPleinOffset = (params.anneeRetraiteTauxPlein || 2048) - currentYear;
-    const retraiteTauxLegalOffset = (params.anneeRetraiteTauxLegal || 2047) - currentYear;
+    const retraiteTauxPleinOffset = (params.ageRetraiteTauxPlein || 65) - ageFinAnnee;
+    const retraiteTauxLegalOffset = (params.ageRetraiteTauxLegal || 64) - ageFinAnnee;
     const retraiteSouhaiteeOffset = (params.ageRetraiteSouhaitee || 60) - ageFinAnnee;
 
     const milestoneAnnotations = {};
@@ -476,9 +476,9 @@ export function mount(store, navigate) {
     store.set('parametres.cashInjections', cashInjections);
 
     // Retirement milestones
-    store.set('parametres.anneeRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-annee').value) || 2047);
+    store.set('parametres.ageRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-age').value) || 64);
     store.set('parametres.pensionTauxLegal', parseInt(document.getElementById('param-pension-legal').value) || 2442);
-    store.set('parametres.anneeRetraiteTauxPlein', parseInt(document.getElementById('param-retraite-plein-annee').value) || 2048);
+    store.set('parametres.ageRetraiteTauxPlein', parseInt(document.getElementById('param-retraite-plein-age').value) || 65);
     store.set('parametres.pensionTauxPlein', parseInt(document.getElementById('param-pension-plein').value) || 2642);
     store.set('parametres.ageRetraiteSouhaitee', parseInt(document.getElementById('param-retraite-souhaitee').value) || 60);
 
