@@ -124,29 +124,9 @@ export function render(store) {
                     <button class="proj-del-plac opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
                 };
-                const addBtnForGroup = (envValue, catValue, label) => `<button class="proj-add-plac-group flex items-center justify-center gap-1 px-2.5 py-1.5 rounded border border-dashed border-dark-400/30 hover:border-accent-green/40 hover:bg-dark-700/30 transition text-xs text-gray-500 hover:text-accent-green cursor-pointer" data-env="${envValue}" data-cat="${catValue}">
-                    <span class="text-sm font-bold">+</span> ${label}
-                  </button>`;
-                const actions = placements.filter(p => getPlacementGroupKey(p) === 'PEA Actions');
-                const etfs = placements.filter(p => getPlacementGroupKey(p) === 'PEA ETF');
-                const others = placements.filter(p => {
-                  const gk = getPlacementGroupKey(p);
-                  return gk !== 'PEA Actions' && gk !== 'PEA ETF';
-                });
                 return `
-            ${actions.length > 0 || etfs.length > 0 ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
-              ${actions.map(renderCard).join('')}
-              ${addBtnForGroup('PEA', 'Action', 'Action PEA')}
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 mt-1">
-              ${etfs.map(renderCard).join('')}
-              ${addBtnForGroup('PEA', 'ETF', 'ETF PEA')}
-            </div>` : `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
-              ${addBtnForGroup('PEA', 'Action', 'Action PEA')}
-              ${addBtnForGroup('PEA', 'ETF', 'ETF PEA')}
-            </div>`}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 mt-1">
-              ${others.map(renderCard).join('')}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
+              ${placements.map(renderCard).join('')}
               <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
                 ${groupIcons['Crypto']}
                 <span class="text-sm text-gray-200 font-medium">Bitcoin</span>
@@ -179,8 +159,6 @@ export function render(store) {
                   value="${((params.rendementPEE || 0.04) * 100).toFixed(1)}" min="0" max="30" step="0.5">
                 <span class="text-[10px] text-gray-500">%</span>
               </div>
-              ${addBtnForGroup('CTO', '', 'CTO')}
-              ${addBtnForGroup('Crypto', 'Crypto', 'Crypto')}
             </div>`;
               })()}
           </div>
@@ -632,23 +610,6 @@ export function mount(store, navigate) {
   // Global add button
   document.getElementById('proj-add-plac-global')?.addEventListener('click', () => {
     openAddPlacementModal(store, navigate, 'projection', null);
-  });
-
-  // Per-group add buttons (+ Action PEA, + ETF PEA, + CTO, + Crypto)
-  document.querySelectorAll('.proj-add-plac-group').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const env = btn.dataset.env || null;
-      const cat = btn.dataset.cat || null;
-      // Pre-fill envelope; category is set after modal opens
-      openAddPlacementModal(store, navigate, 'projection', env);
-      // If category specified, pre-select it in the modal after it opens
-      if (cat) {
-        setTimeout(() => {
-          const catSelect = document.getElementById('field-categorie');
-          if (catSelect) catSelect.value = cat;
-        }, 150);
-      }
-    });
   });
 
   // Click on placement card to edit
