@@ -296,20 +296,18 @@ export function computeProjection(store) {
       if (transfer.source === 'heritage') {
         amount = Math.min(amount, Math.max(0, heritage));
         heritage -= amount;
-      } else if (transfer.source === 'cto') {
-        // Find CTO placement(s) and debit from them
-        const ctoSims = placSims.filter(ps => ps.groupKey === 'CTO' && ps.id !== transfer.destinationId);
-        let remaining = amount;
-        for (const ctoPs of ctoSims) {
-          const debit = Math.min(remaining, Math.max(0, ctoPs.value - ctoPs.totalApports > 0 ? ctoPs.value : 0));
-          if (debit > 0) {
-            ctoPs.value -= debit;
-            remaining -= debit;
-          }
-          if (remaining <= 0) break;
+      } else if (transfer.source?.startsWith('placement:')) {
+        // Debit from a specific placement
+        const srcId = transfer.source.replace('placement:', '');
+        const srcSim = placSims.find(ps => ps.id === srcId && ps.id !== transfer.destinationId);
+        if (srcSim) {
+          amount = Math.min(amount, Math.max(0, srcSim.value));
+          srcSim.value -= amount;
+        } else {
+          amount = 0;
         }
-        amount = amount - remaining; // actual amount debited
       } else {
+        // Default: épargne
         amount = Math.min(amount, Math.max(0, epar));
         epar -= amount;
       }

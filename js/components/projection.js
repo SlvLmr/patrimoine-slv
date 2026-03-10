@@ -173,9 +173,18 @@ export function render(store) {
                 ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
                   const destPlacement = placements.find(p => p.id === t.destinationId);
                   const destName = destPlacement ? destPlacement.nom : '(supprimé)';
-                  const sourceLabels = { heritage: 'Héritage', epargne: 'Épargne', cto: 'CTO' };
-                  const sourceLabel = sourceLabels[t.source] || t.source;
-                  const sourceBg = t.source === 'heritage' ? 'bg-accent-amber/10 text-accent-amber' : t.source === 'cto' ? 'bg-accent-blue/10 text-accent-blue' : 'bg-accent-cyan/10 text-accent-cyan';
+                  let sourceLabel, sourceBg;
+                  if (t.source === 'heritage') {
+                    sourceLabel = 'Héritage'; sourceBg = 'bg-accent-amber/10 text-accent-amber';
+                  } else if (t.source === 'epargne') {
+                    sourceLabel = 'Épargne'; sourceBg = 'bg-accent-cyan/10 text-accent-cyan';
+                  } else if (t.source?.startsWith('placement:')) {
+                    const srcPlac = placements.find(p => p.id === t.source.replace('placement:', ''));
+                    sourceLabel = srcPlac ? srcPlac.nom : '(supprimé)';
+                    sourceBg = 'bg-purple-500/10 text-purple-300';
+                  } else {
+                    sourceLabel = t.source; sourceBg = 'bg-gray-500/10 text-gray-400';
+                  }
                   const freqLabels = { annual: '/an', monthly: '/mois', once: '×1' };
                   const freqLabel = freqLabels[t.frequency] || '×1';
                   return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-purple-400/40 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
@@ -266,6 +275,7 @@ export function render(store) {
             <thead class="bg-dark-800/50 text-gray-500 text-xs">
               <tr>
                 <th class="px-2 py-1.5 text-center">Année</th>
+                <th class="px-2 py-1.5 text-center">An</th>
                 <th class="px-2 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
                 <th class="px-2 py-1.5 text-center">Actions</th>
                 <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
@@ -300,6 +310,7 @@ export function render(store) {
                   ${s.label}
                   ${isRetirement ? '<span class="ml-1 text-[10px] text-accent-amber font-semibold">RET.</span>' : ''}
                 </td>
+                <td class="px-2 py-1 text-center text-gray-500">${s.annee}</td>
                 <td class="px-2 py-1 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['PEA Actions'] || 0)}</td>
                 <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['PEA Actions'] || 0)}</td>
@@ -434,7 +445,19 @@ Stratégie de sortie : ...`).replace(/</g, '&lt;')}</div>
 
 function openTransferModal(store, navigate, editItem = null) {
   const placements = store.get('actifs.placements') || [];
+  const heritageItems = store.get('heritage') || [];
   const currentYear = new Date().getFullYear();
+
+  // Build dynamic source options from all placements + épargne + héritage
+  const sourceOptions = [
+    { value: 'epargne', label: 'Épargne (livrets, fonds euros)' },
+    ...(heritageItems.length > 0 ? [{ value: 'heritage', label: 'Héritage (liquidités)' }] : []),
+    ...placements.map(p => ({
+      value: `placement:${p.id}`,
+      label: `${p.nom} (${p.enveloppe || p.type})`
+    }))
+  ];
+
   const destOptions = placements.map(p => ({
     value: p.id,
     label: `${p.nom} (${p.enveloppe || p.type})`
@@ -442,11 +465,7 @@ function openTransferModal(store, navigate, editItem = null) {
 
   const title = editItem ? 'Modifier le transfert' : 'Planifier un transfert de capital';
   const body = `
-    ${selectField('source', 'Source du capital', [
-      { value: 'epargne', label: 'Épargne (livrets, fonds euros)' },
-      { value: 'heritage', label: 'Héritage (liquidités)' },
-      { value: 'cto', label: 'CTO (Compte-Titres)' }
-    ], editItem?.source || 'epargne')}
+    ${selectField('source', 'Source du capital', sourceOptions, editItem?.source || 'epargne')}
     ${selectField('destinationId', 'Destination (placement)', destOptions, editItem?.destinationId || '')}
     ${inputField('montant', 'Montant (€)', editItem?.montant || '', 'number', 'min="0" step="100" placeholder="50000"')}
     ${selectField('frequency', 'Fréquence', [
