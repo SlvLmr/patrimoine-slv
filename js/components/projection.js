@@ -1,10 +1,11 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, getFormData } from '../utils.js';
+import { formatCurrency, formatPercent, computeProjection, inputField, getFormData, getPlacementGroupKey } from '../utils.js';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 
 export function render(store) {
   const params = store.get('parametres');
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
+  const rendementGroupes = params.rendementGroupes || {};
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
@@ -29,7 +30,7 @@ export function render(store) {
       <!-- Parameters -->
       <div class="card-dark rounded-xl p-6">
         <h2 class="text-lg font-semibold text-gray-200 mb-4">Paramètres de simulation</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1.5">Horizon (années)</label>
             <input type="number" id="param-years" value="${params.projectionYears}" min="1" max="50" step="1"
@@ -50,21 +51,27 @@ export function render(store) {
             <input type="number" id="param-inflation" value="${((params.inflationRate || 0) * 100).toFixed(1)}" min="0" max="20" step="0.5"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
+        </div>
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Rendements annuels</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement immobilier (%)</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Immobilier (%)</label>
             <input type="number" id="param-rend-immo" value="${((params.rendementImmobilier || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement placements (%)</label>
-            <input type="number" id="param-rend-plac" value="${((params.rendementPlacements || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Rendement épargne (%)</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Livrets / Épargne (%)</label>
             <input type="number" id="param-rend-epar" value="${((params.rendementEpargne || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
               class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
           </div>
+          ${groupKeys.map(k => {
+            const val = rendementGroupes[k] !== undefined ? rendementGroupes[k] : (params.rendementPlacements || 0.05);
+            return `<div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">${k} (%)</label>
+            <input type="number" data-group-key="${k}" class="param-rend-group w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition"
+              value="${(val * 100).toFixed(1)}" min="0" max="50" step="0.5">
+          </div>`;
+          }).join('')}
           <div class="flex items-end">
             <button id="btn-update-projection" class="w-full px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-lg hover:opacity-90 transition font-medium">
               Recalculer
@@ -352,8 +359,17 @@ export function mount(store, navigate) {
     store.set('parametres.ageRetraite', parseInt(document.getElementById('param-retraite').value) || 64);
     store.set('parametres.inflationRate', (parseFloat(document.getElementById('param-inflation').value) || 2) / 100);
     store.set('parametres.rendementImmobilier', (parseFloat(document.getElementById('param-rend-immo').value) || 2) / 100);
-    store.set('parametres.rendementPlacements', (parseFloat(document.getElementById('param-rend-plac').value) || 5) / 100);
     store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
+
+    // Per-group rendement overrides
+    const groupInputs = document.querySelectorAll('.param-rend-group');
+    const rendementGroupes = {};
+    groupInputs.forEach(input => {
+      const key = input.dataset.groupKey;
+      rendementGroupes[key] = (parseFloat(input.value) || 5) / 100;
+    });
+    store.set('parametres.rendementGroupes', rendementGroupes);
+
     navigate('projection');
   });
 }

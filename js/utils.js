@@ -95,7 +95,7 @@ export function closeModal() {
 }
 
 // Group placement items by envelope+category display key
-function getPlacementGroupKey(p) {
+export function getPlacementGroupKey(p) {
   const env = p.enveloppe || 'Autre';
   const cat = p.categorie || '';
   if (env === 'PEA') {
@@ -148,10 +148,13 @@ export function computeProjection(store) {
   const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : (params.rendementEpargne || 0.02);
 
   // Build per-placement simulation state
-  const placSims = state.actifs.placements.map(p => ({
-    groupKey: getPlacementGroupKey(p),
+  const rendementGroupes = params.rendementGroupes || {};
+  const placSims = state.actifs.placements.map(p => {
+    const gk = getPlacementGroupKey(p);
+    return {
+    groupKey: gk,
     value: Number(p.valeur) || 0,
-    rendement: Number(p.rendement) || (params.rendementPlacements || 0.05),
+    rendement: rendementGroupes[gk] !== undefined ? rendementGroupes[gk] : (Number(p.rendement) || (params.rendementPlacements || 0.05)),
     dcaMensuel: Number(p.dcaMensuel) || 0,
     dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
     isAirLiquide: !!p.isAirLiquide,
@@ -162,7 +165,8 @@ export function computeProjection(store) {
     dividendeParAction: Number(p.dividendeParAction) || 3.30,
     croissanceDividende: Number(p.croissanceDividende) || 0.08,
     _source: p
-  }));
+  };
+  });
 
   // Discover unique group keys from placements
   const groupKeysSet = new Set();

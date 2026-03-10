@@ -74,6 +74,7 @@ const defaultState = {
     nbParts: 1,
     rendementImmobilier: 0.02,
     rendementPlacements: 0.05,
+    rendementGroupes: {},
     rendementEpargne: 0.02,
     ageFinAnnee: 43,
     ageRetraite: 64
