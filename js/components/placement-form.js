@@ -1,4 +1,4 @@
-import { inputField, selectField, getFormData, openModal } from '../utils.js?v=4';
+import { inputField, selectField, getFormData, openModal } from '../utils.js?v=5';
 
 export const ENVELOPPES = [
   { value: 'PEA', label: 'PEA' },
@@ -22,6 +22,9 @@ export const CATEGORIES = [
 
 export function buildPlacementFormBody(item) {
   const currentYear = new Date().getFullYear();
+  const isPEE = (item.enveloppe || item.type || '') === 'PEE';
+
+  // DCA overrides (non-PEE)
   const overrides = item.dcaOverrides || [];
   const overridesHtml = overrides.map((o, i) => `
     <div class="flex items-center gap-2 dca-override-row" data-idx="${i}">
@@ -36,6 +39,7 @@ export function buildPlacementFormBody(item) {
     </div>
   `).join('');
 
+  // Cash injections (non-PEE)
   const injections = item.cashInjections || [];
   const injectionsHtml = injections.map((inj, i) => `
     <div class="flex items-center gap-2 cash-inj-row" data-idx="${i}">
@@ -50,6 +54,21 @@ export function buildPlacementFormBody(item) {
     </div>
   `).join('');
 
+  // PEE annual contributions
+  const peeContribs = item.peeContributions || [];
+  const peeContribsHtml = peeContribs.map((c, i) => `
+    <div class="flex items-center gap-2 pee-contrib-row" data-idx="${i}">
+      <div class="w-24">
+        <input type="number" class="pee-contrib-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-center" value="${c.year || ''}" min="${currentYear}" max="${currentYear + 50}" step="1">
+      </div>
+      <span class="text-gray-500 text-xs">→</span>
+      <div class="flex-1">
+        <input type="number" class="pee-contrib-amount w-full px-2 py-1.5 bg-dark-800 border border-emerald-500/30 rounded text-emerald-400 text-sm" value="${c.montant || ''}" placeholder="Montant annuel €" step="100">
+      </div>
+      <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+    </div>
+  `).join('');
+
   return `
     ${inputField('nom', 'Nom du titre', item.nom || '', 'text', 'placeholder="Ex: Amundi MSCI World"')}
     ${selectField('enveloppe', 'Enveloppe', ENVELOPPES, item.enveloppe || item.type || '')}
@@ -60,7 +79,9 @@ export function buildPlacementFormBody(item) {
       ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
     </div>
     ${inputField('valeur', 'Valeur totale actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
-    <div class="mt-2 pt-3 border-t border-dark-400/30">
+
+    <!-- DCA section (non-PEE) -->
+    <div id="dca-section" class="${isPEE ? 'hidden' : ''} mt-2 pt-3 border-t border-dark-400/30">
       <p class="text-sm font-medium text-gray-300 mb-3">Investissement programmé</p>
       ${inputField('apport', 'Apport initial (€)', item.apport || '', 'number', 'step="100" placeholder="Capital de départ"')}
       ${inputField('dcaMensuel', 'DCA mensuel (€/mois)', item.dcaMensuel || '', 'number', 'step="10" placeholder="Apport mensuel automatisé"')}
@@ -82,6 +103,16 @@ export function buildPlacementFormBody(item) {
         <button type="button" id="btn-add-cash-injection" class="text-xs text-accent-green hover:text-accent-green/80 font-medium">+ Ajouter un apport</button>
         <p class="text-xs text-gray-600 mt-1">Ex: En 2029, injecter 5 000€ en une fois</p>
       </div>
+    </div>
+
+    <!-- PEE annual contributions section -->
+    <div id="pee-section" class="${isPEE ? '' : 'hidden'} mt-2 pt-3 border-t border-dark-400/30">
+      <p class="text-sm font-medium text-gray-300 mb-1">Versements annuels</p>
+      <p class="text-xs text-gray-600 mb-3">Renseignez le montant total versé (ou prévu) chaque année</p>
+      <div id="pee-contribs-list" class="space-y-2 mb-2">
+        ${peeContribsHtml}
+      </div>
+      <button type="button" id="btn-add-pee-contrib" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Ajouter une année</button>
     </div>
 
     <div class="mt-2 pt-3 border-t border-dark-400/30">
@@ -133,6 +164,37 @@ export function collectCashInjections() {
   return injections.sort((a, b) => a.year - b.year);
 }
 
+export function collectPeeContributions() {
+  const rows = document.querySelectorAll('.pee-contrib-row');
+  const contribs = [];
+  rows.forEach(row => {
+    const year = parseInt(row.querySelector('.pee-contrib-year')?.value);
+    const montant = parseFloat(row.querySelector('.pee-contrib-amount')?.value);
+    if (year > 0 && !isNaN(montant) && montant > 0) {
+      contribs.push({ year, montant });
+    }
+  });
+  return contribs.sort((a, b) => a.year - b.year);
+}
+
+function createPeeContribRow() {
+  const currentYear = new Date().getFullYear();
+  const row = document.createElement('div');
+  row.className = 'flex items-center gap-2 pee-contrib-row';
+  row.innerHTML = `
+    <div class="w-24">
+      <input type="number" class="pee-contrib-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-center" value="${currentYear}" min="${currentYear}" max="${currentYear + 50}" step="1">
+    </div>
+    <span class="text-gray-500 text-xs">→</span>
+    <div class="flex-1">
+      <input type="number" class="pee-contrib-amount w-full px-2 py-1.5 bg-dark-800 border border-emerald-500/30 rounded text-emerald-400 text-sm" placeholder="Montant annuel €" step="100">
+    </div>
+    <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+  `;
+  row.querySelector('.pee-contrib-remove').addEventListener('click', () => row.remove());
+  return row;
+}
+
 export function initPlacementFormListeners(modal) {
   const qtyInput = modal.querySelector('#field-quantite');
   const pruInput = modal.querySelector('#field-pru');
@@ -149,6 +211,18 @@ export function initPlacementFormListeners(modal) {
     pruInput.addEventListener('input', autoCalc);
   }
 
+  // Toggle DCA vs PEE sections based on enveloppe
+  const enveloppeSelect = modal.querySelector('#field-enveloppe');
+  const dcaSection = modal.querySelector('#dca-section');
+  const peeSection = modal.querySelector('#pee-section');
+  if (enveloppeSelect && dcaSection && peeSection) {
+    enveloppeSelect.addEventListener('change', () => {
+      const isPEE = enveloppeSelect.value === 'PEE';
+      dcaSection.classList.toggle('hidden', isPEE);
+      peeSection.classList.toggle('hidden', !isPEE);
+    });
+  }
+
   const cb = modal.querySelector('#field-isAirLiquide');
   const fields = modal.querySelector('#air-liquide-fields');
   if (cb && fields) {
@@ -157,6 +231,7 @@ export function initPlacementFormListeners(modal) {
     });
   }
 
+  // DCA overrides listeners
   const addBtn = modal.querySelector('#btn-add-dca-override');
   const list = modal.querySelector('#dca-overrides-list');
   if (addBtn && list) {
@@ -182,6 +257,7 @@ export function initPlacementFormListeners(modal) {
     });
   }
 
+  // Cash injections listeners
   const addInjBtn = modal.querySelector('#btn-add-cash-injection');
   const injList = modal.querySelector('#cash-injections-list');
   if (addInjBtn && injList) {
@@ -206,22 +282,53 @@ export function initPlacementFormListeners(modal) {
       btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
     });
   }
+
+  // PEE contributions listeners
+  const addPeeBtn = modal.querySelector('#btn-add-pee-contrib');
+  const peeList = modal.querySelector('#pee-contribs-list');
+  if (addPeeBtn && peeList) {
+    addPeeBtn.addEventListener('click', () => {
+      // Auto-increment year from last row
+      const existingRows = peeList.querySelectorAll('.pee-contrib-row');
+      const row = createPeeContribRow();
+      if (existingRows.length > 0) {
+        const lastYear = parseInt(existingRows[existingRows.length - 1].querySelector('.pee-contrib-year')?.value) || new Date().getFullYear();
+        row.querySelector('.pee-contrib-year').value = lastYear + 1;
+      }
+      peeList.appendChild(row);
+      row.querySelector('.pee-contrib-amount').focus();
+    });
+
+    peeList.querySelectorAll('.pee-contrib-remove').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('.pee-contrib-row').remove());
+    });
+  }
+}
+
+function collectFormAndSave(store, navigate, targetPage, placementId) {
+  const data = getFormData(document.getElementById('modal-body'));
+  data.type = data.enveloppe;
+  delete data.rendement; // rendement is managed from projection page
+  data.croissanceDividende = (data.croissanceDividende || 0) / 100;
+  data.dcaOverrides = collectDcaOverrides();
+  data.cashInjections = collectCashInjections();
+  data.peeContributions = collectPeeContributions();
+  data.isAirLiquide = document.getElementById('field-isAirLiquide')?.checked || false;
+  data.loyaltyEligible = document.getElementById('field-loyaltyEligible')?.checked || false;
+
+  if (placementId) {
+    store.updateItem('actifs.placements', placementId, data);
+  } else {
+    store.addItem('actifs.placements', data);
+  }
+  navigate(targetPage);
 }
 
 // Helper to open add placement modal from any page
 export function openAddPlacementModal(store, navigate, targetPage, prefilledEnvelope) {
   const body = buildPlacementFormBody(prefilledEnvelope ? { enveloppe: prefilledEnvelope } : {});
   const modal = openModal('Ajouter un placement', body, () => {
-    const data = getFormData(document.getElementById('modal-body'));
-    data.type = data.enveloppe;
-    delete data.rendement; // rendement is managed from projection page
-    data.croissanceDividende = (data.croissanceDividende || 0) / 100;
-    data.dcaOverrides = collectDcaOverrides();
-    data.cashInjections = collectCashInjections();
-    data.isAirLiquide = document.getElementById('field-isAirLiquide')?.checked || false;
-    data.loyaltyEligible = document.getElementById('field-loyaltyEligible')?.checked || false;
-    store.addItem('actifs.placements', data);
-    navigate(targetPage);
+    collectFormAndSave(store, navigate, targetPage, null);
   });
   initPlacementFormListeners(modal);
 }
@@ -232,16 +339,7 @@ export function openEditPlacementModal(store, navigate, targetPage, placementId)
   if (!item) return;
   const body = buildPlacementFormBody(item);
   const modal = openModal('Modifier le placement', body, () => {
-    const data = getFormData(document.getElementById('modal-body'));
-    data.type = data.enveloppe;
-    delete data.rendement; // rendement is managed from projection page
-    data.croissanceDividende = (data.croissanceDividende || 0) / 100;
-    data.dcaOverrides = collectDcaOverrides();
-    data.cashInjections = collectCashInjections();
-    data.isAirLiquide = document.getElementById('field-isAirLiquide')?.checked || false;
-    data.loyaltyEligible = document.getElementById('field-loyaltyEligible')?.checked || false;
-    store.updateItem('actifs.placements', placementId, data);
-    navigate(targetPage);
+    collectFormAndSave(store, navigate, targetPage, placementId);
   });
   initPlacementFormListeners(modal);
 }

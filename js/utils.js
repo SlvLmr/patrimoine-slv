@@ -175,6 +175,8 @@ export function computeProjection(store) {
     dcaMensuel: Number(p.dcaMensuel) || 0,
     dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
     cashInjections: mergedInj.sort((a, b) => a.year - b.year),
+    peeContributions: (p.peeContributions || []).sort((a, b) => a.year - b.year),
+    isPEE: (p.enveloppe || p.type) === 'PEE',
     isAirLiquide: !!p.isAirLiquide,
     loyaltyEligible: !!p.loyaltyEligible,
     quantite: Number(p.quantite) || 0,
@@ -370,6 +372,19 @@ export function computeProjection(store) {
             }
             ps.totalApports += amount;
             if (isPEAPlacement) peaApportsCumules += amount;
+          }
+        }
+      }
+
+      // PEE annual contributions (injected as lump sum per year)
+      if (ps.isPEE && ps.peeContributions.length > 0) {
+        for (const contrib of ps.peeContributions) {
+          if (contrib.year === currentCalendarYear + year) {
+            const amount = Number(contrib.montant) || 0;
+            if (amount > 0) {
+              ps.value += amount;
+              ps.totalApports += amount;
+            }
           }
         }
       }

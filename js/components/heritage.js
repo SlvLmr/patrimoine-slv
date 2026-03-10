@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=4';
+import { formatCurrency, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=5';
 import { createChart, COLORS, createVerticalGradient } from '../charts/chart-config.js';
 
 function heritageTotal(items) {

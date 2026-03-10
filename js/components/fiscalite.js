@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, computeTax, inputField, selectField, parseNumberInput } from '../utils.js?v=4';
+import { formatCurrency, formatPercent, computeTax, inputField, selectField, parseNumberInput } from '../utils.js?v=5';
 import { createChart, COLORS, PALETTE } from '../charts/chart-config.js';
 
 let taxResult = null;

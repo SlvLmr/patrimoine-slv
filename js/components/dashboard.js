@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent } from '../utils.js?v=4';
+import { formatCurrency, formatPercent } from '../utils.js?v=5';
 import { createChart, COLORS, PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient } from '../charts/chart-config.js';
 
 export function render(store) {
