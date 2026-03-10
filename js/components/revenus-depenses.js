@@ -159,6 +159,10 @@ export function render(store) {
       </div>
 
       <!-- Dépenses par type -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-200">Dépenses</h2>
+        <button id="btn-seed-depenses" class="px-3 py-2 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition" title="Charger les dépenses par défaut">Défaut</button>
+      </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         ${depenseGroups.map(g => `
         <div class="card-dark rounded-xl overflow-hidden">
@@ -263,6 +267,13 @@ export function mount(store, navigate) {
   document.getElementById('btn-seed-revenus')?.addEventListener('click', () => {
     if (confirm('Remplacer tous les revenus par les données par défaut ?')) {
       store.resetSection('revenus');
+      navigate('revenus-depenses');
+    }
+  });
+
+  document.getElementById('btn-seed-depenses')?.addEventListener('click', () => {
+    if (confirm('Remplacer toutes les dépenses par les données par défaut ?')) {
+      store.resetSection('depenses');
       navigate('revenus-depenses');
     }
   });
