@@ -82,7 +82,9 @@ export function createChart(canvasId, config) {
         labels: {
           padding: 16,
           usePointStyle: true,
-          pointStyleWidth: 10,
+          pointStyle: 'circle',
+          boxWidth: 8,
+          boxHeight: 8,
           color: '#88888a',
           font: { size: 12, family: 'Inter' }
         }
