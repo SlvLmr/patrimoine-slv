@@ -220,9 +220,14 @@ export function computeProjection(store) {
   let depenses = depensesMensuelles;
 
   // Track cumulative apports and gains per placement for tax computation
+  const PEA_PLAFOND = 150000;
+  let peaApportsCumules = 0;
   placSims.forEach(ps => {
     ps.totalApports = ps.value; // initial value counts as apport
     ps.totalGains = 0;
+    if (ps.groupKey.startsWith('PEA')) {
+      peaApportsCumules += ps.value;
+    }
   });
   let cumulInterets = 0;
 
@@ -250,20 +255,29 @@ export function computeProjection(store) {
     let interetsAnnuels = 0;
     placSims.forEach(ps => {
       const prevValue = ps.value;
+      const prevApports = ps.totalApports;
 
       if (ps.isAirLiquide) {
         const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
         const monthlyRate = ps.rendement / 12;
         const dca = getDcaForYear(ps, year + 1);
+        const isPEA = ps.groupKey.startsWith('PEA');
         const monthlyDca = (dca > 0 && ps.prixAction > 0) ? dca : 0;
 
         // Month-by-month simulation for proper compound interest on DCA
         let dividendPaid = false;
         for (let m = 0; m < monthsInPeriod; m++) {
-          // Monthly DCA buys shares at current price
+          // Monthly DCA buys shares at current price (respect PEA ceiling)
           if (monthlyDca > 0) {
-            ps.quantite += monthlyDca / ps.prixAction;
-            ps.totalApports += monthlyDca;
+            let dcaThisMonth = monthlyDca;
+            if (isPEA) {
+              dcaThisMonth = Math.min(dcaThisMonth, Math.max(0, PEA_PLAFOND - peaApportsCumules));
+            }
+            if (dcaThisMonth > 0) {
+              ps.quantite += dcaThisMonth / ps.prixAction;
+              ps.totalApports += dcaThisMonth;
+              if (isPEA) peaApportsCumules += dcaThisMonth;
+            }
           }
           // Monthly price growth
           ps.prixAction *= (1 + monthlyRate);
@@ -292,32 +306,49 @@ export function computeProjection(store) {
         const monthlyRate = ps.rendement / 12;
         const dca = getDcaForYear(ps, year + 1);
         const monthlyDca = dca > 0 ? dca : 0;
+        const isPEA = ps.groupKey.startsWith('PEA');
         for (let m = 0; m < monthsInPeriod; m++) {
-          ps.value += monthlyDca;
+          // Respect PEA ceiling on contributions
+          if (monthlyDca > 0) {
+            let dcaThisMonth = monthlyDca;
+            if (isPEA) {
+              dcaThisMonth = Math.min(dcaThisMonth, Math.max(0, PEA_PLAFOND - peaApportsCumules));
+            }
+            if (dcaThisMonth > 0) {
+              ps.value += dcaThisMonth;
+              ps.totalApports += dcaThisMonth;
+              if (isPEA) peaApportsCumules += dcaThisMonth;
+            }
+          }
           ps.value *= (1 + monthlyRate);
         }
-        if (dca > 0) {
-          ps.totalApports += dca * monthsInPeriod;
-        }
       }
 
-      // Cash injections
+      // Cash injections (respect PEA ceiling)
+      const isPEAPlacement = ps.groupKey.startsWith('PEA');
       for (const inj of ps.cashInjections) {
         if (inj.year === year) {
-          const amount = Number(inj.montant) || 0;
-          if (ps.isAirLiquide && ps.prixAction > 0) {
-            ps.quantite += amount / ps.prixAction;
-            ps.value = ps.quantite * ps.prixAction;
-          } else {
-            ps.value += amount;
+          let amount = Number(inj.montant) || 0;
+          if (isPEAPlacement) {
+            amount = Math.min(amount, Math.max(0, PEA_PLAFOND - peaApportsCumules));
           }
-          ps.totalApports += amount;
+          if (amount > 0) {
+            if (ps.isAirLiquide && ps.prixAction > 0) {
+              ps.quantite += amount / ps.prixAction;
+              ps.value = ps.quantite * ps.prixAction;
+            } else {
+              ps.value += amount;
+            }
+            ps.totalApports += amount;
+            if (isPEAPlacement) peaApportsCumules += amount;
+          }
         }
       }
 
-      // Track gains
+      // Track gains (use actual apports delta, not theoretical DCA, due to PEA ceiling)
+      const apportsThisPeriod = ps.totalApports - prevApports;
       ps.totalGains = ps.value - ps.totalApports;
-      interetsAnnuels += ps.value - prevValue - ((getDcaForYear(ps, year + 1) || 0) * monthsInPeriod);
+      interetsAnnuels += ps.value - prevValue - apportsThisPeriod;
     });
 
     // Interest on épargne/héritage
