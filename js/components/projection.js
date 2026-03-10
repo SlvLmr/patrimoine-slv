@@ -21,6 +21,7 @@ export function render(store) {
     'CTO': 'text-accent-blue',
     'PER': 'text-accent-green',
     'Crypto': 'text-accent-amber',
+    'PEE': 'text-emerald-400',
     'Autre': 'text-gray-400'
   };
   const defaultGroupColor = 'text-accent-green';
@@ -102,6 +103,7 @@ export function render(store) {
                   'PEA ETF': '<svg class="w-2.5 h-2.5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
                   'Crypto': '<svg class="w-2.5 h-2.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
                   'Assurance Vie': '<svg class="w-2.5 h-2.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+                  'PEE': '<svg class="w-2.5 h-2.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
                   'CTO': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>',
                 };
                 const defaultIcon = '<svg class="w-2.5 h-2.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
@@ -150,6 +152,14 @@ export function render(store) {
                 <span class="text-[10px] text-gray-500 ml-auto">Ass. Vie</span>
                 <input type="number" id="param-rend-av" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
                   value="${((params.rendementAssuranceVie || 0.03) * 100).toFixed(1)}" min="0" max="30" step="0.5">
+                <span class="text-[10px] text-gray-500">%</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
+                ${groupIcons['PEE']}
+                <span class="text-sm text-gray-200 font-medium">PEE</span>
+                <span class="text-[10px] text-gray-500 ml-auto">PEE</span>
+                <input type="number" id="param-rend-pee" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
+                  value="${((params.rendementPEE || 0.04) * 100).toFixed(1)}" min="0" max="30" step="0.5">
                 <span class="text-[10px] text-gray-500">%</span>
               </div>
             </div>`;
@@ -240,6 +250,7 @@ export function render(store) {
                 <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
                 <th class="px-2 py-1.5 text-center font-semibold">Total - Flat Tax</th>
                 <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Assurance Vie</th>
+                <th class="px-2 py-1.5 text-center">PEE</th>
                 <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Épargne</th>
                 <th class="px-2 py-1.5 text-center">Héritage</th>
                 <th class="px-2 py-1.5 text-center">Immobilier</th>
@@ -273,6 +284,7 @@ export function render(store) {
                 <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['CTO'] || 0)}</td>
                 <td class="px-2 py-1 text-center font-semibold text-accent-cyan">${formatCurrency(s.cashApresImpot)}</td>
                 <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.placementDetail['Assurance Vie'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['PEE'] || 0)}</td>
                 <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.heritage)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.immobilier)}</td>
@@ -574,6 +586,7 @@ export function mount(store, navigate) {
     store.set('parametres.rendementCTO', (parseFloat(document.getElementById('param-rend-cto').value) || 5) / 100);
     store.set('parametres.rendementAssuranceVie', (parseFloat(document.getElementById('param-rend-av').value) || 3) / 100);
     store.set('parametres.rendementCrypto', (parseFloat(document.getElementById('param-rend-crypto').value) || 7) / 100);
+    store.set('parametres.rendementPEE', (parseFloat(document.getElementById('param-rend-pee').value) || 4) / 100);
 
     // Per-placement rendement overrides
     const rendementPlacements = {};

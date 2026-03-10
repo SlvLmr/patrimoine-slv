@@ -4,6 +4,7 @@ const ENVELOPPES = [
   { value: 'PEA', label: 'PEA' },
   { value: 'AV', label: 'Assurance Vie' },
   { value: 'CTO', label: 'Compte-Titres (CTO)' },
+  { value: 'PEE', label: 'PEE (Épargne entreprise)' },
   { value: 'PER', label: 'PER' },
   { value: 'Crypto', label: 'Crypto' },
   { value: 'Autre', label: 'Autre' }
@@ -282,56 +283,56 @@ export function render(store) {
 
   // Build content for each section
   function renderImmoContent() {
-    if (immobilier.length === 0) return '<p class="p-4 text-gray-600 text-sm">Aucun bien immobilier.</p>';
-    return `<div class="space-y-2 p-3">${immobilier.map(i => {
+    if (immobilier.length === 0) return '<p class="px-2 py-1 text-gray-600 text-xs">Aucun bien immobilier.</p>';
+    return `<div class="space-y-1 p-2">${immobilier.map(i => {
       const pv = (Number(i.valeurActuelle) || 0) - (Number(i.valeurAchat) || 0);
       return `
-        <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition">
-          <div class="flex items-center justify-between mb-1">
-            <span class="font-medium text-gray-200 text-sm">${i.nom}</span>
+        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
             ${pvBadge(pv)}
           </div>
-          <div class="flex items-center justify-between text-xs text-gray-400">
+          <div class="flex items-center justify-between text-[11px] text-gray-400">
             <span>${formatCurrency(i.valeurActuelle)}</span>
             <span>${formatCurrency(i.loyerMensuel || 0)}/m</span>
           </div>
-          <div class="flex gap-2 mt-2">
-            <button data-edit-immo="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
-            <button data-del-immo="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+          <div class="flex gap-2 mt-1">
+            <button data-edit-immo="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Modifier</button>
+            <button data-del-immo="${i.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
           </div>
         </div>`;
     }).join('')}</div>`;
   }
 
   function renderPlacContent() {
-    if (placements.length === 0) return '<p class="p-4 text-gray-600 text-sm">Aucun placement.</p>';
-    return `<div class="space-y-1 p-3">${Object.entries(envelopeGroups).map(([env, items]) => {
+    if (placements.length === 0) return '<p class="px-2 py-1 text-gray-600 text-xs">Aucun placement.</p>';
+    return `<div class="p-2">${Object.entries(envelopeGroups).map(([env, items]) => {
       const envTotal = items.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
       return `
-        <div class="mb-2">
-          <div class="flex items-center justify-between px-1 py-1.5">
-            <span class="text-xs font-bold text-accent-blue uppercase tracking-wider">${env}</span>
-            <span class="text-xs font-semibold text-gray-400">${formatCurrency(envTotal)}</span>
+        <div class="mb-1">
+          <div class="flex items-center justify-between px-1 py-1">
+            <span class="text-[10px] font-bold text-accent-blue uppercase tracking-wider">${env}</span>
+            <span class="text-[10px] font-semibold text-gray-400">${formatCurrency(envTotal)}</span>
           </div>
           ${items.map(i => {
             const pv = i.quantite && i.pru ? (Number(i.valeur) - Number(i.pru) * Number(i.quantite)) : 0;
             const dcaLabel = i.dcaMensuel ? `${formatCurrency(i.dcaMensuel)}/m` : '';
             return `
-            <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition mb-1">
-              <div class="flex items-center justify-between mb-1">
-                <div class="flex items-center gap-1.5">
-                  <span class="font-medium text-gray-200 text-sm">${i.nom}</span>
-                  ${i.isAirLiquide ? '<span class="text-xs bg-accent-green/15 text-accent-green px-1 py-0.5 rounded">AI</span>' : ''}
+            <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition mb-0.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1">
+                  <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
+                  ${i.isAirLiquide ? '<span class="text-[9px] bg-accent-green/15 text-accent-green px-1 rounded">AI</span>' : ''}
                 </div>
-                <span class="font-medium text-gray-200 text-sm">${formatCurrency(i.valeur)}</span>
+                <span class="font-medium text-gray-200 text-xs">${formatCurrency(i.valeur)}</span>
               </div>
-              <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center justify-between text-[10px]">
                 ${dcaLabel ? `<span class="text-gray-500">DCA ${dcaLabel}</span>` : '<span></span>'}
                 ${pv !== 0 ? `<span class="${pv >= 0 ? 'text-accent-green' : 'text-accent-red'}">${pv >= 0 ? '+' : ''}${formatCurrency(pv)}</span>` : ''}
               </div>
-              <div class="flex gap-2 mt-2">
-                <button data-edit-plac="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
-                <button data-del-plac="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+              <div class="flex gap-2 mt-0.5">
+                <button data-edit-plac="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Modifier</button>
+                <button data-del-plac="${i.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
               </div>
             </div>`;
           }).join('')}
@@ -340,29 +341,29 @@ export function render(store) {
   }
 
   function renderEparContent() {
-    if (epargne.length === 0) return '<p class="p-4 text-gray-600 text-sm">Aucun compte d\'épargne.</p>';
-    return `<div class="space-y-2 p-3">${epargne.map(i => {
+    if (epargne.length === 0) return '<p class="px-2 py-1 text-gray-600 text-xs">Aucun compte d\'épargne.</p>';
+    return `<div class="space-y-1 p-2">${epargne.map(i => {
       const fillPct = i.plafond ? Math.min(100, (Number(i.solde) / Number(i.plafond)) * 100) : 0;
       return `
-        <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition">
-          <div class="flex items-center justify-between mb-1">
-            <span class="font-medium text-gray-200 text-sm">${i.nom}</span>
-            <span class="font-medium text-accent-amber text-sm">${formatCurrency(i.solde)}</span>
+        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
+            <span class="font-medium text-accent-amber text-xs">${formatCurrency(i.solde)}</span>
           </div>
-          <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+          <div class="flex items-center justify-between text-[10px] text-gray-400">
             <span>${formatPercent(i.tauxInteret || 0)}</span>
             ${i.plafond ? `<span>${formatCurrency(i.plafond)}</span>` : ''}
           </div>
           ${i.plafond ? `
-          <div class="flex items-center gap-2">
-            <div class="progress-bar h-1.5 flex-1">
+          <div class="flex items-center gap-1">
+            <div class="progress-bar h-1 flex-1">
               <div class="progress-bar-fill h-full bg-accent-amber" style="width: ${fillPct}%"></div>
             </div>
-            <span class="text-xs text-gray-500">${fillPct.toFixed(0)}%</span>
+            <span class="text-[10px] text-gray-500">${fillPct.toFixed(0)}%</span>
           </div>` : ''}
-          <div class="flex gap-2 mt-2">
-            <button data-edit-epar="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
-            <button data-del-epar="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+          <div class="flex gap-2 mt-1">
+            <button data-edit-epar="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Modifier</button>
+            <button data-del-epar="${i.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
           </div>
         </div>`;
     }).join('')}</div>`;
@@ -371,43 +372,43 @@ export function render(store) {
   function renderEmpruntContent() {
     // KPI row
     const kpiRow = `
-      <div class="grid grid-cols-3 gap-2 p-3 pb-1">
-        <div class="bg-dark-800/40 rounded-lg p-2 text-center">
-          <p class="text-xs text-gray-500">Dette</p>
-          <p class="text-sm font-bold text-accent-red">${formatCurrency(totalDette)}</p>
+      <div class="grid grid-cols-3 gap-1 p-2 pb-1">
+        <div class="bg-dark-800/40 rounded p-1.5 text-center">
+          <p class="text-[10px] text-gray-500">Dette</p>
+          <p class="text-xs font-bold text-accent-red">${formatCurrency(totalDette)}</p>
         </div>
-        <div class="bg-dark-800/40 rounded-lg p-2 text-center">
-          <p class="text-xs text-gray-500">Mensualités</p>
-          <p class="text-sm font-bold text-gray-200">${formatCurrency(totalMensualites)}</p>
+        <div class="bg-dark-800/40 rounded p-1.5 text-center">
+          <p class="text-[10px] text-gray-500">Mensualités</p>
+          <p class="text-xs font-bold text-gray-200">${formatCurrency(totalMensualites)}</p>
         </div>
-        <div class="bg-dark-800/40 rounded-lg p-2 text-center">
-          <p class="text-xs text-gray-500">Endettement</p>
-          <p class="text-sm font-bold ${tauxEndettement > 0.35 ? 'text-accent-red' : 'text-accent-green'}">${formatPercent(tauxEndettement)}</p>
+        <div class="bg-dark-800/40 rounded p-1.5 text-center">
+          <p class="text-[10px] text-gray-500">Endettement</p>
+          <p class="text-xs font-bold ${tauxEndettement > 0.35 ? 'text-accent-red' : 'text-accent-green'}">${formatPercent(tauxEndettement)}</p>
         </div>
       </div>`;
 
-    if (emprunts.length === 0) return kpiRow + '<p class="p-4 text-gray-600 text-sm">Aucun emprunt.</p>';
-    return kpiRow + `<div class="space-y-2 p-3">${emprunts.map(e => {
+    if (emprunts.length === 0) return kpiRow + '<p class="px-2 py-1 text-gray-600 text-xs">Aucun emprunt.</p>';
+    return kpiRow + `<div class="space-y-1 p-2">${emprunts.map(e => {
       const paidPct = e.capitalInitial ? Math.min(100, ((Number(e.capitalInitial) - Number(e.capitalRestant)) / Number(e.capitalInitial)) * 100) : 0;
       return `
-        <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition">
-          <div class="flex items-center justify-between mb-1">
-            <span class="font-medium text-gray-200 text-sm">${e.nom}</span>
-            <span class="font-medium text-accent-red text-sm">${formatCurrency(e.capitalRestant)}</span>
+        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-gray-200 text-xs">${e.nom}</span>
+            <span class="font-medium text-accent-red text-xs">${formatCurrency(e.capitalRestant)}</span>
           </div>
-          <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+          <div class="flex items-center justify-between text-[10px] text-gray-400">
             <span>${formatPercent(e.tauxInteret || 0)}</span>
             <span>${formatCurrency(e.mensualite)}/m · ${e.dureeRestanteMois || 0} mois</span>
           </div>
-          <div class="flex items-center gap-2">
-            <div class="progress-bar h-1.5 flex-1">
+          <div class="flex items-center gap-1">
+            <div class="progress-bar h-1 flex-1">
               <div class="progress-bar-fill h-full bg-accent-green" style="width: ${paidPct}%"></div>
             </div>
-            <span class="text-xs text-gray-500">${paidPct.toFixed(0)}%</span>
+            <span class="text-[10px] text-gray-500">${paidPct.toFixed(0)}%</span>
           </div>
-          <div class="flex gap-2 mt-2">
-            <button data-edit-emprunt="${e.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
-            <button data-del-emprunt="${e.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+          <div class="flex gap-2 mt-0.5">
+            <button data-edit-emprunt="${e.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Modifier</button>
+            <button data-del-emprunt="${e.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
           </div>
         </div>`;
     }).join('')}</div>`;
@@ -424,29 +425,29 @@ export function render(store) {
     <div class="space-y-6">
       <h1 class="text-2xl font-bold text-gray-100">Actifs et passifs</h1>
 
-      <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 xl:grid-cols-4 gap-3">
         ${sections.map(s => `
         <div class="card-dark rounded-xl overflow-hidden flex flex-col">
           <!-- Header -->
-          <div class="p-4 border-b border-dark-400/30">
-            <div class="flex items-center gap-2 mb-2">
-              <div class="w-8 h-8 rounded-lg bg-${s.color}/20 flex items-center justify-center flex-shrink-0">
-                <svg class="w-4 h-4 text-${s.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="px-3 py-2.5 border-b border-dark-400/30">
+            <div class="flex items-center gap-2 mb-1.5">
+              <div class="w-6 h-6 rounded bg-${s.color}/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-3 h-3 text-${s.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${s.icon}"/>
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
-                <h2 class="text-sm font-semibold text-gray-200">${s.label}</h2>
-                <p class="text-xs text-gray-500">${s.count} élément${s.count > 1 ? 's' : ''}</p>
+                <h2 class="text-xs font-semibold text-gray-200">${s.label}</h2>
+                <p class="text-[10px] text-gray-500">${s.count} élément${s.count > 1 ? 's' : ''}</p>
               </div>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-lg font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
-              <button id="${s.btnId}" class="px-3 py-1.5 bg-gradient-to-r ${s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white' : 'from-accent-green to-accent-amber text-dark-900'} text-xs rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+              <span class="text-sm font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
+              <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white' : 'from-accent-green to-accent-amber text-dark-900'} text-[10px] rounded hover:opacity-90 transition font-medium">+ Ajouter</button>
             </div>
           </div>
-          <!-- Content (scrollable) -->
-          <div class="flex-1 overflow-y-auto max-h-[60vh]">
+          <!-- Content -->
+          <div class="flex-1 overflow-y-auto">
             ${contentRenderers[s.key]()}
           </div>
         </div>

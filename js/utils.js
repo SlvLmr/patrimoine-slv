@@ -105,6 +105,7 @@ export function getPlacementGroupKey(p) {
   }
   if (env === 'AV') return 'Assurance Vie';
   if (env === 'CTO') return 'CTO';
+  if (env === 'PEE') return 'PEE';
   return env; // PER, Crypto, Autre
 }
 
@@ -157,7 +158,7 @@ export function computeProjection(store) {
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
     // Priority: per-placement override > global group default > placement's own > fallback
-    const groupDefaults = { 'CTO': params.rendementCTO, 'Assurance Vie': params.rendementAssuranceVie, 'Crypto': params.rendementCrypto };
+    const groupDefaults = { 'CTO': params.rendementCTO, 'Assurance Vie': params.rendementAssuranceVie, 'Crypto': params.rendementCrypto, 'PEE': params.rendementPEE };
     const rend = rendementPlacements[p.id] !== undefined
       ? rendementPlacements[p.id]
       : (groupDefaults[gk] !== undefined ? groupDefaults[gk] : (Number(p.rendement) || 0.05));
