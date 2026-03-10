@@ -29,15 +29,16 @@ function getToday() {
 }
 
 function updateSolde(store, compte, delta) {
-  const actifs = store.get('actifs') || {};
-  const ccs = actifs.comptesCourants || [];
   const ccId = compte === 'CIC' ? 'cc-cic' : 'cc-trade';
-  const cc = ccs.find(c => c.id === ccId);
-  if (cc) {
-    cc.solde = (Number(cc.solde) || 0) + delta;
+  const label = compte === 'CIC' ? 'Live CIC' : 'Live Trade Republic';
+  const ccs = store.get('actifs.comptesCourants') || [];
+  let cc = ccs.find(c => c.id === ccId);
+  if (!cc) {
+    cc = { id: ccId, nom: label, solde: 0 };
+    ccs.push(cc);
   }
-  actifs.comptesCourants = ccs;
-  store.set('actifs', actifs);
+  cc.solde = (Number(cc.solde) || 0) + delta;
+  store.set('actifs.comptesCourants', ccs);
 }
 
 export function render(store) {
