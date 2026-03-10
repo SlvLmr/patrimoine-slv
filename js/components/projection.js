@@ -449,19 +449,25 @@ function openTransferModal(store, navigate, editItem = null) {
   const currentYear = new Date().getFullYear();
 
   // Build dynamic source options from all placements + épargne + héritage
+  // Include CTO overflow (virtual placement for PEA ceiling overflow)
+  const hasCTO = placements.some(p => (p.enveloppe || p.type) === 'CTO');
   const sourceOptions = [
     { value: 'epargne', label: 'Épargne (livrets, fonds euros)' },
     ...(heritageItems.length > 0 ? [{ value: 'heritage', label: 'Héritage (liquidités)' }] : []),
     ...placements.map(p => ({
       value: `placement:${p.id}`,
       label: `${p.nom} (${p.enveloppe || p.type})`
-    }))
+    })),
+    ...(!hasCTO ? [{ value: 'placement:__cto_overflow__', label: 'CTO (Compte-Titres Ordinaire)' }] : [])
   ];
 
-  const destOptions = placements.map(p => ({
-    value: p.id,
-    label: `${p.nom} (${p.enveloppe || p.type})`
-  }));
+  const destOptions = [
+    ...placements.map(p => ({
+      value: p.id,
+      label: `${p.nom} (${p.enveloppe || p.type})`
+    })),
+    ...(!hasCTO ? [{ value: '__cto_overflow__', label: 'CTO (Compte-Titres Ordinaire)' }] : [])
+  ];
 
   const title = editItem ? 'Modifier le transfert' : 'Planifier un transfert de capital';
   const body = `
