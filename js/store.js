@@ -145,12 +145,26 @@ function loadState(profileId) {
     const raw = localStorage.getItem(key);
     if (!raw) return JSON.parse(JSON.stringify(defaultState));
     const parsed = JSON.parse(raw);
+    const mergedParams = { ...defaultState.parametres, ...(parsed.parametres || {}) };
+    // Migrate old year-based retirement keys to age-based
+    if (mergedParams.anneeRetraiteTauxLegal && !parsed.parametres?.ageRetraiteTauxLegal) {
+      const age = mergedParams.ageFinAnnee || 43;
+      const currentYear = new Date().getFullYear();
+      mergedParams.ageRetraiteTauxLegal = age + (mergedParams.anneeRetraiteTauxLegal - currentYear);
+    }
+    if (mergedParams.anneeRetraiteTauxPlein && !parsed.parametres?.ageRetraiteTauxPlein) {
+      const age = mergedParams.ageFinAnnee || 43;
+      const currentYear = new Date().getFullYear();
+      mergedParams.ageRetraiteTauxPlein = age + (mergedParams.anneeRetraiteTauxPlein - currentYear);
+    }
+    delete mergedParams.anneeRetraiteTauxLegal;
+    delete mergedParams.anneeRetraiteTauxPlein;
     return {
       ...JSON.parse(JSON.stringify(defaultState)),
       ...parsed,
       actifs: { ...defaultState.actifs, ...(parsed.actifs || {}) },
       passifs: { ...defaultState.passifs, ...(parsed.passifs || {}) },
-      parametres: { ...defaultState.parametres, ...(parsed.parametres || {}) }
+      parametres: mergedParams
     };
   } catch {
     return JSON.parse(JSON.stringify(defaultState));

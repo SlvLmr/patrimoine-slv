@@ -34,7 +34,7 @@ export function render(store) {
         <summary class="flex items-center justify-between px-4 py-2 cursor-pointer select-none">
           <div class="flex items-center gap-2">
             <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-            <h2 class="text-xs font-semibold text-gray-400">Paramètres</h2>
+            <h2 class="text-sm font-semibold text-gray-400">Paramètres</h2>
           </div>
           <svg class="w-3.5 h-3.5 text-gray-600 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
@@ -51,40 +51,40 @@ export function render(store) {
                 ['param-rend-epar', 'Épargne', ((params.rendementEpargne || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
               ].map(([id, label, val, min, max, step, suffix]) => `
               <div class="flex items-center gap-0.5">
-                <span class="text-[9px] text-gray-600">${label}</span>
+                <span class="text-[11px] text-gray-500">${label}</span>
                 <input type="number" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
-                  class="w-12 px-1 py-0.5 text-[11px] bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
-                ${suffix ? `<span class="text-[9px] text-gray-600">${suffix}</span>` : ''}
+                  class="w-12 px-1 py-0.5 text-xs bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
+                ${suffix ? `<span class="text-[11px] text-gray-500">${suffix}</span>` : ''}
               </div>`).join('')}
             </div>
             <div class="w-px h-4 bg-dark-400/30 hidden sm:block"></div>
             <div class="flex items-center gap-1.5">
               <svg class="w-3 h-3 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <div class="flex items-center gap-0.5">
-                <span class="text-[9px] text-gray-600">Retraite</span>
+                <span class="text-[11px] text-gray-500">Retraite</span>
                 <input type="number" id="param-retraite" value="${params.ageRetraite || 64}" min="55" max="70" step="1"
-                  class="w-10 px-1 py-0.5 text-[11px] bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
+                  class="w-10 px-1 py-0.5 text-xs bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
               </div>
               <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-400/5 border border-amber-400/20">
-                <span class="text-[9px] text-amber-400/80">Légal</span>
+                <span class="text-[11px] text-amber-400/80">Légal</span>
                 <input type="number" id="param-retraite-legal-age" value="${params.ageRetraiteTauxLegal || 64}" min="55" max="70" step="1"
-                  class="w-10 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
+                  class="w-10 px-0.5 py-0 text-xs bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
                 <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
-                  class="w-14 px-0.5 py-0 text-[11px] bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center font-medium">
-                <span class="text-[8px] text-gray-600">€</span>
+                  class="w-16 px-0.5 py-0 text-xs bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center font-semibold">
+                <span class="text-[9px] text-gray-500">€</span>
               </div>
               <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-400/5 border border-cyan-400/20">
-                <span class="text-[9px] text-cyan-400/80">Plein</span>
+                <span class="text-[11px] text-cyan-400/80">Plein</span>
                 <input type="number" id="param-retraite-plein-age" value="${params.ageRetraiteTauxPlein || 65}" min="55" max="70" step="1"
-                  class="w-10 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
+                  class="w-10 px-0.5 py-0 text-xs bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
                 <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
-                  class="w-14 px-0.5 py-0 text-[11px] bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-medium">
-                <span class="text-[8px] text-gray-600">€</span>
+                  class="w-16 px-0.5 py-0 text-xs bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-semibold">
+                <span class="text-[9px] text-gray-500">€</span>
               </div>
               <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-500/8 border border-purple-500/25">
-                <span class="text-[9px] text-purple-400">Souhaité</span>
+                <span class="text-[11px] text-purple-400">Souhaité</span>
                 <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
-                  class="w-8 px-0.5 py-0 text-[11px] bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-medium">
+                  class="w-10 px-0.5 py-0 text-xs bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-semibold">
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@ export function render(store) {
           <div>
             <div class="flex items-center gap-1.5 mb-1">
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-              <span class="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Placements</span>
+              <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Placements</span>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
               ${placements.map(p => {
@@ -135,7 +135,7 @@ export function render(store) {
 
           <!-- Actions -->
           <div class="flex justify-end">
-            <button id="btn-update-projection" class="px-4 py-1 text-[11px] font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded hover:opacity-90 transition">
+            <button id="btn-update-projection" class="px-4 py-1.5 text-xs font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded hover:opacity-90 transition">
               Recalculer
             </button>
           </div>
