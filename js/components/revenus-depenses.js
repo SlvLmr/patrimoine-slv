@@ -131,7 +131,10 @@ export function render(store) {
             <div class="w-3 h-3 rounded-full bg-accent-green"></div>
             <h2 class="text-lg font-semibold text-gray-200">Revenus</h2>
           </div>
-          <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+          <div class="flex items-center gap-2">
+              <button id="btn-seed-revenus" class="px-3 py-2 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition" title="Charger les revenus par défaut">Défaut</button>
+              <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+            </div>
         </div>
         ${revenus.length > 0 ? `
         <div class="divide-y divide-dark-400/20">
@@ -256,6 +259,13 @@ export function mount(store, navigate) {
     { value: 'Freelance', label: 'Freelance' },
     { value: 'Autre', label: 'Autre' }
   ];
+
+  document.getElementById('btn-seed-revenus')?.addEventListener('click', () => {
+    if (confirm('Remplacer tous les revenus par les données par défaut ?')) {
+      store.resetSection('revenus');
+      navigate('revenus-depenses');
+    }
+  });
 
   document.getElementById('btn-add-revenu')?.addEventListener('click', () => {
     const body = `
