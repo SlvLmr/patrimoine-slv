@@ -157,19 +157,20 @@ export function computeProjection(store) {
   const cashInjectionsParams = params.cashInjections || {};
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
-    // Priority: per-placement override > global group default > placement's own > fallback
-    const groupDefaults = { 'CTO': params.rendementCTO, 'Assurance Vie': params.rendementAssuranceVie, 'Crypto': params.rendementCrypto, 'PEE': params.rendementPEE };
+    // Priority: per-placement override (from projection UI) > placement's own rendement > fallback 5%
     const rend = rendementPlacements[p.id] !== undefined
       ? rendementPlacements[p.id]
-      : (groupDefaults[gk] !== undefined ? groupDefaults[gk] : (Number(p.rendement) || 0.05));
+      : (Number(p.rendement) || 0.05);
     // Cash injections: placement-level (actifs) takes priority, fallback to parametres
     const placInj = p.cashInjections || [];
     const paramInj = cashInjectionsParams[p.id] || [];
     const mergedInj = placInj.length > 0 ? placInj : paramInj;
+    // Use valeur if set, otherwise fall back to apport as starting capital
+    const initialValue = (Number(p.valeur) || 0) || (Number(p.apport) || 0);
     return {
     groupKey: gk,
     id: p.id,
-    value: Number(p.valeur) || 0,
+    value: initialValue,
     rendement: rend,
     dcaMensuel: Number(p.dcaMensuel) || 0,
     dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),

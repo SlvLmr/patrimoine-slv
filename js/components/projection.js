@@ -1,6 +1,6 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, getFormData, getPlacementGroupKey } from '../utils.js';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=2';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=3';
 
 export function render(store) {
   const params = store.get('parametres');
@@ -96,7 +96,7 @@ export function render(store) {
             <div class="flex items-center gap-1.5 mb-1">
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Placements</span>
-              <button id="proj-add-plac-global" class="ml-2 w-5 h-5 flex items-center justify-center rounded bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition text-xs font-bold" title="Ajouter un placement">+</button>
+              <button id="proj-add-plac-global" class="ml-2 w-7 h-7 flex items-center justify-center rounded-lg bg-accent-green/20 text-accent-green hover:bg-accent-green/35 transition text-lg font-bold shadow-sm shadow-accent-green/10" title="Ajouter un placement">+</button>
             </div>
             ${(() => {
                 const groupIcons = {
@@ -126,39 +126,7 @@ export function render(store) {
                 };
                 return `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
-              ${placements.map(renderCard).join('')}
-              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
-                ${groupIcons['Crypto']}
-                <span class="text-sm text-gray-200 font-medium">Bitcoin</span>
-                <span class="text-[10px] text-gray-500 ml-auto">Crypto</span>
-                <input type="number" id="param-rend-crypto" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
-                  value="${((params.rendementCrypto || 0.07) * 100).toFixed(1)}" min="-50" max="100" step="0.5">
-                <span class="text-[10px] text-gray-500">%</span>
-              </div>
-              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
-                ${groupIcons['CTO']}
-                <span class="text-sm text-gray-200 font-medium">CTO</span>
-                <span class="text-[10px] text-gray-500 ml-auto">CTO</span>
-                <input type="number" id="param-rend-cto" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
-                  value="${((params.rendementCTO || 0.05) * 100).toFixed(1)}" min="-20" max="50" step="0.5">
-                <span class="text-[10px] text-gray-500">%</span>
-              </div>
-              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
-                ${groupIcons['Assurance Vie']}
-                <span class="text-sm text-gray-200 font-medium">Assurance Vie</span>
-                <span class="text-[10px] text-gray-500 ml-auto">Ass. Vie</span>
-                <input type="number" id="param-rend-av" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
-                  value="${((params.rendementAssuranceVie || 0.03) * 100).toFixed(1)}" min="0" max="30" step="0.5">
-                <span class="text-[10px] text-gray-500">%</span>
-              </div>
-              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
-                ${groupIcons['PEE']}
-                <span class="text-sm text-gray-200 font-medium">PEE</span>
-                <span class="text-[10px] text-gray-500 ml-auto">PEE</span>
-                <input type="number" id="param-rend-pee" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
-                  value="${((params.rendementPEE || 0.04) * 100).toFixed(1)}" min="0" max="30" step="0.5">
-                <span class="text-[10px] text-gray-500">%</span>
-              </div>
+              ${placements.length > 0 ? placements.map(renderCard).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>'}
             </div>`;
               })()}
           </div>
@@ -580,10 +548,7 @@ export function mount(store, navigate) {
     store.set('parametres.inflationRate', (parseFloat(document.getElementById('param-inflation').value) || 2) / 100);
     store.set('parametres.rendementImmobilier', (parseFloat(document.getElementById('param-rend-immo').value) || 2) / 100);
     store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
-    store.set('parametres.rendementCTO', (parseFloat(document.getElementById('param-rend-cto').value) || 5) / 100);
-    store.set('parametres.rendementAssuranceVie', (parseFloat(document.getElementById('param-rend-av').value) || 3) / 100);
-    store.set('parametres.rendementCrypto', (parseFloat(document.getElementById('param-rend-crypto').value) || 7) / 100);
-    store.set('parametres.rendementPEE', (parseFloat(document.getElementById('param-rend-pee').value) || 4) / 100);
+    // Global envelope rendements removed — now controlled per-placement via .plac-rend inputs
 
     // Per-placement rendement overrides
     const rendementPlacements = {};
