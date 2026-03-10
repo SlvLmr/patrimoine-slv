@@ -28,6 +28,18 @@ function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function updateSolde(store, compte, delta) {
+  const actifs = store.get('actifs') || {};
+  const ccs = actifs.comptesCourants || [];
+  const ccId = compte === 'CIC' ? 'cc-cic' : 'cc-trade';
+  const cc = ccs.find(c => c.id === ccId);
+  if (cc) {
+    cc.solde = (Number(cc.solde) || 0) + delta;
+  }
+  actifs.comptesCourants = ccs;
+  store.set('actifs', actifs);
+}
+
 export function render(store) {
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
   if (!store.get('suiviRevenus')) store.set('suiviRevenus', []);
@@ -90,38 +102,40 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- CIC -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 flex items-center gap-4 border-b border-dark-400/30">
-          ${BANK_ICONS['CIC']}
-          <div class="flex-1">
-            <p class="text-sm text-gray-400">Compte courant CIC</p>
-            <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeCIC)}</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- CIC -->
+        <div class="card-dark rounded-xl overflow-hidden">
+          <div class="p-5 flex items-center gap-4 border-b border-dark-400/30">
+            ${BANK_ICONS['CIC']}
+            <div class="flex-1">
+              <p class="text-sm text-gray-400">Compte courant CIC</p>
+              <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeCIC)}</p>
+            </div>
+            <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
-          <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
+          ${opsCIC.length > 0 ? `
+          <div class="divide-y divide-dark-400/20">
+            ${opsCIC.map(renderOp).join('')}
+          </div>
+          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
         </div>
-        ${opsCIC.length > 0 ? `
-        <div class="divide-y divide-dark-400/20">
-          ${opsCIC.map(renderOp).join('')}
-        </div>
-        ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
-      </div>
 
-      <!-- Trade Republic -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 flex items-center gap-4 border-b border-dark-400/30">
-          ${BANK_ICONS['Trade Republic']}
-          <div class="flex-1">
-            <p class="text-sm text-gray-400">Compte courant Trade Republic</p>
-            <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeTR)}</p>
+        <!-- Trade Republic -->
+        <div class="card-dark rounded-xl overflow-hidden">
+          <div class="p-5 flex items-center gap-4 border-b border-dark-400/30">
+            ${BANK_ICONS['Trade Republic']}
+            <div class="flex-1">
+              <p class="text-sm text-gray-400">Compte courant Trade Republic</p>
+              <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeTR)}</p>
+            </div>
+            <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
-          <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
+          ${opsTR.length > 0 ? `
+          <div class="divide-y divide-dark-400/20">
+            ${opsTR.map(renderOp).join('')}
+          </div>
+          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
         </div>
-        ${opsTR.length > 0 ? `
-        <div class="divide-y divide-dark-400/20">
-          ${opsTR.map(renderOp).join('')}
-        </div>
-        ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
       </div>
 
       ${noOps ? `
@@ -188,6 +202,7 @@ export function mount(store, navigate) {
       const revenus = store.get('suiviRevenus') || [];
       revenus.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviRevenus', revenus);
+      updateSolde(store, data.compte, Number(data.montant) || 0);
       navigate('suivi-depenses');
     });
   });
@@ -242,6 +257,7 @@ export function mount(store, navigate) {
       const items = store.get('suiviDepenses') || [];
       items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
+      updateSolde(store, data.compte, -(Number(data.montant) || 0));
       navigate('suivi-depenses');
     });
   });
@@ -249,8 +265,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-del-expense]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.delExpense;
-      const items = (store.get('suiviDepenses') || []).filter(i => i.id !== id);
-      store.set('suiviDepenses', items);
+      const items = store.get('suiviDepenses') || [];
+      const item = items.find(i => i.id === id);
+      if (item) updateSolde(store, item.compte, Number(item.montant) || 0);
+      store.set('suiviDepenses', items.filter(i => i.id !== id));
       navigate('suivi-depenses');
     });
   });
@@ -258,8 +276,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-del-revenu]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.delRevenu;
-      const revenus = (store.get('suiviRevenus') || []).filter(r => r.id !== id);
-      store.set('suiviRevenus', revenus);
+      const revenus = store.get('suiviRevenus') || [];
+      const rev = revenus.find(r => r.id === id);
+      if (rev) updateSolde(store, rev.compte, -(Number(rev.montant) || 0));
+      store.set('suiviRevenus', revenus.filter(r => r.id !== id));
       navigate('suivi-depenses');
     });
   });
