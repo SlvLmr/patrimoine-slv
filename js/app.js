@@ -249,7 +249,7 @@ function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1px" class="text-2xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
+      <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1.5px" class="text-4xl font-bold text-center bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
     `;
   }
   // Mobile

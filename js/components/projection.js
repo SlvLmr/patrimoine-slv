@@ -49,8 +49,6 @@ export function render(store) {
                 ['param-inflation', 'Inflation', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', '0.5', '%'],
                 ['param-rend-immo', 'Immo', ((params.rendementImmobilier || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
                 ['param-rend-epar', 'Épargne', ((params.rendementEpargne || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
-                ['param-rend-cto', 'CTO', ((params.rendementCTO || 0.05) * 100).toFixed(1), '-20', '50', '0.5', '%'],
-                ['param-rend-av', 'Ass. Vie', ((params.rendementAssuranceVie || 0.03) * 100).toFixed(1), '0', '30', '0.5', '%'],
               ].map(([id, label, val, min, max, step, suffix]) => `
               <div class="flex items-center gap-1">
                 <span class="text-xs text-gray-500">${label}</span>
@@ -122,6 +120,30 @@ export function render(store) {
                 <span class="text-[10px] text-gray-500">%</span>
               </div>`;
               }).join('')}
+              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
+                <svg class="w-2.5 h-2.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm text-gray-200 font-medium">Bitcoin</span>
+                <span class="text-[10px] text-gray-500 ml-auto">Crypto</span>
+                <input type="number" id="param-rend-crypto" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
+                  value="${((params.rendementCrypto || 0.07) * 100).toFixed(1)}" min="-50" max="100" step="0.5">
+                <span class="text-[10px] text-gray-500">%</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
+                <svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+                <span class="text-sm text-gray-200 font-medium">CTO</span>
+                <span class="text-[10px] text-gray-500 ml-auto">CTO</span>
+                <input type="number" id="param-rend-cto" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
+                  value="${((params.rendementCTO || 0.05) * 100).toFixed(1)}" min="-20" max="50" step="0.5">
+                <span class="text-[10px] text-gray-500">%</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
+                <svg class="w-2.5 h-2.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span class="text-sm text-gray-200 font-medium">Assurance Vie</span>
+                <span class="text-[10px] text-gray-500 ml-auto">Ass. Vie</span>
+                <input type="number" id="param-rend-av" class="param-input w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
+                  value="${((params.rendementAssuranceVie || 0.03) * 100).toFixed(1)}" min="0" max="30" step="0.5">
+                <span class="text-[10px] text-gray-500">%</span>
+              </div>
             </div>
           </div>` : ''}
 
@@ -538,6 +560,7 @@ export function mount(store, navigate) {
     store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
     store.set('parametres.rendementCTO', (parseFloat(document.getElementById('param-rend-cto').value) || 5) / 100);
     store.set('parametres.rendementAssuranceVie', (parseFloat(document.getElementById('param-rend-av').value) || 3) / 100);
+    store.set('parametres.rendementCrypto', (parseFloat(document.getElementById('param-rend-crypto').value) || 7) / 100);
 
     // Per-placement rendement overrides
     const rendementPlacements = {};
