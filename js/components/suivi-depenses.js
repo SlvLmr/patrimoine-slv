@@ -28,6 +28,37 @@ function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function getCurrentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+const DEPENSES_MENSUELLES_CIC = [
+  { id: 'mc-credit',     nom: 'Crédit maison',     montant: 652.55 },
+  { id: 'mc-assurance',  nom: 'Assurance habitat',  montant: 51.88 },
+  { id: 'mc-comptes',    nom: 'Comptes',            montant: 14.61 },
+  { id: 'mc-elec',       nom: 'Electricité',        montant: 64.21 },
+  { id: 'mc-gaz',        nom: 'Gaz',                montant: 116.95 },
+  { id: 'mc-eau',        nom: 'Eau',                montant: 32.32 },
+  { id: 'mc-taxe',       nom: 'Taxe foncière',      montant: 179.00 },
+  { id: 'mc-freebox',    nom: 'Freebox Internet',   montant: 39.99 },
+  { id: 'mc-tel-slv',    nom: 'Tél Sylvain',        montant: 15.99 },
+  { id: 'mc-tel-gsp',    nom: 'Tel Gaspard',        montant: 15.99 },
+  { id: 'mc-tel-agt',    nom: 'Tel Agathe',         montant: 15.99 },
+  { id: 'mc-youtube',    nom: 'Youtube Premium',    montant: 12.99 },
+  { id: 'mc-canal',      nom: 'Canal +',            montant: 19.99 },
+  { id: 'mc-pel-gsp',    nom: 'PEL Gsp /CIC',      montant: 50.00 },
+  { id: 'mc-pel-agt',    nom: 'PEL Agt /CIC',      montant: 50.00 },
+  { id: 'mc-vacances',   nom: 'Vacances - WE',      montant: 200.00 },
+  { id: 'mc-anniv',      nom: 'Anniv - Noël',       montant: 100.00 },
+  { id: 'mc-clubs',      nom: 'Clubs - Cantine',    montant: 70.00 },
+  { id: 'mc-quotidien',  nom: 'Quotidien /TRR',     montant: 700.00 },
+  { id: 'mc-pea-slv',    nom: 'PEA Slv /TRR',      montant: 300.00 },
+  { id: 'mc-btc-slv',    nom: 'BTC Slv /TRR',      montant: 50.00 },
+  { id: 'mc-pea-gsp',    nom: 'PEA Gsp /TRR',      montant: 50.00 },
+  { id: 'mc-pea-agt',    nom: 'PEA Agt /TRR',      montant: 50.00 },
+];
+
 
 export function render(store) {
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
@@ -41,10 +72,18 @@ export function render(store) {
   const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
   const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
 
-  // Compute live solde = base + revenus - depenses
+  // Monthly checklist state
+  const monthKey = getCurrentMonthKey();
+  const cicCochees = store.get('cicMensuellesCochees') || {};
+  const cocheesThisMonth = cicCochees[monthKey] || [];
+  const totalCochees = DEPENSES_MENSUELLES_CIC
+    .filter(d => cocheesThisMonth.includes(d.id))
+    .reduce((s, d) => s + d.montant, 0);
+
+  // Compute live solde = base + revenus - depenses - checked monthly
   const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const soldeCIC = baseSoldeCIC + revCIC - depCIC;
+  const soldeCIC = baseSoldeCIC + revCIC - depCIC - totalCochees;
 
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
@@ -121,6 +160,34 @@ export function render(store) {
             ${opsCIC.map(renderOp).join('')}
           </div>
           ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
+
+          <!-- Dépenses mensuelles fixes -->
+          <details class="group/mensuel">
+            <summary class="flex items-center justify-between px-4 py-2.5 cursor-pointer select-none border-t border-dark-400/30 bg-dark-700/30">
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span class="text-xs font-semibold text-gray-300">Dépenses mensuelles</span>
+                <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${DEPENSES_MENSUELLES_CIC.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-accent-red">${formatCurrency(totalCochees)}</span>
+                <svg class="w-3.5 h-3.5 text-gray-500 transition-transform group-open/mensuel:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+            </summary>
+            <div class="divide-y divide-dark-400/10">
+              ${DEPENSES_MENSUELLES_CIC.map(d => {
+                const checked = cocheesThisMonth.includes(d.id);
+                return `
+              <label class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition cursor-pointer select-none">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-700 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
+                  <span class="text-[12px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'}">${d.nom}</span>
+                </div>
+                <span class="text-[12px] font-medium ${checked ? 'text-gray-600' : 'text-gray-300'}">${formatCurrencyCents(d.montant)}</span>
+              </label>`;
+              }).join('')}
+            </div>
+          </details>
         </div>
 
         <!-- Trade Republic -->
@@ -330,6 +397,25 @@ export function mount(store, navigate) {
         store.set('suiviRevenus', revenus);
         navigate('suivi-depenses');
       });
+    });
+  });
+
+  // Toggle CIC monthly expenses
+  document.querySelectorAll('[data-cic-mensuel]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.cicMensuel;
+      const monthKey = getCurrentMonthKey();
+      const cicCochees = store.get('cicMensuellesCochees') || {};
+      const list = cicCochees[monthKey] || [];
+      if (cb.checked) {
+        if (!list.includes(id)) list.push(id);
+      } else {
+        const idx = list.indexOf(id);
+        if (idx !== -1) list.splice(idx, 1);
+      }
+      cicCochees[monthKey] = list;
+      store.set('cicMensuellesCochees', cicCochees);
+      navigate('suivi-depenses');
     });
   });
 
