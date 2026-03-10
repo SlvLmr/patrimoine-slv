@@ -276,12 +276,15 @@ export function render(store) {
       </div>
 
       <!-- Stratégie d'investissement — éditable -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 border-b border-dark-400/30 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-200">Ma stratégie d'investissement</h2>
-          <span class="text-[10px] text-gray-600 italic">Cliquer pour modifier</span>
-        </div>
-        <div class="p-5 space-y-4">
+      <details class="card-dark rounded-xl group">
+        <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
+          <div class="flex items-center gap-2">
+            <h2 class="text-lg font-semibold text-gray-200">Ma stratégie d'investissement</h2>
+            <span class="text-[10px] text-gray-600 italic">Cliquer pour modifier</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-5 pb-5 space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 class="text-sm font-semibold text-accent-amber mb-2">Enveloppes & plafonds</h3>
@@ -315,14 +318,15 @@ Stratégie de sortie : ...`).replace(/</g, '&lt;')}</div>
             </div>
           </div>
         </div>
-      </div>
+      </details>
 
       <!-- Formules de calcul -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 border-b border-dark-400/30">
+      <details class="card-dark rounded-xl group">
+        <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
           <h2 class="text-lg font-semibold text-gray-200">Comment sont calculées les projections</h2>
-        </div>
-        <div class="p-5 space-y-4 text-sm text-gray-400 leading-relaxed">
+          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-5 pb-5 space-y-4 text-sm text-gray-400 leading-relaxed">
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
@@ -375,7 +379,7 @@ Stratégie de sortie : ...`).replace(/</g, '&lt;')}</div>
           </div>
 
         </div>
-      </div>
+      </details>
     </div>
   `;
 }
