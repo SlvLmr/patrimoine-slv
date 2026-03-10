@@ -271,8 +271,8 @@ export function mount(store, navigate) {
       label: 'Immobilier',
       data: snapshots.map(s => s.immobilier),
       borderColor: immColor,
-      backgroundColor: immColor,
-      fill: false,
+      backgroundColor: createVerticalGradient(ctx2d, immColor, 0.18, 0.02),
+      fill: true,
       tension: 0.45,
       pointRadius: 0,
       borderWidth: 3
@@ -285,8 +285,8 @@ export function mount(store, navigate) {
         label: k,
         data: snapshots.map(s => s.placementDetail[k] || 0),
         borderColor: color,
-        backgroundColor: color,
-        fill: false,
+        backgroundColor: createVerticalGradient(ctx2d, color, 0.18, 0.02),
+        fill: true,
         tension: 0.45,
         pointRadius: 0,
         borderWidth: 3
@@ -299,8 +299,8 @@ export function mount(store, navigate) {
       label: 'Épargne',
       data: snapshots.map(s => s.epargne),
       borderColor: epColor,
-      backgroundColor: epColor,
-      fill: false,
+      backgroundColor: createVerticalGradient(ctx2d, epColor, 0.18, 0.02),
+      fill: true,
       tension: 0.45,
       pointRadius: 0,
       borderWidth: 3
