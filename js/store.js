@@ -70,7 +70,14 @@ const defaultState = {
     { id: 'dep47', nom: 'PEL AGT /CIC', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 50 },
     { id: 'dep48', nom: 'Hélène part. PEL', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: -50 },
   ],
-  suiviDepenses: [],
+  suiviDepenses: [
+    { id: 'sd-01', date: '2026-03-02', description: 'La Poste LRAR', categorie: 'Achats divers', montant: 15.12, compte: 'Trade Republic' },
+    { id: 'sd-02', date: '2026-03-02', description: 'Action Agathe Ski', categorie: 'Achats divers', montant: 5.78, compte: 'Trade Republic' },
+    { id: 'sd-03', date: '2026-03-02', description: 'Gifi Agathe Ski', categorie: 'Achats divers', montant: 2.99, compte: 'Trade Republic' },
+    { id: 'sd-04', date: '2026-03-02', description: 'La Poste', categorie: 'Achats divers', montant: 1.60, compte: 'Trade Republic' },
+    { id: 'sd-05', date: '2026-03-02', description: 'La Poste', categorie: 'Achats divers', montant: 1.60, compte: 'Trade Republic' },
+    { id: 'sd-06', date: '2026-03-02', description: 'La Poste', categorie: 'Achats divers', montant: 2.10, compte: 'Trade Republic' },
+  ],
   archiveDepenses: [],
   parametres: {
     inflationRate: 0.02,
@@ -164,9 +171,16 @@ function loadState(profileId) {
     }
     delete mergedParams.anneeRetraiteTauxLegal;
     delete mergedParams.anneeRetraiteTauxPlein;
+    // Merge suiviDepenses: inject default seed items that don't exist yet
+    const existingDepenses = parsed.suiviDepenses || [];
+    const existingIds = new Set(existingDepenses.map(d => d.id));
+    const seedDepenses = defaultState.suiviDepenses.filter(d => !existingIds.has(d.id));
+    const mergedDepenses = [...seedDepenses, ...existingDepenses];
+
     return {
       ...JSON.parse(JSON.stringify(defaultState)),
       ...parsed,
+      suiviDepenses: mergedDepenses,
       actifs: { ...defaultState.actifs, ...(parsed.actifs || {}) },
       passifs: { ...defaultState.passifs, ...(parsed.passifs || {}) },
       parametres: mergedParams
