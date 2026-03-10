@@ -106,13 +106,6 @@ export function render(store) {
 
       <!-- Charts -->
       <div class="card-dark rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Évolution du patrimoine</h2>
-        <div class="h-80">
-          <canvas id="chart-projection"></canvas>
-        </div>
-      </div>
-
-      <div class="card-dark rounded-xl p-6">
         <h2 class="text-lg font-semibold text-gray-200 mb-4">Répartition des actifs dans le temps</h2>
         <div class="h-80">
           <canvas id="chart-repartition-temps"></canvas>
@@ -178,92 +171,7 @@ export function mount(store, navigate) {
   const groupKeys = snapshots.groupKeys || [];
   const labels = snapshots.map(s => s.annee === 0 ? 'Actuel' : `+${s.annee}`);
 
-  // Line chart with gradient fills
-  if (document.getElementById('chart-projection')) {
-    const canvas = document.getElementById('chart-projection');
-    const ctx2d = canvas.getContext('2d');
-
-    const gradActifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
-    gradActifs.addColorStop(0, '#c9a76c');
-    gradActifs.addColorStop(1, '#dbb88a');
-
-    const gradDette = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
-    gradDette.addColorStop(0, '#ff4757');
-    gradDette.addColorStop(1, '#ff6b6b');
-
-    const gradNet = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
-    gradNet.addColorStop(0, '#dbb88a');
-    gradNet.addColorStop(1, '#e8d5b0');
-
-    createChart('chart-projection', {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'Total actifs',
-            data: snapshots.map(s => s.totalActifs),
-            borderColor: gradActifs,
-            backgroundColor: createVerticalGradient(ctx2d, '#c9a76c', 0.25, 0.0),
-            fill: true,
-            tension: 0.45,
-            pointRadius: 0,
-            pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#c9a76c',
-            pointHoverBorderColor: '#fff',
-            pointHoverBorderWidth: 2,
-            borderWidth: 2.5
-          },
-          {
-            label: 'Dette',
-            data: snapshots.map(s => s.totalDette),
-            borderColor: gradDette,
-            backgroundColor: createVerticalGradient(ctx2d, '#ff4757', 0.15, 0.0),
-            fill: true,
-            tension: 0.45,
-            pointRadius: 0,
-            pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#ff4757',
-            pointHoverBorderColor: '#fff',
-            pointHoverBorderWidth: 2,
-            borderWidth: 2.5
-          },
-          {
-            label: 'Patrimoine net',
-            data: snapshots.map(s => s.patrimoineNet),
-            borderColor: gradNet,
-            backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.3, 0.0),
-            fill: true,
-            tension: 0.45,
-            pointRadius: 0,
-            pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#dbb88a',
-            pointHoverBorderColor: '#fff',
-            pointHoverBorderWidth: 2,
-            borderWidth: 3
-          }
-        ]
-      },
-      options: {
-        interaction: { intersect: false, mode: 'index' },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: COLORS.gridText }
-          },
-          y: {
-            grid: { color: COLORS.grid },
-            ticks: {
-              color: COLORS.gridText,
-              callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // Stacked area chart - now with detailed groups
+  // Asset breakdown chart with optional patrimoine net toggle
   if (document.getElementById('chart-repartition-temps')) {
     const canvas = document.getElementById('chart-repartition-temps');
     const ctx2d = canvas.getContext('2d');
@@ -329,6 +237,44 @@ export function mount(store, navigate) {
         borderWidth: 3
       });
     }
+
+    // Global patrimoine curves (hidden by default, toggle via legend)
+    datasets.push({
+      label: 'Patrimoine net',
+      data: snapshots.map(s => s.patrimoineNet),
+      borderColor: '#dbb88a',
+      backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.25, 0.02),
+      fill: true,
+      tension: 0.45,
+      pointRadius: 0,
+      borderWidth: 3,
+      borderDash: [6, 3],
+      hidden: true
+    });
+    datasets.push({
+      label: 'Total actifs',
+      data: snapshots.map(s => s.totalActifs),
+      borderColor: '#c9a76c',
+      backgroundColor: createVerticalGradient(ctx2d, '#c9a76c', 0.18, 0.02),
+      fill: true,
+      tension: 0.45,
+      pointRadius: 0,
+      borderWidth: 2.5,
+      borderDash: [6, 3],
+      hidden: true
+    });
+    datasets.push({
+      label: 'Dette',
+      data: snapshots.map(s => s.totalDette),
+      borderColor: '#ff4757',
+      backgroundColor: createVerticalGradient(ctx2d, '#ff4757', 0.12, 0.02),
+      fill: true,
+      tension: 0.45,
+      pointRadius: 0,
+      borderWidth: 2.5,
+      borderDash: [6, 3],
+      hidden: true
+    });
 
     createChart('chart-repartition-temps', {
       type: 'line',
