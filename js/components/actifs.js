@@ -220,6 +220,7 @@ function initPlacementFormListeners(modal) {
 export function render(store) {
   const state = store.getAll();
   const { immobilier, placements, epargne } = state.actifs;
+  const emprunts = store.get('passifs.emprunts');
 
   // Group placements by envelope
   const envelopeGroups = {};
@@ -229,191 +230,227 @@ export function render(store) {
     envelopeGroups[env].push(p);
   });
 
+  // Passifs KPIs
+  const totalDette = store.totalPassifs();
+  const totalMensualites = emprunts.reduce((s, e) => s + (Number(e.mensualite) || 0), 0);
+  const totalRevenus = store.totalRevenus();
+  const tauxEndettement = totalRevenus > 0 ? totalMensualites / totalRevenus : 0;
+
+  // Totals for column headers
+  const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
+  const totalPlac = placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+  const totalEpar = epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
+
+  const sections = [
+    {
+      key: 'immobilier',
+      label: 'Immobilier',
+      icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+      color: 'accent-green',
+      total: totalImmo,
+      count: immobilier.length,
+      btnId: 'btn-add-immo',
+    },
+    {
+      key: 'placements',
+      label: 'Placements',
+      icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+      color: 'accent-green',
+      total: totalPlac,
+      count: placements.length,
+      btnId: 'btn-add-plac',
+    },
+    {
+      key: 'epargne',
+      label: 'Épargne',
+      icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
+      color: 'accent-amber',
+      total: totalEpar,
+      count: epargne.length,
+      btnId: 'btn-add-epar',
+    },
+    {
+      key: 'emprunts',
+      label: 'Emprunts',
+      icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5',
+      color: 'accent-red',
+      total: totalDette,
+      count: emprunts.length,
+      btnId: 'btn-add-emprunt',
+    },
+  ];
+
+  // Build content for each section
+  function renderImmoContent() {
+    if (immobilier.length === 0) return '<p class="p-4 text-gray-600 text-sm">Aucun bien immobilier.</p>';
+    return `<div class="space-y-2 p-3">${immobilier.map(i => {
+      const pv = (Number(i.valeurActuelle) || 0) - (Number(i.valeurAchat) || 0);
+      return `
+        <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-medium text-gray-200 text-sm">${i.nom}</span>
+            ${pvBadge(pv)}
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>${formatCurrency(i.valeurActuelle)}</span>
+            <span>${formatCurrency(i.loyerMensuel || 0)}/m</span>
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button data-edit-immo="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
+            <button data-del-immo="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
+  }
+
+  function renderPlacContent() {
+    if (placements.length === 0) return '<p class="p-4 text-gray-600 text-sm">Aucun placement.</p>';
+    return `<div class="space-y-1 p-3">${Object.entries(envelopeGroups).map(([env, items]) => {
+      const envTotal = items.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+      return `
+        <div class="mb-2">
+          <div class="flex items-center justify-between px-1 py-1.5">
+            <span class="text-xs font-bold text-accent-blue uppercase tracking-wider">${env}</span>
+            <span class="text-xs font-semibold text-gray-400">${formatCurrency(envTotal)}</span>
+          </div>
+          ${items.map(i => {
+            const pv = i.quantite && i.pru ? (Number(i.valeur) - Number(i.pru) * Number(i.quantite)) : 0;
+            const dcaLabel = i.dcaMensuel ? `${formatCurrency(i.dcaMensuel)}/m` : '';
+            return `
+            <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition mb-1">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-medium text-gray-200 text-sm">${i.nom}</span>
+                  ${i.isAirLiquide ? '<span class="text-xs bg-accent-green/15 text-accent-green px-1 py-0.5 rounded">AI</span>' : ''}
+                </div>
+                <span class="font-medium text-gray-200 text-sm">${formatCurrency(i.valeur)}</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                ${dcaLabel ? `<span class="text-gray-500">DCA ${dcaLabel}</span>` : '<span></span>'}
+                ${pv !== 0 ? `<span class="${pv >= 0 ? 'text-accent-green' : 'text-accent-red'}">${pv >= 0 ? '+' : ''}${formatCurrency(pv)}</span>` : ''}
+              </div>
+              <div class="flex gap-2 mt-2">
+                <button data-edit-plac="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
+                <button data-del-plac="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    }).join('')}</div>`;
+  }
+
+  function renderEparContent() {
+    if (epargne.length === 0) return '<p class="p-4 text-gray-600 text-sm">Aucun compte d\'épargne.</p>';
+    return `<div class="space-y-2 p-3">${epargne.map(i => {
+      const fillPct = i.plafond ? Math.min(100, (Number(i.solde) / Number(i.plafond)) * 100) : 0;
+      return `
+        <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-medium text-gray-200 text-sm">${i.nom}</span>
+            <span class="font-medium text-accent-amber text-sm">${formatCurrency(i.solde)}</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+            <span>${formatPercent(i.tauxInteret || 0)}</span>
+            ${i.plafond ? `<span>${formatCurrency(i.plafond)}</span>` : ''}
+          </div>
+          ${i.plafond ? `
+          <div class="flex items-center gap-2">
+            <div class="progress-bar h-1.5 flex-1">
+              <div class="progress-bar-fill h-full bg-accent-amber" style="width: ${fillPct}%"></div>
+            </div>
+            <span class="text-xs text-gray-500">${fillPct.toFixed(0)}%</span>
+          </div>` : ''}
+          <div class="flex gap-2 mt-2">
+            <button data-edit-epar="${i.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
+            <button data-del-epar="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
+  }
+
+  function renderEmpruntContent() {
+    // KPI row
+    const kpiRow = `
+      <div class="grid grid-cols-3 gap-2 p-3 pb-1">
+        <div class="bg-dark-800/40 rounded-lg p-2 text-center">
+          <p class="text-xs text-gray-500">Dette</p>
+          <p class="text-sm font-bold text-accent-red">${formatCurrency(totalDette)}</p>
+        </div>
+        <div class="bg-dark-800/40 rounded-lg p-2 text-center">
+          <p class="text-xs text-gray-500">Mensualités</p>
+          <p class="text-sm font-bold text-gray-200">${formatCurrency(totalMensualites)}</p>
+        </div>
+        <div class="bg-dark-800/40 rounded-lg p-2 text-center">
+          <p class="text-xs text-gray-500">Endettement</p>
+          <p class="text-sm font-bold ${tauxEndettement > 0.35 ? 'text-accent-red' : 'text-accent-green'}">${formatPercent(tauxEndettement)}</p>
+        </div>
+      </div>`;
+
+    if (emprunts.length === 0) return kpiRow + '<p class="p-4 text-gray-600 text-sm">Aucun emprunt.</p>';
+    return kpiRow + `<div class="space-y-2 p-3">${emprunts.map(e => {
+      const paidPct = e.capitalInitial ? Math.min(100, ((Number(e.capitalInitial) - Number(e.capitalRestant)) / Number(e.capitalInitial)) * 100) : 0;
+      return `
+        <div class="bg-dark-800/40 rounded-lg p-3 hover:bg-dark-600/30 transition">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-medium text-gray-200 text-sm">${e.nom}</span>
+            <span class="font-medium text-accent-red text-sm">${formatCurrency(e.capitalRestant)}</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+            <span>${formatPercent(e.tauxInteret || 0)}</span>
+            <span>${formatCurrency(e.mensualite)}/m · ${e.dureeRestanteMois || 0} mois</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="progress-bar h-1.5 flex-1">
+              <div class="progress-bar-fill h-full bg-accent-green" style="width: ${paidPct}%"></div>
+            </div>
+            <span class="text-xs text-gray-500">${paidPct.toFixed(0)}%</span>
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button data-edit-emprunt="${e.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
+            <button data-del-emprunt="${e.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
+  }
+
+  const contentRenderers = {
+    immobilier: renderImmoContent,
+    placements: renderPlacContent,
+    epargne: renderEparContent,
+    emprunts: renderEmpruntContent,
+  };
+
   return `
     <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-100">Gestion des actifs</h1>
-      </div>
+      <h1 class="text-2xl font-bold text-gray-100">Actifs et passifs</h1>
 
-      <!-- Immobilier -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-accent-green/20 flex items-center justify-center">
-              <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-              </svg>
-            </div>
-            <h2 class="text-lg font-semibold text-gray-200">Immobilier</h2>
-          </div>
-          <button id="btn-add-immo" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
-        </div>
-        ${immobilier.length > 0 ? `
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-dark-800/50 text-gray-500">
-              <tr>
-                <th class="px-5 py-3 text-left">Nom</th>
-                <th class="px-5 py-3 text-right">Valeur d'achat</th>
-                <th class="px-5 py-3 text-right">Valeur actuelle</th>
-                <th class="px-5 py-3 text-right">+/- Value</th>
-                <th class="px-5 py-3 text-right">Loyer</th>
-                <th class="px-5 py-3 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-dark-400/20">
-              ${immobilier.map(i => {
-                const pv = (Number(i.valeurActuelle) || 0) - (Number(i.valeurAchat) || 0);
-                return `
-              <tr class="hover:bg-dark-600/30 transition">
-                <td class="px-5 py-3 font-medium text-gray-200">${i.nom}</td>
-                <td class="px-5 py-3 text-right text-gray-400">${formatCurrency(i.valeurAchat)}</td>
-                <td class="px-5 py-3 text-right font-medium text-gray-200">${formatCurrency(i.valeurActuelle)}</td>
-                <td class="px-5 py-3 text-right">${pvBadge(pv)}</td>
-                <td class="px-5 py-3 text-right text-gray-400">${formatCurrency(i.loyerMensuel || 0)}/m</td>
-                <td class="px-5 py-3 text-center">
-                  <button data-edit-immo="${i.id}" class="text-accent-blue hover:text-accent-blue/80 mr-3 text-xs font-medium">Modifier</button>
-                  <button data-del-immo="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
-                </td>
-              </tr>
-              `;}).join('')}
-            </tbody>
-          </table>
-        </div>
-        ` : '<p class="p-5 text-gray-600 text-sm">Aucun bien immobilier enregistré.</p>'}
-      </div>
-
-      <!-- Placements financiers -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-accent-green/20 flex items-center justify-center">
-              <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-              </svg>
-            </div>
-            <h2 class="text-lg font-semibold text-gray-200">Placements financiers</h2>
-            <span class="text-xs text-gray-500 bg-dark-600 px-2 py-0.5 rounded-full">${placements.length} ligne${placements.length > 1 ? 's' : ''}</span>
-          </div>
-          <button id="btn-add-plac" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
-        </div>
-
-        ${placements.length > 0 ? `
-        ${Object.entries(envelopeGroups).map(([env, items]) => {
-          const envTotal = items.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
-          return `
-          <div class="border-b border-dark-400/20 last:border-0">
-            <div class="px-5 py-3 bg-dark-800/30 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-accent-blue uppercase tracking-wider">${env}</span>
-                <span class="text-xs text-gray-600">${items.length} titre${items.length > 1 ? 's' : ''}</span>
+      <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+        ${sections.map(s => `
+        <div class="card-dark rounded-xl overflow-hidden flex flex-col">
+          <!-- Header -->
+          <div class="p-4 border-b border-dark-400/30">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-8 h-8 rounded-lg bg-${s.color}/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-${s.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${s.icon}"/>
+                </svg>
               </div>
-              <span class="text-sm font-semibold text-gray-300">${formatCurrency(envTotal)}</span>
+              <div class="flex-1 min-w-0">
+                <h2 class="text-sm font-semibold text-gray-200">${s.label}</h2>
+                <p class="text-xs text-gray-500">${s.count} élément${s.count > 1 ? 's' : ''}</p>
+              </div>
             </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead class="text-gray-600 text-xs">
-                  <tr>
-                    <th class="px-5 py-2 text-left">Nom</th>
-                    <th class="px-5 py-2 text-right">Valeur</th>
-                    <th class="px-5 py-2 text-right">DCA</th>
-                    <th class="px-5 py-2 text-right">+/- Value</th>
-                    <th class="px-5 py-2 text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-dark-400/10">
-                  ${items.map(i => {
-                    const pv = i.quantite && i.pru ? (Number(i.valeur) - Number(i.pru) * Number(i.quantite)) : 0;
-                    const pvPct = i.pru && i.quantite ? (Number(i.valeur) / (Number(i.pru) * Number(i.quantite)) - 1) : 0;
-                    const dcaLabel = i.dcaMensuel ? `${formatCurrency(i.dcaMensuel)}/m` : '—';
-                    return `
-                  <tr class="hover:bg-dark-600/30 transition group">
-                    <td class="px-5 py-3">
-                      <div class="flex items-center gap-2">
-                        <span class="font-medium text-gray-200">${i.nom}</span>
-                        ${i.isAirLiquide ? '<span class="text-xs bg-accent-green/15 text-accent-green px-1.5 py-0.5 rounded">AI</span>' : ''}
-                      </div>
-                      ${i.categorie ? `<span class="text-xs text-gray-600">${i.categorie}</span>` : ''}
-                    </td>
-                    <td class="px-5 py-3 text-right font-medium text-gray-200">${formatCurrency(i.valeur)}</td>
-                    <td class="px-5 py-3 text-right text-gray-400 text-xs">${dcaLabel}</td>
-                    <td class="px-5 py-3 text-right">
-                      ${pv !== 0 ? `
-                        <div class="${pv >= 0 ? 'text-accent-green' : 'text-accent-red'} text-xs font-medium">
-                          ${pv >= 0 ? '+' : ''}${formatCurrency(pv)}
-                          <span class="text-gray-600 ml-1">(${pvPct >= 0 ? '+' : ''}${(pvPct * 100).toFixed(1)}%)</span>
-                        </div>
-                      ` : '<span class="text-gray-600">—</span>'}
-                    </td>
-                    <td class="px-5 py-3 text-center opacity-50 group-hover:opacity-100 transition">
-                      <button data-edit-plac="${i.id}" class="text-accent-blue hover:text-accent-blue/80 mr-2 text-xs font-medium">Modifier</button>
-                      <button data-del-plac="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
-                    </td>
-                  </tr>
-                  `;}).join('')}
-                </tbody>
-              </table>
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
+              <button id="${s.btnId}" class="px-3 py-1.5 bg-gradient-to-r ${s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white' : 'from-accent-green to-accent-amber text-dark-900'} text-xs rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
             </div>
           </div>
-          `;}).join('')}
-        ` : '<p class="p-5 text-gray-600 text-sm">Aucun placement enregistré.</p>'}
-      </div>
-
-      <!-- Épargne -->
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-accent-amber/20 flex items-center justify-center">
-              <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-              </svg>
-            </div>
-            <h2 class="text-lg font-semibold text-gray-200">Épargne</h2>
+          <!-- Content (scrollable) -->
+          <div class="flex-1 overflow-y-auto max-h-[60vh]">
+            ${contentRenderers[s.key]()}
           </div>
-          <button id="btn-add-epar" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
         </div>
-        ${epargne.length > 0 ? `
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-dark-800/50 text-gray-500">
-              <tr>
-                <th class="px-5 py-3 text-left">Nom</th>
-                <th class="px-5 py-3 text-right">Solde</th>
-                <th class="px-5 py-3 text-right">Taux</th>
-                <th class="px-5 py-3 text-right">Plafond</th>
-                <th class="px-5 py-3 text-right">Remplissage</th>
-                <th class="px-5 py-3 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-dark-400/20">
-              ${epargne.map(i => {
-                const fillPct = i.plafond ? Math.min(100, (Number(i.solde) / Number(i.plafond)) * 100) : 0;
-                return `
-              <tr class="hover:bg-dark-600/30 transition">
-                <td class="px-5 py-3 font-medium text-gray-200">${i.nom}</td>
-                <td class="px-5 py-3 text-right font-medium text-accent-amber">${formatCurrency(i.solde)}</td>
-                <td class="px-5 py-3 text-right text-gray-400">${formatPercent(i.tauxInteret || 0)}</td>
-                <td class="px-5 py-3 text-right text-gray-500">${i.plafond ? formatCurrency(i.plafond) : '—'}</td>
-                <td class="px-5 py-3 text-right">
-                  ${i.plafond ? `
-                  <div class="flex items-center gap-2 justify-end">
-                    <div class="progress-bar h-1.5 w-16">
-                      <div class="progress-bar-fill h-full bg-accent-amber" style="width: ${fillPct}%"></div>
-                    </div>
-                    <span class="text-xs text-gray-500">${fillPct.toFixed(0)}%</span>
-                  </div>
-                  ` : '—'}
-                </td>
-                <td class="px-5 py-3 text-center">
-                  <button data-edit-epar="${i.id}" class="text-accent-blue hover:text-accent-blue/80 mr-3 text-xs font-medium">Modifier</button>
-                  <button data-del-epar="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
-                </td>
-              </tr>
-              `;}).join('')}
-            </tbody>
-          </table>
-        </div>
-        ` : '<p class="p-5 text-gray-600 text-sm">Aucun compte d\'épargne enregistré.</p>'}
+        `).join('')}
       </div>
     </div>
   `;
@@ -556,6 +593,49 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       if (confirm('Supprimer ce compte d\'épargne ?')) {
         store.removeItem('actifs.epargne', btn.dataset.delEpar);
+        navigate('actifs');
+      }
+    });
+  });
+
+  // --- Emprunts (Passifs) ---
+  const empruntForm = (item = {}) => `
+    ${inputField('nom', "Nom de l'emprunt", item.nom || '', 'text', 'placeholder="Ex: Prêt immobilier RP"')}
+    ${inputField('capitalInitial', 'Capital initial (€)', item.capitalInitial || '', 'number', 'step="1000"')}
+    ${inputField('capitalRestant', 'Capital restant dû (€)', item.capitalRestant || '', 'number', 'step="1000"')}
+    ${inputField('tauxInteret', 'Taux d\'intérêt annuel (%)', ((parseFloat(item.tauxInteret) || 0.02) * 100).toFixed(2), 'number', 'step="0.1" min="0" max="100"')}
+    ${inputField('mensualite', 'Mensualité (€)', item.mensualite || '', 'number', 'step="10"')}
+    ${inputField('dureeRestanteMois', 'Durée restante (mois)', item.dureeRestanteMois || '', 'number', 'step="1"')}
+    ${inputField('dateDebut', 'Date de début', item.dateDebut || '', 'date')}
+  `;
+
+  document.getElementById('btn-add-emprunt')?.addEventListener('click', () => {
+    openModal('Ajouter un emprunt', empruntForm(), () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      data.tauxInteret = (data.tauxInteret || 0) / 100;
+      store.addItem('passifs.emprunts', data);
+      navigate('actifs');
+    });
+  });
+
+  content.querySelectorAll('[data-edit-emprunt]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.editEmprunt;
+      const item = store.get('passifs.emprunts').find(i => i.id === id);
+      if (!item) return;
+      openModal("Modifier l'emprunt", empruntForm(item), () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        data.tauxInteret = (data.tauxInteret || 0) / 100;
+        store.updateItem('passifs.emprunts', id, data);
+        navigate('actifs');
+      });
+    });
+  });
+
+  content.querySelectorAll('[data-del-emprunt]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (confirm('Supprimer cet emprunt ?')) {
+        store.removeItem('passifs.emprunts', btn.dataset.delEmprunt);
         navigate('actifs');
       }
     });
