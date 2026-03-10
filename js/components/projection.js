@@ -7,6 +7,7 @@ export function render(store) {
   const groupKeys = snapshots.groupKeys || [];
   const rendementPlacements = params.rendementPlacements || {};
   const placements = (store.getAll().actifs?.placements || []);
+  const currentCalendarYear = new Date().getFullYear();
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
@@ -136,36 +137,34 @@ export function render(store) {
         const milestones = [20, 25, 30];
         const firstNet = first?.patrimoineNet || 0;
         const firstImmo = first?.immobilier || 0;
-        const firstFin = (first?.placements || 0) + (first?.epargne || 0) + (first?.heritage || 0);
+        const firstFin = first?.totalLiquiditesNettes || 0;
         return `
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card-dark rounded-xl p-5 kpi-card">
-          <p class="text-sm text-gray-400 mb-2">Patrimoine actuel</p>
+          <p class="text-sm text-gray-400 mb-2">${first?.label || 'Fin ' + new Date().getFullYear()}</p>
           <p class="text-2xl font-bold text-gray-200">${formatCurrency(firstNet)}</p>
           <div class="flex gap-3 mt-2 text-xs text-gray-500">
             <span>Immo ${formatCurrency(firstImmo)}</span>
             <span>·</span>
-            <span>Fin ${formatCurrency(firstFin)}</span>
+            <span>Liq. ${formatCurrency(firstFin)}</span>
           </div>
         </div>
         ${milestones.map((yr, i) => {
           const snap = snapshots[yr] || snapshots[snapshots.length - 1];
           const net = snap?.patrimoineNet || 0;
           const immo = snap?.immobilier || 0;
-          const fin = (snap?.placements || 0) + (snap?.epargne || 0) + (snap?.heritage || 0);
-          const dette = snap?.totalDette || 0;
+          const liq = snap?.totalLiquiditesNettes || 0;
           const evol = net - firstNet;
           const evolPct = firstNet ? evol / Math.abs(firstNet) : 0;
           const glows = ['glow-blue', 'glow-green', 'glow-blue'];
           return `
         <div class="card-dark rounded-xl p-5 kpi-card ${glows[i]}">
-          <p class="text-sm text-gray-400 mb-2">Dans ${yr} ans</p>
+          <p class="text-sm text-gray-400 mb-2">Fin ${snap?.calendarYear || (currentCalendarYear + yr)}</p>
           <p class="text-2xl font-bold gradient-text">${formatCurrency(net)}</p>
           <div class="flex gap-3 mt-2 text-xs">
             <span class="text-pink-400">Immo ${formatCurrency(immo)}</span>
             <span class="text-gray-600">·</span>
-            <span class="text-purple-400">Fin ${formatCurrency(fin)}</span>
-            ${dette > 0 ? `<span class="text-gray-600">·</span><span class="text-red-400/70">Dette −${formatCurrency(dette)}</span>` : ''}
+            <span class="text-purple-400">Liq. ${formatCurrency(liq)}</span>
           </div>
           <div class="flex items-center gap-2 mt-2">
             <span class="text-sm ${evol >= 0 ? 'text-accent-green' : 'text-accent-red'}">${evol >= 0 ? '+' : ''}${formatCurrency(evol)}</span>
@@ -197,14 +196,12 @@ export function render(store) {
               <tr>
                 <th class="px-3 py-3 text-left">Année</th>
                 <th class="px-3 py-3 text-center">Âge</th>
-                <th class="px-3 py-3 text-right">Immobilier</th>
                 ${groupKeys.map(k => `<th class="px-3 py-3 text-right">${k}</th>`).join('')}
                 <th class="px-3 py-3 text-right">Épargne</th>
-                <th class="px-3 py-3 text-right">Intérêts annuels</th>
+                <th class="px-3 py-3 text-right">Intérêts cumulés</th>
                 <th class="px-3 py-3 text-right">Cash après impôt</th>
-                <th class="px-3 py-3 text-right">Total actifs</th>
-                <th class="px-3 py-3 text-right">Dette</th>
-                <th class="px-3 py-3 text-right font-semibold">Patrimoine net</th>
+                <th class="px-3 py-3 text-right">Immobilier</th>
+                <th class="px-3 py-3 text-right font-semibold">Total liquidités nettes</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
@@ -218,18 +215,16 @@ export function render(store) {
                 return `
               <tr class="hover:bg-dark-600/30 transition ${rowClass}">
                 <td class="px-3 py-2 font-medium text-gray-300">
-                  ${s.annee === 0 ? 'Actuel' : `${s.calendarYear}`}
+                  ${s.label}
                   ${isRetirement ? '<span class="ml-1 text-xs text-accent-amber font-semibold">RETRAITE</span>' : ''}
                 </td>
                 <td class="px-3 py-2 text-center ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-400'}">${s.age} ans</td>
-                <td class="px-3 py-2 text-right text-accent-green">${formatCurrency(s.immobilier)}</td>
                 ${groupKeys.map(k => `<td class="px-3 py-2 text-right ${groupColors[k] || defaultGroupColor}">${formatCurrency(s.placementDetail[k] || 0)}</td>`).join('')}
                 <td class="px-3 py-2 text-right text-accent-amber">${formatCurrency(s.epargne)}</td>
-                <td class="px-3 py-2 text-right ${s.interetsAnnuels > 0 ? 'text-accent-cyan' : 'text-gray-600'}">${s.annee === 0 ? '—' : formatCurrency(s.interetsAnnuels)}</td>
+                <td class="px-3 py-2 text-right ${s.interetsCumules > 0 ? 'text-accent-cyan' : 'text-gray-600'}">${formatCurrency(s.interetsCumules)}</td>
                 <td class="px-3 py-2 text-right ${s.cashApresImpot >= 0 ? 'text-accent-green' : 'text-accent-red/70'}">${formatCurrency(s.cashApresImpot)}</td>
-                <td class="px-3 py-2 text-right text-gray-300">${formatCurrency(s.totalActifs)}</td>
-                <td class="px-3 py-2 text-right text-accent-red/70">${formatCurrency(s.totalDette)}</td>
-                <td class="px-3 py-2 text-right font-semibold ${s.patrimoineNet >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrency(s.patrimoineNet)}</td>
+                <td class="px-3 py-2 text-right text-accent-green">${formatCurrency(s.immobilier)}</td>
+                <td class="px-3 py-2 text-right font-semibold ${s.totalLiquiditesNettes >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrency(s.totalLiquiditesNettes)}</td>
               </tr>`;
               }).join('')}
             </tbody>
@@ -243,7 +238,7 @@ export function render(store) {
 export function mount(store, navigate) {
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
-  const labels = snapshots.map(s => s.annee === 0 ? 'Actuel' : `${s.calendarYear}`);
+  const labels = snapshots.map(s => s.label);
 
   // Asset breakdown chart with optional patrimoine net toggle
   if (document.getElementById('chart-repartition-temps')) {
@@ -312,10 +307,10 @@ export function mount(store, navigate) {
       });
     }
 
-    // Patrimoine net (hidden by default, toggle via legend)
+    // Total liquidités nettes (hidden by default, toggle via legend)
     datasets.push({
-      label: 'Patrimoine net',
-      data: snapshots.map(s => s.patrimoineNet),
+      label: 'Total liquidités nettes',
+      data: snapshots.map(s => s.totalLiquiditesNettes),
       borderColor: '#dbb88a',
       backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.25, 0.02),
       fill: true,
@@ -338,7 +333,7 @@ export function mount(store, navigate) {
     const milestoneAnnotations = {};
     const projYears = params.projectionYears || 30;
     const inRange = (v) => v >= 0 && v <= projYears;
-    const toLabel = (v) => v === 0 ? 'Actuel' : `+${v}`;
+    const toLabel = (v) => `Fin ${currentYear + v}`;
 
     // Dashed vertical lines only (no labels to avoid overlap)
     if (inRange(retraiteSouhaiteeOffset)) {

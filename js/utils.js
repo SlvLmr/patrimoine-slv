@@ -219,6 +219,13 @@ export function computeProjection(store) {
   let revenus = revenusMensuels;
   let depenses = depensesMensuelles;
 
+  // Track cumulative apports and gains per placement for tax computation
+  placSims.forEach(ps => {
+    ps.totalApports = ps.value; // initial value counts as apport
+    ps.totalGains = 0;
+  });
+  let cumulInterets = 0;
+
   for (let year = 0; year <= years; year++) {
     // Inject heritage
     if (heritageByYear[year]) {
@@ -226,89 +233,29 @@ export function computeProjection(store) {
       heritage += heritageByYear[year].liq;
     }
 
-    let totalDette = emprunts.reduce((s, e) => s + Math.max(0, e.capitalRestant), 0);
-    let mensualitesTotales = emprunts
-      .filter(e => e.capitalRestant > 0)
-      .reduce((s, e) => s + e.mensualite, 0);
-
-    // Aggregate placement values by group
-    const groupValues = {};
-    groupKeys.forEach(k => { groupValues[k] = 0; });
-    placSims.forEach(ps => { groupValues[ps.groupKey] += ps.value; });
-
-    const totalPlacements = groupKeys.reduce((s, k) => s + groupValues[k], 0);
-    const totalActifs = immo + totalPlacements + epar + heritage;
-    const patrimoineNet = totalActifs - totalDette;
-
-    // Compute interest for this year
-    let interetsAnnuels = 0;
-    if (year > 0) {
-      // For year 1, the previous period was partial (remainingMonths)
-      const prevFraction = (year === 1) ? remainingMonths / 12 : 1;
-      interetsAnnuels += immo * rendImmo * prevFraction / (1 + rendImmo * prevFraction);
-      placSims.forEach(ps => {
-        if (!ps.isAirLiquide) {
-          interetsAnnuels += ps.value * ps.rendement * prevFraction / (1 + ps.rendement * prevFraction);
-        }
-      });
-      interetsAnnuels += epar * rendEpar * prevFraction / (1 + rendEpar * prevFraction);
-      if (heritage > 0) interetsAnnuels += heritage * rendEpar * prevFraction / (1 + rendEpar * prevFraction);
-    }
-
-    // Cash après impôt = annual savings capacity
-    const cashApresImpot = Math.round((revenus - depenses - mensualitesTotales) * 12);
-
-    const detail = {};
-    groupKeys.forEach(k => { detail[k] = Math.round(groupValues[k]); });
-
-    snapshots.push({
-      annee: year,
-      calendarYear: year === 0 ? currentCalendarYear : currentCalendarYear + year,
-      age: ageFinAnnee + year,
-      isRetraite: (ageFinAnnee + year) === ageRetraite,
-      immobilier: Math.round(immo),
-      placementDetail: detail,
-      placements: Math.round(totalPlacements),
-      epargne: Math.round(epar),
-      heritage: Math.round(heritage),
-      totalActifs: Math.round(totalActifs),
-      totalDette: Math.round(totalDette),
-      patrimoineNet: Math.round(patrimoineNet),
-      interetsAnnuels: Math.round(interetsAnnuels),
-      cashApresImpot,
-      revenusMensuels: Math.round(revenus),
-      depensesMensuelles: Math.round(depenses),
-      mensualites: Math.round(mensualitesTotales),
-      capaciteEpargne: Math.round(revenus - depenses - mensualitesTotales)
-    });
-
-    if (year === years) break;
-
-    // --- Grow assets for next year ---
-    // First iteration (year 0→1) covers only remaining months of current year
+    // --- Grow assets FIRST, then snapshot (so year 0 = end of current year) ---
     const monthsInPeriod = (year === 0) ? remainingMonths : 12;
     const periodFraction = monthsInPeriod / 12;
 
     // Immobilier
     immo *= (1 + rendImmo * periodFraction);
 
-    // Épargne: interest only (Livret A, LDD, etc.)
+    // Épargne
     epar *= (1 + rendEpar * periodFraction);
 
-    // Héritage liquide: same interest rate as épargne
+    // Héritage liquide
     if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
 
-    // Per-placement growth + DCA + Air Liquide
+    // Per-placement growth + DCA
+    let interetsAnnuels = 0;
     placSims.forEach(ps => {
-      if (ps.isAirLiquide) {
-        // Air Liquide special logic
-        const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
+      const prevValue = ps.value;
 
-        // Share price appreciation (prorated for first period)
+      if (ps.isAirLiquide) {
+        const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
         ps.prixAction *= (1 + ps.rendement * periodFraction);
 
-        // Dividends (reinvested into more shares) - only for full years
-        if (year > 0 || monthsInPeriod >= 6) {
+        if (monthsInPeriod >= 6) {
           const dividendTotal = ps.quantite * ps.dividendeParAction * loyaltyMultiplier;
           interetsAnnuels += dividendTotal;
           if (ps.prixAction > 0) {
@@ -316,36 +263,32 @@ export function computeProjection(store) {
           }
         }
 
-        // Free shares every 2 years (year 2, 4, 6...)
         if (year > 0 && year % 2 === 0) {
           const freeShares = Math.floor(ps.quantite / 10) * loyaltyMultiplier;
           ps.quantite += freeShares;
         }
 
-        // DCA: buy more shares monthly (prorated for first period)
         const dca = getDcaForYear(ps, year + 1);
         if (dca > 0 && ps.prixAction > 0) {
           const periodDca = dca * monthsInPeriod;
           ps.quantite += periodDca / ps.prixAction;
+          ps.totalApports += periodDca;
         }
 
-        // Grow dividend per share
         ps.dividendeParAction *= (1 + ps.croissanceDividende * periodFraction);
-
-        // Update value
         ps.value = ps.quantite * ps.prixAction;
 
       } else {
-        // Standard placement: rendement + DCA (prorated for first period)
         ps.value *= (1 + ps.rendement * periodFraction);
-
         const dca = getDcaForYear(ps, year + 1);
         if (dca > 0) {
-          ps.value += dca * monthsInPeriod;
+          const periodDca = dca * monthsInPeriod;
+          ps.value += periodDca;
+          ps.totalApports += periodDca;
         }
       }
 
-      // Cash injections (one-time lump sums)
+      // Cash injections
       for (const inj of ps.cashInjections) {
         if (inj.year === year) {
           const amount = Number(inj.montant) || 0;
@@ -355,11 +298,27 @@ export function computeProjection(store) {
           } else {
             ps.value += amount;
           }
+          ps.totalApports += amount;
         }
       }
+
+      // Track gains
+      ps.totalGains = ps.value - ps.totalApports;
+      interetsAnnuels += ps.value - prevValue - ((getDcaForYear(ps, year + 1) || 0) * monthsInPeriod);
     });
 
-    // Emprunts amortization (prorated for first period)
+    // Interest on épargne/héritage
+    interetsAnnuels += epar * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
+    if (heritage > 0) interetsAnnuels += heritage * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
+
+    cumulInterets += Math.max(0, interetsAnnuels);
+
+    // Emprunts
+    let totalDette = emprunts.reduce((s, e) => s + Math.max(0, e.capitalRestant), 0);
+    let mensualitesTotales = emprunts
+      .filter(e => e.capitalRestant > 0)
+      .reduce((s, e) => s + e.mensualite, 0);
+
     emprunts = emprunts.map(e => {
       if (e.capitalRestant <= 0) return e;
       let capital = e.capitalRestant;
@@ -370,6 +329,66 @@ export function computeProjection(store) {
       }
       return { ...e, capitalRestant: capital, dureeRestanteMois: Math.max(0, e.dureeRestanteMois - monthsInPeriod) };
     });
+
+    // Compute tax on gains per placement
+    // PEA: 17.2% prélèvements sociaux on gains (after 5 years; 30% before, but we assume 5y+ hold)
+    // CTO/Crypto: 30% PFU (flat tax) on gains
+    let totalTaxes = 0;
+    let totalApports = 0;
+    let totalGainsAllPlacements = 0;
+    placSims.forEach(ps => {
+      const gains = Math.max(0, ps.totalGains);
+      const gk = ps.groupKey;
+      const isPEA = gk.startsWith('PEA');
+      const taxRate = isPEA ? 0.172 : 0.30; // PEA = 17.2% PS, CTO/Crypto = 30% PFU
+      totalTaxes += gains * taxRate;
+      totalApports += ps.totalApports;
+      totalGainsAllPlacements += gains;
+    });
+
+    // Aggregate placement values by group
+    const groupValues = {};
+    groupKeys.forEach(k => { groupValues[k] = 0; });
+    placSims.forEach(ps => { groupValues[ps.groupKey] += ps.value; });
+
+    const totalPlacements = groupKeys.reduce((s, k) => s + groupValues[k], 0);
+
+    // Cash après impôt = total placement value - taxes on gains
+    const cashApresImpot = Math.round(totalPlacements - totalTaxes);
+
+    // Total liquidités nettes = placements after tax + épargne + heritage + comptes courants
+    const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+    const totalLiquiditesNettes = Math.round(cashApresImpot + epar + heritage + ccTotal);
+
+    const detail = {};
+    groupKeys.forEach(k => { detail[k] = Math.round(groupValues[k]); });
+
+    snapshots.push({
+      annee: year,
+      calendarYear: currentCalendarYear + year,
+      label: `Fin ${currentCalendarYear + year}`,
+      age: ageFinAnnee + year,
+      isRetraite: (ageFinAnnee + year) === ageRetraite,
+      immobilier: Math.round(immo),
+      placementDetail: detail,
+      placements: Math.round(totalPlacements),
+      epargne: Math.round(epar),
+      heritage: Math.round(heritage),
+      interetsAnnuels: Math.round(Math.max(0, interetsAnnuels)),
+      interetsCumules: Math.round(cumulInterets),
+      totalApports: Math.round(totalApports),
+      totalTaxes: Math.round(totalTaxes),
+      cashApresImpot,
+      totalLiquiditesNettes,
+      totalDette: Math.round(totalDette),
+      patrimoineNet: Math.round(immo + totalPlacements + epar + heritage - totalDette),
+      revenusMensuels: Math.round(revenus),
+      depensesMensuelles: Math.round(depenses),
+      mensualites: Math.round(mensualitesTotales),
+      capaciteEpargne: Math.round(revenus - depenses - mensualitesTotales)
+    });
+
+    if (year === years) break;
 
     revenus *= (1 + inflation * periodFraction);
     depenses *= (1 + inflation * periodFraction);
