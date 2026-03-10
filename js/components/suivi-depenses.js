@@ -63,7 +63,7 @@ export function render(store) {
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-100">Suivi de dépenses</h1>
+        <h1 class="text-2xl font-bold text-gray-100">Suivi Live</h1>
         <button id="btn-add-expense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une dépense</button>
       </div>
 
