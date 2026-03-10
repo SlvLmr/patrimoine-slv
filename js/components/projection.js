@@ -5,10 +5,8 @@ export function render(store) {
   const params = store.get('parametres');
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
-  const rendementGroupes = params.rendementGroupes || {};
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjections = params.cashInjections || {};
-  const dcaOverridesParams = params.dcaOverridesParams || {};
   const placements = (store.getAll().actifs?.placements || []);
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
@@ -54,15 +52,6 @@ export function render(store) {
                 <input type="number" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
                   class="w-full px-2 py-1.5 text-xs bg-dark-800 border border-dark-400/40 rounded-md text-gray-300 focus:ring-1 focus:ring-accent-blue/30 focus:border-accent-blue/30 transition">
               </div>`).join('')}
-              ${groupKeys.map(k => {
-                const val = rendementGroupes[k] !== undefined ? rendementGroupes[k] : (params.rendementPlacements || 0.05);
-                return `
-              <div class="w-20">
-                <label class="block text-[10px] text-gray-500 mb-0.5 truncate">${k} %</label>
-                <input type="number" data-group-key="${k}" class="param-rend-group w-full px-2 py-1.5 text-xs bg-dark-800 border border-dark-400/40 rounded-md text-gray-300 focus:ring-1 focus:ring-accent-blue/30 focus:border-accent-blue/30 transition"
-                  value="${(val * 100).toFixed(1)}" min="0" max="50" step="0.5">
-              </div>`;
-              }).join('')}
             </div>
           </div>
           <!-- Horizon retraite -->
@@ -107,38 +96,18 @@ export function render(store) {
                 const gk = getPlacementGroupKey(p);
                 const currentRend = rendementPlacements[p.id] !== undefined
                   ? rendementPlacements[p.id]
-                  : (rendementGroupes[gk] !== undefined ? rendementGroupes[gk] : (Number(p.rendement) || 0.05));
+                  : (Number(p.rendement) || 0.05);
                 const injections = cashInjections[p.id] || [];
-                const dcaP = dcaOverridesParams[p.id];
-                const currentDca = dcaP !== undefined ? dcaP.dcaMensuel : (Number(p.dcaMensuel) || 0);
-                const dcaOvs = dcaP?.overrides || p.dcaOverrides || [];
                 return `
               <div class="flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-dark-800/40 border border-dark-400/20 placement-row" data-placement-id="${p.id}">
-                <span class="text-[10px] text-gray-400 w-28 truncate" title="${p.nom}">${p.nom}</span>
-                <span class="text-[9px] text-gray-600">${gk}</span>
+                <span class="text-[11px] text-gray-300 w-32 truncate font-medium" title="${p.nom}">${p.nom}</span>
+                <span class="text-[9px] text-gray-500">${gk}</span>
                 <div class="flex items-center gap-1">
-                  <label class="text-[9px] text-gray-600">Rdt</label>
-                  <input type="number" class="plac-rend w-14 px-1 py-0.5 text-xs bg-dark-800 border border-dark-400/40 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center"
-                    value="${(currentRend * 100).toFixed(1)}" min="0" max="50" step="0.5">
-                  <span class="text-[9px] text-gray-600">%</span>
+                  <label class="text-[9px] text-gray-500">Rdt</label>
+                  <input type="number" class="plac-rend w-16 px-1.5 py-1 text-xs bg-dark-800 border border-dark-400/40 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center"
+                    value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5">
+                  <span class="text-[9px] text-gray-500">%</span>
                 </div>
-                <div class="flex items-center gap-1">
-                  <label class="text-[9px] text-gray-600">DCA</label>
-                  <input type="number" class="plac-dca w-16 px-1 py-0.5 text-xs bg-dark-800 border border-dark-400/40 rounded text-amber-400/80 focus:ring-1 focus:ring-amber-400/30 text-center"
-                    value="${currentDca}" min="0" max="50000" step="10">
-                  <span class="text-[9px] text-gray-600">€/m</span>
-                </div>
-                <div class="flex items-center gap-1 dca-overrides-container">
-                  ${dcaOvs.map(ov => `
-                  <div class="flex items-center gap-0.5 dca-ov-row">
-                    <span class="text-[9px] text-gray-600">an</span>
-                    <input type="number" class="dca-ov-year w-10 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" value="${ov.fromYear}" min="1" max="50">
-                    <span class="text-[9px] text-gray-600">&rarr;</span>
-                    <input type="number" class="dca-ov-amount w-14 px-1 py-0.5 text-[10px] bg-dark-800 border border-amber-400/30 rounded text-amber-400/80 text-center" value="${ov.dcaMensuel}" step="10">
-                    <button class="dca-ov-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
-                  </div>`).join('')}
-                </div>
-                <button class="dca-ov-add text-[9px] text-amber-400/50 hover:text-amber-400 transition" title="Changer DCA à partir d'une année">+ DCA</button>
                 <div class="flex items-center gap-1 cash-injections-container">
                   ${injections.map(inj => `
                   <div class="flex items-center gap-0.5 cash-inj-row">
@@ -165,8 +134,19 @@ export function render(store) {
       ${(() => {
         const milestones = [20, 25, 30];
         const firstNet = first?.patrimoineNet || 0;
+        const firstImmo = first?.immobilier || 0;
+        const firstFin = (first?.placements || 0) + (first?.epargne || 0) + (first?.heritage || 0);
         return `
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card-dark rounded-xl p-5 kpi-card">
+          <p class="text-sm text-gray-400 mb-2">Patrimoine actuel</p>
+          <p class="text-2xl font-bold text-gray-200">${formatCurrency(firstNet)}</p>
+          <div class="flex gap-3 mt-2 text-xs text-gray-500">
+            <span>Immo ${formatCurrency(firstImmo)}</span>
+            <span>·</span>
+            <span>Fin ${formatCurrency(firstFin)}</span>
+          </div>
+        </div>
         ${milestones.map((yr, i) => {
           const snap = snapshots[yr] || snapshots[snapshots.length - 1];
           const net = snap?.patrimoineNet || 0;
@@ -458,40 +438,15 @@ export function mount(store, navigate) {
     store.set('parametres.rendementImmobilier', (parseFloat(document.getElementById('param-rend-immo').value) || 2) / 100);
     store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
 
-    // Per-group rendement overrides
-    const groupInputs = document.querySelectorAll('.param-rend-group');
-    const rendementGroupes = {};
-    groupInputs.forEach(input => {
-      const key = input.dataset.groupKey;
-      rendementGroupes[key] = (parseFloat(input.value) || 5) / 100;
-    });
-    store.set('parametres.rendementGroupes', rendementGroupes);
-
     // Per-placement overrides
     const rendementPlacements = {};
     const cashInjections = {};
-    const dcaOverridesParams = {};
     document.querySelectorAll('.placement-row').forEach(row => {
       const pid = row.dataset.placementId;
       const rendInput = row.querySelector('.plac-rend');
       if (rendInput) {
         rendementPlacements[pid] = (parseFloat(rendInput.value) || 5) / 100;
       }
-      // DCA
-      const dcaInput = row.querySelector('.plac-dca');
-      const dcaOvRows = row.querySelectorAll('.dca-ov-row');
-      const dcaMensuel = parseFloat(dcaInput?.value) || 0;
-      const overrides = [];
-      dcaOvRows.forEach(ovr => {
-        const yr = parseInt(ovr.querySelector('.dca-ov-year')?.value);
-        const amt = parseFloat(ovr.querySelector('.dca-ov-amount')?.value);
-        if (yr > 0 && !isNaN(amt)) {
-          overrides.push({ fromYear: yr, dcaMensuel: amt });
-        }
-      });
-      dcaOverridesParams[pid] = { dcaMensuel, overrides };
-
-      // Cash injections
       const injRows = row.querySelectorAll('.cash-inj-row');
       if (injRows.length > 0) {
         const injs = [];
@@ -507,7 +462,6 @@ export function mount(store, navigate) {
     });
     store.set('parametres.rendementPlacements', rendementPlacements);
     store.set('parametres.cashInjections', cashInjections);
-    store.set('parametres.dcaOverridesParams', dcaOverridesParams);
 
     // Retirement milestones
     store.set('parametres.anneeRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-annee').value) || 2047);
@@ -538,28 +492,5 @@ export function mount(store, navigate) {
 
   document.querySelectorAll('.cash-inj-remove').forEach(btn => {
     btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
-  });
-
-  // Dynamic add/remove DCA override rows
-  document.querySelectorAll('.dca-ov-add').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const row = btn.closest('.placement-row');
-      const container = row.querySelector('.dca-overrides-container');
-      const div = document.createElement('div');
-      div.className = 'flex items-center gap-0.5 dca-ov-row';
-      div.innerHTML = `
-        <span class="text-[9px] text-gray-600">an</span>
-        <input type="number" class="dca-ov-year w-10 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" min="1" max="50">
-        <span class="text-[9px] text-gray-600">&rarr;</span>
-        <input type="number" class="dca-ov-amount w-14 px-1 py-0.5 text-[10px] bg-dark-800 border border-amber-400/30 rounded text-amber-400/80 text-center" step="10">
-        <button class="dca-ov-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
-      `;
-      container.appendChild(div);
-      div.querySelector('.dca-ov-remove').addEventListener('click', () => div.remove());
-    });
-  });
-
-  document.querySelectorAll('.dca-ov-remove').forEach(btn => {
-    btn.addEventListener('click', () => btn.closest('.dca-ov-row').remove());
   });
 }
