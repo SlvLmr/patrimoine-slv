@@ -112,13 +112,13 @@ export function render(store) {
                 };
                 const icon = groupIcons[gk] || '<svg class="w-2.5 h-2.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
                 return `
-              <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition placement-row" data-placement-id="${p.id}">
+              <div class="flex items-center gap-1 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition placement-row" data-placement-id="${p.id}">
                 ${icon}
-                <span class="text-[10px] text-gray-300 truncate flex-1 font-medium" title="${p.nom}">${p.nom}</span>
-                <span class="text-[8px] text-gray-600 hidden xl:inline">${gk}</span>
-                <input type="number" class="plac-rend w-12 px-1 py-0.5 text-[11px] bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center"
+                <span class="text-xs text-gray-200 truncate max-w-[7rem] font-medium" title="${p.nom}">${p.nom}</span>
+                <span class="text-[9px] text-gray-500 ml-auto">${gk}</span>
+                <input type="number" class="plac-rend w-14 px-1 py-0.5 text-xs bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
                   value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5">
-                <span class="text-[8px] text-gray-600">%</span>
+                <span class="text-[9px] text-gray-500">%</span>
                 <div class="flex items-center gap-0.5 cash-injections-container">
                   ${injections.map(inj => `
                   <div class="flex items-center gap-0.5 cash-inj-row">
