@@ -210,47 +210,65 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('chart-repartition-temps');
     const ctx2d = canvas.getContext('2d');
 
+    let colorIdx = 0;
+    const nextColor = () => VIVID_PALETTE[colorIdx++ % VIVID_PALETTE.length];
     const datasets = [];
 
     // Immobilier
-    const immColor = '#ec4899';
+    const immColor = nextColor();
     datasets.push({
       label: 'Immobilier',
       data: snapshots.map(s => s.immobilier),
       borderColor: immColor,
-      backgroundColor: createVerticalGradient(ctx2d, immColor, 0.25, 0.03),
+      backgroundColor: createVerticalGradient(ctx2d, immColor, 0.18, 0.02),
       fill: true,
-      tension: 0.4,
+      tension: 0.45,
       pointRadius: 0,
-      borderWidth: 2.5
+      borderWidth: 3,
+      hidden: true
     });
 
-    // Financier (placements + épargne + héritage)
-    const finColor = '#a855f7';
-    datasets.push({
-      label: 'Financier',
-      data: snapshots.map(s => (s.placements || 0) + (s.epargne || 0) + (s.heritage || 0)),
-      borderColor: finColor,
-      backgroundColor: createVerticalGradient(ctx2d, finColor, 0.25, 0.03),
-      fill: true,
-      tension: 0.4,
-      pointRadius: 0,
-      borderWidth: 2.5
-    });
-
-    // Dette
-    const hasDebt = snapshots.some(s => s.totalDette > 0);
-    if (hasDebt) {
+    // Each placement group
+    groupKeys.forEach((k) => {
+      const color = nextColor();
       datasets.push({
-        label: 'Dette',
-        data: snapshots.map(s => s.totalDette),
-        borderColor: 'rgba(239,68,68,0.7)',
-        backgroundColor: createVerticalGradient(ctx2d, '#ef4444', 0.12, 0.01),
+        label: k,
+        data: snapshots.map(s => s.placementDetail[k] || 0),
+        borderColor: color,
+        backgroundColor: createVerticalGradient(ctx2d, color, 0.18, 0.02),
         fill: true,
-        tension: 0.4,
+        tension: 0.45,
         pointRadius: 0,
-        borderWidth: 1.5,
-        borderDash: [4, 3]
+        borderWidth: 3
+      });
+    });
+
+    // Épargne
+    const epColor = nextColor();
+    datasets.push({
+      label: 'Épargne',
+      data: snapshots.map(s => s.epargne),
+      borderColor: epColor,
+      backgroundColor: createVerticalGradient(ctx2d, epColor, 0.18, 0.02),
+      fill: true,
+      tension: 0.45,
+      pointRadius: 0,
+      borderWidth: 3
+    });
+
+    // Héritage (show if any heritage items are configured)
+    const heritageItems = store.get('heritage') || [];
+    if (heritageItems.length > 0) {
+      const herColor = nextColor();
+      datasets.push({
+        label: 'Héritage',
+        data: snapshots.map(s => s.heritage),
+        borderColor: herColor,
+        backgroundColor: createVerticalGradient(ctx2d, herColor, 0.18, 0.02),
+        fill: true,
+        tension: 0.45,
+        pointRadius: 0,
+        borderWidth: 3
       });
     }
 
@@ -259,11 +277,11 @@ export function mount(store, navigate) {
       label: 'Patrimoine net',
       data: snapshots.map(s => s.patrimoineNet),
       borderColor: '#dbb88a',
-      backgroundColor: 'transparent',
-      fill: false,
-      tension: 0.4,
+      backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.25, 0.02),
+      fill: true,
+      tension: 0.45,
       pointRadius: 0,
-      borderWidth: 2,
+      borderWidth: 3,
       borderDash: [6, 3],
       hidden: true
     });
