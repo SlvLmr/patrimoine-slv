@@ -50,8 +50,6 @@ function buildPlacementFormBody(item) {
       ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
     </div>
     ${inputField('valeur', 'Valeur totale actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
-    ${inputField('rendement', 'Rendement annuel estimé (%)', ((item.rendement || 0.05) * 100).toFixed(1), 'number', 'step="0.5" min="0" max="100"')}
-
     <div class="mt-2 pt-3 border-t border-dark-400/30">
       <p class="text-sm font-medium text-gray-300 mb-3">Investissement programmé</p>
       ${inputField('apport', 'Apport initial (€)', item.apport || '', 'number', 'step="100" placeholder="Capital de départ"')}
@@ -242,7 +240,6 @@ export function render(store) {
                     <th class="px-5 py-2 text-right">Valeur</th>
                     <th class="px-5 py-2 text-right">DCA</th>
                     <th class="px-5 py-2 text-right">+/- Value</th>
-                    <th class="px-5 py-2 text-right">Rend.</th>
                     <th class="px-5 py-2 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -270,7 +267,6 @@ export function render(store) {
                         </div>
                       ` : '<span class="text-gray-600">—</span>'}
                     </td>
-                    <td class="px-5 py-3 text-right text-gray-400">${i.rendement ? formatPercent(i.rendement) : '—'}</td>
                     <td class="px-5 py-3 text-center opacity-50 group-hover:opacity-100 transition">
                       <button data-edit-plac="${i.id}" class="text-accent-blue hover:text-accent-blue/80 mr-2 text-xs font-medium">Modifier</button>
                       <button data-del-plac="${i.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
@@ -401,7 +397,6 @@ export function mount(store, navigate) {
     const modal = openModal('Ajouter un placement', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.type = data.enveloppe;
-      data.rendement = (data.rendement || 0) / 100;
       data.croissanceDividende = (data.croissanceDividende || 0) / 100;
       data.dcaOverrides = collectDcaOverrides();
       data.isAirLiquide = document.getElementById('field-isAirLiquide')?.checked || false;

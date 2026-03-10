@@ -342,24 +342,26 @@ export function mount(store, navigate) {
     const currentYear = new Date().getFullYear();
     const ageFinAnnee = params.ageFinAnnee || 43;
 
-    const retraiteTauxPleinOffset = (params.ageRetraiteTauxPlein || 65) - ageFinAnnee;
-    const retraiteTauxLegalOffset = (params.ageRetraiteTauxLegal || 64) - ageFinAnnee;
-    const retraiteSouhaiteeOffset = (params.ageRetraiteSouhaitee || 60) - ageFinAnnee;
+    const retraiteTauxPleinOffset = (Number(params.ageRetraiteTauxPlein) || 65) - ageFinAnnee;
+    const retraiteTauxLegalOffset = (Number(params.ageRetraiteTauxLegal) || 64) - ageFinAnnee;
+    const retraiteSouhaiteeOffset = (Number(params.ageRetraiteSouhaitee) || 60) - ageFinAnnee;
 
     const milestoneAnnotations = {};
     const projYears = params.projectionYears || 30;
     const inRange = (v) => v >= 0 && v <= projYears;
+    const toLabel = (v) => v === 0 ? 'Actuel' : `+${v}`;
 
     if (inRange(retraiteSouhaiteeOffset)) {
       milestoneAnnotations.retraiteSouhaitee = {
         type: 'line',
-        xMin: retraiteSouhaiteeOffset,
-        xMax: retraiteSouhaiteeOffset,
-        borderColor: 'rgba(168,85,247,0.5)',
-        borderWidth: 1.5,
+        xMin: toLabel(retraiteSouhaiteeOffset),
+        xMax: toLabel(retraiteSouhaiteeOffset),
+        borderColor: 'rgba(168,85,247,0.45)',
+        borderWidth: 1,
+        borderDash: [6, 4],
         label: {
           display: true,
-          content: `Départ souhaité · ${params.ageRetraiteSouhaitee} ans`,
+          content: `Souhaité · ${params.ageRetraiteSouhaitee} ans`,
           position: 'start',
           yAdjust: -6,
           backgroundColor: 'rgba(168,85,247,0.85)',
@@ -373,42 +375,42 @@ export function mount(store, navigate) {
     if (inRange(retraiteTauxLegalOffset)) {
       milestoneAnnotations.retraiteLegal = {
         type: 'line',
-        xMin: retraiteTauxLegalOffset,
-        xMax: retraiteTauxLegalOffset,
-        borderColor: 'rgba(245,158,11,0.4)',
+        xMin: toLabel(retraiteTauxLegalOffset),
+        xMax: toLabel(retraiteTauxLegalOffset),
+        borderColor: 'rgba(245,158,11,0.45)',
         borderWidth: 1,
-        borderDash: [3, 3],
+        borderDash: [6, 4],
         label: {
           display: true,
-          content: `Légal · ${(params.pensionTauxLegal || 0).toLocaleString('fr-FR')} €`,
+          content: `Légal · ${Number(params.pensionTauxLegal || 0).toLocaleString('fr-FR')} €`,
           position: 'start',
           yAdjust: 14,
           backgroundColor: 'rgba(245,158,11,0.8)',
           color: '#fff',
-          font: { size: 9, weight: '500' },
-          padding: { top: 2, bottom: 2, left: 5, right: 5 },
-          borderRadius: 3
+          font: { size: 10, weight: '600' },
+          padding: { top: 3, bottom: 3, left: 6, right: 6 },
+          borderRadius: 4
         }
       };
     }
     if (inRange(retraiteTauxPleinOffset)) {
       milestoneAnnotations.retraitePlein = {
         type: 'line',
-        xMin: retraiteTauxPleinOffset,
-        xMax: retraiteTauxPleinOffset,
-        borderColor: 'rgba(34,211,238,0.4)',
+        xMin: toLabel(retraiteTauxPleinOffset),
+        xMax: toLabel(retraiteTauxPleinOffset),
+        borderColor: 'rgba(34,211,238,0.45)',
         borderWidth: 1,
-        borderDash: [3, 3],
+        borderDash: [6, 4],
         label: {
           display: true,
-          content: `Taux plein · ${(params.pensionTauxPlein || 0).toLocaleString('fr-FR')} €`,
+          content: `Taux plein · ${Number(params.pensionTauxPlein || 0).toLocaleString('fr-FR')} €`,
           position: 'start',
           yAdjust: 34,
           backgroundColor: 'rgba(34,211,238,0.8)',
           color: '#fff',
-          font: { size: 9, weight: '500' },
-          padding: { top: 2, bottom: 2, left: 5, right: 5 },
-          borderRadius: 3
+          font: { size: 10, weight: '600' },
+          padding: { top: 3, bottom: 3, left: 6, right: 6 },
+          borderRadius: 4
         }
       };
     }
