@@ -343,6 +343,77 @@ export function render(store) {
       </div>
 
       <!-- Stratégie d'investissement — éditable -->
+      ${(() => {
+        // Compute real data for strategy defaults
+        const state = store.getAll();
+        const allPlac = state.actifs?.placements || [];
+        const revenus = (state.revenus || []).reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
+        const depenses = (state.depenses || []).reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
+        const mensualitesEmprunt = (state.passifs?.emprunts || []).reduce((s, e) => s + (Number(e.mensualite) || 0), 0);
+        const capaciteEpargne = revenus - depenses - mensualitesEmprunt;
+
+        // Group DCA by group key
+        const dcaByGroup = {};
+        allPlac.forEach(p => {
+          const gk = getPlacementGroupKey(p);
+          const dca = Number(p.dcaMensuel) || 0;
+          if (dca > 0) dcaByGroup[gk] = (dcaByGroup[gk] || 0) + dca;
+        });
+
+        // PEA total apports
+        const peaApports = allPlac
+          .filter(p => (p.enveloppe || p.type || '').startsWith('PEA'))
+          .reduce((s, p) => s + ((Number(p.valeur) || 0) || (Number(p.apport) || 0)), 0);
+
+        // Heritage total
+        const hTotal = heritageItems.reduce((s, h) => s + (Number(h.montant) || 0), 0);
+        const hYears = heritageItems.map(h => h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?');
+
+        // Enveloppes text
+        const enveloppes = allPlac.length > 0 ? (() => {
+          const envSet = new Set();
+          allPlac.forEach(p => envSet.add(p.enveloppe || p.type || 'Autre'));
+          const lines = [];
+          if (envSet.has('PEA')) lines.push(`PEA : plafond 150 000 € (versé ${formatCurrency(peaApports)}) — gains exonérés d'IR après 5 ans`);
+          if (envSet.has('AV') || allPlac.some(p => (p.enveloppe || p.type || '').includes('AV'))) lines.push('Assurance Vie : pas de plafond, fiscalité avantageuse après 8 ans');
+          if (envSet.has('CTO') || allPlac.some(p => getPlacementGroupKey(p) === 'CTO')) lines.push('CTO : pas de plafond, flat tax 30% sur les plus-values');
+          if (envSet.has('PEE')) lines.push('PEE : abondement employeur, bloqué 5 ans');
+          if (envSet.has('PER')) lines.push('PER : déductible du revenu imposable, bloqué jusqu\'à la retraite');
+          if (envSet.has('Crypto') || allPlac.some(p => getPlacementGroupKey(p) === 'Crypto')) lines.push('Crypto : flat tax 30% sur les plus-values réalisées');
+          return lines.join('\n');
+        })() : 'Aucun placement configuré';
+
+        // DCA text
+        const dcaLines = ['Objectif : remplir le PEA en priorité (avantage fiscal)'];
+        Object.entries(dcaByGroup).sort((a, b) => b[1] - a[1]).forEach(([gk, dca]) => {
+          dcaLines.push(`DCA mensuel ${gk} : ${formatCurrency(dca)}/mois`);
+        });
+        const totalDCA = Object.values(dcaByGroup).reduce((s, v) => s + v, 0);
+        if (totalDCA > 0) dcaLines.push(`Total DCA : ${formatCurrency(totalDCA)}/mois`);
+        dcaLines.push('Quand le PEA est plein → basculer le DCA vers le CTO');
+        const repartition = dcaLines.join('\n');
+
+        // Moyens
+        const moyensLines = [];
+        moyensLines.push(`Capacité d'épargne mensuelle : ${formatCurrency(capaciteEpargne)}`);
+        moyensLines.push(`Revenus : ${formatCurrency(revenus)}/mois — Dépenses : ${formatCurrency(depenses)}/mois`);
+        if (mensualitesEmprunt > 0) moyensLines.push(`Crédits : ${formatCurrency(mensualitesEmprunt)}/mois`);
+        if (hTotal > 0) moyensLines.push(`Héritage prévu : ${formatCurrency(hTotal)} (${hYears.join(', ')})`);
+        const moyens = moyensLines.join('\n');
+
+        // Objectifs
+        const ageRetraiteSouhaitee = params.ageRetraiteSouhaitee || 60;
+        const cashOutLabel = params.cashOutYear ? `Cash out en ${params.cashOutYear}` : 'Non défini';
+        const objectifsLines = [
+          `Retraite souhaitée à ${ageRetraiteSouhaitee} ans`,
+          `Patrimoine actuel : ${formatCurrency(first?.patrimoineNet || 0)}`,
+          `Patrimoine projeté (fin) : ${formatCurrency(last?.patrimoineNet || 0)}`,
+          `Pension légale : ${formatCurrency(params.pensionTauxLegal || 2442)}/mois — Taux plein : ${formatCurrency(params.pensionTauxPlein || 2642)}/mois`,
+          `Stratégie de sortie : ${cashOutLabel}`
+        ];
+        const objectifs = objectifsLines.join('\n');
+
+        return `
       <details class="card-dark rounded-xl group">
         <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
           <div class="flex items-center gap-2">
@@ -352,40 +423,37 @@ export function render(store) {
           <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
         <div class="px-5 pb-5 space-y-4">
+          <div class="flex justify-end mb-2">
+            <button id="strat-refresh" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Régénérer depuis les données actuelles">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Actualiser depuis mes données
+            </button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 class="text-sm font-semibold text-accent-amber mb-2">Enveloppes & plafonds</h3>
-              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.enveloppes || `PEA : plafond 150 000 € de versements (gains exonérés d'IR après 5 ans)
-Assurance Vie : pas de plafond, fiscalité avantageuse après 8 ans
-CTO : pas de plafond, flat tax 30% sur les plus-values
-PER : déductible du revenu imposable, bloqué jusqu'à la retraite
-Crypto : flat tax 30% sur les plus-values réalisées`).replace(/</g, '&lt;')}</div>
+              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+                data-default="${enveloppes.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.enveloppes || enveloppes).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-accent-cyan mb-2">Répartition cible & DCA</h3>
-              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.repartition || `Objectif : remplir le PEA en priorité (avantage fiscal)
-DCA mensuel ETF World : ... €/mois
-DCA mensuel Actions : ... €/mois
-DCA mensuel Crypto : ... €/mois
-Quand le PEA est plein → basculer le DCA vers le CTO`).replace(/</g, '&lt;')}</div>
+              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+                data-default="${repartition.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.repartition || repartition).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-accent-green mb-2">Moyens supplémentaires</h3>
-              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.moyens || `Capacité d'épargne mensuelle : ... €
-Prime annuelle / 13e mois : ... €
-Revenus complémentaires (dividendes, loyers) : ... €
-Héritage prévu : ...`).replace(/</g, '&lt;')}</div>
+              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+                data-default="${moyens.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.moyens || moyens).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-purple-400 mb-2">Objectifs & horizon</h3>
-              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.objectifs || `Retraite anticipée à ... ans
-Patrimoine cible : ... €
-Rente mensuelle visée : ... €/mois
-Stratégie de sortie : ...`).replace(/</g, '&lt;')}</div>
+              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+                data-default="${objectifs.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.objectifs || objectifs).replace(/</g, '&lt;')}</div>
             </div>
           </div>
         </div>
-      </details>
+      </details>`;
+      })()}
 
       <!-- Formules de calcul -->
       <details class="card-dark rounded-xl group">
@@ -802,6 +870,18 @@ export function mount(store, navigate) {
         navigate('projection');
       }
     });
+  });
+
+  // Refresh strategy blocks from data
+  document.getElementById('strat-refresh')?.addEventListener('click', () => {
+    ['strat-enveloppes', 'strat-repartition', 'strat-moyens', 'strat-objectifs'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.dataset.default) {
+        el.textContent = el.dataset.default;
+      }
+    });
+    // Clear saved strategy so defaults regenerate
+    store.set('parametres.strategie', {});
   });
 
   // --- Heritage CRUD from projection ---
