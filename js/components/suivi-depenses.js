@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=5';
+import { formatCurrency, formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=5';
 
 const CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -66,23 +66,23 @@ export function render(store) {
   const renderOp = (op) => {
     const isRevenu = op.type === 'revenu';
     const icon = isRevenu
-      ? `<svg class="w-5 h-5 text-accent-green flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
-      : `<svg class="w-5 h-5 text-accent-red flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
+      ? `<svg class="w-4 h-4 text-accent-green flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
+      : `<svg class="w-4 h-4 text-accent-red flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
     const color = isRevenu ? 'text-accent-green' : 'text-accent-red';
     const sign = isRevenu ? '+' : '-';
     const delAttr = isRevenu ? `data-del-revenu="${op.id}"` : `data-del-expense="${op.id}"`;
     return `
-      <div class="flex items-center justify-between px-4 py-3 hover:bg-dark-600/30 transition group">
-        <div class="flex items-center gap-3">
+      <div class="flex items-center justify-between px-3 py-1.5 hover:bg-dark-600/30 transition group">
+        <div class="flex items-center gap-2">
           ${icon}
           <span class="text-xs text-gray-500 w-16">${formatDate(op.date)}</span>
           <div>
-            <p class="text-sm text-gray-200">${op.description || '—'}</p>
-            <span class="text-xs text-gray-500">${op.categorie || ''}</span>
+            <p class="text-sm text-gray-200 leading-tight">${op.description || '—'}</p>
+            <span class="text-[11px] text-gray-500">${op.categorie || ''}</span>
           </div>
         </div>
-        <div class="flex items-center gap-3">
-          <span class="text-sm font-medium ${color}">${sign}${formatCurrency(op.montant)}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium ${color}">${sign}${formatCurrencyCents(op.montant)}</span>
           <button ${delAttr} class="opacity-0 group-hover:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition">Suppr.</button>
         </div>
       </div>`;
