@@ -109,14 +109,32 @@ export function render(store) {
       </div>
 
       <!-- Summary -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      ${(() => {
+        const firstImmo = first?.immobilier || 0;
+        const firstFin = (first?.placements || 0) + (first?.epargne || 0) + (first?.heritage || 0);
+        const lastImmo = last?.immobilier || 0;
+        const lastFin = (last?.placements || 0) + (last?.epargne || 0) + (last?.heritage || 0);
+        const lastDette = last?.totalDette || 0;
+        return `
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card-dark rounded-xl p-5 kpi-card">
           <p class="text-sm text-gray-400 mb-2">Patrimoine net aujourd'hui</p>
           <p class="text-2xl font-bold text-gray-200">${formatCurrency(first?.patrimoineNet || 0)}</p>
+          <div class="flex gap-3 mt-2 text-xs text-gray-500">
+            <span>Immo ${formatCurrency(firstImmo)}</span>
+            <span>·</span>
+            <span>Financier ${formatCurrency(firstFin)}</span>
+          </div>
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card glow-blue">
           <p class="text-sm text-gray-400 mb-2">Dans ${params.projectionYears} ans</p>
           <p class="text-2xl font-bold gradient-text">${formatCurrency(last?.patrimoineNet || 0)}</p>
+          <div class="flex gap-3 mt-2 text-xs">
+            <span class="text-pink-400">Immo ${formatCurrency(lastImmo)}</span>
+            <span class="text-gray-600">·</span>
+            <span class="text-purple-400">Financier ${formatCurrency(lastFin)}</span>
+            ${lastDette > 0 ? `<span class="text-gray-600">·</span><span class="text-red-400/70">Dette −${formatCurrency(lastDette)}</span>` : ''}
+          </div>
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card glow-green">
           <p class="text-sm text-gray-400 mb-2">Évolution</p>
@@ -130,7 +148,13 @@ export function render(store) {
             </span>` : ''}
           </div>
         </div>
-      </div>
+        <div class="card-dark rounded-xl p-5 kpi-card">
+          <p class="text-sm text-gray-400 mb-2">Capacité d'épargne</p>
+          <p class="text-2xl font-bold ${(last?.capaciteEpargne || 0) >= 0 ? 'text-accent-cyan' : 'text-accent-red'}">${formatCurrency((last?.capaciteEpargne || 0) * 12)}/an</p>
+          <p class="text-xs text-gray-500 mt-2">${formatCurrency(last?.capaciteEpargne || 0)}/mois à horizon</p>
+        </div>
+      </div>`;
+      })()}
 
       <!-- Charts -->
       <div class="card-dark rounded-xl p-6">
@@ -204,65 +228,47 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('chart-repartition-temps');
     const ctx2d = canvas.getContext('2d');
 
-    let colorIdx = 0;
-    const nextColor = () => VIVID_PALETTE[colorIdx++ % VIVID_PALETTE.length];
     const datasets = [];
 
     // Immobilier
-    const immColor = nextColor();
+    const immColor = '#ec4899';
     datasets.push({
       label: 'Immobilier',
       data: snapshots.map(s => s.immobilier),
       borderColor: immColor,
-      backgroundColor: createVerticalGradient(ctx2d, immColor, 0.18, 0.02),
+      backgroundColor: createVerticalGradient(ctx2d, immColor, 0.25, 0.03),
       fill: true,
-      tension: 0.45,
+      tension: 0.4,
       pointRadius: 0,
-      borderWidth: 3,
-      hidden: true
+      borderWidth: 2.5
     });
 
-    // Each placement group
-    groupKeys.forEach((k) => {
-      const color = nextColor();
-      datasets.push({
-        label: k,
-        data: snapshots.map(s => s.placementDetail[k] || 0),
-        borderColor: color,
-        backgroundColor: createVerticalGradient(ctx2d, color, 0.18, 0.02),
-        fill: true,
-        tension: 0.45,
-        pointRadius: 0,
-        borderWidth: 3
-      });
-    });
-
-    // Épargne
-    const epColor = nextColor();
+    // Financier (placements + épargne + héritage)
+    const finColor = '#a855f7';
     datasets.push({
-      label: 'Épargne',
-      data: snapshots.map(s => s.epargne),
-      borderColor: epColor,
-      backgroundColor: createVerticalGradient(ctx2d, epColor, 0.18, 0.02),
+      label: 'Financier',
+      data: snapshots.map(s => (s.placements || 0) + (s.epargne || 0) + (s.heritage || 0)),
+      borderColor: finColor,
+      backgroundColor: createVerticalGradient(ctx2d, finColor, 0.25, 0.03),
       fill: true,
-      tension: 0.45,
+      tension: 0.4,
       pointRadius: 0,
-      borderWidth: 3
+      borderWidth: 2.5
     });
 
-    // Héritage (show if any heritage items are configured)
-    const heritageItems = store.get('heritage') || [];
-    if (heritageItems.length > 0) {
-      const herColor = nextColor();
+    // Dette
+    const hasDebt = snapshots.some(s => s.totalDette > 0);
+    if (hasDebt) {
       datasets.push({
-        label: 'Héritage',
-        data: snapshots.map(s => s.heritage),
-        borderColor: herColor,
-        backgroundColor: createVerticalGradient(ctx2d, herColor, 0.18, 0.02),
+        label: 'Dette',
+        data: snapshots.map(s => s.totalDette),
+        borderColor: 'rgba(239,68,68,0.7)',
+        backgroundColor: createVerticalGradient(ctx2d, '#ef4444', 0.12, 0.01),
         fill: true,
-        tension: 0.45,
+        tension: 0.4,
         pointRadius: 0,
-        borderWidth: 3
+        borderWidth: 1.5,
+        borderDash: [4, 3]
       });
     }
 
@@ -271,11 +277,11 @@ export function mount(store, navigate) {
       label: 'Patrimoine net',
       data: snapshots.map(s => s.patrimoineNet),
       borderColor: '#dbb88a',
-      backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.25, 0.02),
-      fill: true,
-      tension: 0.45,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.4,
       pointRadius: 0,
-      borderWidth: 3,
+      borderWidth: 2,
       borderDash: [6, 3],
       hidden: true
     });
