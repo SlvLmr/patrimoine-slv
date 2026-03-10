@@ -115,91 +115,86 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Revenus & Dépenses — 5 colonnes côte à côte -->
-      <div class="flex items-center justify-between mb-2">
-        <div></div>
-        <div class="flex items-center gap-2">
-          <button id="btn-seed-revenus" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut revenus</button>
-          <button id="btn-seed-depenses" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut dépenses</button>
-        </div>
+      <!-- Revenus & Dépenses — blocs empilés, pliables -->
+      <div class="flex items-center justify-end mb-2 gap-2">
+        <button id="btn-seed-revenus" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut revenus</button>
+        <button id="btn-seed-depenses" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut dépenses</button>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+      <div class="space-y-3">
         <!-- Revenus -->
-        <div class="card-dark rounded-xl overflow-hidden flex flex-col">
-          <div class="p-3 border-b border-dark-400/30">
-            <div class="flex items-center gap-2 mb-2">
-              <div class="w-6 h-6 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
-                <svg class="w-3 h-3 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <details open class="card-dark rounded-xl overflow-hidden group">
+          <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                 </svg>
               </div>
-              <div class="min-w-0">
-                <h2 class="text-sm font-semibold text-gray-200">Revenus</h2>
-                <p class="text-[10px] text-accent-green/80">${formatCurrency(revenus.reduce((s, r) => s + getMensuelLisse(r), 0))}/mois</p>
-              </div>
+              <h2 class="text-sm font-semibold text-gray-200">Revenus</h2>
+              <span class="text-xs text-gray-400">${formatCurrency(revenus.reduce((s, r) => s + getMensuelLisse(r), 0))}/mois</span>
             </div>
-            <button id="btn-add-revenu" class="w-full px-3 py-1.5 bg-accent-green/20 text-accent-green text-xs rounded-lg hover:bg-accent-green/30 transition font-medium">+ Ajouter</button>
-          </div>
+            <div class="flex items-center gap-3">
+              <button id="btn-add-revenu" class="px-3 py-1 bg-accent-green/20 text-accent-green text-xs rounded-lg hover:bg-accent-green/30 transition font-medium" onclick="event.stopPropagation()">+ Ajouter</button>
+              <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
           ${revenus.length > 0 ? `
-          <div class="divide-y divide-dark-400/20 flex-1 overflow-y-auto max-h-96">
+          <div class="divide-y divide-dark-400/20">
             ${revenus.map(r => `
-            <div class="px-3 py-2 hover:bg-dark-600/30 transition">
-              <div class="flex items-center justify-between">
-                <p class="font-medium text-xs text-gray-200 truncate mr-2">${r.nom}</p>
-                <span class="text-xs font-medium text-accent-green whitespace-nowrap">${formatFreqLabel(r)}</span>
+            <div class="flex items-center justify-between px-4 py-1 hover:bg-dark-600/30 transition group/row">
+              <div class="flex items-center gap-3 min-w-0">
+                <p class="text-xs text-gray-200 truncate">${r.nom}</p>
+                <p class="text-[10px] text-gray-600 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
               </div>
-              <div class="flex items-center justify-between mt-0.5">
-                <p class="text-[10px] text-gray-600">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
-                <div class="flex items-center gap-2">
-                  ${r.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(r)}</span>` : ''}
-                  <button data-edit-rev="${r.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Mod.</button>
-                  <button data-del-rev="${r.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
-                </div>
+              <div class="flex items-center gap-3 flex-shrink-0">
+                ${r.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(r)}</span>` : ''}
+                <span class="text-xs font-medium text-gray-100 whitespace-nowrap">${formatFreqLabel(r)}</span>
+                <button data-edit-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium transition">Mod.</button>
+                <button data-del-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition">✕</button>
               </div>
             </div>
             `).join('')}
           </div>
-          ` : '<p class="p-3 text-gray-600 text-xs">Aucun revenu.</p>'}
-        </div>
+          ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
+        </details>
 
-        <!-- 4 colonnes dépenses -->
+        <!-- 4 blocs dépenses -->
         ${depenseGroups.map(g => `
-        <div class="card-dark rounded-xl overflow-hidden flex flex-col">
-          <div class="p-3 border-b border-dark-400/30">
-            <div class="flex items-center gap-2 mb-2">
-              <div class="w-6 h-6 rounded-lg bg-accent-red/15 flex items-center justify-center flex-shrink-0">
-                <svg class="w-3 h-3 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <details open class="card-dark rounded-xl overflow-hidden group">
+          <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-accent-red/15 flex items-center justify-center flex-shrink-0">
+                <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${g.icon}"/>
                 </svg>
               </div>
-              <div class="min-w-0">
-                <h2 class="text-sm font-semibold text-gray-200 truncate">${g.label}</h2>
-                ${g.total > 0 ? `<p class="text-[10px] text-accent-red/80">${formatCurrency(g.total)}/mois</p>` : ''}
-              </div>
+              <h2 class="text-sm font-semibold text-gray-200">${g.label}</h2>
+              ${g.total > 0 ? `<span class="text-xs text-gray-400">${formatCurrency(g.total)}/mois</span>` : ''}
             </div>
-            <button class="btn-add-depense w-full px-3 py-1.5 bg-accent-red/20 text-accent-red text-xs rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}">+ Ajouter</button>
-          </div>
+            <div class="flex items-center gap-3">
+              <button class="btn-add-depense px-3 py-1 bg-accent-red/20 text-accent-red text-xs rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}" onclick="event.stopPropagation()">+ Ajouter</button>
+              <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
           ${g.items.length > 0 ? `
-          <div class="divide-y divide-dark-400/20 flex-1 overflow-y-auto max-h-96">
+          <div class="divide-y divide-dark-400/20">
             ${g.items.map(d => `
-            <div class="px-3 py-2 hover:bg-dark-600/30 transition">
-              <div class="flex items-center justify-between">
-                <p class="font-medium text-xs text-gray-200 truncate mr-2">${d.nom}</p>
-                <span class="text-xs font-medium text-accent-red whitespace-nowrap">${formatFreqLabel(d)}</span>
+            <div class="flex items-center justify-between px-4 py-1 hover:bg-dark-600/30 transition group/row">
+              <div class="flex items-center gap-3 min-w-0">
+                <p class="text-xs text-gray-200 truncate">${d.nom}</p>
+                <p class="text-[10px] text-gray-600 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
               </div>
-              <div class="flex items-center justify-between mt-0.5">
-                <p class="text-[10px] text-gray-600">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
-                <div class="flex items-center gap-2">
-                  ${d.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(d)}</span>` : ''}
-                  <button data-edit-dep="${d.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Mod.</button>
-                  <button data-del-dep="${d.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
-                </div>
+              <div class="flex items-center gap-3 flex-shrink-0">
+                ${d.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(d)}</span>` : ''}
+                <span class="text-xs font-medium text-gray-100 whitespace-nowrap">${formatFreqLabel(d)}</span>
+                <button data-edit-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium transition">Mod.</button>
+                <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition">✕</button>
               </div>
             </div>
             `).join('')}
           </div>
-          ` : '<p class="p-3 text-gray-600 text-xs">Aucune dépense.</p>'}
-        </div>
+          ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucune dépense.</p>'}
+        </details>
         `).join('')}
       </div>
     </div>
