@@ -218,7 +218,7 @@ export function render(store) {
                 return `
               <tr class="hover:bg-dark-600/30 transition ${rowClass}">
                 <td class="px-3 py-2 font-medium text-gray-300">
-                  ${s.annee === 0 ? 'Actuel' : `+${s.annee} an${s.annee > 1 ? 's' : ''}`}
+                  ${s.annee === 0 ? 'Actuel' : `${s.calendarYear}`}
                   ${isRetirement ? '<span class="ml-1 text-xs text-accent-amber font-semibold">RETRAITE</span>' : ''}
                 </td>
                 <td class="px-3 py-2 text-center ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-400'}">${s.age} ans</td>
@@ -243,7 +243,7 @@ export function render(store) {
 export function mount(store, navigate) {
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
-  const labels = snapshots.map(s => s.annee === 0 ? 'Actuel' : `+${s.annee}`);
+  const labels = snapshots.map(s => s.annee === 0 ? 'Actuel' : `${s.calendarYear}`);
 
   // Asset breakdown chart with optional patrimoine net toggle
   if (document.getElementById('chart-repartition-temps')) {

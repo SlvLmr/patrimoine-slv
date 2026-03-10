@@ -129,6 +129,10 @@ export function computeProjection(store) {
   const state = store.getAll();
   const params = state.parametres;
   const years = params.projectionYears || 30;
+  const now = new Date();
+  const currentCalendarYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-based (0=Jan, 11=Dec)
+  const remainingMonths = 12 - currentMonth; // months left including current month
   const inflation = params.inflationRate || 0.02;
   const ageFinAnnee = params.ageFinAnnee || 43;
   const ageRetraite = params.ageRetraite || 64;
@@ -239,14 +243,16 @@ export function computeProjection(store) {
     // Compute interest for this year
     let interetsAnnuels = 0;
     if (year > 0) {
-      interetsAnnuels += immo * rendImmo / (1 + rendImmo);
+      // For year 1, the previous period was partial (remainingMonths)
+      const prevFraction = (year === 1) ? remainingMonths / 12 : 1;
+      interetsAnnuels += immo * rendImmo * prevFraction / (1 + rendImmo * prevFraction);
       placSims.forEach(ps => {
         if (!ps.isAirLiquide) {
-          interetsAnnuels += ps.value * ps.rendement / (1 + ps.rendement);
+          interetsAnnuels += ps.value * ps.rendement * prevFraction / (1 + ps.rendement * prevFraction);
         }
       });
-      interetsAnnuels += epar * rendEpar / (1 + rendEpar);
-      if (heritage > 0) interetsAnnuels += heritage * rendEpar / (1 + rendEpar);
+      interetsAnnuels += epar * rendEpar * prevFraction / (1 + rendEpar * prevFraction);
+      if (heritage > 0) interetsAnnuels += heritage * rendEpar * prevFraction / (1 + rendEpar * prevFraction);
     }
 
     // Cash après impôt = annual savings capacity
@@ -257,6 +263,7 @@ export function computeProjection(store) {
 
     snapshots.push({
       annee: year,
+      calendarYear: year === 0 ? currentCalendarYear : currentCalendarYear + year,
       age: ageFinAnnee + year,
       isRetraite: (ageFinAnnee + year) === ageRetraite,
       immobilier: Math.round(immo),
@@ -278,15 +285,18 @@ export function computeProjection(store) {
     if (year === years) break;
 
     // --- Grow assets for next year ---
+    // First iteration (year 0→1) covers only remaining months of current year
+    const monthsInPeriod = (year === 0) ? remainingMonths : 12;
+    const periodFraction = monthsInPeriod / 12;
 
     // Immobilier
-    immo *= (1 + rendImmo);
+    immo *= (1 + rendImmo * periodFraction);
 
     // Épargne: interest only (Livret A, LDD, etc.)
-    epar *= (1 + rendEpar);
+    epar *= (1 + rendEpar * periodFraction);
 
     // Héritage liquide: same interest rate as épargne
-    if (heritage > 0) heritage *= (1 + rendEpar);
+    if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
 
     // Per-placement growth + DCA + Air Liquide
     placSims.forEach(ps => {
@@ -294,14 +304,16 @@ export function computeProjection(store) {
         // Air Liquide special logic
         const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
 
-        // Share price appreciation
-        ps.prixAction *= (1 + ps.rendement);
+        // Share price appreciation (prorated for first period)
+        ps.prixAction *= (1 + ps.rendement * periodFraction);
 
-        // Dividends (reinvested into more shares)
-        const dividendTotal = ps.quantite * ps.dividendeParAction * loyaltyMultiplier;
-        interetsAnnuels += dividendTotal; // count dividends as interest
-        if (ps.prixAction > 0) {
-          ps.quantite += dividendTotal / ps.prixAction; // reinvest dividends
+        // Dividends (reinvested into more shares) - only for full years
+        if (year > 0 || monthsInPeriod >= 6) {
+          const dividendTotal = ps.quantite * ps.dividendeParAction * loyaltyMultiplier;
+          interetsAnnuels += dividendTotal;
+          if (ps.prixAction > 0) {
+            ps.quantite += dividendTotal / ps.prixAction;
+          }
         }
 
         // Free shares every 2 years (year 2, 4, 6...)
@@ -310,26 +322,26 @@ export function computeProjection(store) {
           ps.quantite += freeShares;
         }
 
-        // DCA: buy more shares monthly
+        // DCA: buy more shares monthly (prorated for first period)
         const dca = getDcaForYear(ps, year + 1);
         if (dca > 0 && ps.prixAction > 0) {
-          const annualDca = dca * 12;
-          ps.quantite += annualDca / ps.prixAction;
+          const periodDca = dca * monthsInPeriod;
+          ps.quantite += periodDca / ps.prixAction;
         }
 
         // Grow dividend per share
-        ps.dividendeParAction *= (1 + ps.croissanceDividende);
+        ps.dividendeParAction *= (1 + ps.croissanceDividende * periodFraction);
 
         // Update value
         ps.value = ps.quantite * ps.prixAction;
 
       } else {
-        // Standard placement: rendement + DCA
-        ps.value *= (1 + ps.rendement);
+        // Standard placement: rendement + DCA (prorated for first period)
+        ps.value *= (1 + ps.rendement * periodFraction);
 
         const dca = getDcaForYear(ps, year + 1);
         if (dca > 0) {
-          ps.value += dca * 12;
+          ps.value += dca * monthsInPeriod;
         }
       }
 
@@ -347,20 +359,20 @@ export function computeProjection(store) {
       }
     });
 
-    // Emprunts amortization
+    // Emprunts amortization (prorated for first period)
     emprunts = emprunts.map(e => {
       if (e.capitalRestant <= 0) return e;
       let capital = e.capitalRestant;
-      for (let m = 0; m < 12; m++) {
+      for (let m = 0; m < monthsInPeriod; m++) {
         const interetMensuel = capital * (e.tauxAnnuel / 12);
         const amortissement = Math.min(capital, e.mensualite - interetMensuel);
         capital = Math.max(0, capital - amortissement);
       }
-      return { ...e, capitalRestant: capital, dureeRestanteMois: Math.max(0, e.dureeRestanteMois - 12) };
+      return { ...e, capitalRestant: capital, dureeRestanteMois: Math.max(0, e.dureeRestanteMois - monthsInPeriod) };
     });
 
-    revenus *= (1 + inflation);
-    depenses *= (1 + inflation);
+    revenus *= (1 + inflation * periodFraction);
+    depenses *= (1 + inflation * periodFraction);
   }
 
   // Attach metadata
