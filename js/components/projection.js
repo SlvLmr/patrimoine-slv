@@ -271,11 +271,11 @@ export function mount(store, navigate) {
       label: 'Immobilier',
       data: snapshots.map(s => s.immobilier),
       borderColor: immColor,
-      backgroundColor: createVerticalGradient(ctx2d, immColor, 0.18, 0.02),
-      fill: true,
+      backgroundColor: immColor,
+      fill: false,
       tension: 0.45,
       pointRadius: 0,
-      borderWidth: 2.5
+      borderWidth: 3
     });
 
     // Each placement group
@@ -285,11 +285,11 @@ export function mount(store, navigate) {
         label: k,
         data: snapshots.map(s => s.placementDetail[k] || 0),
         borderColor: color,
-        backgroundColor: createVerticalGradient(ctx2d, color, 0.18, 0.02),
-        fill: true,
+        backgroundColor: color,
+        fill: false,
         tension: 0.45,
         pointRadius: 0,
-        borderWidth: 2.5
+        borderWidth: 3
       });
     });
 
@@ -299,11 +299,11 @@ export function mount(store, navigate) {
       label: 'Épargne',
       data: snapshots.map(s => s.epargne),
       borderColor: epColor,
-      backgroundColor: createVerticalGradient(ctx2d, epColor, 0.18, 0.02),
-      fill: true,
+      backgroundColor: epColor,
+      fill: false,
       tension: 0.45,
       pointRadius: 0,
-      borderWidth: 2.5
+      borderWidth: 3
     });
 
     createChart('chart-repartition-temps', {
