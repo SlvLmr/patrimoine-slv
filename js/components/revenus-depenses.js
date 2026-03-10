@@ -163,43 +163,43 @@ export function render(store) {
         <h2 class="text-lg font-semibold text-gray-200">Dépenses</h2>
         <button id="btn-seed-depenses" class="px-3 py-2 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition" title="Charger les dépenses par défaut">Défaut</button>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         ${depenseGroups.map(g => `
         <div class="card-dark rounded-xl overflow-hidden">
-          <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-accent-red/15 flex items-center justify-center">
-                <svg class="w-4 h-4 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-4 border-b border-dark-400/30">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-7 h-7 rounded-lg bg-accent-red/15 flex items-center justify-center flex-shrink-0">
+                <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${g.icon}"/>
                 </svg>
               </div>
-              <div>
-                <h2 class="text-base font-semibold text-gray-200">${g.label}</h2>
-                ${g.total > 0 ? `<p class="text-xs text-accent-red/80">${formatCurrency(g.total)}/mois</p>` : ''}
+              <div class="min-w-0">
+                <h2 class="text-sm font-semibold text-gray-200 truncate">${g.label}</h2>
+                ${g.total > 0 ? `<p class="text-[10px] text-accent-red/80">${formatCurrency(g.total)}/mois</p>` : ''}
               </div>
             </div>
-            <button class="btn-add-depense px-4 py-2 bg-accent-red/20 text-accent-red text-sm rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}">+ Ajouter</button>
+            <button class="btn-add-depense w-full px-3 py-1.5 bg-accent-red/20 text-accent-red text-xs rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}">+ Ajouter</button>
           </div>
           ${g.items.length > 0 ? `
-          <div class="divide-y divide-dark-400/20">
+          <div class="divide-y divide-dark-400/20 max-h-80 overflow-y-auto">
             ${g.items.map(d => `
-            <div class="flex items-center justify-between px-5 py-3 hover:bg-dark-600/30 transition">
-              <div>
-                <p class="font-medium text-sm text-gray-200">${d.nom}</p>
-                <p class="text-xs text-gray-600">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
+            <div class="px-3 py-2 hover:bg-dark-600/30 transition">
+              <div class="flex items-center justify-between">
+                <p class="font-medium text-xs text-gray-200 truncate mr-2">${d.nom}</p>
+                <span class="text-xs font-medium text-accent-red whitespace-nowrap">${formatFreqLabel(d)}</span>
               </div>
-              <div class="flex items-center gap-3">
-                <div class="text-right">
-                  <span class="font-medium text-accent-red">${formatFreqLabel(d)}</span>
-                  ${d.frequence === 'Annuel' ? `<p class="text-[10px] text-gray-500">${formatLisseLabel(d)}</p>` : ''}
+              <div class="flex items-center justify-between mt-0.5">
+                <p class="text-[10px] text-gray-600">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
+                <div class="flex items-center gap-2">
+                  ${d.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(d)}</span>` : ''}
+                  <button data-edit-dep="${d.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Mod.</button>
+                  <button data-del-dep="${d.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
                 </div>
-                <button data-edit-dep="${d.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
-                <button data-del-dep="${d.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
               </div>
             </div>
             `).join('')}
           </div>
-          ` : '<p class="p-5 text-gray-600 text-sm">Aucune dépense.</p>'}
+          ` : '<p class="p-3 text-gray-600 text-xs">Aucune dépense.</p>'}
         </div>
         `).join('')}
       </div>
