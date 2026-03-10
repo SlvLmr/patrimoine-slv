@@ -11,6 +11,7 @@ export function render(store) {
   const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
   const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
 
   const hasData = totalActifs > 0 || totalPassifs > 0;
 
@@ -19,6 +20,7 @@ export function render(store) {
   if (immoTotal > 0) allocItems.push({ label: 'Immobilier', value: immoTotal, color: COLORS.immobilier, pct: ((immoTotal / totalActifs) * 100).toFixed(1) });
   if (placTotal > 0) allocItems.push({ label: 'Placements', value: placTotal, color: COLORS.placements, pct: ((placTotal / totalActifs) * 100).toFixed(1) });
   if (eparTotal > 0) allocItems.push({ label: 'Épargne', value: eparTotal, color: COLORS.epargne, pct: ((eparTotal / totalActifs) * 100).toFixed(1) });
+  if (ccTotal > 0) allocItems.push({ label: 'Comptes courants', value: ccTotal, color: '#6366f1', pct: ((ccTotal / totalActifs) * 100).toFixed(1) });
 
   return `
     <div class="space-y-6">
@@ -39,7 +41,7 @@ export function render(store) {
       </div>
 
       <!-- KPI Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div class="card-dark rounded-xl p-5 kpi-card glow-green">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center">
@@ -72,6 +74,25 @@ export function render(store) {
             <p class="text-sm text-gray-400">Épargne</p>
           </div>
           <p class="text-2xl font-bold text-accent-amber">${formatCurrency(eparTotal)}</p>
+        </div>
+        <div class="card-dark rounded-xl p-5 kpi-card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400">Comptes courants</p>
+          </div>
+          <p class="text-2xl font-bold text-indigo-400">${formatCurrency(ccTotal)}</p>
+          <div class="mt-2 space-y-0.5">
+            ${(state.actifs.comptesCourants || []).map(c => `
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-500">${c.nom}</span>
+                <span class="text-gray-400">${formatCurrency(c.solde)}</span>
+              </div>
+            `).join('')}
+          </div>
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card glow-green">
           <div class="flex items-center gap-3 mb-3">
@@ -118,7 +139,7 @@ export function render(store) {
       </div>
 
       <!-- Detail Tables -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="card-dark rounded-xl p-6">
           <div class="flex items-center gap-2 mb-4">
             <div class="w-3 h-3 rounded-full bg-accent-green"></div>
@@ -158,6 +179,19 @@ export function render(store) {
             </div>
           `).join('') : '<p class="text-gray-600 text-sm">Aucune épargne</p>'}
         </div>
+        <div class="card-dark rounded-xl p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
+            <h3 class="font-semibold text-gray-200">Comptes courants</h3>
+          </div>
+          ${(state.actifs.comptesCourants || []).map(c => `
+            <div class="flex justify-between items-center py-2.5 border-b border-dark-400/30">
+              <span class="text-gray-400 text-sm">${c.nom}</span>
+              <input type="number" data-cc-id="${c.id}" value="${Number(c.solde) || 0}" step="0.01"
+                class="w-28 px-2 py-1 text-sm bg-dark-800 border border-dark-400/30 rounded text-right text-indigo-400 font-medium focus:ring-1 focus:ring-indigo-500/30">
+            </div>
+          `).join('')}
+        </div>
       </div>
       ` : `
       <div class="card-dark rounded-xl p-12 text-center">
@@ -181,6 +215,7 @@ export function mount(store) {
   const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
   const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const totalActifs = store.totalActifs();
   const totalPassifs = store.totalPassifs();
 
@@ -197,10 +232,12 @@ export function mount(store) {
       ['#8b6914', '#b8976c'],  // deep amber→bronze for immobilier
       ['#c9a76c', '#dbb88a'],  // gold→light gold for placements
       ['#e8d5b0', '#f5edd8'],  // cream→pale cream for epargne
+      ['#6366f1', '#818cf8'],  // indigo for comptes courants
     ];
     if (immoTotal > 0) { data.push(immoTotal); labels.push('Immobilier'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[0][0], gradientPairsMap[0][1])); }
     if (placTotal > 0) { data.push(placTotal); labels.push('Placements'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[1][0], gradientPairsMap[1][1])); }
     if (eparTotal > 0) { data.push(eparTotal); labels.push('Épargne'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[2][0], gradientPairsMap[2][1])); }
+    if (ccTotal > 0) { data.push(ccTotal); labels.push('Comptes courants'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[3][0], gradientPairsMap[3][1])); }
 
     if (data.length > 0) {
       createChart('chart-repartition', {
@@ -276,4 +313,17 @@ export function mount(store) {
       }
     });
   }
+
+  // Live edit comptes courants
+  document.querySelectorAll('[data-cc-id]').forEach(input => {
+    input.addEventListener('change', () => {
+      const ccId = input.dataset.ccId;
+      const cc = (store.getAll().actifs.comptesCourants || []);
+      const account = cc.find(c => c.id === ccId);
+      if (account) {
+        account.solde = parseFloat(input.value) || 0;
+        store.set('actifs.comptesCourants', cc);
+      }
+    });
+  });
 }

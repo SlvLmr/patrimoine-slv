@@ -7,7 +7,11 @@ const defaultState = {
   actifs: {
     immobilier: [],
     placements: [],
-    epargne: []
+    epargne: [],
+    comptesCourants: [
+      { id: 'cc-cic', nom: 'Live CIC', solde: 0 },
+      { id: 'cc-trade', nom: 'Live Trade Republic', solde: 0 }
+    ]
   },
   passifs: {
     emprunts: []
@@ -67,6 +71,7 @@ const defaultState = {
     { id: 'dep48', nom: 'Hélène part. PEL', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: -50 },
   ],
   suiviDepenses: [],
+  archiveDepenses: [],
   parametres: {
     inflationRate: 0.02,
     projectionYears: 30,
@@ -213,6 +218,7 @@ const Store = {
     this._profileId = activeId;
     this._state = loadState(activeId);
     this._applyMonthlyDCA();
+    this._archivePastExpenses();
     return this;
   },
 
@@ -226,6 +232,8 @@ const Store = {
     if (lastDCA === monthKey) return; // already applied this month
 
     const placements = this._state.actifs?.placements || [];
+    const comptesCourants = this._state.actifs?.comptesCourants || [];
+    const tradeCc = comptesCourants.find(c => c.id === 'cc-trade');
     let changed = false;
 
     placements.forEach(p => {
@@ -235,12 +243,27 @@ const Store = {
       const pru = Number(p.pru) || 0;
       const qty = Number(p.quantite) || 0;
       const val = Number(p.valeur) || 0;
+      const env = (p.enveloppe || p.type || '').toUpperCase();
+      const isPEA = env.startsWith('PEA');
 
       if (pru > 0) {
-        // Buy new parts at PRU
-        const newParts = dca / pru;
-        p.quantite = qty + newParts;
-        p.valeur = (qty + newParts) * pru;
+        if (isPEA) {
+          // PEA: only whole shares, remainder goes to Live Trade
+          const wholeParts = Math.floor(dca / pru);
+          const remainder = dca - (wholeParts * pru);
+          if (wholeParts > 0) {
+            p.quantite = qty + wholeParts;
+            p.valeur = (qty + wholeParts) * pru;
+          }
+          if (remainder > 0 && tradeCc) {
+            tradeCc.solde = (Number(tradeCc.solde) || 0) + remainder;
+          }
+        } else {
+          // CTO/Crypto: fractional shares allowed
+          const newParts = dca / pru;
+          p.quantite = qty + newParts;
+          p.valeur = (qty + newParts) * pru;
+        }
       } else {
         // No PRU: just add the amount
         p.valeur = val + dca;
@@ -252,6 +275,63 @@ const Store = {
       this._state.parametres._lastDCAMonth = monthKey;
       saveState(this._profileId, this._state);
     }
+  },
+
+  // Archive past months' expenses into archiveDepenses summaries
+  _archivePastExpenses() {
+    const items = this._state.suiviDepenses || [];
+    if (items.length === 0) return;
+
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // Find items from past months (not current month)
+    const pastItems = items.filter(i => {
+      const d = new Date(i.date);
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return mk < currentMonthKey;
+    });
+
+    if (pastItems.length === 0) return;
+
+    // Group past items by month
+    const byMonth = {};
+    pastItems.forEach(i => {
+      const d = new Date(i.date);
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!byMonth[mk]) byMonth[mk] = { total: 0, count: 0, categories: {} };
+      const montant = Number(i.montant) || 0;
+      byMonth[mk].total += montant;
+      byMonth[mk].count++;
+      const cat = i.categorie || 'Autre';
+      byMonth[mk].categories[cat] = (byMonth[mk].categories[cat] || 0) + montant;
+    });
+
+    // Merge into archiveDepenses
+    if (!this._state.archiveDepenses) this._state.archiveDepenses = [];
+    const archive = this._state.archiveDepenses;
+
+    for (const [mk, data] of Object.entries(byMonth)) {
+      const existing = archive.find(a => a.mois === mk);
+      if (existing) {
+        existing.total += data.total;
+        existing.count += data.count;
+        for (const [cat, val] of Object.entries(data.categories)) {
+          existing.categories[cat] = (existing.categories[cat] || 0) + val;
+        }
+      } else {
+        archive.push({ mois: mk, total: data.total, count: data.count, categories: data.categories });
+      }
+    }
+
+    // Remove archived items from suiviDepenses (keep only current month)
+    this._state.suiviDepenses = items.filter(i => {
+      const d = new Date(i.date);
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return mk >= currentMonthKey;
+    });
+
+    saveState(this._profileId, this._state);
   },
 
   // Cloud sync: load all data from cloud and replace local
@@ -408,7 +488,8 @@ const Store = {
     const immo = a.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
     const plac = a.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
     const epar = a.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
-    return immo + plac + epar;
+    const cc = (a.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+    return immo + plac + epar + cc;
   },
 
   totalPassifs() {

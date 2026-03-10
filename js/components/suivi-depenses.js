@@ -48,6 +48,16 @@ export function render(store) {
 
   const monthLabel = new Date(currentMonth + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
+  // Archive data
+  const archives = store.get('archiveDepenses') || [];
+  const currentYear = new Date().getFullYear().toString();
+
+  // Cumulé annuel = archives de cette année + dépenses du mois en cours
+  const yearArchives = archives.filter(a => a.mois.startsWith(currentYear));
+  const yearArchiveTotal = yearArchives.reduce((s, a) => s + (a.total || 0), 0);
+  const yearTotal = yearArchiveTotal + monthTotal;
+  const yearCount = yearArchives.reduce((s, a) => s + (a.count || 0), 0) + monthItems.length;
+
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -56,7 +66,7 @@ export function render(store) {
       </div>
 
       <!-- KPIs -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card-dark rounded-xl p-5 kpi-card">
           <p class="text-sm text-gray-400 mb-2">Aujourd'hui</p>
           <p class="text-2xl font-bold text-accent-red">${formatCurrency(todayTotal)}</p>
@@ -70,6 +80,11 @@ export function render(store) {
         <div class="card-dark rounded-xl p-5 kpi-card">
           <p class="text-sm text-gray-400 mb-2">Moy. journalière (mois)</p>
           <p class="text-2xl font-bold text-gray-200">${formatCurrency(monthItems.length > 0 ? monthTotal / new Date().getDate() : 0)}</p>
+        </div>
+        <div class="card-dark rounded-xl p-5 kpi-card">
+          <p class="text-sm text-gray-400 mb-2">Cumulé ${currentYear}</p>
+          <p class="text-2xl font-bold text-purple-400">${formatCurrency(yearTotal)}</p>
+          <p class="text-xs text-gray-500 mt-1">${yearCount} dépense${yearCount > 1 ? 's' : ''}</p>
         </div>
       </div>
 
@@ -124,10 +139,39 @@ export function render(store) {
       </div>`;
       }).join('')}
 
-      ${months.length === 0 ? `
+      ${months.length === 0 && archives.length === 0 ? `
       <div class="card-dark rounded-xl p-8 text-center">
         <p class="text-gray-500">Aucune dépense enregistrée. Cliquez sur "+ Ajouter une dépense" pour commencer.</p>
       </div>
+      ` : ''}
+
+      ${archives.length > 0 ? `
+      <!-- Archives -->
+      <details class="card-dark rounded-xl group">
+        <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+          <h2 class="text-sm font-semibold text-gray-400">Archives mensuelles</h2>
+          <svg class="w-4 h-4 text-gray-600 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="divide-y divide-dark-400/20">
+          ${archives.sort((a, b) => b.mois.localeCompare(a.mois)).map(a => {
+            const label = new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
+            return `
+          <div class="px-5 py-3">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-sm text-gray-300 capitalize">${label}</span>
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-gray-500">${a.count} dépense${a.count > 1 ? 's' : ''}</span>
+                <span class="text-sm font-semibold text-accent-red">${formatCurrency(a.total)}</span>
+              </div>
+            </div>
+            ${cats.length > 0 ? `<div class="flex flex-wrap gap-1 mt-1">${cats.map(([cat, val]) =>
+              `<span class="text-[10px] px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-500">${cat} ${formatCurrency(val)}</span>`
+            ).join('')}</div>` : ''}
+          </div>`;
+          }).join('')}
+        </div>
+      </details>
       ` : ''}
     </div>
   `;
