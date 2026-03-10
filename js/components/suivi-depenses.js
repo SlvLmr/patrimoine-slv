@@ -63,6 +63,11 @@ const DEPENSES_MENSUELLES_CIC = [
 export function render(store) {
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
   if (!store.get('suiviRevenus')) store.set('suiviRevenus', []);
+  // Init depenses mensuelles CIC from defaults if not present
+  if (!store.get('depensesMensuellesCIC')) {
+    store.set('depensesMensuellesCIC', JSON.parse(JSON.stringify(DEPENSES_MENSUELLES_CIC)));
+  }
+  const depMensuelles = store.get('depensesMensuellesCIC') || [];
   const items = store.get('suiviDepenses') || [];
   const revenus = store.get('suiviRevenus') || [];
   const comptesCourants = store.get('actifs')?.comptesCourants || [
@@ -76,7 +81,7 @@ export function render(store) {
   const monthKey = getCurrentMonthKey();
   const cicCochees = store.get('cicMensuellesCochees') || {};
   const cocheesThisMonth = cicCochees[monthKey] || [];
-  const totalCochees = DEPENSES_MENSUELLES_CIC
+  const totalCochees = depMensuelles
     .filter(d => cocheesThisMonth.includes(d.id))
     .reduce((s, d) => s + d.montant, 0);
 
@@ -162,32 +167,39 @@ export function render(store) {
           ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
 
           <!-- Dépenses mensuelles fixes -->
-          <details class="group/mensuel">
-            <summary class="flex items-center justify-between px-4 py-2.5 cursor-pointer select-none border-t border-dark-400/30 bg-dark-700/30">
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-dark-700/30">
               <div class="flex items-center gap-2">
                 <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 <span class="text-xs font-semibold text-gray-300">Dépenses mensuelles</span>
-                <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${DEPENSES_MENSUELLES_CIC.length}</span>
+                <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${depMensuelles.length}</span>
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-xs font-medium text-accent-red">${formatCurrency(totalCochees)}</span>
-                <svg class="w-3.5 h-3.5 text-gray-500 transition-transform group-open/mensuel:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <button id="btn-add-mensuel-cic" class="text-accent-amber hover:text-accent-amber/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
               </div>
-            </summary>
+            </div>
             <div class="divide-y divide-dark-400/10">
-              ${DEPENSES_MENSUELLES_CIC.map(d => {
+              ${depMensuelles.map((d, idx) => {
                 const checked = cocheesThisMonth.includes(d.id);
                 return `
-              <label class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition cursor-pointer select-none">
-                <div class="flex items-center gap-2.5 min-w-0">
+              <div class="flex items-center justify-between px-3 py-1.5 hover:bg-dark-600/30 transition group/mc">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="flex flex-col gap-0.5 opacity-0 group-hover/mc:opacity-100 transition flex-shrink-0">
+                    <button data-mc-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▲</button>
+                    <button data-mc-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▼</button>
+                  </div>
                   <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-700 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
-                  <span class="text-[12px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'}">${d.nom}</span>
+                  <span class="text-[12px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
                 </div>
-                <span class="text-[12px] font-medium ${checked ? 'text-gray-600' : 'text-gray-300'}">${formatCurrencyCents(d.montant)}</span>
-              </label>`;
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[12px] font-medium ${checked ? 'text-gray-600' : 'text-gray-300'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
+                  <button data-mc-del="${d.id}" class="opacity-0 group-hover/mc:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition">✕</button>
+                </div>
+              </div>`;
               }).join('')}
             </div>
-          </details>
+          </div>
         </div>
 
         <!-- Trade Republic -->
@@ -415,6 +427,85 @@ export function mount(store, navigate) {
       }
       cicCochees[monthKey] = list;
       store.set('cicMensuellesCochees', cicCochees);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Edit monthly expense
+  document.querySelectorAll('[data-mc-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.mcEdit;
+      const list = store.get('depensesMensuellesCIC') || [];
+      const dep = list.find(d => d.id === id);
+      if (!dep) return;
+      const body = `
+        ${inputField('nom', 'Nom', dep.nom)}
+        ${inputField('montant', 'Montant (€)', dep.montant, 'number', '0.01')}
+      `;
+      openModal('Modifier la dépense mensuelle', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        dep.nom = data.nom || dep.nom;
+        dep.montant = Number(data.montant) || dep.montant;
+        store.set('depensesMensuellesCIC', list);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Move monthly expense up
+  document.querySelectorAll('[data-mc-up]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.mcUp;
+      const list = store.get('depensesMensuellesCIC') || [];
+      const idx = list.findIndex(d => d.id === id);
+      if (idx > 0) {
+        [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]];
+        store.set('depensesMensuellesCIC', list);
+        navigate('suivi-depenses');
+      }
+    });
+  });
+
+  // Move monthly expense down
+  document.querySelectorAll('[data-mc-down]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.mcDown;
+      const list = store.get('depensesMensuellesCIC') || [];
+      const idx = list.findIndex(d => d.id === id);
+      if (idx >= 0 && idx < list.length - 1) {
+        [list[idx], list[idx + 1]] = [list[idx + 1], list[idx]];
+        store.set('depensesMensuellesCIC', list);
+        navigate('suivi-depenses');
+      }
+    });
+  });
+
+  // Delete monthly expense
+  document.querySelectorAll('[data-mc-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.mcDel;
+      const list = store.get('depensesMensuellesCIC') || [];
+      const idx = list.findIndex(d => d.id === id);
+      if (idx !== -1) {
+        list.splice(idx, 1);
+        store.set('depensesMensuellesCIC', list);
+        navigate('suivi-depenses');
+      }
+    });
+  });
+
+  // Add new monthly expense
+  document.getElementById('btn-add-mensuel-cic')?.addEventListener('click', () => {
+    const body = `
+      ${inputField('nom', 'Nom', '')}
+      ${inputField('montant', 'Montant (€)', '', 'number', '0.01')}
+    `;
+    openModal('Ajouter une dépense mensuelle', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      if (!data.nom || !data.montant) return;
+      const list = store.get('depensesMensuellesCIC') || [];
+      list.push({ id: 'mc-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) });
+      store.set('depensesMensuellesCIC', list);
       navigate('suivi-depenses');
     });
   });
