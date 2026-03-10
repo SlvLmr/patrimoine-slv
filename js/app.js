@@ -47,7 +47,13 @@ const navItems = [
 let appStarted = false;
 
 function navigate(page) {
-  window.location.hash = page;
+  const current = window.location.hash.slice(1);
+  if (page && page === current) {
+    // Same page — re-render directly
+    renderPage();
+  } else {
+    window.location.hash = page;
+  }
 }
 
 function renderPage() {

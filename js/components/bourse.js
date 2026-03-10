@@ -399,9 +399,6 @@ export function mount(store, navigate) {
   document.getElementById('btn-add-ticker')?.addEventListener('click', () => {
     modal?.classList.remove('hidden');
   });
-  document.getElementById('modal-overlay-add')?.addEventListener('click', () => {
-    modal?.classList.add('hidden');
-  });
   document.getElementById('btn-cancel-add')?.addEventListener('click', () => {
     modal?.classList.add('hidden');
   });

@@ -73,7 +73,6 @@ export function openModal(title, bodyHtml, onConfirm) {
   document.body.appendChild(modal);
 
   modal.querySelector('#modal-cancel').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
   if (onConfirm) {
     modal.querySelector('#modal-confirm').addEventListener('click', () => {
