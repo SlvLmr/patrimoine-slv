@@ -4,8 +4,6 @@ import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as Dashboard from './components/dashboard.js';
 import * as Heritage from './components/heritage.js';
-import * as Actifs from './components/actifs.js?v=5';
-import * as Passifs from './components/passifs.js';
 import * as RevenusDepenses from './components/revenus-depenses.js';
 import * as Projection from './components/projection.js?v=5';
 import * as Fiscalite from './components/fiscalite.js';
@@ -19,8 +17,6 @@ const store = Store.init();
 const routes = {
   dashboard: Dashboard,
   heritage: Heritage,
-  actifs: Actifs,
-  passifs: Passifs,
   'revenus-depenses': RevenusDepenses,
   'suivi-depenses': SuiviDepenses,
   projection: Projection,
@@ -35,7 +31,6 @@ const navItems = [
   { id: '_title_quotidien', sectionTitle: 'Quotidien' },
   { id: 'revenus-depenses', label: 'Revenus et dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'suivi-depenses', label: 'Suivi Live', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-  { id: 'actifs', label: 'Actifs et passifs', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
   { id: '_title_demain', sectionTitle: 'Demain' },
   { id: 'projection', label: 'Projection', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
   { id: 'fiscalite', label: 'Fiscalité', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
@@ -58,8 +53,8 @@ function renderPage() {
   destroyAllCharts();
 
   let hash = window.location.hash.slice(1) || 'dashboard';
-  // Redirect passifs to the merged actifs page
-  if (hash === 'passifs' || hash === 'heritage') { hash = 'actifs'; window.location.hash = 'actifs'; return; }
+  // Redirect legacy routes to projection
+  if (hash === 'actifs' || hash === 'passifs' || hash === 'heritage') { hash = 'projection'; window.location.hash = 'projection'; return; }
   const component = routes[hash] || routes.dashboard;
   const contentEl = document.getElementById('app-content');
 
