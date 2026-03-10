@@ -163,49 +163,37 @@ export function render(store) {
 
       <!-- Summary -->
       ${(() => {
-        const firstImmo = first?.immobilier || 0;
-        const firstFin = (first?.placements || 0) + (first?.epargne || 0) + (first?.heritage || 0);
-        const lastImmo = last?.immobilier || 0;
-        const lastFin = (last?.placements || 0) + (last?.epargne || 0) + (last?.heritage || 0);
-        const lastDette = last?.totalDette || 0;
+        const milestones = [20, 25, 30];
+        const firstNet = first?.patrimoineNet || 0;
         return `
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card-dark rounded-xl p-5 kpi-card">
-          <p class="text-sm text-gray-400 mb-2">Patrimoine net aujourd'hui</p>
-          <p class="text-2xl font-bold text-gray-200">${formatCurrency(first?.patrimoineNet || 0)}</p>
-          <div class="flex gap-3 mt-2 text-xs text-gray-500">
-            <span>Immo ${formatCurrency(firstImmo)}</span>
-            <span>·</span>
-            <span>Financier ${formatCurrency(firstFin)}</span>
-          </div>
-        </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-blue">
-          <p class="text-sm text-gray-400 mb-2">Dans ${params.projectionYears} ans</p>
-          <p class="text-2xl font-bold gradient-text">${formatCurrency(last?.patrimoineNet || 0)}</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        ${milestones.map((yr, i) => {
+          const snap = snapshots[yr] || snapshots[snapshots.length - 1];
+          const net = snap?.patrimoineNet || 0;
+          const immo = snap?.immobilier || 0;
+          const fin = (snap?.placements || 0) + (snap?.epargne || 0) + (snap?.heritage || 0);
+          const dette = snap?.totalDette || 0;
+          const evol = net - firstNet;
+          const evolPct = firstNet ? evol / Math.abs(firstNet) : 0;
+          const glows = ['glow-blue', 'glow-green', 'glow-blue'];
+          return `
+        <div class="card-dark rounded-xl p-5 kpi-card ${glows[i]}">
+          <p class="text-sm text-gray-400 mb-2">Dans ${yr} ans</p>
+          <p class="text-2xl font-bold gradient-text">${formatCurrency(net)}</p>
           <div class="flex gap-3 mt-2 text-xs">
-            <span class="text-pink-400">Immo ${formatCurrency(lastImmo)}</span>
+            <span class="text-pink-400">Immo ${formatCurrency(immo)}</span>
             <span class="text-gray-600">·</span>
-            <span class="text-purple-400">Financier ${formatCurrency(lastFin)}</span>
-            ${lastDette > 0 ? `<span class="text-gray-600">·</span><span class="text-red-400/70">Dette −${formatCurrency(lastDette)}</span>` : ''}
+            <span class="text-purple-400">Fin ${formatCurrency(fin)}</span>
+            ${dette > 0 ? `<span class="text-gray-600">·</span><span class="text-red-400/70">Dette −${formatCurrency(dette)}</span>` : ''}
           </div>
-        </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
-          <p class="text-sm text-gray-400 mb-2">Évolution</p>
-          <div class="flex items-center gap-3">
-            <p class="text-2xl font-bold ${evolution >= 0 ? 'text-accent-green' : 'text-accent-red'}">
-              ${evolution >= 0 ? '+' : ''}${formatCurrency(evolution)}
-            </p>
-            ${evolutionPct ? `
-            <span class="text-sm px-2 py-0.5 rounded-full ${evolution >= 0 ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-red/10 text-accent-red'}">
-              ${evolution >= 0 ? '+' : ''}${(evolutionPct * 100).toFixed(0)}%
-            </span>` : ''}
+          <div class="flex items-center gap-2 mt-2">
+            <span class="text-sm ${evol >= 0 ? 'text-accent-green' : 'text-accent-red'}">${evol >= 0 ? '+' : ''}${formatCurrency(evol)}</span>
+            <span class="text-xs px-1.5 py-0.5 rounded-full ${evol >= 0 ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-red/10 text-accent-red'}">
+              ${evol >= 0 ? '+' : ''}${(evolPct * 100).toFixed(0)}%
+            </span>
           </div>
-        </div>
-        <div class="card-dark rounded-xl p-5 kpi-card">
-          <p class="text-sm text-gray-400 mb-2">Capacité d'épargne</p>
-          <p class="text-2xl font-bold ${(last?.capaciteEpargne || 0) >= 0 ? 'text-accent-cyan' : 'text-accent-red'}">${formatCurrency((last?.capaciteEpargne || 0) * 12)}/an</p>
-          <p class="text-xs text-gray-500 mt-2">${formatCurrency(last?.capaciteEpargne || 0)}/mois à horizon</p>
-        </div>
+        </div>`;
+        }).join('')}
       </div>`;
       })()}
 
