@@ -202,8 +202,8 @@ export function render(store) {
                 <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
                 <th class="px-2 py-1.5 text-center">Bitcoin</th>
                 <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
-                <th class="px-2 py-1.5 text-center font-semibold border-l-2 border-dark-300/40">Total Invest</th>
-                <th class="px-2 py-1.5 text-center">Assurance Vie</th>
+                <th class="px-2 py-1.5 text-center font-semibold">Total - Impôts</th>
+                <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Assurance Vie</th>
                 <th class="px-2 py-1.5 text-center">CTO</th>
                 <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Épargne</th>
                 <th class="px-2 py-1.5 text-center">Héritage</th>
@@ -234,8 +234,8 @@ export function render(store) {
                 <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['PEA ETF'] || 0)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['Crypto'] || 0)}</td>
                 <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['Crypto'] || 0)}</td>
-                <td class="px-2 py-1 text-center font-semibold text-accent-cyan border-l-2 border-dark-300/40">${formatCurrency(s.cashApresImpot)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['Assurance Vie'] || 0)}</td>
+                <td class="px-2 py-1 text-center font-semibold text-accent-cyan">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.placementDetail['Assurance Vie'] || 0)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['CTO'] || 0)}</td>
                 <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.heritage)}</td>
