@@ -196,6 +196,7 @@ export function computeProjection(store) {
   const snapshots = [];
   let immo = totalImmo;
   let epar = totalEpar;
+  let heritage = 0;
   let revenus = revenusMensuels;
   let depenses = depensesMensuelles;
 
@@ -203,7 +204,7 @@ export function computeProjection(store) {
     // Inject heritage
     if (heritageByYear[year]) {
       immo += heritageByYear[year].immo;
-      epar += heritageByYear[year].liq;
+      heritage += heritageByYear[year].liq;
     }
 
     let totalDette = emprunts.reduce((s, e) => s + Math.max(0, e.capitalRestant), 0);
@@ -217,7 +218,7 @@ export function computeProjection(store) {
     placSims.forEach(ps => { groupValues[ps.groupKey] += ps.value; });
 
     const totalPlacements = groupKeys.reduce((s, k) => s + groupValues[k], 0);
-    const totalActifs = immo + totalPlacements + epar;
+    const totalActifs = immo + totalPlacements + epar + heritage;
     const patrimoineNet = totalActifs - totalDette;
 
     // Compute interest for this year
@@ -230,6 +231,7 @@ export function computeProjection(store) {
         }
       });
       interetsAnnuels += epar * rendEpar / (1 + rendEpar);
+      if (heritage > 0) interetsAnnuels += heritage * rendEpar / (1 + rendEpar);
     }
 
     // Cash après impôt = annual savings capacity
@@ -246,6 +248,7 @@ export function computeProjection(store) {
       placementDetail: detail,
       placements: Math.round(totalPlacements),
       epargne: Math.round(epar),
+      heritage: Math.round(heritage),
       totalActifs: Math.round(totalActifs),
       totalDette: Math.round(totalDette),
       patrimoineNet: Math.round(patrimoineNet),
@@ -266,6 +269,9 @@ export function computeProjection(store) {
 
     // Épargne: interest only (Livret A, LDD, etc.)
     epar *= (1 + rendEpar);
+
+    // Héritage liquide: same interest rate as épargne
+    if (heritage > 0) heritage *= (1 + rendEpar);
 
     // Per-placement growth + DCA + Air Liquide
     placSims.forEach(ps => {

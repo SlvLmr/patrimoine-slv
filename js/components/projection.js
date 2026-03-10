@@ -306,6 +306,22 @@ export function mount(store, navigate) {
       borderWidth: 3
     });
 
+    // Héritage (only if there is heritage data)
+    const hasHeritage = snapshots.some(s => s.heritage > 0);
+    if (hasHeritage) {
+      const herColor = nextColor();
+      datasets.push({
+        label: 'Héritage',
+        data: snapshots.map(s => s.heritage),
+        borderColor: herColor,
+        backgroundColor: createVerticalGradient(ctx2d, herColor, 0.18, 0.02),
+        fill: true,
+        tension: 0.45,
+        pointRadius: 0,
+        borderWidth: 3
+      });
+    }
+
     createChart('chart-repartition-temps', {
       type: 'line',
       data: { labels, datasets },
