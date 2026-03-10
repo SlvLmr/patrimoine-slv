@@ -196,12 +196,12 @@ export function render(store) {
               <tr>
                 <th class="px-3 py-3 text-left">Année</th>
                 <th class="px-3 py-3 text-center">Âge</th>
-                <th class="px-3 py-3 text-right">Épargne</th>
                 <th class="px-3 py-3 text-right">PEA Actions</th>
                 <th class="px-3 py-3 text-right">PEA ETF</th>
                 <th class="px-3 py-3 text-right">Bitcoin</th>
                 <th class="px-3 py-3 text-right">Intérêts cumulés</th>
-                <th class="px-3 py-3 text-right">Cash après impôt</th>
+                <th class="px-3 py-3 text-right">Total Invest</th>
+                <th class="px-3 py-3 text-right border-l-2 border-dark-300/40">Épargne</th>
                 <th class="px-3 py-3 text-right">Immobilier</th>
                 <th class="px-3 py-3 text-right">Héritage</th>
                 <th class="px-3 py-3 text-right font-semibold">Total liquidités</th>
@@ -215,6 +215,7 @@ export function render(store) {
                   : s.annee === 0
                     ? 'bg-accent-blue/5'
                     : '';
+                const totalInvest = (s.totalApports || 0) + (s.interetsCumules || 0);
                 return `
               <tr class="hover:bg-dark-600/30 transition ${rowClass}">
                 <td class="px-3 py-2 font-medium text-gray-300">
@@ -222,12 +223,12 @@ export function render(store) {
                   ${isRetirement ? '<span class="ml-1 text-xs text-accent-amber font-semibold">RETRAITE</span>' : ''}
                 </td>
                 <td class="px-3 py-2 text-center ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-400'}">${s.age} ans</td>
-                <td class="px-3 py-2 text-right text-accent-amber">${formatCurrency(s.epargne)}</td>
                 <td class="px-3 py-2 text-right ${groupColors['PEA Actions'] || defaultGroupColor}">${formatCurrency(s.placementDetail['PEA Actions'] || 0)}</td>
                 <td class="px-3 py-2 text-right ${groupColors['PEA ETF'] || defaultGroupColor}">${formatCurrency(s.placementDetail['PEA ETF'] || 0)}</td>
                 <td class="px-3 py-2 text-right ${groupColors['Crypto'] || defaultGroupColor}">${formatCurrency(s.placementDetail['Crypto'] || 0)}</td>
                 <td class="px-3 py-2 text-right ${s.interetsCumules > 0 ? 'text-accent-cyan' : 'text-gray-600'}">${formatCurrency(s.interetsCumules)}</td>
-                <td class="px-3 py-2 text-right ${s.cashApresImpot >= 0 ? 'text-accent-green' : 'text-accent-red/70'}">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-3 py-2 text-right font-medium text-gray-200">${formatCurrency(totalInvest)}</td>
+                <td class="px-3 py-2 text-right text-accent-amber border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
                 <td class="px-3 py-2 text-right text-accent-green">${formatCurrency(s.immobilier)}</td>
                 <td class="px-3 py-2 text-right text-purple-400">${formatCurrency(s.heritage)}</td>
                 <td class="px-3 py-2 text-right font-semibold ${s.totalLiquiditesNettes >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrency(s.totalLiquiditesNettes)}</td>
