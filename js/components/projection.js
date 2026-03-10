@@ -290,59 +290,68 @@ export function mount(store, navigate) {
     const retraiteSouhaiteeOffset = (params.ageRetraiteSouhaitee || 60) - ageFinAnnee;
 
     const milestoneAnnotations = {};
-    if (retraiteTauxLegalOffset >= 0 && retraiteTauxLegalOffset <= (params.projectionYears || 30)) {
-      milestoneAnnotations.retraiteLegal = {
-        type: 'line',
-        xMin: retraiteTauxLegalOffset,
-        xMax: retraiteTauxLegalOffset,
-        borderColor: '#f59e0b',
-        borderWidth: 2,
-        borderDash: [4, 4],
-        label: {
-          display: true,
-          content: `Taux légal (${params.anneeRetraiteTauxLegal}) — ${(params.pensionTauxLegal || 0).toLocaleString('fr-FR')} €/mois`,
-          position: 'start',
-          backgroundColor: 'rgba(245,158,11,0.15)',
-          color: '#f59e0b',
-          font: { size: 11, weight: 'bold' },
-          padding: 6
-        }
-      };
-    }
-    if (retraiteTauxPleinOffset >= 0 && retraiteTauxPleinOffset <= (params.projectionYears || 30)) {
-      milestoneAnnotations.retraitePlein = {
-        type: 'line',
-        xMin: retraiteTauxPleinOffset,
-        xMax: retraiteTauxPleinOffset,
-        borderColor: '#22d3ee',
-        borderWidth: 2,
-        borderDash: [4, 4],
-        label: {
-          display: true,
-          content: `Taux plein (${params.anneeRetraiteTauxPlein}) — ${(params.pensionTauxPlein || 0).toLocaleString('fr-FR')} €/mois`,
-          position: 'center',
-          backgroundColor: 'rgba(34,211,238,0.15)',
-          color: '#22d3ee',
-          font: { size: 11, weight: 'bold' },
-          padding: 6
-        }
-      };
-    }
-    if (retraiteSouhaiteeOffset >= 0 && retraiteSouhaiteeOffset <= (params.projectionYears || 30)) {
+    const projYears = params.projectionYears || 30;
+    const inRange = (v) => v >= 0 && v <= projYears;
+
+    if (inRange(retraiteSouhaiteeOffset)) {
       milestoneAnnotations.retraiteSouhaitee = {
         type: 'line',
         xMin: retraiteSouhaiteeOffset,
         xMax: retraiteSouhaiteeOffset,
-        borderColor: '#a855f7',
-        borderWidth: 2.5,
+        borderColor: 'rgba(168,85,247,0.5)',
+        borderWidth: 1.5,
         label: {
           display: true,
-          content: `Départ souhaité (${params.ageRetraiteSouhaitee} ans)`,
-          position: 'end',
-          backgroundColor: 'rgba(168,85,247,0.15)',
-          color: '#a855f7',
-          font: { size: 11, weight: 'bold' },
-          padding: 6
+          content: `Départ souhaité · ${params.ageRetraiteSouhaitee} ans`,
+          position: 'start',
+          yAdjust: -6,
+          backgroundColor: 'rgba(168,85,247,0.85)',
+          color: '#fff',
+          font: { size: 10, weight: '600' },
+          padding: { top: 3, bottom: 3, left: 6, right: 6 },
+          borderRadius: 4
+        }
+      };
+    }
+    if (inRange(retraiteTauxLegalOffset)) {
+      milestoneAnnotations.retraiteLegal = {
+        type: 'line',
+        xMin: retraiteTauxLegalOffset,
+        xMax: retraiteTauxLegalOffset,
+        borderColor: 'rgba(245,158,11,0.4)',
+        borderWidth: 1,
+        borderDash: [3, 3],
+        label: {
+          display: true,
+          content: `Légal · ${(params.pensionTauxLegal || 0).toLocaleString('fr-FR')} €`,
+          position: 'start',
+          yAdjust: 14,
+          backgroundColor: 'rgba(245,158,11,0.8)',
+          color: '#fff',
+          font: { size: 9, weight: '500' },
+          padding: { top: 2, bottom: 2, left: 5, right: 5 },
+          borderRadius: 3
+        }
+      };
+    }
+    if (inRange(retraiteTauxPleinOffset)) {
+      milestoneAnnotations.retraitePlein = {
+        type: 'line',
+        xMin: retraiteTauxPleinOffset,
+        xMax: retraiteTauxPleinOffset,
+        borderColor: 'rgba(34,211,238,0.4)',
+        borderWidth: 1,
+        borderDash: [3, 3],
+        label: {
+          display: true,
+          content: `Taux plein · ${(params.pensionTauxPlein || 0).toLocaleString('fr-FR')} €`,
+          position: 'start',
+          yAdjust: 34,
+          backgroundColor: 'rgba(34,211,238,0.8)',
+          color: '#fff',
+          font: { size: 9, weight: '500' },
+          padding: { top: 2, bottom: 2, left: 5, right: 5 },
+          borderRadius: 3
         }
       };
     }
