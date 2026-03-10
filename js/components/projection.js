@@ -314,9 +314,9 @@ export function mount(store, navigate) {
       borderWidth: 3
     });
 
-    // Héritage (only if there is heritage data)
-    const hasHeritage = snapshots.some(s => s.heritage > 0);
-    if (hasHeritage) {
+    // Héritage (show if any heritage items are configured)
+    const heritageItems = store.get('heritage') || [];
+    if (heritageItems.length > 0) {
       const herColor = nextColor();
       datasets.push({
         label: 'Héritage',
