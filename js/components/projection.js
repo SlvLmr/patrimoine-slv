@@ -250,6 +250,108 @@ export function render(store) {
           </table>
         </div>
       </div>
+
+      <!-- Stratégie d'investissement — éditable -->
+      <div class="card-dark rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-dark-400/30 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-200">Ma stratégie d'investissement</h2>
+          <span class="text-[10px] text-gray-600 italic">Cliquer pour modifier</span>
+        </div>
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 class="text-sm font-semibold text-accent-amber mb-2">Enveloppes & plafonds</h3>
+              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.enveloppes || `PEA : plafond 150 000 € de versements (gains exonérés d'IR après 5 ans)
+Assurance Vie : pas de plafond, fiscalité avantageuse après 8 ans
+CTO : pas de plafond, flat tax 30% sur les plus-values
+PER : déductible du revenu imposable, bloqué jusqu'à la retraite
+Crypto : flat tax 30% sur les plus-values réalisées`).replace(/</g, '&lt;')}</div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-accent-cyan mb-2">Répartition cible & DCA</h3>
+              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.repartition || `Objectif : remplir le PEA en priorité (avantage fiscal)
+DCA mensuel ETF World : ... €/mois
+DCA mensuel Actions : ... €/mois
+DCA mensuel Crypto : ... €/mois
+Quand le PEA est plein → basculer le DCA vers le CTO`).replace(/</g, '&lt;')}</div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-accent-green mb-2">Moyens supplémentaires</h3>
+              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.moyens || `Capacité d'épargne mensuelle : ... €
+Prime annuelle / 13e mois : ... €
+Revenus complémentaires (dividendes, loyers) : ... €
+Héritage prévu : ...`).replace(/</g, '&lt;')}</div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-purple-400 mb-2">Objectifs & horizon</h3>
+              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap">${(params.strategie?.objectifs || `Retraite anticipée à ... ans
+Patrimoine cible : ... €
+Rente mensuelle visée : ... €/mois
+Stratégie de sortie : ...`).replace(/</g, '&lt;')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formules de calcul -->
+      <div class="card-dark rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-dark-400/30">
+          <h2 class="text-lg font-semibold text-gray-200">Comment sont calculées les projections</h2>
+        </div>
+        <div class="p-5 space-y-4 text-sm text-gray-400 leading-relaxed">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-accent-green font-semibold mb-1">Intérêts composés (placements)</h3>
+              <p>Chaque mois : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">valeur × (1 + rendement / 12)</code></p>
+              <p class="mt-1 text-xs text-gray-500">Le DCA mensuel est ajouté <em>avant</em> la croissance du mois. L'effet boule de neige : les intérêts génèrent eux-mêmes des intérêts.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-accent-amber font-semibold mb-1">Plafond PEA (150 000 €)</h3>
+              <p>Seuls les <em>versements</em> comptent (pas les gains). Quand le plafond est atteint, le DCA excédentaire bascule automatiquement vers le CTO.</p>
+              <p class="mt-1 text-xs text-gray-500">Les gains dans le PEA ne sont pas plafonnés : votre PEA peut valoir bien plus que 150k€.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-accent-cyan font-semibold mb-1">Fiscalité PEA (après 5 ans)</h3>
+              <p>Prélèvements sociaux seuls : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 17.2%</code></p>
+              <p class="mt-1 text-xs text-gray-500">Avant 5 ans, c'est la flat tax complète (30%). Après 5 ans, exonération d'impôt sur le revenu → seulement 17.2% de cotisations sociales.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-blue-400 font-semibold mb-1">Flat Tax CTO / Crypto (30%)</h3>
+              <p>Sur les plus-values : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 30%</code></p>
+              <p class="mt-1 text-xs text-gray-500">Le PFU (Prélèvement Forfaitaire Unique) = 12.8% d'IR + 17.2% de prélèvements sociaux. Appliqué uniquement sur les gains, pas sur le capital investi.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-pink-400 font-semibold mb-1">Immobilier</h3>
+              <p>Croissance annuelle : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">valeur × (1 + rendement immo)</code></p>
+              <p class="mt-1 text-xs text-gray-500">Appliqué proportionnellement au nombre de mois restants la 1ère année.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-purple-400 font-semibold mb-1">Épargne (livrets)</h3>
+              <p>Croissance annuelle : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">solde × (1 + taux moyen pondéré)</code></p>
+              <p class="mt-1 text-xs text-gray-500">Le taux est la moyenne pondérée par le solde de chaque livret. Les intérêts des livrets réglementés sont nets d'impôt.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-gray-300 font-semibold mb-1">Inflation</h3>
+              <p>Les revenus et dépenses augmentent chaque année : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">montant × (1 + inflation)</code></p>
+              <p class="mt-1 text-xs text-gray-500">Simule la hausse du coût de la vie. Les placements ne sont pas ajustés (rendement nominal).</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-gray-300 font-semibold mb-1">Total - Flat Tax</h3>
+              <p><code class="text-gray-300 bg-dark-900/60 px-1 rounded">Σ valeur placements − Σ impôts sur gains</code></p>
+              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui, après avoir payé les impôts sur chaque enveloppe selon sa fiscalité propre.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   `;
 }
@@ -452,5 +554,23 @@ export function mount(store, navigate) {
     store.set('parametres.ageRetraiteSouhaitee', parseInt(document.getElementById('param-retraite-souhaitee').value) || 60);
 
     navigate('projection');
+  });
+
+  // Auto-save editable strategy blocks on blur
+  const stratFields = [
+    { id: 'strat-enveloppes', key: 'enveloppes' },
+    { id: 'strat-repartition', key: 'repartition' },
+    { id: 'strat-moyens', key: 'moyens' },
+    { id: 'strat-objectifs', key: 'objectifs' }
+  ];
+  stratFields.forEach(({ id, key }) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('blur', () => {
+        const current = store.get('parametres')?.strategie || {};
+        current[key] = el.innerText;
+        store.set('parametres.strategie', current);
+      });
+    }
   });
 }
