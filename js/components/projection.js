@@ -351,24 +351,25 @@ export function mount(store, navigate) {
     const inRange = (v) => v >= 0 && v <= projYears;
     const toLabel = (v) => v === 0 ? 'Actuel' : `+${v}`;
 
+    // Stack labels above the chart area, spaced vertically
     if (inRange(retraiteSouhaiteeOffset)) {
       milestoneAnnotations.retraiteSouhaitee = {
         type: 'line',
         xMin: toLabel(retraiteSouhaiteeOffset),
         xMax: toLabel(retraiteSouhaiteeOffset),
-        borderColor: 'rgba(168,85,247,0.45)',
+        borderColor: 'rgba(168,85,247,0.35)',
         borderWidth: 1,
         borderDash: [6, 4],
         label: {
           display: true,
           content: `Souhaité · ${params.ageRetraiteSouhaitee} ans`,
           position: 'start',
-          yAdjust: -6,
+          yAdjust: -8,
           backgroundColor: 'rgba(168,85,247,0.85)',
           color: '#fff',
-          font: { size: 10, weight: '600' },
-          padding: { top: 3, bottom: 3, left: 6, right: 6 },
-          borderRadius: 4
+          font: { size: 9, weight: '600' },
+          padding: { top: 2, bottom: 2, left: 5, right: 5 },
+          borderRadius: 3
         }
       };
     }
@@ -377,19 +378,19 @@ export function mount(store, navigate) {
         type: 'line',
         xMin: toLabel(retraiteTauxLegalOffset),
         xMax: toLabel(retraiteTauxLegalOffset),
-        borderColor: 'rgba(245,158,11,0.45)',
+        borderColor: 'rgba(245,158,11,0.35)',
         borderWidth: 1,
         borderDash: [6, 4],
         label: {
           display: true,
           content: `Légal · ${Number(params.pensionTauxLegal || 0).toLocaleString('fr-FR')} €`,
           position: 'start',
-          yAdjust: 14,
+          yAdjust: -8,
           backgroundColor: 'rgba(245,158,11,0.8)',
           color: '#fff',
-          font: { size: 10, weight: '600' },
-          padding: { top: 3, bottom: 3, left: 6, right: 6 },
-          borderRadius: 4
+          font: { size: 9, weight: '600' },
+          padding: { top: 2, bottom: 2, left: 5, right: 5 },
+          borderRadius: 3
         }
       };
     }
@@ -398,19 +399,19 @@ export function mount(store, navigate) {
         type: 'line',
         xMin: toLabel(retraiteTauxPleinOffset),
         xMax: toLabel(retraiteTauxPleinOffset),
-        borderColor: 'rgba(34,211,238,0.45)',
+        borderColor: 'rgba(34,211,238,0.35)',
         borderWidth: 1,
         borderDash: [6, 4],
         label: {
           display: true,
           content: `Taux plein · ${Number(params.pensionTauxPlein || 0).toLocaleString('fr-FR')} €`,
           position: 'start',
-          yAdjust: 34,
+          yAdjust: -8,
           backgroundColor: 'rgba(34,211,238,0.8)',
           color: '#fff',
-          font: { size: 10, weight: '600' },
-          padding: { top: 3, bottom: 3, left: 6, right: 6 },
-          borderRadius: 4
+          font: { size: 9, weight: '600' },
+          padding: { top: 2, bottom: 2, left: 5, right: 5 },
+          borderRadius: 3
         }
       };
     }
