@@ -149,13 +149,17 @@ export function computeProjection(store) {
 
   // Build per-placement simulation state
   const rendementPlacements = params.rendementPlacements || {};
-  const cashInjections = params.cashInjections || {};
+  const cashInjectionsParams = params.cashInjections || {};
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
     // Priority: per-placement override > placement's own > global default
     const rend = rendementPlacements[p.id] !== undefined
       ? rendementPlacements[p.id]
       : (Number(p.rendement) || 0.05);
+    // Cash injections: placement-level (actifs) takes priority, fallback to parametres
+    const placInj = p.cashInjections || [];
+    const paramInj = cashInjectionsParams[p.id] || [];
+    const mergedInj = placInj.length > 0 ? placInj : paramInj;
     return {
     groupKey: gk,
     id: p.id,
@@ -163,7 +167,7 @@ export function computeProjection(store) {
     rendement: rend,
     dcaMensuel: Number(p.dcaMensuel) || 0,
     dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
-    cashInjections: (cashInjections[p.id] || []).sort((a, b) => a.year - b.year),
+    cashInjections: mergedInj.sort((a, b) => a.year - b.year),
     isAirLiquide: !!p.isAirLiquide,
     loyaltyEligible: !!p.loyaltyEligible,
     quantite: Number(p.quantite) || 0,

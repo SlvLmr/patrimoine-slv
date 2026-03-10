@@ -40,6 +40,20 @@ function buildPlacementFormBody(item) {
     </div>
   `).join('');
 
+  const injections = item.cashInjections || [];
+  const injectionsHtml = injections.map((inj, i) => `
+    <div class="flex items-center gap-2 cash-inj-row" data-idx="${i}">
+      <div class="flex-1">
+        <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${inj.year || ''}" placeholder="Année" min="1" max="50" step="1">
+      </div>
+      <span class="text-gray-500 text-xs">→</span>
+      <div class="flex-1">
+        <input type="number" class="cash-inj-amount w-full px-2 py-1.5 bg-dark-800 border border-accent-green/30 rounded text-accent-green text-sm" value="${inj.montant || ''}" placeholder="Montant €" step="100">
+      </div>
+      <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+    </div>
+  `).join('');
+
   return `
     ${inputField('nom', 'Nom du titre', item.nom || '', 'text', 'placeholder="Ex: Amundi MSCI World"')}
     ${selectField('enveloppe', 'Enveloppe', ENVELOPPES, item.enveloppe || item.type || '')}
@@ -62,6 +76,15 @@ function buildPlacementFormBody(item) {
         </div>
         <button type="button" id="btn-add-dca-override" class="text-xs text-accent-blue hover:text-accent-blue/80 font-medium">+ Ajouter une période</button>
         <p class="text-xs text-gray-600 mt-1">Ex: À partir de l'année 5, passer le DCA à 500€/mois</p>
+      </div>
+
+      <div class="mt-3">
+        <label class="block text-xs font-medium text-gray-400 mb-1.5">Apports exceptionnels</label>
+        <div id="cash-injections-list" class="space-y-2 mb-2">
+          ${injectionsHtml}
+        </div>
+        <button type="button" id="btn-add-cash-injection" class="text-xs text-accent-green hover:text-accent-green/80 font-medium">+ Ajouter un apport</button>
+        <p class="text-xs text-gray-600 mt-1">Ex: Année 3, injecter 5 000€ en une fois</p>
       </div>
     </div>
 
@@ -101,6 +124,19 @@ function collectDcaOverrides() {
   return overrides.sort((a, b) => a.fromYear - b.fromYear);
 }
 
+function collectCashInjections() {
+  const rows = document.querySelectorAll('.cash-inj-row');
+  const injections = [];
+  rows.forEach(row => {
+    const year = parseInt(row.querySelector('.cash-inj-year')?.value);
+    const montant = parseFloat(row.querySelector('.cash-inj-amount')?.value);
+    if (year > 0 && !isNaN(montant) && montant !== 0) {
+      injections.push({ year, montant });
+    }
+  });
+  return injections.sort((a, b) => a.year - b.year);
+}
+
 function initPlacementFormListeners(modal) {
   // Toggle Air Liquide fields
   const cb = modal.querySelector('#field-isAirLiquide');
@@ -135,6 +171,32 @@ function initPlacementFormListeners(modal) {
     // Remove buttons for existing rows
     list.querySelectorAll('.dca-ov-remove').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.dca-override-row').remove());
+    });
+  }
+
+  // Cash injection management
+  const addInjBtn = modal.querySelector('#btn-add-cash-injection');
+  const injList = modal.querySelector('#cash-injections-list');
+  if (addInjBtn && injList) {
+    addInjBtn.addEventListener('click', () => {
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-2 cash-inj-row';
+      row.innerHTML = `
+        <div class="flex-1">
+          <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="Année" min="1" max="50" step="1">
+        </div>
+        <span class="text-gray-500 text-xs">→</span>
+        <div class="flex-1">
+          <input type="number" class="cash-inj-amount w-full px-2 py-1.5 bg-dark-800 border border-accent-green/30 rounded text-accent-green text-sm" placeholder="Montant €" step="100">
+        </div>
+        <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+      `;
+      injList.appendChild(row);
+      row.querySelector('.cash-inj-remove').addEventListener('click', () => row.remove());
+    });
+
+    injList.querySelectorAll('.cash-inj-remove').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
     });
   }
 }
@@ -399,6 +461,7 @@ export function mount(store, navigate) {
       data.type = data.enveloppe;
       data.croissanceDividende = (data.croissanceDividende || 0) / 100;
       data.dcaOverrides = collectDcaOverrides();
+      data.cashInjections = collectCashInjections();
       data.isAirLiquide = document.getElementById('field-isAirLiquide')?.checked || false;
       data.loyaltyEligible = document.getElementById('field-loyaltyEligible')?.checked || false;
       store.addItem('actifs.placements', data);

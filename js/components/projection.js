@@ -6,7 +6,6 @@ export function render(store) {
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
   const rendementPlacements = params.rendementPlacements || {};
-  const cashInjections = params.cashInjections || {};
   const placements = (store.getAll().actifs?.placements || []);
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
@@ -119,15 +118,6 @@ export function render(store) {
                 <input type="number" class="plac-rend w-14 px-1 py-0.5 text-xs bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
                   value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5">
                 <span class="text-[9px] text-gray-500">%</span>
-                <div class="flex items-center gap-0.5 cash-injections-container">
-                  ${injections.map(inj => `
-                  <div class="flex items-center gap-0.5 cash-inj-row">
-                    <input type="number" class="cash-inj-year w-8 px-0.5 py-0 text-[9px] bg-dark-900/60 border border-dark-400/25 rounded text-gray-400 text-center" value="${inj.year}" min="1" max="50" placeholder="An">
-                    <input type="number" class="cash-inj-amount w-12 px-0.5 py-0 text-[9px] bg-dark-900/60 border border-accent-green/20 rounded text-accent-green text-center" value="${inj.montant}" step="100" placeholder="€">
-                    <button class="cash-inj-remove text-gray-700 hover:text-red-400 text-[9px] leading-none" title="Supprimer">&times;</button>
-                  </div>`).join('')}
-                </div>
-                <button class="cash-inj-add text-[8px] text-accent-blue/50 hover:text-accent-blue transition" title="Apport ponctuel">+</button>
               </div>`;
               }).join('')}
             </div>
@@ -351,26 +341,15 @@ export function mount(store, navigate) {
     const inRange = (v) => v >= 0 && v <= projYears;
     const toLabel = (v) => v === 0 ? 'Actuel' : `+${v}`;
 
-    // Stack labels above the chart area, spaced vertically
+    // Dashed vertical lines only (no labels to avoid overlap)
     if (inRange(retraiteSouhaiteeOffset)) {
       milestoneAnnotations.retraiteSouhaitee = {
         type: 'line',
         xMin: toLabel(retraiteSouhaiteeOffset),
         xMax: toLabel(retraiteSouhaiteeOffset),
-        borderColor: 'rgba(168,85,247,0.35)',
+        borderColor: 'rgba(168,85,247,0.4)',
         borderWidth: 1,
-        borderDash: [6, 4],
-        label: {
-          display: true,
-          content: `Souhaité · ${params.ageRetraiteSouhaitee} ans`,
-          position: 'start',
-          yAdjust: -8,
-          backgroundColor: 'rgba(168,85,247,0.85)',
-          color: '#fff',
-          font: { size: 9, weight: '600' },
-          padding: { top: 2, bottom: 2, left: 5, right: 5 },
-          borderRadius: 3
-        }
+        borderDash: [6, 4]
       };
     }
     if (inRange(retraiteTauxLegalOffset)) {
@@ -378,20 +357,9 @@ export function mount(store, navigate) {
         type: 'line',
         xMin: toLabel(retraiteTauxLegalOffset),
         xMax: toLabel(retraiteTauxLegalOffset),
-        borderColor: 'rgba(245,158,11,0.35)',
+        borderColor: 'rgba(245,158,11,0.4)',
         borderWidth: 1,
-        borderDash: [6, 4],
-        label: {
-          display: true,
-          content: `Légal · ${Number(params.pensionTauxLegal || 0).toLocaleString('fr-FR')} €`,
-          position: 'start',
-          yAdjust: -8,
-          backgroundColor: 'rgba(245,158,11,0.8)',
-          color: '#fff',
-          font: { size: 9, weight: '600' },
-          padding: { top: 2, bottom: 2, left: 5, right: 5 },
-          borderRadius: 3
-        }
+        borderDash: [6, 4]
       };
     }
     if (inRange(retraiteTauxPleinOffset)) {
@@ -399,20 +367,9 @@ export function mount(store, navigate) {
         type: 'line',
         xMin: toLabel(retraiteTauxPleinOffset),
         xMax: toLabel(retraiteTauxPleinOffset),
-        borderColor: 'rgba(34,211,238,0.35)',
+        borderColor: 'rgba(34,211,238,0.4)',
         borderWidth: 1,
-        borderDash: [6, 4],
-        label: {
-          display: true,
-          content: `Taux plein · ${Number(params.pensionTauxPlein || 0).toLocaleString('fr-FR')} €`,
-          position: 'start',
-          yAdjust: -8,
-          backgroundColor: 'rgba(34,211,238,0.8)',
-          color: '#fff',
-          font: { size: 9, weight: '600' },
-          padding: { top: 2, bottom: 2, left: 5, right: 5 },
-          borderRadius: 3
-        }
+        borderDash: [6, 4]
       };
     }
 
@@ -453,30 +410,16 @@ export function mount(store, navigate) {
     store.set('parametres.rendementImmobilier', (parseFloat(document.getElementById('param-rend-immo').value) || 2) / 100);
     store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
 
-    // Per-placement overrides
+    // Per-placement rendement overrides
     const rendementPlacements = {};
-    const cashInjections = {};
     document.querySelectorAll('.placement-row').forEach(row => {
       const pid = row.dataset.placementId;
       const rendInput = row.querySelector('.plac-rend');
       if (rendInput) {
         rendementPlacements[pid] = (parseFloat(rendInput.value) || 5) / 100;
       }
-      const injRows = row.querySelectorAll('.cash-inj-row');
-      if (injRows.length > 0) {
-        const injs = [];
-        injRows.forEach(ir => {
-          const year = parseInt(ir.querySelector('.cash-inj-year')?.value);
-          const montant = parseFloat(ir.querySelector('.cash-inj-amount')?.value);
-          if (year > 0 && !isNaN(montant) && montant !== 0) {
-            injs.push({ year, montant });
-          }
-        });
-        if (injs.length > 0) cashInjections[pid] = injs;
-      }
     });
     store.set('parametres.rendementPlacements', rendementPlacements);
-    store.set('parametres.cashInjections', cashInjections);
 
     // Retirement milestones
     store.set('parametres.ageRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-age').value) || 64);
@@ -486,26 +429,5 @@ export function mount(store, navigate) {
     store.set('parametres.ageRetraiteSouhaitee', parseInt(document.getElementById('param-retraite-souhaitee').value) || 60);
 
     navigate('projection');
-  });
-
-  // Dynamic add/remove cash injection rows
-  document.querySelectorAll('.cash-inj-add').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const row = btn.closest('.placement-row');
-      const container = row.querySelector('.cash-injections-container');
-      const div = document.createElement('div');
-      div.className = 'flex items-center gap-0.5 cash-inj-row';
-      div.innerHTML = `
-        <input type="number" class="cash-inj-year w-12 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" min="1" max="50" placeholder="An" title="Année">
-        <input type="number" class="cash-inj-amount w-16 px-1 py-0.5 text-[10px] bg-dark-800 border border-accent-green/30 rounded text-accent-green text-center" step="100" placeholder="€" title="Montant">
-        <button class="cash-inj-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
-      `;
-      container.appendChild(div);
-      div.querySelector('.cash-inj-remove').addEventListener('click', () => div.remove());
-    });
-  });
-
-  document.querySelectorAll('.cash-inj-remove').forEach(btn => {
-    btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
   });
 }
