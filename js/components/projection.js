@@ -31,99 +31,111 @@ export function render(store) {
 
       <!-- Parameters — collapsible -->
       <details class="card-dark rounded-xl group" open>
-        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
-          <h2 class="text-sm font-semibold text-gray-300">Paramètres</h2>
-          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <summary class="flex items-center justify-between px-4 py-2 cursor-pointer select-none">
+          <div class="flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            <h2 class="text-xs font-semibold text-gray-400">Paramètres</h2>
+          </div>
+          <svg class="w-3.5 h-3.5 text-gray-600 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-4 pb-4 space-y-4">
-          <!-- Simulation -->
-          <div>
-            <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Simulation</h3>
-            <div class="flex flex-wrap items-end gap-2">
+        <div class="px-4 pb-3 space-y-2.5">
+          <!-- Row 1: Simulation + Retraite inline -->
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3 h-3 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
               ${[
-                ['param-years', 'Horizon', params.projectionYears, '1', '50', '1'],
-                ['param-age', 'Âge', params.ageFinAnnee || 43, '18', '100', '1'],
-                ['param-inflation', 'Inflation %', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', '0.5'],
-                ['param-rend-immo', 'Rdt immo %', ((params.rendementImmobilier || 0) * 100).toFixed(1), '0', '30', '0.5'],
-                ['param-rend-epar', 'Rdt épargne %', ((params.rendementEpargne || 0) * 100).toFixed(1), '0', '30', '0.5'],
-              ].map(([id, label, val, min, max, step]) => `
-              <div class="w-20">
-                <label class="block text-[10px] text-gray-500 mb-0.5 truncate">${label}</label>
+                ['param-years', 'Horizon', params.projectionYears, '1', '50', '1', ''],
+                ['param-age', 'Âge', params.ageFinAnnee || 43, '18', '100', '1', ''],
+                ['param-inflation', 'Inflation', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', '0.5', '%'],
+                ['param-rend-immo', 'Immo', ((params.rendementImmobilier || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
+                ['param-rend-epar', 'Épargne', ((params.rendementEpargne || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
+              ].map(([id, label, val, min, max, step, suffix]) => `
+              <div class="flex items-center gap-0.5">
+                <span class="text-[9px] text-gray-600">${label}</span>
                 <input type="number" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
-                  class="w-full px-2 py-1.5 text-xs bg-dark-800 border border-dark-400/40 rounded-md text-gray-300 focus:ring-1 focus:ring-accent-blue/30 focus:border-accent-blue/30 transition">
+                  class="w-12 px-1 py-0.5 text-[11px] bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
+                ${suffix ? `<span class="text-[9px] text-gray-600">${suffix}</span>` : ''}
               </div>`).join('')}
             </div>
-          </div>
-          <!-- Horizon retraite -->
-          <div>
-            <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Horizon retraite</h3>
-            <div class="flex flex-wrap items-end gap-2">
-              <div class="w-20">
-                <label class="block text-[10px] text-gray-500 mb-0.5">Âge retraite</label>
+            <div class="w-px h-4 bg-dark-400/30 hidden sm:block"></div>
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3 h-3 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <div class="flex items-center gap-0.5">
+                <span class="text-[9px] text-gray-600">Retraite</span>
                 <input type="number" id="param-retraite" value="${params.ageRetraite || 64}" min="55" max="70" step="1"
-                  class="w-full px-2 py-1.5 text-xs bg-dark-800 border border-dark-400/40 rounded-md text-gray-300 focus:ring-1 focus:ring-accent-blue/30 focus:border-accent-blue/30 transition">
+                  class="w-10 px-1 py-0.5 text-[11px] bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
               </div>
-              <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-dark-800/60 border border-dark-400/30">
-                <span class="text-[10px] text-amber-400/80">Légal</span>
+              <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-400/5 border border-amber-400/20">
+                <span class="text-[9px] text-amber-400/80">Légal</span>
                 <input type="number" id="param-retraite-legal-annee" value="${params.anneeRetraiteTauxLegal || 2047}" min="2025" max="2080" step="1"
-                  class="w-14 px-1 py-0.5 text-xs bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
+                  class="w-12 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
                 <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
-                  class="w-16 px-1 py-0.5 text-xs bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center">
-                <span class="text-[10px] text-gray-600">€/m</span>
+                  class="w-14 px-0.5 py-0 text-[11px] bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center font-medium">
+                <span class="text-[8px] text-gray-600">€</span>
               </div>
-              <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-dark-800/60 border border-dark-400/30">
-                <span class="text-[10px] text-cyan-400/80">Plein</span>
+              <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-400/5 border border-cyan-400/20">
+                <span class="text-[9px] text-cyan-400/80">Plein</span>
                 <input type="number" id="param-retraite-plein-annee" value="${params.anneeRetraiteTauxPlein || 2048}" min="2025" max="2080" step="1"
-                  class="w-14 px-1 py-0.5 text-xs bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
+                  class="w-12 px-0.5 py-0 text-[11px] bg-transparent border-0 text-gray-400 focus:ring-0 text-center">
                 <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
-                  class="w-16 px-1 py-0.5 text-xs bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center">
-                <span class="text-[10px] text-gray-600">€/m</span>
+                  class="w-14 px-0.5 py-0 text-[11px] bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-medium">
+                <span class="text-[8px] text-gray-600">€</span>
               </div>
-              <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/30">
-                <span class="text-[10px] text-purple-400">Souhaité</span>
+              <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-500/8 border border-purple-500/25">
+                <span class="text-[9px] text-purple-400">Souhaité</span>
                 <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
-                  class="w-10 px-1 py-0.5 text-xs bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-medium">
-                <span class="text-[10px] text-gray-600">ans</span>
+                  class="w-8 px-0.5 py-0 text-[11px] bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-medium">
               </div>
             </div>
           </div>
-          <!-- Per-placement overrides -->
+
+          <!-- Row 2: Placements as compact grid -->
           ${placements.length > 0 ? `
           <div>
-            <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Par placement</h3>
-            <div class="space-y-1.5">
+            <div class="flex items-center gap-1.5 mb-1">
+              <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              <span class="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Placements</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
               ${placements.map(p => {
                 const gk = getPlacementGroupKey(p);
                 const currentRend = rendementPlacements[p.id] !== undefined
                   ? rendementPlacements[p.id]
                   : (Number(p.rendement) || 0.05);
                 const injections = cashInjections[p.id] || [];
+                const groupIcons = {
+                  'PEA Actions': '<svg class="w-2.5 h-2.5 text-accent-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+                  'PEA ETF': '<svg class="w-2.5 h-2.5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
+                  'Crypto': '<svg class="w-2.5 h-2.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+                  'Assurance Vie': '<svg class="w-2.5 h-2.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+                  'CTO': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>',
+                };
+                const icon = groupIcons[gk] || '<svg class="w-2.5 h-2.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
                 return `
-              <div class="flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-dark-800/40 border border-dark-400/20 placement-row" data-placement-id="${p.id}">
-                <span class="text-[11px] text-gray-300 w-32 truncate font-medium" title="${p.nom}">${p.nom}</span>
-                <span class="text-[9px] text-gray-500">${gk}</span>
-                <div class="flex items-center gap-1">
-                  <label class="text-[9px] text-gray-500">Rdt</label>
-                  <input type="number" class="plac-rend w-16 px-1.5 py-1 text-xs bg-dark-800 border border-dark-400/40 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center"
-                    value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5">
-                  <span class="text-[9px] text-gray-500">%</span>
-                </div>
-                <div class="flex items-center gap-1 cash-injections-container">
+              <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition placement-row" data-placement-id="${p.id}">
+                ${icon}
+                <span class="text-[10px] text-gray-300 truncate flex-1 font-medium" title="${p.nom}">${p.nom}</span>
+                <span class="text-[8px] text-gray-600 hidden xl:inline">${gk}</span>
+                <input type="number" class="plac-rend w-12 px-1 py-0.5 text-[11px] bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center"
+                  value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5">
+                <span class="text-[8px] text-gray-600">%</span>
+                <div class="flex items-center gap-0.5 cash-injections-container">
                   ${injections.map(inj => `
                   <div class="flex items-center gap-0.5 cash-inj-row">
-                    <input type="number" class="cash-inj-year w-12 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" value="${inj.year}" min="1" max="50" placeholder="An" title="Année">
-                    <input type="number" class="cash-inj-amount w-16 px-1 py-0.5 text-[10px] bg-dark-800 border border-accent-green/30 rounded text-accent-green text-center" value="${inj.montant}" step="100" placeholder="€" title="Montant">
-                    <button class="cash-inj-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
+                    <input type="number" class="cash-inj-year w-8 px-0.5 py-0 text-[9px] bg-dark-900/60 border border-dark-400/25 rounded text-gray-400 text-center" value="${inj.year}" min="1" max="50" placeholder="An">
+                    <input type="number" class="cash-inj-amount w-12 px-0.5 py-0 text-[9px] bg-dark-900/60 border border-accent-green/20 rounded text-accent-green text-center" value="${inj.montant}" step="100" placeholder="€">
+                    <button class="cash-inj-remove text-gray-700 hover:text-red-400 text-[9px] leading-none" title="Supprimer">&times;</button>
                   </div>`).join('')}
                 </div>
-                <button class="cash-inj-add text-[9px] text-accent-blue/70 hover:text-accent-blue transition" title="Ajouter un apport ponctuel">+ apport</button>
+                <button class="cash-inj-add text-[8px] text-accent-blue/50 hover:text-accent-blue transition" title="Apport ponctuel">+</button>
               </div>`;
               }).join('')}
             </div>
           </div>` : ''}
+
           <!-- Actions -->
-          <div class="flex justify-end pt-1">
-            <button id="btn-update-projection" class="px-4 py-1.5 text-xs font-medium bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-md hover:opacity-90 transition">
+          <div class="flex justify-end">
+            <button id="btn-update-projection" class="px-4 py-1 text-[11px] font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded hover:opacity-90 transition">
               Recalculer
             </button>
           </div>
