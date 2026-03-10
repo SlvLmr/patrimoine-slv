@@ -264,10 +264,8 @@ export function computeProjection(store) {
     // Immobilier
     immo *= (1 + rendImmo);
 
-    // Épargne: interest + cash surplus (revenus - dépenses - mensualités)
-    const cashSurplus = (revenus - depenses - mensualitesTotales) * 12;
+    // Épargne: interest only (Livret A, LDD, etc.)
     epar *= (1 + rendEpar);
-    epar += cashSurplus;
 
     // Per-placement growth + DCA + Air Liquide
     placSims.forEach(ps => {
