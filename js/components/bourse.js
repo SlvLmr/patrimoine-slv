@@ -201,12 +201,37 @@ function renderMiniChart(canvasId, chartPoints, isUp, pru) {
 function findMatchingActif(item, placements) {
   if (!placements || !placements.length) return null;
   const isinLower = (item.isin || '').toLowerCase();
+  const nameLower = (item.name || '').toLowerCase();
   if (!isinLower) return null;
+
   return placements.find(p => {
     const pIsin = (p.isin || '').toLowerCase();
     const pNom = (p.nom || '').toLowerCase();
+    const pTicker = (p.ticker || '').toLowerCase();
+
+    // Exact ISIN/ticker match
+    if (pIsin && pIsin === isinLower) return true;
+    if (pTicker && pTicker === isinLower) return true;
+
+    // Substring ISIN match (for partial ISINs)
     if (pIsin && (pIsin.includes(isinLower) || isinLower.includes(pIsin))) return true;
-    if (pNom && pNom.includes(item.name?.toLowerCase()?.split(' ')[0] || '___')) return true;
+
+    // Name matching: compare full names and first words
+    if (pNom && nameLower) {
+      // Full name contains
+      if (pNom.includes(nameLower) || nameLower.includes(pNom)) return true;
+      // First word match (at least 3 chars to avoid false positives)
+      const firstWord = nameLower.split(' ')[0];
+      if (firstWord.length >= 3 && pNom.includes(firstWord)) return true;
+    }
+
+    // Categorie crypto + name match (e.g. "Bitcoin" in placements matches "Bitcoin" watchlist)
+    if (p.categorie === 'Crypto' && pNom && nameLower) {
+      const pFirstWord = pNom.split(' ')[0];
+      const iFirstWord = nameLower.split(' ')[0];
+      if (pFirstWord.length >= 3 && pFirstWord === iFirstWord) return true;
+    }
+
     return false;
   }) || null;
 }
@@ -276,8 +301,9 @@ export function render(store) {
             const qty = Number(actif.quantite) || 0;
             const pru = Number(actif.pru) || 0;
             const valTotale = Number(actif.valeur) || 0;
+            const invested = qty * pru;
             return `
-            <div class="mt-3 pt-3 border-t border-dark-400/20 space-y-1.5 portfolio-info">
+            <div class="mt-3 pt-3 border-t border-dark-400/20 space-y-1.5 portfolio-info" data-qty="${qty}" data-pru="${pru}" data-invested="${invested}">
               <p class="text-[10px] uppercase tracking-wider text-accent-amber/60 font-semibold mb-1">Mon portefeuille</p>
               <div class="flex justify-between text-xs">
                 <span class="text-accent-amber/70">Parts</span>
@@ -289,7 +315,11 @@ export function render(store) {
               </div>
               <div class="flex justify-between text-xs">
                 <span class="text-accent-amber/70">Valeur totale</span>
-                <span class="text-accent-amber font-semibold">${formatNum(valTotale)} €</span>
+                <span class="text-accent-amber font-semibold portfolio-val-totale">${formatNum(valTotale)} €</span>
+              </div>
+              <div class="flex justify-between text-xs portfolio-gain-row" style="display:none">
+                <span class="text-accent-amber/70">+/- value</span>
+                <span class="font-semibold portfolio-gain-value">—</span>
               </div>
             </div>`;
           })()}
@@ -381,6 +411,33 @@ async function loadAllQuotes(store) {
             </span>
           </div>
         `;
+        // Update gain/loss with live price
+        const portfolioInfo = card.querySelector('.portfolio-info');
+        if (portfolioInfo) {
+          const qty = Number(portfolioInfo.dataset.qty) || 0;
+          const invested = Number(portfolioInfo.dataset.invested) || 0;
+          if (qty > 0 && invested > 0) {
+            const liveValue = qty * quote.price;
+            const gain = liveValue - invested;
+            const gainPct = (gain / invested) * 100;
+            const gainPositive = gain >= 0;
+
+            const sym = quote.currency === 'USD' ? '$' : '€';
+
+            // Update valeur totale with live value
+            const valEl = portfolioInfo.querySelector('.portfolio-val-totale');
+            if (valEl) valEl.textContent = `${formatNum(liveValue)} ${sym}`;
+
+            // Show gain/loss row
+            const gainRow = portfolioInfo.querySelector('.portfolio-gain-row');
+            const gainVal = portfolioInfo.querySelector('.portfolio-gain-value');
+            if (gainRow && gainVal) {
+              gainRow.style.display = '';
+              gainVal.className = `font-semibold ${gainPositive ? 'text-accent-green' : 'text-red-500'}`;
+              gainVal.textContent = `${gainPositive ? '+' : ''}${formatNum(gain)} ${sym} (${gainPositive ? '+' : ''}${gainPct.toFixed(1)}%)`;
+            }
+          }
+        }
       } else {
         priceDiv.innerHTML = `<p class="text-sm text-accent-amber/60">Erreur de chargement</p>`;
       }
