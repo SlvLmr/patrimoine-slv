@@ -282,7 +282,8 @@ export function mount(store, navigate) {
       fill: false,
       tension: 0.45,
       pointRadius: 0,
-      borderWidth: 3
+      borderWidth: 3,
+      hidden: true
     });
 
     // Each placement group
