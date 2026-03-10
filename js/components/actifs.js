@@ -252,15 +252,6 @@ export function render(store) {
       btnId: 'btn-add-immo',
     },
     {
-      key: 'placements',
-      label: 'Placements',
-      icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
-      color: 'accent-green',
-      total: totalPlac,
-      count: placements.length,
-      btnId: 'btn-add-plac',
-    },
-    {
       key: 'epargne',
       label: 'Épargne',
       icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
@@ -268,6 +259,15 @@ export function render(store) {
       total: totalEpar,
       count: epargne.length,
       btnId: 'btn-add-epar',
+    },
+    {
+      key: 'placements',
+      label: 'Placements',
+      icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+      color: 'accent-green',
+      total: totalPlac,
+      count: placements.length,
+      btnId: 'btn-add-plac',
     },
     {
       key: 'emprunts',
