@@ -250,37 +250,26 @@ function initLogo() {
   if (logoContainer) {
     logoContainer.innerHTML = `
       <div class="flex items-center gap-3">
-        <div class="logo-halo w-10 h-10 rounded-xl bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0 relative">
-          <span class="logo-symbol text-dark-900 font-bold text-lg select-none" style="font-family:'Space Grotesk',sans-serif"></span>
+        <div class="logo-halo w-12 h-12 rounded-xl bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
+          </svg>
         </div>
-        <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1px" class="text-2xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo">Horizon</h1>
+        <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1px" class="text-2xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-shimmer">Horizon</h1>
       </div>
     `;
-    // Cycle currency symbols
-    const symbols = ['€', '$', '₿', '¥', '£'];
-    let idx = 0;
-    const symbolEl = logoContainer.querySelector('.logo-symbol');
-    if (symbolEl) {
-      symbolEl.textContent = symbols[0];
-      setInterval(() => {
-        idx = (idx + 1) % symbols.length;
-        symbolEl.style.opacity = '0';
-        setTimeout(() => {
-          symbolEl.textContent = symbols[idx];
-          symbolEl.style.opacity = '1';
-        }, 200);
-      }, 2500);
-    }
   }
   // Mobile
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
       <div class="flex items-center gap-2">
-        <div class="logo-halo w-8 h-8 rounded-lg bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0">
-          <span class="text-dark-900 font-bold text-sm select-none" style="font-family:'Space Grotesk',sans-serif">€</span>
+        <div class="logo-halo w-9 h-9 rounded-lg bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
+          </svg>
         </div>
-        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo">Horizon</span>
+        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-shimmer">Horizon</span>
       </div>
     `;
   }

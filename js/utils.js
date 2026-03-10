@@ -156,10 +156,11 @@ export function computeProjection(store) {
   const cashInjectionsParams = params.cashInjections || {};
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
-    // Priority: per-placement override > placement's own > global default
+    // Priority: per-placement override > global group default > placement's own > fallback
+    const groupDefaults = { 'CTO': params.rendementCTO, 'Assurance Vie': params.rendementAssuranceVie };
     const rend = rendementPlacements[p.id] !== undefined
       ? rendementPlacements[p.id]
-      : (Number(p.rendement) || 0.05);
+      : (groupDefaults[gk] !== undefined ? groupDefaults[gk] : (Number(p.rendement) || 0.05));
     // Cash injections: placement-level (actifs) takes priority, fallback to parametres
     const placInj = p.cashInjections || [];
     const paramInj = cashInjectionsParams[p.id] || [];
@@ -184,16 +185,12 @@ export function computeProjection(store) {
   });
 
   // CTO overflow placement: receives PEA DCA when ceiling is reached
-  // Use average PEA rendement for the CTO overflow
-  const peaPlacements = placSims.filter(ps => ps.groupKey.startsWith('PEA'));
-  const avgPeaRend = peaPlacements.length > 0
-    ? peaPlacements.reduce((s, ps) => s + ps.rendement, 0) / peaPlacements.length
-    : 0.05;
+  const rendCTO = params.rendementCTO || 0.05;
   const ctoOverflow = {
     groupKey: 'CTO',
     id: '__cto_overflow__',
     value: 0,
-    rendement: avgPeaRend,
+    rendement: rendCTO,
     dcaMensuel: 0,
     dcaOverrides: [],
     cashInjections: [],

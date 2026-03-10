@@ -49,6 +49,8 @@ export function render(store) {
                 ['param-inflation', 'Inflation', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', '0.5', '%'],
                 ['param-rend-immo', 'Immo', ((params.rendementImmobilier || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
                 ['param-rend-epar', 'Épargne', ((params.rendementEpargne || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
+                ['param-rend-cto', 'CTO', ((params.rendementCTO || 0.05) * 100).toFixed(1), '-20', '50', '0.5', '%'],
+                ['param-rend-av', 'Ass. Vie', ((params.rendementAssuranceVie || 0.03) * 100).toFixed(1), '0', '30', '0.5', '%'],
               ].map(([id, label, val, min, max, step, suffix]) => `
               <div class="flex items-center gap-1">
                 <span class="text-xs text-gray-500">${label}</span>
@@ -534,6 +536,8 @@ export function mount(store, navigate) {
     store.set('parametres.inflationRate', (parseFloat(document.getElementById('param-inflation').value) || 2) / 100);
     store.set('parametres.rendementImmobilier', (parseFloat(document.getElementById('param-rend-immo').value) || 2) / 100);
     store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
+    store.set('parametres.rendementCTO', (parseFloat(document.getElementById('param-rend-cto').value) || 5) / 100);
+    store.set('parametres.rendementAssuranceVie', (parseFloat(document.getElementById('param-rend-av').value) || 3) / 100);
 
     // Per-placement rendement overrides
     const rendementPlacements = {};
