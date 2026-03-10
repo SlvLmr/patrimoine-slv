@@ -1,12 +1,33 @@
 import { formatCurrency, openModal, getFormData, inputField, selectField } from '../utils.js';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
+const DEPENSE_TYPES = [
+  { key: 'Fixe', label: 'Dépenses fixes', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { key: 'Variable', label: 'Dépenses variables', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z' },
+  { key: 'Abonnement', label: 'Abonnements', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+  { key: 'Investissement', label: 'Investissements', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
+];
+
+function getDepensesByType(depenses, typeKey) {
+  return depenses.filter(d => (d.typeDepense || 'Fixe') === typeKey);
+}
+
+function sumDepenses(items) {
+  return items.reduce((s, d) => s + (Number(d.montantMensuel) || 0), 0);
+}
+
 export function render(store) {
   const revenus = store.get('revenus');
   const depenses = store.get('depenses');
   const totalR = store.totalRevenus();
   const totalD = store.totalDepenses();
   const balance = totalR - totalD;
+
+  const depenseGroups = DEPENSE_TYPES.map(t => ({
+    ...t,
+    items: getDepensesByType(depenses, t.key),
+    total: sumDepenses(getDepensesByType(depenses, t.key))
+  }));
 
   return `
     <div class="space-y-6">
@@ -58,47 +79,55 @@ export function render(store) {
       </div>
       ` : ''}
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Revenus -->
-        <div class="card-dark rounded-xl overflow-hidden">
-          <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <div class="w-3 h-3 rounded-full bg-accent-green"></div>
-              <h2 class="text-lg font-semibold text-gray-200">Revenus</h2>
-            </div>
-            <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+      <!-- Revenus -->
+      <div class="card-dark rounded-xl overflow-hidden">
+        <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-accent-green"></div>
+            <h2 class="text-lg font-semibold text-gray-200">Revenus</h2>
           </div>
-          ${revenus.length > 0 ? `
-          <div class="divide-y divide-dark-400/20">
-            ${revenus.map(r => `
-            <div class="flex items-center justify-between px-5 py-3 hover:bg-dark-600/30 transition">
-              <div>
-                <p class="font-medium text-sm text-gray-200">${r.nom}</p>
-                <p class="text-xs text-gray-600">${r.type || 'Autre'}</p>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="font-medium text-accent-green">${formatCurrency(r.montantMensuel)}/mois</span>
-                <button data-edit-rev="${r.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
-                <button data-del-rev="${r.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
-              </div>
-            </div>
-            `).join('')}
-          </div>
-          ` : '<p class="p-5 text-gray-600 text-sm">Aucun revenu enregistré.</p>'}
+          <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
         </div>
+        ${revenus.length > 0 ? `
+        <div class="divide-y divide-dark-400/20">
+          ${revenus.map(r => `
+          <div class="flex items-center justify-between px-5 py-3 hover:bg-dark-600/30 transition">
+            <div>
+              <p class="font-medium text-sm text-gray-200">${r.nom}</p>
+              <p class="text-xs text-gray-600">${r.type || 'Autre'}</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-medium text-accent-green">${formatCurrency(r.montantMensuel)}/mois</span>
+              <button data-edit-rev="${r.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
+              <button data-del-rev="${r.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
+            </div>
+          </div>
+          `).join('')}
+        </div>
+        ` : '<p class="p-5 text-gray-600 text-sm">Aucun revenu enregistré.</p>'}
+      </div>
 
-        <!-- Dépenses -->
+      <!-- Dépenses par type -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        ${depenseGroups.map(g => `
         <div class="card-dark rounded-xl overflow-hidden">
           <div class="p-5 border-b border-dark-400/30 flex justify-between items-center">
             <div class="flex items-center gap-3">
-              <div class="w-3 h-3 rounded-full bg-accent-red"></div>
-              <h2 class="text-lg font-semibold text-gray-200">Dépenses</h2>
+              <div class="w-8 h-8 rounded-lg bg-accent-red/15 flex items-center justify-center">
+                <svg class="w-4 h-4 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${g.icon}"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-base font-semibold text-gray-200">${g.label}</h2>
+                ${g.total > 0 ? `<p class="text-xs text-accent-red/80">${formatCurrency(g.total)}/mois</p>` : ''}
+              </div>
             </div>
-            <button id="btn-add-depense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter</button>
+            <button class="btn-add-depense px-4 py-2 bg-accent-red/20 text-accent-red text-sm rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}">+ Ajouter</button>
           </div>
-          ${depenses.length > 0 ? `
+          ${g.items.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
-            ${depenses.map(d => `
+            ${g.items.map(d => `
             <div class="flex items-center justify-between px-5 py-3 hover:bg-dark-600/30 transition">
               <div>
                 <p class="font-medium text-sm text-gray-200">${d.nom}</p>
@@ -112,8 +141,9 @@ export function render(store) {
             </div>
             `).join('')}
           </div>
-          ` : '<p class="p-5 text-gray-600 text-sm">Aucune dépense enregistrée.</p>'}
+          ` : '<p class="p-5 text-gray-600 text-sm">Aucune dépense.</p>'}
         </div>
+        `).join('')}
       </div>
     </div>
   `;
@@ -225,16 +255,28 @@ export function mount(store, navigate) {
     { value: 'Autre', label: 'Autre' }
   ];
 
-  document.getElementById('btn-add-depense')?.addEventListener('click', () => {
-    const body = `
-      ${inputField('nom', 'Libellé', '', 'text', 'placeholder="Ex: Loyer"')}
-      ${selectField('categorie', 'Catégorie', depCategories)}
-      ${inputField('montantMensuel', 'Montant mensuel (€)', '', 'number', 'step="10"')}
-    `;
-    openModal('Ajouter une dépense', body, () => {
-      const data = getFormData(document.getElementById('modal-body'));
-      store.addItem('depenses', data);
-      navigate('revenus-depenses');
+  const depTypeOptions = [
+    { value: 'Fixe', label: 'Fixe' },
+    { value: 'Variable', label: 'Variable' },
+    { value: 'Abonnement', label: 'Abonnement' },
+    { value: 'Investissement', label: 'Investissement' },
+  ];
+
+  // Add depense — one button per group
+  content.querySelectorAll('.btn-add-depense').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const typeDepense = btn.dataset.type;
+      const body = `
+        ${inputField('nom', 'Libellé', '', 'text', 'placeholder="Ex: Loyer"')}
+        ${selectField('categorie', 'Catégorie', depCategories)}
+        ${inputField('montantMensuel', 'Montant mensuel (€)', '', 'number', 'step="10"')}
+      `;
+      openModal(`Ajouter — ${DEPENSE_TYPES.find(t => t.key === typeDepense)?.label || 'Dépense'}`, body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        data.typeDepense = typeDepense;
+        store.addItem('depenses', data);
+        navigate('revenus-depenses');
+      });
     });
   });
 
@@ -246,6 +288,7 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Libellé', item.nom)}
         ${selectField('categorie', 'Catégorie', depCategories, item.categorie)}
+        ${selectField('typeDepense', 'Type de dépense', depTypeOptions, item.typeDepense || 'Fixe')}
         ${inputField('montantMensuel', 'Montant mensuel (€)', item.montantMensuel, 'number', 'step="10"')}
       `;
       openModal('Modifier la dépense', body, () => {
