@@ -78,6 +78,34 @@ export function render(store) {
             </button>
           </div>
         </div>
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">Jalons retraite</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Taux légal (année)</label>
+            <input type="number" id="param-retraite-legal-annee" value="${params.anneeRetraiteTauxLegal || 2047}" min="2025" max="2080" step="1"
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Pension légale (€/mois)</label>
+            <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Taux plein (année)</label>
+            <input type="number" id="param-retraite-plein-annee" value="${params.anneeRetraiteTauxPlein || 2048}" min="2025" max="2080" step="1"
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Pension taux plein (€/mois)</label>
+            <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
+              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-purple-400 mb-1.5">Départ souhaité (âge)</label>
+            <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
+              class="w-full px-3 py-2.5 bg-dark-800 border border-purple-500/50 rounded-lg text-purple-400 focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition font-medium">
+          </div>
+        </div>
       </div>
 
       <!-- Summary -->
@@ -238,7 +266,7 @@ export function mount(store, navigate) {
       });
     }
 
-    // Global patrimoine curves (hidden by default, toggle via legend)
+    // Patrimoine net (hidden by default, toggle via legend)
     datasets.push({
       label: 'Patrimoine net',
       data: snapshots.map(s => s.patrimoineNet),
@@ -251,36 +279,84 @@ export function mount(store, navigate) {
       borderDash: [6, 3],
       hidden: true
     });
-    datasets.push({
-      label: 'Total actifs',
-      data: snapshots.map(s => s.totalActifs),
-      borderColor: '#c9a76c',
-      backgroundColor: createVerticalGradient(ctx2d, '#c9a76c', 0.18, 0.02),
-      fill: true,
-      tension: 0.45,
-      pointRadius: 0,
-      borderWidth: 2.5,
-      borderDash: [6, 3],
-      hidden: true
-    });
-    datasets.push({
-      label: 'Dette',
-      data: snapshots.map(s => s.totalDette),
-      borderColor: '#ff4757',
-      backgroundColor: createVerticalGradient(ctx2d, '#ff4757', 0.12, 0.02),
-      fill: true,
-      tension: 0.45,
-      pointRadius: 0,
-      borderWidth: 2.5,
-      borderDash: [6, 3],
-      hidden: true
-    });
+
+    // Retirement milestones as vertical annotations
+    const params = store.get('parametres');
+    const currentYear = new Date().getFullYear();
+    const ageFinAnnee = params.ageFinAnnee || 43;
+
+    const retraiteTauxPleinOffset = (params.anneeRetraiteTauxPlein || 2048) - currentYear;
+    const retraiteTauxLegalOffset = (params.anneeRetraiteTauxLegal || 2047) - currentYear;
+    const retraiteSouhaiteeOffset = (params.ageRetraiteSouhaitee || 60) - ageFinAnnee;
+
+    const milestoneAnnotations = {};
+    if (retraiteTauxLegalOffset >= 0 && retraiteTauxLegalOffset <= (params.projectionYears || 30)) {
+      milestoneAnnotations.retraiteLegal = {
+        type: 'line',
+        xMin: retraiteTauxLegalOffset,
+        xMax: retraiteTauxLegalOffset,
+        borderColor: '#f59e0b',
+        borderWidth: 2,
+        borderDash: [4, 4],
+        label: {
+          display: true,
+          content: `Taux légal (${params.anneeRetraiteTauxLegal}) — ${(params.pensionTauxLegal || 0).toLocaleString('fr-FR')} €/mois`,
+          position: 'start',
+          backgroundColor: 'rgba(245,158,11,0.15)',
+          color: '#f59e0b',
+          font: { size: 11, weight: 'bold' },
+          padding: 6
+        }
+      };
+    }
+    if (retraiteTauxPleinOffset >= 0 && retraiteTauxPleinOffset <= (params.projectionYears || 30)) {
+      milestoneAnnotations.retraitePlein = {
+        type: 'line',
+        xMin: retraiteTauxPleinOffset,
+        xMax: retraiteTauxPleinOffset,
+        borderColor: '#22d3ee',
+        borderWidth: 2,
+        borderDash: [4, 4],
+        label: {
+          display: true,
+          content: `Taux plein (${params.anneeRetraiteTauxPlein}) — ${(params.pensionTauxPlein || 0).toLocaleString('fr-FR')} €/mois`,
+          position: 'center',
+          backgroundColor: 'rgba(34,211,238,0.15)',
+          color: '#22d3ee',
+          font: { size: 11, weight: 'bold' },
+          padding: 6
+        }
+      };
+    }
+    if (retraiteSouhaiteeOffset >= 0 && retraiteSouhaiteeOffset <= (params.projectionYears || 30)) {
+      milestoneAnnotations.retraiteSouhaitee = {
+        type: 'line',
+        xMin: retraiteSouhaiteeOffset,
+        xMax: retraiteSouhaiteeOffset,
+        borderColor: '#a855f7',
+        borderWidth: 2.5,
+        label: {
+          display: true,
+          content: `Départ souhaité (${params.ageRetraiteSouhaitee} ans)`,
+          position: 'end',
+          backgroundColor: 'rgba(168,85,247,0.15)',
+          color: '#a855f7',
+          font: { size: 11, weight: 'bold' },
+          padding: 6
+        }
+      };
+    }
 
     createChart('chart-repartition-temps', {
       type: 'line',
       data: { labels, datasets },
       options: {
         interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          annotation: {
+            annotations: milestoneAnnotations
+          }
+        },
         scales: {
           x: {
             grid: { display: false },
@@ -316,6 +392,13 @@ export function mount(store, navigate) {
       rendementGroupes[key] = (parseFloat(input.value) || 5) / 100;
     });
     store.set('parametres.rendementGroupes', rendementGroupes);
+
+    // Retirement milestones
+    store.set('parametres.anneeRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-annee').value) || 2047);
+    store.set('parametres.pensionTauxLegal', parseInt(document.getElementById('param-pension-legal').value) || 2442);
+    store.set('parametres.anneeRetraiteTauxPlein', parseInt(document.getElementById('param-retraite-plein-annee').value) || 2048);
+    store.set('parametres.pensionTauxPlein', parseInt(document.getElementById('param-pension-plein').value) || 2642);
+    store.set('parametres.ageRetraiteSouhaitee', parseInt(document.getElementById('param-retraite-souhaitee').value) || 60);
 
     navigate('projection');
   });

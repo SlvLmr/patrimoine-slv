@@ -77,7 +77,12 @@ const defaultState = {
     rendementGroupes: {},
     rendementEpargne: 0.02,
     ageFinAnnee: 43,
-    ageRetraite: 64
+    ageRetraite: 64,
+    anneeRetraiteTauxPlein: 2048,
+    pensionTauxPlein: 2642,
+    anneeRetraiteTauxLegal: 2047,
+    pensionTauxLegal: 2442,
+    ageRetraiteSouhaitee: 60
   }
 };
 
