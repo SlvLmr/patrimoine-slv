@@ -179,15 +179,16 @@ export function render(store) {
               <div class="space-y-1">
                 ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
                   const destPlacement = placements.find(p => p.id === t.destinationId);
-                  const destName = destPlacement ? destPlacement.nom : '(supprimé)';
+                  const destName = destPlacement ? destPlacement.nom : (t.destinationId === '__cto_overflow__' ? 'CTO' : '(supprimé)');
                   let sourceLabel, sourceBg;
                   if (t.source === 'heritage') {
                     sourceLabel = 'Héritage'; sourceBg = 'bg-accent-amber/10 text-accent-amber';
                   } else if (t.source === 'epargne') {
                     sourceLabel = 'Épargne'; sourceBg = 'bg-accent-cyan/10 text-accent-cyan';
                   } else if (t.source?.startsWith('placement:')) {
-                    const srcPlac = placements.find(p => p.id === t.source.replace('placement:', ''));
-                    sourceLabel = srcPlac ? srcPlac.nom : '(supprimé)';
+                    const srcId = t.source.replace('placement:', '');
+                    const srcPlac = placements.find(p => p.id === srcId);
+                    sourceLabel = srcPlac ? srcPlac.nom : (srcId === '__cto_overflow__' ? 'CTO' : '(supprimé)');
                     sourceBg = 'bg-purple-500/10 text-purple-300';
                   } else {
                     sourceLabel = t.source; sourceBg = 'bg-gray-500/10 text-gray-400';
