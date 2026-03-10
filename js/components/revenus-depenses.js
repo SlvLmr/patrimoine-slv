@@ -143,8 +143,12 @@ export function render(store) {
             ${revenus.map(r => `
             <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row">
               <div class="flex items-center gap-3 min-w-0">
+                <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
+                  <button data-move-rev-up="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▲</button>
+                  <button data-move-rev-down="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▼</button>
+                </div>
                 <p class="text-xs text-gray-200 truncate">${r.nom}</p>
-                <p class="text-[10px] text-gray-600 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
+                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
               </div>
               <div class="flex items-center gap-3 flex-shrink-0">
                 ${r.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(r)}</span>` : ''}
@@ -265,6 +269,35 @@ export function mount(store, navigate) {
         store.updateItem('revenus', id, data);
         navigate('revenus-depenses');
       });
+    });
+  });
+
+  // Move revenu up/down
+  content.querySelectorAll('[data-move-rev-up]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.moveRevUp;
+      const revenus = store.get('revenus');
+      const idx = revenus.findIndex(r => r.id === id);
+      if (idx > 0) {
+        [revenus[idx - 1], revenus[idx]] = [revenus[idx], revenus[idx - 1]];
+        store.set('revenus', revenus);
+        navigate('revenus-depenses');
+      }
+    });
+  });
+
+  content.querySelectorAll('[data-move-rev-down]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.moveRevDown;
+      const revenus = store.get('revenus');
+      const idx = revenus.findIndex(r => r.id === id);
+      if (idx >= 0 && idx < revenus.length - 1) {
+        [revenus[idx], revenus[idx + 1]] = [revenus[idx + 1], revenus[idx]];
+        store.set('revenus', revenus);
+        navigate('revenus-depenses');
+      }
     });
   });
 

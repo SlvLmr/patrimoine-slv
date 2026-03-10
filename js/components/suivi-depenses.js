@@ -71,9 +71,16 @@ export function render(store) {
     const sign = isRevenu ? '+' : '-';
     const editAttr = isRevenu ? `data-edit-revenu="${op.id}"` : `data-edit-expense="${op.id}"`;
     const delAttr = isRevenu ? `data-del-revenu="${op.id}"` : `data-del-expense="${op.id}"`;
+    const moveUpAttr = isRevenu ? `data-move-rev-up="${op.id}"` : `data-move-exp-up="${op.id}"`;
+    const moveDownAttr = isRevenu ? `data-move-rev-down="${op.id}"` : `data-move-exp-down="${op.id}"`;
+    const moveAccount = `data-move-compte="${op.compte}"`;
     return `
       <div class="flex items-center justify-between px-3 py-1.5 hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
         <div class="flex items-center gap-2 min-w-0">
+          <div class="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+            <button ${moveUpAttr} ${moveAccount} class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
+            <button ${moveDownAttr} ${moveAccount} class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
+          </div>
           ${icon}
           <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
           <span class="ml-2 text-[13px] text-gray-200 truncate">${op.description || '—'}</span>
@@ -323,6 +330,76 @@ export function mount(store, navigate) {
         store.set('suiviRevenus', revenus);
         navigate('suivi-depenses');
       });
+    });
+  });
+
+  // Move operations up/down (suivi dépenses)
+  document.querySelectorAll('[data-move-exp-up]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.moveExpUp;
+      const compte = btn.dataset.moveCompte;
+      const items = store.get('suiviDepenses') || [];
+      const filtered = items.filter(i => i.compte === compte);
+      const fIdx = filtered.findIndex(i => i.id === id);
+      if (fIdx > 0) {
+        const globalIdxCurrent = items.indexOf(filtered[fIdx]);
+        const globalIdxPrev = items.indexOf(filtered[fIdx - 1]);
+        [items[globalIdxPrev], items[globalIdxCurrent]] = [items[globalIdxCurrent], items[globalIdxPrev]];
+        store.set('suiviDepenses', items);
+        navigate('suivi-depenses');
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-move-exp-down]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.moveExpDown;
+      const compte = btn.dataset.moveCompte;
+      const items = store.get('suiviDepenses') || [];
+      const filtered = items.filter(i => i.compte === compte);
+      const fIdx = filtered.findIndex(i => i.id === id);
+      if (fIdx >= 0 && fIdx < filtered.length - 1) {
+        const globalIdxCurrent = items.indexOf(filtered[fIdx]);
+        const globalIdxNext = items.indexOf(filtered[fIdx + 1]);
+        [items[globalIdxCurrent], items[globalIdxNext]] = [items[globalIdxNext], items[globalIdxCurrent]];
+        store.set('suiviDepenses', items);
+        navigate('suivi-depenses');
+      }
+    });
+  });
+
+  // Move revenus up/down (suivi revenus)
+  document.querySelectorAll('[data-move-rev-up]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.moveRevUp;
+      const compte = btn.dataset.moveCompte;
+      const revenus = store.get('suiviRevenus') || [];
+      const filtered = revenus.filter(r => r.compte === compte);
+      const fIdx = filtered.findIndex(r => r.id === id);
+      if (fIdx > 0) {
+        const globalIdxCurrent = revenus.indexOf(filtered[fIdx]);
+        const globalIdxPrev = revenus.indexOf(filtered[fIdx - 1]);
+        [revenus[globalIdxPrev], revenus[globalIdxCurrent]] = [revenus[globalIdxCurrent], revenus[globalIdxPrev]];
+        store.set('suiviRevenus', revenus);
+        navigate('suivi-depenses');
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-move-rev-down]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.moveRevDown;
+      const compte = btn.dataset.moveCompte;
+      const revenus = store.get('suiviRevenus') || [];
+      const filtered = revenus.filter(r => r.compte === compte);
+      const fIdx = filtered.findIndex(r => r.id === id);
+      if (fIdx >= 0 && fIdx < filtered.length - 1) {
+        const globalIdxCurrent = revenus.indexOf(filtered[fIdx]);
+        const globalIdxNext = revenus.indexOf(filtered[fIdx + 1]);
+        [revenus[globalIdxCurrent], revenus[globalIdxNext]] = [revenus[globalIdxNext], revenus[globalIdxCurrent]];
+        store.set('suiviRevenus', revenus);
+        navigate('suivi-depenses');
+      }
     });
   });
 
