@@ -275,24 +275,40 @@ export function computeProjection(store) {
     // Héritage liquide
     if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
 
-    // Capital transfers (épargne/héritage → placement)
+    // Capital transfers (épargne/héritage/CTO → placement)
     const calYear = currentYear + year;
     for (const transfer of capitalTransfers) {
       const startY = Number(transfer.startYear);
       const endY = transfer.endYear ? Number(transfer.endYear) : startY;
-      const isActive = transfer.frequency === 'annual'
-        ? (calYear >= startY && calYear <= endY)
-        : (calYear === startY);
-      if (!isActive) continue;
+      const inRange = calYear >= startY && calYear <= endY;
+      const isOnce = (!transfer.frequency || transfer.frequency === 'once') && calYear === startY;
+      const isRecurring = (transfer.frequency === 'annual' || transfer.frequency === 'monthly') && inRange;
+      if (!isOnce && !isRecurring) continue;
 
       const destSim = placSims.find(ps => ps.id === transfer.destinationId);
       if (!destSim) continue;
 
-      let amount = Number(transfer.montant) || 0;
+      // Monthly: multiply by months in period; annual/once: lump sum
+      const multiplier = transfer.frequency === 'monthly' ? monthsInPeriod : 1;
+      let amount = (Number(transfer.montant) || 0) * multiplier;
+
       // Debit from source
       if (transfer.source === 'heritage') {
         amount = Math.min(amount, Math.max(0, heritage));
         heritage -= amount;
+      } else if (transfer.source === 'cto') {
+        // Find CTO placement(s) and debit from them
+        const ctoSims = placSims.filter(ps => ps.groupKey === 'CTO' && ps.id !== transfer.destinationId);
+        let remaining = amount;
+        for (const ctoPs of ctoSims) {
+          const debit = Math.min(remaining, Math.max(0, ctoPs.value - ctoPs.totalApports > 0 ? ctoPs.value : 0));
+          if (debit > 0) {
+            ctoPs.value -= debit;
+            remaining -= debit;
+          }
+          if (remaining <= 0) break;
+        }
+        amount = amount - remaining; // actual amount debited
       } else {
         amount = Math.min(amount, Math.max(0, epar));
         epar -= amount;
