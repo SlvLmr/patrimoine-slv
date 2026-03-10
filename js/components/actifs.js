@@ -138,6 +138,22 @@ function collectCashInjections() {
 }
 
 function initPlacementFormListeners(modal) {
+  // Auto-compute Valeur = Quantité × PRU
+  const qtyInput = modal.querySelector('#field-quantite');
+  const pruInput = modal.querySelector('#field-pru');
+  const valeurInput = modal.querySelector('#field-valeur');
+  if (qtyInput && pruInput && valeurInput) {
+    const autoCalc = () => {
+      const qty = parseFloat(qtyInput.value);
+      const pru = parseFloat(pruInput.value);
+      if (qty > 0 && pru > 0) {
+        valeurInput.value = (qty * pru).toFixed(2);
+      }
+    };
+    qtyInput.addEventListener('input', autoCalc);
+    pruInput.addEventListener('input', autoCalc);
+  }
+
   // Toggle Air Liquide fields
   const cb = modal.querySelector('#field-isAirLiquide');
   const fields = modal.querySelector('#air-liquide-fields');

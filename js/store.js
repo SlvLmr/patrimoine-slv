@@ -212,7 +212,46 @@ const Store = {
 
     this._profileId = activeId;
     this._state = loadState(activeId);
+    this._applyMonthlyDCA();
     return this;
+  },
+
+  // Auto-apply DCA on the 2nd of each month
+  _applyMonthlyDCA() {
+    const now = new Date();
+    if (now.getDate() < 2) return; // before the 2nd, skip
+
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const lastDCA = this._state.parametres._lastDCAMonth;
+    if (lastDCA === monthKey) return; // already applied this month
+
+    const placements = this._state.actifs?.placements || [];
+    let changed = false;
+
+    placements.forEach(p => {
+      const dca = Number(p.dcaMensuel) || 0;
+      if (dca <= 0) return;
+
+      const pru = Number(p.pru) || 0;
+      const qty = Number(p.quantite) || 0;
+      const val = Number(p.valeur) || 0;
+
+      if (pru > 0) {
+        // Buy new parts at PRU
+        const newParts = dca / pru;
+        p.quantite = qty + newParts;
+        p.valeur = (qty + newParts) * pru;
+      } else {
+        // No PRU: just add the amount
+        p.valeur = val + dca;
+      }
+      changed = true;
+    });
+
+    if (changed) {
+      this._state.parametres._lastDCAMonth = monthKey;
+      saveState(this._profileId, this._state);
+    }
   },
 
   // Cloud sync: load all data from cloud and replace local
