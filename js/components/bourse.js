@@ -433,7 +433,7 @@ async function loadAllQuotes(store) {
             const gainVal = portfolioInfo.querySelector('.portfolio-gain-value');
             if (gainRow && gainVal) {
               gainRow.style.display = '';
-              gainVal.className = `font-semibold ${gainPositive ? 'text-accent-green' : 'text-red-500'}`;
+              gainVal.className = `font-semibold ${gainPositive ? 'text-accent-green' : 'text-accent-red'}`;
               gainVal.textContent = `${gainPositive ? '+' : ''}${formatNum(gain)} ${sym} (${gainPositive ? '+' : ''}${gainPct.toFixed(1)}%)`;
             }
           }
