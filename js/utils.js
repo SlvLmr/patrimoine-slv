@@ -149,14 +149,23 @@ export function computeProjection(store) {
 
   // Build per-placement simulation state
   const rendementGroupes = params.rendementGroupes || {};
+  const rendementPlacements = params.rendementPlacements || {};
+  const cashInjections = params.cashInjections || {};
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
+    // Priority: per-placement override > group override > placement's own > global default
+    let rend;
+    if (rendementPlacements[p.id] !== undefined) rend = rendementPlacements[p.id];
+    else if (rendementGroupes[gk] !== undefined) rend = rendementGroupes[gk];
+    else rend = Number(p.rendement) || 0.05;
     return {
     groupKey: gk,
+    id: p.id,
     value: Number(p.valeur) || 0,
-    rendement: rendementGroupes[gk] !== undefined ? rendementGroupes[gk] : (Number(p.rendement) || (params.rendementPlacements || 0.05)),
+    rendement: rend,
     dcaMensuel: Number(p.dcaMensuel) || 0,
     dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
+    cashInjections: (cashInjections[p.id] || []).sort((a, b) => a.year - b.year),
     isAirLiquide: !!p.isAirLiquide,
     loyaltyEligible: !!p.loyaltyEligible,
     quantite: Number(p.quantite) || 0,
@@ -319,6 +328,19 @@ export function computeProjection(store) {
         const dca = getDcaForYear(ps, year + 1);
         if (dca > 0) {
           ps.value += dca * 12;
+        }
+      }
+
+      // Cash injections (one-time lump sums)
+      for (const inj of ps.cashInjections) {
+        if (inj.year === year) {
+          const amount = Number(inj.montant) || 0;
+          if (ps.isAirLiquide && ps.prixAction > 0) {
+            ps.quantite += amount / ps.prixAction;
+            ps.value = ps.quantite * ps.prixAction;
+          } else {
+            ps.value += amount;
+          }
         }
       }
     });

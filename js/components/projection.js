@@ -6,6 +6,9 @@ export function render(store) {
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
   const rendementGroupes = params.rendementGroupes || {};
+  const rendementPlacements = params.rendementPlacements || {};
+  const cashInjections = params.cashInjections || {};
+  const placements = (store.getAll().actifs?.placements || []);
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
@@ -92,10 +95,47 @@ export function render(store) {
                   class="w-10 px-1 py-0.5 text-xs bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-medium">
                 <span class="text-[10px] text-gray-600">ans</span>
               </div>
-              <button id="btn-update-projection" class="ml-auto px-4 py-1.5 text-xs font-medium bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-md hover:opacity-90 transition">
-                Recalculer
-              </button>
             </div>
+          </div>
+          <!-- Per-placement overrides -->
+          ${placements.length > 0 ? `
+          <div>
+            <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Par placement</h3>
+            <div class="space-y-1.5">
+              ${placements.map(p => {
+                const gk = getPlacementGroupKey(p);
+                const currentRend = rendementPlacements[p.id] !== undefined
+                  ? rendementPlacements[p.id]
+                  : (rendementGroupes[gk] !== undefined ? rendementGroupes[gk] : (Number(p.rendement) || 0.05));
+                const injections = cashInjections[p.id] || [];
+                return `
+              <div class="flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-dark-800/40 border border-dark-400/20 placement-row" data-placement-id="${p.id}">
+                <span class="text-[10px] text-gray-400 w-28 truncate" title="${p.nom}">${p.nom}</span>
+                <span class="text-[9px] text-gray-600">${gk}</span>
+                <div class="flex items-center gap-1">
+                  <label class="text-[9px] text-gray-600">Rdt</label>
+                  <input type="number" class="plac-rend w-14 px-1 py-0.5 text-xs bg-dark-800 border border-dark-400/40 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center"
+                    value="${(currentRend * 100).toFixed(1)}" min="0" max="50" step="0.5">
+                  <span class="text-[9px] text-gray-600">%</span>
+                </div>
+                <div class="flex items-center gap-1 cash-injections-container">
+                  ${injections.map((inj, idx) => `
+                  <div class="flex items-center gap-0.5 cash-inj-row">
+                    <input type="number" class="cash-inj-year w-12 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" value="${inj.year}" min="1" max="50" placeholder="An" title="Année">
+                    <input type="number" class="cash-inj-amount w-16 px-1 py-0.5 text-[10px] bg-dark-800 border border-accent-green/30 rounded text-accent-green text-center" value="${inj.montant}" step="100" placeholder="€" title="Montant">
+                    <button class="cash-inj-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
+                  </div>`).join('')}
+                </div>
+                <button class="cash-inj-add text-[9px] text-accent-blue/70 hover:text-accent-blue transition" title="Ajouter un apport">+ apport</button>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
+          <!-- Actions -->
+          <div class="flex justify-end pt-1">
+            <button id="btn-update-projection" class="px-4 py-1.5 text-xs font-medium bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-md hover:opacity-90 transition">
+              Recalculer
+            </button>
           </div>
         </div>
       </details>
@@ -418,6 +458,31 @@ export function mount(store, navigate) {
     });
     store.set('parametres.rendementGroupes', rendementGroupes);
 
+    // Per-placement rendement overrides
+    const rendementPlacements = {};
+    const cashInjections = {};
+    document.querySelectorAll('.placement-row').forEach(row => {
+      const pid = row.dataset.placementId;
+      const rendInput = row.querySelector('.plac-rend');
+      if (rendInput) {
+        rendementPlacements[pid] = (parseFloat(rendInput.value) || 5) / 100;
+      }
+      const injRows = row.querySelectorAll('.cash-inj-row');
+      if (injRows.length > 0) {
+        const injs = [];
+        injRows.forEach(ir => {
+          const year = parseInt(ir.querySelector('.cash-inj-year')?.value);
+          const montant = parseFloat(ir.querySelector('.cash-inj-amount')?.value);
+          if (year > 0 && !isNaN(montant) && montant !== 0) {
+            injs.push({ year, montant });
+          }
+        });
+        if (injs.length > 0) cashInjections[pid] = injs;
+      }
+    });
+    store.set('parametres.rendementPlacements', rendementPlacements);
+    store.set('parametres.cashInjections', cashInjections);
+
     // Retirement milestones
     store.set('parametres.anneeRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-annee').value) || 2047);
     store.set('parametres.pensionTauxLegal', parseInt(document.getElementById('param-pension-legal').value) || 2442);
@@ -426,5 +491,26 @@ export function mount(store, navigate) {
     store.set('parametres.ageRetraiteSouhaitee', parseInt(document.getElementById('param-retraite-souhaitee').value) || 60);
 
     navigate('projection');
+  });
+
+  // Dynamic add/remove cash injection rows
+  document.querySelectorAll('.cash-inj-add').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.placement-row');
+      const container = row.querySelector('.cash-injections-container');
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-0.5 cash-inj-row';
+      div.innerHTML = `
+        <input type="number" class="cash-inj-year w-12 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" min="1" max="50" placeholder="An" title="Année">
+        <input type="number" class="cash-inj-amount w-16 px-1 py-0.5 text-[10px] bg-dark-800 border border-accent-green/30 rounded text-accent-green text-center" step="100" placeholder="€" title="Montant">
+        <button class="cash-inj-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
+      `;
+      container.appendChild(div);
+      div.querySelector('.cash-inj-remove').addEventListener('click', () => div.remove());
+    });
+  });
+
+  document.querySelectorAll('.cash-inj-remove').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
   });
 }
