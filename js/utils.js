@@ -331,8 +331,12 @@ export function computeProjection(store) {
     });
 
     // Compute tax on gains per placement
-    // PEA: 17.2% prélèvements sociaux on gains (after 5 years; 30% before, but we assume 5y+ hold)
-    // CTO/Crypto: 30% PFU (flat tax) on gains
+    // PFU (flat tax) = 33% (12.8% IR + 17.2% PS + 3% taxe complémentaire)
+    // PEA après 5 ans: 17.2% PS uniquement (exonération IR + taxe complémentaire)
+    // PEA avant 5 ans: 33% PFU complet
+    // CTO/Crypto: 33% PFU toujours
+    const PFU_RATE = 0.33;
+    const PS_RATE = 0.172;
     let totalTaxes = 0;
     let totalApports = 0;
     let totalGainsAllPlacements = 0;
@@ -340,7 +344,13 @@ export function computeProjection(store) {
       const gains = Math.max(0, ps.totalGains);
       const gk = ps.groupKey;
       const isPEA = gk.startsWith('PEA');
-      const taxRate = isPEA ? 0.172 : 0.30; // PEA = 17.2% PS, CTO/Crypto = 30% PFU
+      let taxRate;
+      if (isPEA) {
+        // PEA: after 5 years only social charges, before 5 years full PFU
+        taxRate = year >= 5 ? PS_RATE : PFU_RATE;
+      } else {
+        taxRate = PFU_RATE;
+      }
       totalTaxes += gains * taxRate;
       totalApports += ps.totalApports;
       totalGainsAllPlacements += gains;
