@@ -141,34 +141,8 @@ export function render(store) {
               })()}
           </div>
 
-          <!-- Row 3: Heritage + Capital Transfers side by side -->
+          <!-- Row 3: Capital Transfers + Heritage side by side -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <!-- Heritage -->
-            <div>
-              <div class="flex items-center gap-1.5 mb-1">
-                <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Héritage</span>
-                <button id="proj-add-heritage" class="ml-1 w-6 h-6 flex items-center justify-center rounded-lg bg-accent-amber/20 text-accent-amber hover:bg-accent-amber/35 transition text-sm font-bold" title="Ajouter un héritage">+</button>
-              </div>
-              <div class="space-y-1">
-                ${heritageItems.length > 0 ? heritageItems.map(h => {
-                  const isImmo = h.type === 'Immobilier';
-                  const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
-                  return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-amber/40 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
-                    <svg class="w-2.5 h-2.5 shrink-0 ${isImmo ? 'text-accent-green' : 'text-accent-amber'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      ${isImmo
-                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>'
-                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>'}
-                    </svg>
-                    <span class="text-xs text-gray-200 truncate max-w-[7rem] font-medium" title="${h.nom}">${h.nom}</span>
-                    <span class="text-[9px] text-gray-600">${formatCurrency(h.montant)}</span>
-                    <span class="text-[10px] text-gray-500 ml-auto">${yearLabel}</span>
-                    <button class="proj-del-heritage opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${h.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
-                  </div>`;
-                }).join('') : '<p class="text-center text-gray-600 text-xs py-1">Aucun héritage</p>'}
-              </div>
-            </div>
-
             <!-- Capital Transfers -->
             <div>
               <div class="flex items-center gap-1.5 mb-1">
@@ -206,6 +180,32 @@ export function render(store) {
                     <button class="proj-del-transfer opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${t.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
                 }).join('') : '<p class="text-center text-gray-600 text-xs py-1">Aucun transfert planifié</p>'}
+              </div>
+            </div>
+
+            <!-- Heritage -->
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Héritage</span>
+                <button id="proj-add-heritage" class="ml-1 w-6 h-6 flex items-center justify-center rounded-lg bg-accent-amber/20 text-accent-amber hover:bg-accent-amber/35 transition text-sm font-bold" title="Ajouter un héritage">+</button>
+              </div>
+              <div class="space-y-1">
+                ${heritageItems.length > 0 ? heritageItems.map(h => {
+                  const isImmo = h.type === 'Immobilier';
+                  const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
+                  return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-amber/40 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
+                    <svg class="w-2.5 h-2.5 shrink-0 ${isImmo ? 'text-accent-green' : 'text-accent-amber'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      ${isImmo
+                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>'
+                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>'}
+                    </svg>
+                    <span class="text-xs text-gray-200 truncate max-w-[7rem] font-medium" title="${h.nom}">${h.nom}</span>
+                    <span class="text-[9px] text-gray-600">${formatCurrency(h.montant)}</span>
+                    <span class="text-[10px] text-gray-500 ml-auto">${yearLabel}</span>
+                    <button class="proj-del-heritage opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${h.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
+                  </div>`;
+                }).join('') : '<p class="text-center text-gray-600 text-xs py-1">Aucun héritage</p>'}
               </div>
             </div>
           </div>
