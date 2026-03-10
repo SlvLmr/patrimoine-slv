@@ -36,23 +36,35 @@ function sid(isin) {
   return (isin || '').replace(/[^a-zA-Z0-9]/g, '');
 }
 
-// Resolve ISIN to Yahoo Finance ticker via search API
+// Check if a string looks like an ISIN (2 letters + 10 alphanumeric)
+function isIsin(str) {
+  return /^[A-Z]{2}[A-Z0-9]{10}$/i.test(str);
+}
+
+// Resolve ISIN or ticker to Yahoo Finance ticker via search API
 const tickerCache = {};
-async function resolveIsinToTicker(isin) {
-  if (tickerCache[isin]) return tickerCache[isin];
+async function resolveIsinToTicker(identifier) {
+  if (tickerCache[identifier]) return tickerCache[identifier];
+
+  // If it's not an ISIN, treat it as a direct Yahoo ticker
+  if (!isIsin(identifier)) {
+    tickerCache[identifier] = identifier.toUpperCase();
+    return identifier.toUpperCase();
+  }
+
   try {
-    const searchUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(isin)}&quotesCount=1&newsCount=0`;
+    const searchUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(identifier)}&quotesCount=1&newsCount=0`;
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(searchUrl)}`;
     const res = await fetch(proxyUrl);
     if (!res.ok) throw new Error('Search failed');
     const data = await res.json();
     const quote = data.quotes?.[0];
     if (quote?.symbol) {
-      tickerCache[isin] = quote.symbol;
+      tickerCache[identifier] = quote.symbol;
       return quote.symbol;
     }
   } catch (e) {
-    console.warn(`ISIN lookup failed for ${isin}:`, e);
+    console.warn(`Ticker lookup failed for ${identifier}:`, e);
   }
   return null;
 }
@@ -294,9 +306,9 @@ export function render(store) {
         <div class="relative bg-dark-800 border border-dark-400 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
           <h3 class="text-lg font-semibold text-gray-100">Ajouter un titre</h3>
           <div>
-            <label class="block text-sm text-gray-400 mb-1">Code ISIN</label>
-            <input id="input-isin" type="text" placeholder="Ex: FR0011550185" class="w-full bg-dark-700 border border-dark-400 rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
-            <p class="text-xs text-gray-600 mt-1">Le ticker Yahoo Finance sera résolu automatiquement depuis l'ISIN</p>
+            <label class="block text-sm text-gray-400 mb-1">Code ISIN ou Ticker Yahoo</label>
+            <input id="input-isin" type="text" placeholder="Ex: FR0011550185 ou BTC-USD" class="w-full bg-dark-700 border border-dark-400 rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
+            <p class="text-xs text-gray-600 mt-1">ISIN pour actions/ETF — Ticker Yahoo pour crypto (ex: BTC-USD, ETH-USD, SOL-USD)</p>
           </div>
           <div>
             <label class="block text-sm text-gray-400 mb-1">Nom (optionnel)</label>
@@ -403,6 +415,15 @@ export function mount(store, navigate) {
     modal?.classList.add('hidden');
   });
 
+  // Auto-detect type from ticker input
+  document.getElementById('input-isin')?.addEventListener('input', (e) => {
+    const val = e.target.value.trim().toUpperCase();
+    const typeSelect = document.getElementById('input-type');
+    if (typeSelect && val.includes('-USD') || val.includes('-EUR')) {
+      typeSelect.value = 'Crypto';
+    }
+  });
+
   // Confirm add
   document.getElementById('btn-confirm-add')?.addEventListener('click', () => {
     const isin = document.getElementById('input-isin')?.value?.trim();
@@ -412,7 +433,7 @@ export function mount(store, navigate) {
 
     const watchlist = loadWatchlist();
     if (watchlist.some(w => w.isin.toLowerCase() === isin.toLowerCase())) {
-      alert('Cet ISIN est déjà dans votre liste.');
+      alert('Ce titre est déjà dans votre liste.');
       return;
     }
 
