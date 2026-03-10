@@ -218,7 +218,7 @@ export function render(store) {
                   : s.annee === 0
                     ? 'bg-accent-blue/5'
                     : '';
-                const borderTop = isFiveYear ? 'border-t-2 border-t-dark-200/50' : '';
+                const borderTop = isFiveYear ? 'border-t-[3px] border-t-gray-500/40' : '';
                 return `
               <tr class="hover:bg-dark-600/30 transition ${rowClass} ${borderTop} text-xs">
                 <td class="px-2 py-1 text-center font-medium text-gray-200">
