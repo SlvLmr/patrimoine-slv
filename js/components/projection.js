@@ -194,47 +194,49 @@ export function render(store) {
           <table class="w-full text-sm">
             <thead class="bg-dark-800/50 text-gray-500 text-xs">
               <tr>
-                <th class="px-2 py-2 text-center">Année</th>
-                <th class="px-2 py-2 text-center border-r-2 border-dark-300/40">Âge</th>
-                <th class="px-2 py-2 text-center">PEA Actions</th>
-                <th class="px-2 py-2 text-center">PEA ETF</th>
-                <th class="px-2 py-2 text-center">Bitcoin</th>
-                <th class="px-2 py-2 text-center">Intérêts cumulés</th>
-                <th class="px-2 py-2 text-center font-semibold">Total Invest</th>
-                <th class="px-2 py-2 text-center border-l-2 border-dark-300/40">Épargne</th>
-                <th class="px-2 py-2 text-center">Immobilier</th>
-                <th class="px-2 py-2 text-center">Héritage</th>
-                <th class="px-2 py-2 text-center font-semibold">Total liquidités</th>
-                <th class="px-2 py-2 text-center"></th>
-                <th class="px-2 py-2 text-center"></th>
+                <th class="px-2 py-1.5 text-center">Année</th>
+                <th class="px-2 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
+                <th class="px-2 py-1.5 text-center">PEA Actions</th>
+                <th class="px-2 py-1.5 text-center">PEA ETF</th>
+                <th class="px-2 py-1.5 text-center">Bitcoin</th>
+                <th class="px-2 py-1.5 text-center">Intérêts cumulés</th>
+                <th class="px-2 py-1.5 text-center font-semibold">Total Invest</th>
+                <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Épargne</th>
+                <th class="px-2 py-1.5 text-center">Héritage</th>
+                <th class="px-2 py-1.5 text-center">Immobilier</th>
+                <th class="px-2 py-1.5 text-center font-semibold">Total liquidités</th>
+                <th class="px-2 py-1.5 text-center"></th>
+                <th class="px-2 py-1.5 text-center"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
               ${snapshots.map(s => {
                 const isRetirement = s.isRetraite;
+                const isFiveYear = s.annee > 0 && s.annee % 5 === 0;
                 const rowClass = isRetirement
                   ? 'bg-accent-amber/10 border-l-4 border-l-accent-amber'
                   : s.annee === 0
                     ? 'bg-accent-blue/5'
                     : '';
+                const borderTop = isFiveYear ? 'border-t-2 border-t-dark-200/50' : '';
                 return `
-              <tr class="hover:bg-dark-600/30 transition ${rowClass} text-xs">
-                <td class="px-2 py-1.5 text-center font-medium text-gray-200">
+              <tr class="hover:bg-dark-600/30 transition ${rowClass} ${borderTop} text-xs">
+                <td class="px-2 py-1 text-center font-medium text-gray-200">
                   ${s.label}
                   ${isRetirement ? '<span class="ml-1 text-[10px] text-accent-amber font-semibold">RET.</span>' : ''}
                 </td>
-                <td class="px-2 py-1.5 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200">${formatCurrency(s.placementDetail['PEA Actions'] || 0)}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200">${formatCurrency(s.placementDetail['PEA ETF'] || 0)}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200">${formatCurrency(s.placementDetail['Crypto'] || 0)}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200">${formatCurrency(s.interetsCumules)}</td>
-                <td class="px-2 py-1.5 text-center font-semibold text-accent-cyan">${formatCurrency(s.cashApresImpot)}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200">${formatCurrency(s.immobilier)}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200">${formatCurrency(s.heritage)}</td>
-                <td class="px-2 py-1.5 text-center font-semibold text-accent-green">${formatCurrency(s.totalLiquiditesNettes)}</td>
-                <td class="px-2 py-1.5 text-center text-gray-200"></td>
-                <td class="px-2 py-1.5 text-center text-gray-200"></td>
+                <td class="px-2 py-1 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['PEA Actions'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['PEA ETF'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['Crypto'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.interetsCumules)}</td>
+                <td class="px-2 py-1 text-center font-semibold text-accent-cyan">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.heritage)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.immobilier)}</td>
+                <td class="px-2 py-1 text-center font-semibold text-accent-green">${formatCurrency(s.totalLiquiditesNettes)}</td>
+                <td class="px-2 py-1 text-center text-gray-200"></td>
+                <td class="px-2 py-1 text-center text-gray-200"></td>
               </tr>`;
               }).join('')}
             </tbody>

@@ -253,13 +253,29 @@ export function computeProjection(store) {
 
       if (ps.isAirLiquide) {
         const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
-        ps.prixAction *= (1 + ps.rendement * periodFraction);
+        const monthlyRate = ps.rendement / 12;
+        const dca = getDcaForYear(ps, year + 1);
+        const monthlyDca = (dca > 0 && ps.prixAction > 0) ? dca : 0;
 
-        if (monthsInPeriod >= 6) {
-          const dividendTotal = ps.quantite * ps.dividendeParAction * loyaltyMultiplier;
-          interetsAnnuels += dividendTotal;
-          if (ps.prixAction > 0) {
-            ps.quantite += dividendTotal / ps.prixAction;
+        // Month-by-month simulation for proper compound interest on DCA
+        let dividendPaid = false;
+        for (let m = 0; m < monthsInPeriod; m++) {
+          // Monthly DCA buys shares at current price
+          if (monthlyDca > 0) {
+            ps.quantite += monthlyDca / ps.prixAction;
+            ps.totalApports += monthlyDca;
+          }
+          // Monthly price growth
+          ps.prixAction *= (1 + monthlyRate);
+
+          // Dividends paid once per year around month 6
+          if (!dividendPaid && m >= 5 && monthsInPeriod >= 6) {
+            dividendPaid = true;
+            const dividendTotal = ps.quantite * ps.dividendeParAction * loyaltyMultiplier;
+            interetsAnnuels += dividendTotal;
+            if (ps.prixAction > 0) {
+              ps.quantite += dividendTotal / ps.prixAction;
+            }
           }
         }
 
@@ -268,23 +284,20 @@ export function computeProjection(store) {
           ps.quantite += freeShares;
         }
 
-        const dca = getDcaForYear(ps, year + 1);
-        if (dca > 0 && ps.prixAction > 0) {
-          const periodDca = dca * monthsInPeriod;
-          ps.quantite += periodDca / ps.prixAction;
-          ps.totalApports += periodDca;
-        }
-
         ps.dividendeParAction *= (1 + ps.croissanceDividende * periodFraction);
         ps.value = ps.quantite * ps.prixAction;
 
       } else {
-        ps.value *= (1 + ps.rendement * periodFraction);
+        // Month-by-month simulation for proper compound interest on DCA
+        const monthlyRate = ps.rendement / 12;
         const dca = getDcaForYear(ps, year + 1);
+        const monthlyDca = dca > 0 ? dca : 0;
+        for (let m = 0; m < monthsInPeriod; m++) {
+          ps.value += monthlyDca;
+          ps.value *= (1 + monthlyRate);
+        }
         if (dca > 0) {
-          const periodDca = dca * monthsInPeriod;
-          ps.value += periodDca;
-          ps.totalApports += periodDca;
+          ps.totalApports += dca * monthsInPeriod;
         }
       }
 
