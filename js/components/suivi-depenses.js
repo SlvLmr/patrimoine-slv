@@ -24,11 +24,6 @@ const BANK_ICONS = {
   </svg>`
 };
 
-function getMonthKey(date) {
-  const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
 function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -44,46 +39,46 @@ export function render(store) {
   ];
   const soldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
   const soldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
-  const today = getToday();
-  const currentMonth = getMonthKey(today);
-
-  // Group by month
-  const byMonth = {};
-  items.forEach(item => {
-    const mk = getMonthKey(item.date);
-    if (!byMonth[mk]) byMonth[mk] = [];
-    byMonth[mk].push(item);
-  });
-
-  // Sort months descending
-  const months = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
-
-  // Today's total
-  const todayItems = items.filter(i => i.date === today);
-  const todayTotal = todayItems.reduce((s, i) => s + (Number(i.montant) || 0), 0);
-
-  // This month total
-  const monthItems = byMonth[currentMonth] || [];
-  const monthTotal = monthItems.reduce((s, i) => s + (Number(i.montant) || 0), 0);
-
-  // Category breakdown for current month
-  const catBreakdown = {};
-  monthItems.forEach(i => {
-    const cat = i.categorie || 'Autre';
-    catBreakdown[cat] = (catBreakdown[cat] || 0) + (Number(i.montant) || 0);
-  });
-
-  const monthLabel = new Date(currentMonth + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-
   // Archive data
   const archives = store.get('archiveDepenses') || [];
-  const currentYear = new Date().getFullYear().toString();
 
-  // Cumulé annuel = archives de cette année + dépenses du mois en cours
-  const yearArchives = archives.filter(a => a.mois.startsWith(currentYear));
-  const yearArchiveTotal = yearArchives.reduce((s, a) => s + (a.total || 0), 0);
-  const yearTotal = yearArchiveTotal + monthTotal;
-  const yearCount = yearArchives.reduce((s, a) => s + (a.count || 0), 0) + monthItems.length;
+  // Merge revenus + depenses into unified operations per bank
+  const opsCIC = [
+    ...items.filter(i => i.compte === 'CIC').map(i => ({ ...i, type: 'depense' })),
+    ...revenus.filter(r => r.compte === 'CIC').map(r => ({ ...r, type: 'revenu' }))
+  ].sort((a, b) => b.date.localeCompare(a.date) || (b.id || '').localeCompare(a.id || ''));
+
+  const opsTR = [
+    ...items.filter(i => i.compte === 'Trade Republic').map(i => ({ ...i, type: 'depense' })),
+    ...revenus.filter(r => r.compte === 'Trade Republic').map(r => ({ ...r, type: 'revenu' }))
+  ].sort((a, b) => b.date.localeCompare(a.date) || (b.id || '').localeCompare(a.id || ''));
+
+  const renderOp = (op) => {
+    const isRevenu = op.type === 'revenu';
+    const icon = isRevenu
+      ? `<svg class="w-5 h-5 text-accent-green flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
+      : `<svg class="w-5 h-5 text-accent-red flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
+    const color = isRevenu ? 'text-accent-green' : 'text-accent-red';
+    const sign = isRevenu ? '+' : '-';
+    const delAttr = isRevenu ? `data-del-revenu="${op.id}"` : `data-del-expense="${op.id}"`;
+    return `
+      <div class="flex items-center justify-between px-4 py-3 hover:bg-dark-600/30 transition group">
+        <div class="flex items-center gap-3">
+          ${icon}
+          <span class="text-xs text-gray-500 w-16">${formatDate(op.date)}</span>
+          <div>
+            <p class="text-sm text-gray-200">${op.description || '—'}</p>
+            <span class="text-xs text-gray-500">${op.categorie || ''}</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-medium ${color}">${sign}${formatCurrency(op.montant)}</span>
+          <button ${delAttr} class="opacity-0 group-hover:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition">Suppr.</button>
+        </div>
+      </div>`;
+  };
+
+  const noOps = opsCIC.length === 0 && opsTR.length === 0 && archives.length === 0;
 
   return `
     <div class="space-y-6">
@@ -95,130 +90,43 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Soldes comptes courants -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="card-dark rounded-xl p-5 flex items-center gap-4">
+      <!-- CIC -->
+      <div class="card-dark rounded-xl overflow-hidden">
+        <div class="p-5 flex items-center gap-4 border-b border-dark-400/30">
           ${BANK_ICONS['CIC']}
           <div class="flex-1">
             <p class="text-sm text-gray-400">Compte courant CIC</p>
-            <p class="text-xl font-bold text-gray-100 cc-solde-cic">${formatCurrency(soldeCIC)}</p>
+            <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeCIC)}</p>
           </div>
           <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
         </div>
-        <div class="card-dark rounded-xl p-5 flex items-center gap-4">
+        ${opsCIC.length > 0 ? `
+        <div class="divide-y divide-dark-400/20">
+          ${opsCIC.map(renderOp).join('')}
+        </div>
+        ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
+      </div>
+
+      <!-- Trade Republic -->
+      <div class="card-dark rounded-xl overflow-hidden">
+        <div class="p-5 flex items-center gap-4 border-b border-dark-400/30">
           ${BANK_ICONS['Trade Republic']}
           <div class="flex-1">
             <p class="text-sm text-gray-400">Compte courant Trade Republic</p>
-            <p class="text-xl font-bold text-gray-100 cc-solde-trade">${formatCurrency(soldeTR)}</p>
+            <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeTR)}</p>
           </div>
           <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
         </div>
-      </div>
-
-      <!-- KPIs -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card-dark rounded-xl p-5 kpi-card">
-          <p class="text-sm text-gray-400 mb-2">Aujourd'hui</p>
-          <p class="text-2xl font-bold text-accent-red">${formatCurrency(todayTotal)}</p>
-          <p class="text-xs text-gray-500 mt-1">${todayItems.length} dépense${todayItems.length > 1 ? 's' : ''}</p>
-        </div>
-        <div class="card-dark rounded-xl p-5 kpi-card">
-          <p class="text-sm text-gray-400 mb-2">${monthLabel}</p>
-          <p class="text-2xl font-bold text-accent-amber">${formatCurrency(monthTotal)}</p>
-          <p class="text-xs text-gray-500 mt-1">${monthItems.length} dépense${monthItems.length > 1 ? 's' : ''}</p>
-        </div>
-        <div class="card-dark rounded-xl p-5 kpi-card">
-          <p class="text-sm text-gray-400 mb-2">Moy. journalière (mois)</p>
-          <p class="text-2xl font-bold text-gray-200">${formatCurrency(monthItems.length > 0 ? monthTotal / new Date().getDate() : 0)}</p>
-        </div>
-        <div class="card-dark rounded-xl p-5 kpi-card">
-          <p class="text-sm text-gray-400 mb-2">Cumulé ${currentYear}</p>
-          <p class="text-2xl font-bold text-purple-400">${formatCurrency(yearTotal)}</p>
-          <p class="text-xs text-gray-500 mt-1">${yearCount} dépense${yearCount > 1 ? 's' : ''}</p>
-        </div>
-      </div>
-
-      <!-- Category breakdown -->
-      ${Object.keys(catBreakdown).length > 0 ? `
-      <div class="card-dark rounded-xl p-5">
-        <h2 class="text-sm font-semibold text-gray-300 mb-3">Répartition du mois</h2>
-        <div class="space-y-2">
-          ${Object.entries(catBreakdown).sort((a, b) => b[1] - a[1]).map(([cat, total]) => {
-            const pct = monthTotal > 0 ? (total / monthTotal * 100) : 0;
-            return `
-            <div class="flex items-center gap-3">
-              <span class="text-xs text-gray-400 w-24 truncate">${cat}</span>
-              <div class="flex-1 h-2 bg-dark-600 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-accent-red to-accent-amber rounded-full" style="width:${pct}%"></div>
-              </div>
-              <span class="text-xs font-medium text-gray-300 w-20 text-right">${formatCurrency(total)}</span>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-      ` : ''}
-
-      <!-- Expense list by month -->
-      ${months.map(mk => {
-        const mItems = byMonth[mk].sort((a, b) => b.date.localeCompare(a.date) || b.id?.localeCompare(a.id));
-        const mTotal = mItems.reduce((s, i) => s + (Number(i.montant) || 0), 0);
-        const label = new Date(mk + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-        return `
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-4 border-b border-dark-400/30 flex justify-between items-center">
-          <h2 class="text-sm font-semibold text-gray-300 capitalize">${label}</h2>
-          <span class="text-sm font-semibold text-accent-red">${formatCurrency(mTotal)}</span>
-        </div>
+        ${opsTR.length > 0 ? `
         <div class="divide-y divide-dark-400/20">
-          ${mItems.map(i => `
-          <div class="flex items-center justify-between px-4 py-3 hover:bg-dark-600/30 transition group">
-            <div class="flex items-center gap-3">
-              <span class="text-xs text-gray-500 w-16">${formatDate(i.date)}</span>
-              <div>
-                <p class="text-sm text-gray-200">${i.description || '—'}</p>
-                <span class="text-xs text-gray-500">${i.categorie || ''}${i.compte ? ` · ${i.compte}` : ''}</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-sm font-medium text-accent-red">-${formatCurrency(i.montant)}</span>
-              <button data-del-expense="${i.id}" class="opacity-0 group-hover:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition">Suppr.</button>
-            </div>
-          </div>
-          `).join('')}
+          ${opsTR.map(renderOp).join('')}
         </div>
-      </div>`;
-      }).join('')}
+        ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
+      </div>
 
-      ${months.length === 0 && archives.length === 0 && revenus.length === 0 ? `
+      ${noOps ? `
       <div class="card-dark rounded-xl p-8 text-center">
         <p class="text-gray-500">Aucune opération enregistrée. Cliquez sur "+ Ajouter un revenu" ou "+ Ajouter une dépense" pour commencer.</p>
-      </div>
-      ` : ''}
-
-      <!-- Revenus list -->
-      ${revenus.length > 0 ? `
-      <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-4 border-b border-dark-400/30 flex justify-between items-center">
-          <h2 class="text-sm font-semibold text-gray-300">Revenus</h2>
-          <span class="text-sm font-semibold text-accent-green">${formatCurrency(revenus.reduce((s, r) => s + (Number(r.montant) || 0), 0))}</span>
-        </div>
-        <div class="divide-y divide-dark-400/20">
-          ${revenus.sort((a, b) => b.date.localeCompare(a.date)).map(r => `
-          <div class="flex items-center justify-between px-4 py-3 hover:bg-dark-600/30 transition group">
-            <div class="flex items-center gap-3">
-              <span class="text-xs text-gray-500 w-16">${formatDate(r.date)}</span>
-              <div>
-                <p class="text-sm text-gray-200">${r.description || '—'}</p>
-                <span class="text-xs text-gray-500">${r.categorie || ''}${r.compte ? ` · ${r.compte}` : ''}</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-sm font-medium text-accent-green">+${formatCurrency(r.montant)}</span>
-              <button data-del-revenu="${r.id}" class="opacity-0 group-hover:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition">Suppr.</button>
-            </div>
-          </div>
-          `).join('')}
-        </div>
       </div>
       ` : ''}
 
