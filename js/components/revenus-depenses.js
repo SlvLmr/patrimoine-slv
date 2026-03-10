@@ -111,7 +111,7 @@ export function render(store) {
             </div>
             <p class="text-sm text-gray-400">Balance annuelle</p>
           </div>
-          <p class="text-2xl font-bold ${balance >= 0 ? 'text-accent-blue' : 'text-accent-red'}">${formatCurrency(balance * 12)}</p>
+          <p class="text-3xl font-bold ${balance >= 0 ? 'text-accent-blue' : 'text-accent-red'}">${formatCurrency(balance * 12)}</p>
         </div>
       </div>
 
