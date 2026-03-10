@@ -1,5 +1,6 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, getFormData, getPlacementGroupKey } from '../utils.js';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js';
 
 export function render(store) {
   const params = store.get('parametres');
@@ -91,11 +92,11 @@ export function render(store) {
           </div>
 
           <!-- Row 2: Placements as compact grid -->
-          ${placements.length > 0 ? `
           <div>
             <div class="flex items-center gap-1.5 mb-1">
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Placements</span>
+              <button id="proj-add-plac-global" class="ml-2 w-5 h-5 flex items-center justify-center rounded bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition text-xs font-bold" title="Ajouter un placement">+</button>
             </div>
             ${(() => {
                 const groupIcons = {
@@ -111,25 +112,41 @@ export function render(store) {
                   const gk = getPlacementGroupKey(p);
                   const currentRend = rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05);
                   const icon = groupIcons[gk] || defaultIcon;
-                  return `<div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition placement-row" data-placement-id="${p.id}">
+                  const dcaLabel = p.dcaMensuel ? `<span class="text-[9px] text-gray-600">${p.dcaMensuel}€/m</span>` : '';
+                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-pointer placement-row" data-placement-id="${p.id}">
                     ${icon}
-                    <span class="text-sm text-gray-200 truncate max-w-[8rem] font-medium" title="${p.nom}">${p.nom}</span>
+                    <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
+                    ${dcaLabel}
                     <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
                     <input type="number" class="param-input plac-rend w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
-                      value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5">
+                      value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5" onclick="event.stopPropagation()">
                     <span class="text-[10px] text-gray-500">%</span>
+                    <button class="proj-del-plac opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
                 };
+                const addBtnForGroup = (envValue, catValue, label) => `<button class="proj-add-plac-group flex items-center justify-center gap-1 px-2.5 py-1.5 rounded border border-dashed border-dark-400/30 hover:border-accent-green/40 hover:bg-dark-700/30 transition text-xs text-gray-500 hover:text-accent-green cursor-pointer" data-env="${envValue}" data-cat="${catValue}">
+                    <span class="text-sm font-bold">+</span> ${label}
+                  </button>`;
                 const actions = placements.filter(p => getPlacementGroupKey(p) === 'PEA Actions');
                 const etfs = placements.filter(p => getPlacementGroupKey(p) === 'PEA ETF');
+                const others = placements.filter(p => {
+                  const gk = getPlacementGroupKey(p);
+                  return gk !== 'PEA Actions' && gk !== 'PEA ETF';
+                });
                 return `
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
+            ${actions.length > 0 || etfs.length > 0 ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
               ${actions.map(renderCard).join('')}
+              ${addBtnForGroup('PEA', 'Action', 'Action PEA')}
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 mt-1">
               ${etfs.map(renderCard).join('')}
-            </div>
+              ${addBtnForGroup('PEA', 'ETF', 'ETF PEA')}
+            </div>` : `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
+              ${addBtnForGroup('PEA', 'Action', 'Action PEA')}
+              ${addBtnForGroup('PEA', 'ETF', 'ETF PEA')}
+            </div>`}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 mt-1">
+              ${others.map(renderCard).join('')}
               <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-dark-400/30 transition">
                 ${groupIcons['Crypto']}
                 <span class="text-sm text-gray-200 font-medium">Bitcoin</span>
@@ -162,9 +179,11 @@ export function render(store) {
                   value="${((params.rendementPEE || 0.04) * 100).toFixed(1)}" min="0" max="30" step="0.5">
                 <span class="text-[10px] text-gray-500">%</span>
               </div>
+              ${addBtnForGroup('CTO', '', 'CTO')}
+              ${addBtnForGroup('Crypto', 'Crypto', 'Crypto')}
             </div>`;
               })()}
-          </div>` : ''}
+          </div>
 
           <!-- Actions -->
           <div class="flex justify-end">
@@ -607,6 +626,56 @@ export function mount(store, navigate) {
     store.set('parametres.ageRetraiteSouhaitee', parseInt(document.getElementById('param-retraite-souhaitee').value) || 60);
 
     navigate('projection');
+  });
+
+  // --- Placement CRUD from projection ---
+  // Global add button
+  document.getElementById('proj-add-plac-global')?.addEventListener('click', () => {
+    openAddPlacementModal(store, navigate, 'projection', null);
+  });
+
+  // Per-group add buttons (+ Action PEA, + ETF PEA, + CTO, + Crypto)
+  document.querySelectorAll('.proj-add-plac-group').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const env = btn.dataset.env || null;
+      const cat = btn.dataset.cat || null;
+      // Pre-fill envelope; category is set after modal opens
+      openAddPlacementModal(store, navigate, 'projection', env);
+      // If category specified, pre-select it in the modal after it opens
+      if (cat) {
+        setTimeout(() => {
+          const catSelect = document.getElementById('field-categorie');
+          if (catSelect) catSelect.value = cat;
+        }, 150);
+      }
+    });
+  });
+
+  // Click on placement card to edit
+  document.querySelectorAll('.proj-edit-plac').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEditPlacementModal(store, navigate, 'projection', el.dataset.id);
+    });
+  });
+
+  // Also make the whole card clickable (except input/button)
+  document.querySelectorAll('.placement-row[data-placement-id]').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      openEditPlacementModal(store, navigate, 'projection', row.dataset.placementId);
+    });
+  });
+
+  // Delete placement from projection
+  document.querySelectorAll('.proj-del-plac').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('Supprimer ce placement ?')) {
+        store.removeItem('actifs.placements', btn.dataset.id);
+        navigate('projection');
+      }
+    });
   });
 
   // Auto-save editable strategy blocks on blur
