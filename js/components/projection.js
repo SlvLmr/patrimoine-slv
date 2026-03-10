@@ -277,64 +277,67 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-5 border-b border-dark-400/30">
           <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
-          <p class="text-[10px] text-gray-600 mt-1">Apports | <span class="italic">+Intérêts</span> | <span class="text-accent-red/70">-Impôts (taux)</span> — PEA &lt;5 ans: 30% PFU · PEA &gt;5 ans: 17,2% PS · AV &lt;8 ans: 30% · AV &gt;8 ans: 24,7% · CTO/Crypto: 30% · PEE: 17,2%</p>
+          <p class="text-[10px] text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5 ans: 30% · PEA &gt;5 ans: 17,2% · AV &lt;8 ans: 30% · AV &gt;8 ans: 24,7% · CTO/Crypto: 30% · PEE: 17,2%</p>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-dark-800/50 text-gray-500 text-xs">
+        <div>
+          <table class="w-full text-sm table-fixed">
+            <thead class="bg-dark-800/50 text-gray-500 text-[10px]">
               <tr>
-                <th class="px-2 py-1.5 text-center" rowspan="2">Année</th>
-                <th class="px-2 py-1.5 text-center" rowspan="2">An</th>
-                <th class="px-2 py-1.5 text-center border-r-2 border-dark-300/40" rowspan="2">Âge</th>
-                ${groupKeys.map(gk => `<th class="px-2 py-1.5 text-center border-l border-dark-300/20" colspan="3">${gk}</th>`).join('')}
-                <th class="px-2 py-1.5 text-center font-semibold border-l-2 border-dark-300/40" rowspan="2">Net d'impôts</th>
-                <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40" rowspan="2">Épargne</th>
-                <th class="px-2 py-1.5 text-center" rowspan="2">Héritage</th>
-                <th class="px-2 py-1.5 text-center" rowspan="2">Immobilier</th>
-                <th class="px-2 py-1.5 text-center font-semibold border-l-2 border-dark-300/40" rowspan="2">Total liq.</th>
-              </tr>
-              <tr>
-                ${groupKeys.map(() => `
-                  <th class="px-1 py-0.5 text-center text-[9px] border-l border-dark-300/20">Apports</th>
-                  <th class="px-1 py-0.5 text-center text-[9px] italic font-light">+Int.</th>
-                  <th class="px-1 py-0.5 text-center text-[9px] text-accent-red/50">-Impôts</th>
-                `).join('')}
+                <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
+                <th class="w-[28px] px-0 py-1.5 text-center">An</th>
+                <th class="w-[32px] px-0 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
+                <th class="px-1 py-1.5 text-center">Actions</th>
+                <th class="px-1 py-1.5 text-center">ETF</th>
+                <th class="px-1 py-1.5 text-center">Bitcoin</th>
+                <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">CTO</th>
+                <th class="px-1 py-1.5 text-center">AV</th>
+                <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">PEE</th>
+                <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
+                <th class="px-1 py-1.5 text-center">Épargne</th>
+                <th class="px-1 py-1.5 text-center">Hérit.</th>
+                <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Immo.</th>
+                <th class="px-1 py-1.5 text-center font-semibold">Liq.</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
               ${snapshots.map(s => {
                 const isRetirement = s.isRetraite;
-                const isFiveYear = s.annee > 0 && s.annee % 5 === 0;
+                const isFiveYear = (s.annee + 1) > 1 && (s.annee + 1) % 5 === 0;
                 const rowClass = isRetirement
                   ? 'bg-accent-amber/10 border-l-4 border-l-accent-amber'
                   : s.annee === 0
                     ? 'bg-accent-blue/5'
                     : '';
                 const borderTop = isFiveYear ? 'border-t-[3px] border-t-gray-500/40' : '';
-                return `
-              <tr class="hover:bg-dark-600/30 transition ${rowClass} ${borderTop} text-xs">
-                <td class="px-2 py-1 text-center font-medium text-gray-200">
-                  ${s.label}
-                  ${isRetirement ? '<span class="ml-1 text-[10px] text-accent-amber font-semibold">RET.</span>' : ''}
-                </td>
-                <td class="px-2 py-1 text-center text-gray-500">${s.annee}</td>
-                <td class="px-2 py-1 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
-                ${groupKeys.map(gk => {
-                  const apports = s.placementApports[gk] || 0;
-                  const gains = s.placementGains[gk] || 0;
-                  const taxes = s.placementTaxes?.[gk] || 0;
+                // Helper: render a placement cell with tooltip
+                const placCell = (gk, extraClass = '') => {
+                  const val = s.placementDetail[gk] || 0;
+                  const ap = s.placementApports[gk] || 0;
+                  const ga = s.placementGains[gk] || 0;
+                  const tx = s.placementTaxes?.[gk] || 0;
                   const rate = s.placementTaxRates?.[gk] || 0;
-                  const rateLabel = rate > 0 ? `${Math.round(rate * 100)}%` : '';
-                  return `
-                <td class="px-1 py-1 text-center text-gray-200 border-l border-dark-300/20">${formatCurrency(apports)}</td>
-                <td class="px-1 py-1 text-center text-gray-300 italic font-light">${formatCurrency(gains)}</td>
-                <td class="px-1 py-1 text-center text-accent-red/60 text-[10px]">${taxes > 0 ? `-${formatCurrency(taxes)}` : '-'}${rateLabel ? `<br><span class="text-[8px] text-gray-600">${rateLabel}</span>` : ''}</td>`;
-                }).join('')}
-                <td class="px-2 py-1 text-center font-semibold text-accent-cyan border-l-2 border-dark-300/40">${formatCurrency(s.cashApresImpot)}</td>
-                <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.heritage)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.immobilier)}</td>
-                <td class="px-2 py-1 text-center font-semibold text-accent-green border-l-2 border-dark-300/40">${formatCurrency(s.totalLiquiditesNettes)}</td>
+                  const rateStr = rate > 0 ? ` (${Math.round(rate * 100)}%)` : '';
+                  const tip = `Apports: ${formatCurrency(ap)}\\nGains: ${formatCurrency(ga)}\\nImpôts: -${formatCurrency(tx)}${rateStr}\\nNet: ${formatCurrency(val - tx)}`;
+                  return `<td class="px-1 py-1 text-center text-[11px] text-gray-200 ${extraClass}" title="${tip}">${val > 0 ? formatCurrency(val) : '<span class=&quot;text-gray-700&quot;>-</span>'}</td>`;
+                };
+                return `
+              <tr class="hover:bg-dark-600/30 transition ${rowClass} ${borderTop} text-[11px]">
+                <td class="px-1 py-1 text-center font-medium text-gray-200 truncate">
+                  ${s.label}${isRetirement ? ' <span class="text-[9px] text-accent-amber font-semibold">R</span>' : ''}
+                </td>
+                <td class="px-0 py-1 text-center text-gray-500">${s.annee + 1}</td>
+                <td class="px-0 py-1 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
+                ${placCell('PEA Actions')}
+                ${placCell('PEA ETF')}
+                ${placCell('Crypto')}
+                ${placCell('CTO', 'border-r-2 border-dark-300/40')}
+                ${placCell('Assurance Vie')}
+                ${placCell('PEE', 'border-r-2 border-dark-300/40')}
+                <td class="px-1 py-1 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px]" title="Total placements: ${formatCurrency(s.placements)}\\nImpôts totaux: -${formatCurrency(s.totalTaxes)}">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-200">${formatCurrency(s.epargne)}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-200">${formatCurrency(s.heritage)}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40">${formatCurrency(s.immobilier)}</td>
+                <td class="px-1 py-1 text-center font-semibold text-accent-green text-[11px]">${formatCurrency(s.totalLiquiditesNettes)}</td>
               </tr>`;
               }).join('')}
             </tbody>
