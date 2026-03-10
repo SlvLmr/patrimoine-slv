@@ -183,6 +183,26 @@ export function computeProjection(store) {
   };
   });
 
+  // CTO overflow placement: receives PEA DCA when ceiling is reached
+  // Use average PEA rendement for the CTO overflow
+  const peaPlacements = placSims.filter(ps => ps.groupKey.startsWith('PEA'));
+  const avgPeaRend = peaPlacements.length > 0
+    ? peaPlacements.reduce((s, ps) => s + ps.rendement, 0) / peaPlacements.length
+    : 0.05;
+  const ctoOverflow = {
+    groupKey: 'CTO',
+    id: '__cto_overflow__',
+    value: 0,
+    rendement: avgPeaRend,
+    dcaMensuel: 0,
+    dcaOverrides: [],
+    cashInjections: [],
+    isAirLiquide: false,
+    totalApports: 0,
+    totalGains: 0
+  };
+  placSims.push(ctoOverflow);
+
   // Discover unique group keys from placements
   const groupKeysSet = new Set();
   placSims.forEach(ps => groupKeysSet.add(ps.groupKey));
@@ -252,8 +272,12 @@ export function computeProjection(store) {
     if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
 
     // Per-placement growth + DCA
+    // Collect PEA overflow per month to redirect to CTO
+    const ctoOverflowMonthly = new Array(monthsInPeriod).fill(0);
+
     let interetsAnnuels = 0;
     placSims.forEach(ps => {
+      if (ps.id === '__cto_overflow__') return; // handled separately after
       const prevValue = ps.value;
       const prevApports = ps.totalApports;
 
@@ -271,7 +295,10 @@ export function computeProjection(store) {
           if (monthlyDca > 0) {
             let dcaThisMonth = monthlyDca;
             if (isPEA) {
-              dcaThisMonth = Math.min(dcaThisMonth, Math.max(0, PEA_PLAFOND - peaApportsCumules));
+              const room = Math.max(0, PEA_PLAFOND - peaApportsCumules);
+              dcaThisMonth = Math.min(dcaThisMonth, room);
+              const overflow = monthlyDca - dcaThisMonth;
+              if (overflow > 0) ctoOverflowMonthly[m] += overflow;
             }
             if (dcaThisMonth > 0) {
               ps.quantite += dcaThisMonth / ps.prixAction;
@@ -312,7 +339,10 @@ export function computeProjection(store) {
           if (monthlyDca > 0) {
             let dcaThisMonth = monthlyDca;
             if (isPEA) {
-              dcaThisMonth = Math.min(dcaThisMonth, Math.max(0, PEA_PLAFOND - peaApportsCumules));
+              const room = Math.max(0, PEA_PLAFOND - peaApportsCumules);
+              dcaThisMonth = Math.min(dcaThisMonth, room);
+              const overflow = monthlyDca - dcaThisMonth;
+              if (overflow > 0) ctoOverflowMonthly[m] += overflow;
             }
             if (dcaThisMonth > 0) {
               ps.value += dcaThisMonth;
@@ -350,6 +380,23 @@ export function computeProjection(store) {
       ps.totalGains = ps.value - ps.totalApports;
       interetsAnnuels += ps.value - prevValue - apportsThisPeriod;
     });
+
+    // CTO overflow: simulate month-by-month with redirected PEA DCA
+    {
+      const prevValue = ctoOverflow.value;
+      const prevApports = ctoOverflow.totalApports;
+      const monthlyRate = ctoOverflow.rendement / 12;
+      for (let m = 0; m < monthsInPeriod; m++) {
+        if (ctoOverflowMonthly[m] > 0) {
+          ctoOverflow.value += ctoOverflowMonthly[m];
+          ctoOverflow.totalApports += ctoOverflowMonthly[m];
+        }
+        ctoOverflow.value *= (1 + monthlyRate);
+      }
+      ctoOverflow.totalGains = ctoOverflow.value - ctoOverflow.totalApports;
+      const apportsThisPeriod = ctoOverflow.totalApports - prevApports;
+      interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
+    }
 
     // Interest on épargne/héritage
     interetsAnnuels += epar * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
