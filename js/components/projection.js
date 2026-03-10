@@ -134,7 +134,7 @@ export function render(store) {
 
       <!-- Summary -->
       ${(() => {
-        const milestones = [20, 25, 30];
+        const targetYears = [20, 25, 30];
         const firstNet = first?.patrimoineNet || 0;
         const firstImmo = first?.immobilier || 0;
         const firstFin = first?.totalLiquiditesNettes || 0;
@@ -149,8 +149,9 @@ export function render(store) {
             <span>Liq. ${formatCurrency(firstFin)}</span>
           </div>
         </div>
-        ${milestones.map((yr, i) => {
-          const snap = snapshots[yr] || snapshots[snapshots.length - 1];
+        ${targetYears.map((targetYr, i) => {
+          const targetCalYear = currentCalendarYear + targetYr;
+          const snap = snapshots.find(s => s.calendarYear === targetCalYear) || snapshots[snapshots.length - 1];
           const net = snap?.patrimoineNet || 0;
           const immo = snap?.immobilier || 0;
           const liq = snap?.totalLiquiditesNettes || 0;
@@ -159,7 +160,7 @@ export function render(store) {
           const glows = ['glow-blue', 'glow-green', 'glow-blue'];
           return `
         <div class="card-dark rounded-xl p-5 kpi-card ${glows[i]}">
-          <p class="text-sm text-gray-400 mb-2">Fin ${snap?.calendarYear || (currentCalendarYear + yr)}</p>
+          <p class="text-sm text-gray-400 mb-2">Fin ${targetCalYear} <span class="text-gray-600">(+${targetYr} ans)</span></p>
           <p class="text-2xl font-bold gradient-text">${formatCurrency(net)}</p>
           <div class="flex gap-3 mt-2 text-xs">
             <span class="text-pink-400">Immo ${formatCurrency(immo)}</span>
