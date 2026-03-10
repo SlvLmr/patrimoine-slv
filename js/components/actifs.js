@@ -10,6 +10,26 @@ const ENVELOPPES = [
   { value: 'Autre', label: 'Autre' }
 ];
 
+const ENVELOPE_COLORS = {
+  PEA: 'accent-green',
+  AV: 'accent-amber',
+  CTO: 'accent-blue',
+  PEE: 'accent-cyan',
+  PER: 'accent-green',
+  Crypto: 'accent-red',
+  Autre: 'gray-400',
+};
+
+const ENVELOPE_ICONS = {
+  PEA: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+  AV: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+  CTO: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+  PEE: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+  PER: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+  Crypto: 'M13 10V3L4 14h7v7l9-11h-7z',
+  Autre: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
+};
+
 const CATEGORIES = [
   { value: 'ETF', label: 'ETF (Tracker)' },
   { value: 'Action', label: 'Action individuelle' },
@@ -244,8 +264,9 @@ export function render(store) {
   const totalEpar = epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const totalHeritage = heritageItems.reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
-  const sections = [
-    {
+  // Fixed sections
+  const fixedSections = {
+    immobilier: {
       key: 'immobilier',
       label: 'Immobilier',
       icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
@@ -254,7 +275,7 @@ export function render(store) {
       count: immobilier.length,
       btnId: 'btn-add-immo',
     },
-    {
+    epargne: {
       key: 'epargne',
       label: 'Épargne',
       icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
@@ -263,16 +284,7 @@ export function render(store) {
       count: epargne.length,
       btnId: 'btn-add-epar',
     },
-    {
-      key: 'placements',
-      label: 'Placements',
-      icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
-      color: 'accent-green',
-      total: totalPlac,
-      count: placements.length,
-      btnId: 'btn-add-plac',
-    },
-    {
+    emprunts: {
       key: 'emprunts',
       label: 'Emprunts',
       icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5',
@@ -281,7 +293,7 @@ export function render(store) {
       count: emprunts.length,
       btnId: 'btn-add-emprunt',
     },
-    {
+    heritage: {
       key: 'heritage',
       label: 'Héritage',
       icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
@@ -290,7 +302,24 @@ export function render(store) {
       count: heritageItems.length,
       btnId: 'btn-add-heritage',
     },
-  ];
+  };
+
+  // Dynamic envelope sections from placements
+  const envelopeSections = Object.entries(envelopeGroups).map(([env, items]) => {
+    const envMeta = ENVELOPPES.find(e => e.value === env);
+    const envTotal = items.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+    return {
+      key: `plac-${env}`,
+      envKey: env,
+      label: envMeta ? envMeta.label : env,
+      icon: ENVELOPE_ICONS[env] || ENVELOPE_ICONS.Autre,
+      color: ENVELOPE_COLORS[env] || 'gray-400',
+      total: envTotal,
+      count: items.length,
+      btnId: `btn-add-plac-${env}`,
+      items,
+    };
+  });
 
   // Build content for each section
   function renderImmoContent() {
@@ -315,17 +344,25 @@ export function render(store) {
     }).join('')}</div>`;
   }
 
-  function renderPlacContent() {
-    if (placements.length === 0) return '<p class="px-2 py-1 text-gray-600 text-xs">Aucun placement.</p>';
-    return `<div class="p-2">${Object.entries(envelopeGroups).map(([env, items]) => {
-      const envTotal = items.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+  function renderEnvelopeContent(items) {
+    if (!items || items.length === 0) return '<p class="px-2 py-1 text-gray-600 text-xs">Aucun placement.</p>';
+    // Group by category within envelope
+    const catGroups = {};
+    items.forEach(i => {
+      const cat = i.categorie || 'Autre';
+      if (!catGroups[cat]) catGroups[cat] = [];
+      catGroups[cat].push(i);
+    });
+    const cats = Object.keys(catGroups);
+    const showCatHeaders = cats.length > 1;
+    return `<div class="p-2">${cats.map(cat => {
+      const catItems = catGroups[cat];
+      const catMeta = CATEGORIES.find(c => c.value === cat);
+      const catLabel = catMeta ? catMeta.label : cat;
       return `
         <div class="mb-1">
-          <div class="flex items-center justify-between px-1 py-1">
-            <span class="text-[10px] font-bold text-accent-blue uppercase tracking-wider">${env}</span>
-            <span class="text-[10px] font-semibold text-gray-400">${formatCurrency(envTotal)}</span>
-          </div>
-          ${items.map(i => {
+          ${showCatHeaders ? `<div class="px-1 py-0.5 mb-0.5"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">${catLabel}</span></div>` : ''}
+          ${catItems.map(i => {
             const pv = i.quantite && i.pru ? (Number(i.valeur) - Number(i.pru) * Number(i.quantite)) : 0;
             const dcaLabel = i.dcaMensuel ? `${formatCurrency(i.dcaMensuel)}/m` : '';
             return `
@@ -334,6 +371,7 @@ export function render(store) {
                 <div class="flex items-center gap-1">
                   <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
                   ${i.isAirLiquide ? '<span class="text-[9px] bg-accent-green/15 text-accent-green px-1 rounded">AI</span>' : ''}
+                  ${!showCatHeaders && i.categorie ? `<span class="text-[9px] text-gray-500">${i.categorie}</span>` : ''}
                 </div>
                 <span class="font-medium text-gray-200 text-xs">${formatCurrency(i.valeur)}</span>
               </div>
@@ -447,13 +485,22 @@ export function render(store) {
 
   const contentRenderers = {
     immobilier: renderImmoContent,
-    placements: renderPlacContent,
     epargne: renderEparContent,
     emprunts: renderEmpruntContent,
     heritage: renderHeritageContent,
   };
+  // Add dynamic envelope renderers
+  envelopeSections.forEach(es => {
+    contentRenderers[es.key] = () => renderEnvelopeContent(es.items);
+  });
 
-  const renderColumn = (s) => `
+  const renderColumn = (s) => {
+    const isEnvelope = s.key.startsWith('plac-');
+    const btnColorClass = s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white'
+      : s.key === 'heritage' ? 'from-accent-cyan to-accent-cyan text-dark-900'
+      : isEnvelope ? `from-${s.color} to-${s.color} text-dark-900`
+      : 'from-accent-green to-accent-amber text-dark-900';
+    return `
     <div class="card-dark rounded-xl overflow-hidden flex flex-col">
       <div class="px-3 py-2.5 border-b border-dark-400/30">
         <div class="flex items-center gap-2 mb-1.5">
@@ -469,26 +516,42 @@ export function render(store) {
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
-          <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white' : s.key === 'heritage' ? 'from-accent-cyan to-accent-cyan text-dark-900' : 'from-accent-green to-accent-amber text-dark-900'} text-[10px] rounded hover:opacity-90 transition font-medium">+ Ajouter</button>
+          <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${btnColorClass} text-[10px] rounded hover:opacity-90 transition font-medium">+ Ajouter</button>
         </div>
       </div>
       <div class="flex-1 overflow-y-auto">
         ${contentRenderers[s.key]()}
       </div>
     </div>`;
+  };
 
-  const row1 = sections.filter(s => ['immobilier', 'epargne', 'placements'].includes(s.key));
-  const row2 = sections.filter(s => ['emprunts', 'heritage'].includes(s.key));
+  // Row 1: Immobilier + Épargne
+  const row1 = [fixedSections.immobilier, fixedSections.epargne];
+  // Row 2: Dynamic envelope blocks (placements by envelope)
+  const envCols = envelopeSections.length <= 2 ? 2 : envelopeSections.length <= 3 ? 3 : 4;
+  // Row 3: Emprunts + Héritage
+  const row3 = [fixedSections.emprunts, fixedSections.heritage];
+
+  const addPlacBtn = envelopeSections.length === 0
+    ? `<div class="flex justify-center"><button id="btn-add-plac" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un placement</button></div>`
+    : `<div class="flex justify-end"><button id="btn-add-plac" class="px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">+ Nouveau placement</button></div>`;
 
   return `
     <div class="space-y-4">
       <h1 class="text-2xl font-bold text-gray-100">Actifs et passifs</h1>
 
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
         ${row1.map(renderColumn).join('')}
       </div>
+
+      ${envelopeSections.length > 0 ? `
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-${envCols} gap-3">
+        ${envelopeSections.map(renderColumn).join('')}
+      </div>` : ''}
+      ${addPlacBtn}
+
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
-        ${row2.map(renderColumn).join('')}
+        ${row3.map(renderColumn).join('')}
       </div>
     </div>
   `;
@@ -545,8 +608,8 @@ export function mount(store, navigate) {
   });
 
   // --- Placements ---
-  document.getElementById('btn-add-plac')?.addEventListener('click', () => {
-    const body = buildPlacementFormBody({});
+  const openAddPlacement = (prefilledEnvelope) => {
+    const body = buildPlacementFormBody(prefilledEnvelope ? { enveloppe: prefilledEnvelope } : {});
     const modal = openModal('Ajouter un placement', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.type = data.enveloppe;
@@ -559,6 +622,15 @@ export function mount(store, navigate) {
       navigate('actifs');
     });
     initPlacementFormListeners(modal);
+  };
+
+  // General add placement button
+  document.getElementById('btn-add-plac')?.addEventListener('click', () => openAddPlacement(null));
+
+  // Per-envelope add buttons
+  content.querySelectorAll('[id^="btn-add-plac-"]').forEach(btn => {
+    const env = btn.id.replace('btn-add-plac-', '');
+    btn.addEventListener('click', () => openAddPlacement(env));
   });
 
   content.querySelectorAll('[data-edit-plac]').forEach(btn => {
