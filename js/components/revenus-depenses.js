@@ -179,10 +179,14 @@ export function render(store) {
           ${g.items.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
             ${g.items.map(d => `
-            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row">
+            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row" data-dep-id="${d.id}" data-dep-type="${g.key}">
               <div class="flex items-center gap-3 min-w-0">
+                <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
+                  <button data-move-dep-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▲</button>
+                  <button data-move-dep-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▼</button>
+                </div>
                 <p class="text-xs text-gray-200 truncate">${d.nom}</p>
-                <p class="text-[10px] text-gray-600 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
+                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
               </div>
               <div class="flex items-center gap-3 flex-shrink-0">
                 ${d.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(d)}</span>` : ''}
@@ -329,6 +333,50 @@ export function mount(store, navigate) {
         store.updateItem('depenses', id, data);
         navigate('revenus-depenses');
       });
+    });
+  });
+
+  // Move depense up/down
+  content.querySelectorAll('[data-move-dep-up]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.moveDepUp;
+      const depenses = store.get('depenses');
+      const idx = depenses.findIndex(d => d.id === id);
+      if (idx <= 0) return;
+      // Swap within same type group
+      const item = depenses[idx];
+      const type = item.typeDepense || 'Fixe';
+      // Find previous item of same type
+      for (let i = idx - 1; i >= 0; i--) {
+        if ((depenses[i].typeDepense || 'Fixe') === type) {
+          [depenses[i], depenses[idx]] = [depenses[idx], depenses[i]];
+          break;
+        }
+      }
+      store.set('depenses', depenses);
+      navigate('revenus-depenses');
+    });
+  });
+
+  content.querySelectorAll('[data-move-dep-down]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.moveDepDown;
+      const depenses = store.get('depenses');
+      const idx = depenses.findIndex(d => d.id === id);
+      if (idx < 0 || idx >= depenses.length - 1) return;
+      const item = depenses[idx];
+      const type = item.typeDepense || 'Fixe';
+      // Find next item of same type
+      for (let i = idx + 1; i < depenses.length; i++) {
+        if ((depenses[i].typeDepense || 'Fixe') === type) {
+          [depenses[i], depenses[idx]] = [depenses[idx], depenses[i]];
+          break;
+        }
+      }
+      store.set('depenses', depenses);
+      navigate('revenus-depenses');
     });
   });
 

@@ -76,7 +76,8 @@ export function render(store) {
         <div class="flex items-center gap-2 min-w-0">
           ${icon}
           <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
-          <span class="text-[13px] text-gray-200 truncate">${op.description || '—'}</span>
+          <span class="ml-2 text-[13px] text-gray-200 truncate">${op.description || '—'}</span>
+          ${op.categorie ? `<span class="text-[10px] font-light text-gray-500 flex-shrink-0">${op.categorie}</span>` : ''}
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
           <span class="text-[13px] font-medium text-gray-100">${sign}${formatCurrencyCents(op.montant)}</span>
