@@ -254,6 +254,8 @@ export function computeProjection(store) {
     }
   });
   let cumulInterets = 0;
+  const PFU_RATE = 0.33;
+  const PS_RATE = 0.172;
 
   for (let year = 0; year <= years; year++) {
     // Inject heritage
@@ -314,6 +316,29 @@ export function computeProjection(store) {
       if (amount > 0) {
         destSim.value += amount;
         destSim.totalApports += amount;
+      }
+    }
+
+    // Cash out: liquidate all placements into épargne (after tax)
+    const cashOutYear = params.cashOutYear ? Number(params.cashOutYear) : null;
+    let cashedOut = false;
+    if (cashOutYear && calYear === cashOutYear) {
+      cashedOut = true;
+      placSims.forEach(ps => {
+        if (ps.value <= 0) return;
+        const gains = Math.max(0, ps.totalGains);
+        const isPEA = ps.groupKey.startsWith('PEA');
+        const taxRate = isPEA && year >= 5 ? PS_RATE : PFU_RATE;
+        const taxes = gains * taxRate;
+        epar += ps.value - taxes;
+        ps.value = 0;
+        ps.totalApports = 0;
+        ps.totalGains = 0;
+      });
+      // Also liquidate heritage into épargne
+      if (heritage > 0) {
+        epar += heritage;
+        heritage = 0;
       }
     }
 
@@ -481,12 +506,7 @@ export function computeProjection(store) {
     });
 
     // Compute tax on gains per placement
-    // PFU (flat tax) = 33% (12.8% IR + 17.2% PS + 3% taxe complémentaire)
-    // PEA après 5 ans: 17.2% PS uniquement (exonération IR + taxe complémentaire)
-    // PEA avant 5 ans: 33% PFU complet
-    // CTO/Crypto: 33% PFU toujours
-    const PFU_RATE = 0.33;
-    const PS_RATE = 0.172;
+    // Tax computation per placement (PFU/PS rates defined above loop)
     let totalTaxes = 0;
     let totalApports = 0;
     let totalGainsAllPlacements = 0;
