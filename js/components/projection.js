@@ -196,17 +196,17 @@ export function render(store) {
               <tr>
                 <th class="px-2 py-1.5 text-center">Année</th>
                 <th class="px-2 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
-                <th class="px-2 py-1.5 text-center">PEA Actions</th>
-                <th class="px-2 py-1.5 text-center">PEA ETF</th>
+                <th class="px-2 py-1.5 text-center">Actions</th>
+                <th class="px-2 py-1.5 text-center text-accent-amber/60">+ Intérêts</th>
+                <th class="px-2 py-1.5 text-center">ETF</th>
+                <th class="px-2 py-1.5 text-center text-accent-green/60">+ Intérêts</th>
                 <th class="px-2 py-1.5 text-center">Bitcoin</th>
-                <th class="px-2 py-1.5 text-center">Intérêts cumulés</th>
-                <th class="px-2 py-1.5 text-center font-semibold">Total Invest</th>
+                <th class="px-2 py-1.5 text-center text-amber-500/60">+ Intérêts</th>
+                <th class="px-2 py-1.5 text-center font-semibold border-l-2 border-dark-300/40">Total Invest</th>
                 <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Épargne</th>
                 <th class="px-2 py-1.5 text-center">Héritage</th>
                 <th class="px-2 py-1.5 text-center">Immobilier</th>
                 <th class="px-2 py-1.5 text-center font-semibold">Total liquidités</th>
-                <th class="px-2 py-1.5 text-center"></th>
-                <th class="px-2 py-1.5 text-center"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
@@ -226,17 +226,17 @@ export function render(store) {
                   ${isRetirement ? '<span class="ml-1 text-[10px] text-accent-amber font-semibold">RET.</span>' : ''}
                 </td>
                 <td class="px-2 py-1 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['PEA Actions'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['PEA ETF'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['Crypto'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.interetsCumules)}</td>
-                <td class="px-2 py-1 text-center font-semibold text-accent-cyan">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['PEA Actions'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-accent-amber/70">${formatCurrency(s.placementGains['PEA Actions'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['PEA ETF'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-accent-green/70">${formatCurrency(s.placementGains['PEA ETF'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['Crypto'] || 0)}</td>
+                <td class="px-2 py-1 text-center text-amber-500/70">${formatCurrency(s.placementGains['Crypto'] || 0)}</td>
+                <td class="px-2 py-1 text-center font-semibold text-accent-cyan border-l-2 border-dark-300/40">${formatCurrency(s.cashApresImpot)}</td>
                 <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.heritage)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.immobilier)}</td>
                 <td class="px-2 py-1 text-center font-semibold text-accent-green">${formatCurrency(s.totalLiquiditesNettes)}</td>
-                <td class="px-2 py-1 text-center text-gray-200"></td>
-                <td class="px-2 py-1 text-center text-gray-200"></td>
               </tr>`;
               }).join('')}
             </tbody>

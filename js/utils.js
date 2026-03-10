@@ -400,10 +400,16 @@ export function computeProjection(store) {
       totalGainsAllPlacements += gains;
     });
 
-    // Aggregate placement values by group
+    // Aggregate placement values, apports and gains by group
     const groupValues = {};
-    groupKeys.forEach(k => { groupValues[k] = 0; });
-    placSims.forEach(ps => { groupValues[ps.groupKey] += ps.value; });
+    const groupApports = {};
+    const groupGains = {};
+    groupKeys.forEach(k => { groupValues[k] = 0; groupApports[k] = 0; groupGains[k] = 0; });
+    placSims.forEach(ps => {
+      groupValues[ps.groupKey] += ps.value;
+      groupApports[ps.groupKey] += ps.totalApports;
+      groupGains[ps.groupKey] += Math.max(0, ps.totalGains);
+    });
 
     const totalPlacements = groupKeys.reduce((s, k) => s + groupValues[k], 0);
 
@@ -415,7 +421,13 @@ export function computeProjection(store) {
     const totalLiquiditesNettes = Math.round(cashApresImpot + epar + heritage + ccTotal);
 
     const detail = {};
-    groupKeys.forEach(k => { detail[k] = Math.round(groupValues[k]); });
+    const detailApports = {};
+    const detailGains = {};
+    groupKeys.forEach(k => {
+      detail[k] = Math.round(groupValues[k]);
+      detailApports[k] = Math.round(groupApports[k]);
+      detailGains[k] = Math.round(groupGains[k]);
+    });
 
     snapshots.push({
       annee: year,
@@ -425,6 +437,8 @@ export function computeProjection(store) {
       isRetraite: (ageFinAnnee + year) === ageRetraite,
       immobilier: Math.round(immo),
       placementDetail: detail,
+      placementApports: detailApports,
+      placementGains: detailGains,
       placements: Math.round(totalPlacements),
       epargne: Math.round(epar),
       heritage: Math.round(heritage),
