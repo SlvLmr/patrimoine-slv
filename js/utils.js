@@ -173,14 +173,8 @@ export function computeProjection(store) {
     value: initialValue,
     rendement: rend,
     dcaMensuel: Number(p.dcaMensuel) || 0,
-    dcaOverrides: (p.dcaOverrides || []).map(ov => ({
-      ...ov,
-      fromYear: ov.fromYear > 100 ? ov.fromYear - currentCalendarYear : ov.fromYear
-    })).sort((a, b) => a.fromYear - b.fromYear),
-    cashInjections: mergedInj.map(inj => ({
-      ...inj,
-      year: inj.year > 100 ? inj.year - currentCalendarYear : inj.year
-    })).sort((a, b) => a.year - b.year),
+    dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
+    cashInjections: mergedInj.sort((a, b) => a.year - b.year),
     isAirLiquide: !!p.isAirLiquide,
     loyaltyEligible: !!p.loyaltyEligible,
     quantite: Number(p.quantite) || 0,
@@ -289,7 +283,7 @@ export function computeProjection(store) {
       if (ps.isAirLiquide) {
         const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
         const monthlyRate = ps.rendement / 12;
-        const dca = getDcaForYear(ps, year + 1);
+        const dca = getDcaForYear(ps, currentCalendarYear + year);
         const isPEA = ps.groupKey.startsWith('PEA');
         const monthlyDca = (dca > 0 && ps.prixAction > 0) ? dca : 0;
 
@@ -336,7 +330,7 @@ export function computeProjection(store) {
       } else {
         // Month-by-month simulation for proper compound interest on DCA
         const monthlyRate = ps.rendement / 12;
-        const dca = getDcaForYear(ps, year + 1);
+        const dca = getDcaForYear(ps, currentCalendarYear + year);
         const monthlyDca = dca > 0 ? dca : 0;
         const isPEA = ps.groupKey.startsWith('PEA');
         for (let m = 0; m < monthsInPeriod; m++) {
@@ -362,7 +356,7 @@ export function computeProjection(store) {
       // Cash injections (respect PEA ceiling)
       const isPEAPlacement = ps.groupKey.startsWith('PEA');
       for (const inj of ps.cashInjections) {
-        if (inj.year === year) {
+        if (inj.year === currentCalendarYear + year) {
           let amount = Number(inj.montant) || 0;
           if (isPEAPlacement) {
             amount = Math.min(amount, Math.max(0, PEA_PLAFOND - peaApportsCumules));

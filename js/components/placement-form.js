@@ -1,4 +1,4 @@
-import { inputField, selectField, getFormData, openModal } from '../utils.js';
+import { inputField, selectField, getFormData, openModal } from '../utils.js?v=4';
 
 export const ENVELOPPES = [
   { value: 'PEA', label: 'PEA' },
@@ -60,7 +60,6 @@ export function buildPlacementFormBody(item) {
       ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
     </div>
     ${inputField('valeur', 'Valeur totale actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
-    ${inputField('rendement', 'Rendement attendu (%/an)', ((parseFloat(item.rendement) || 0.05) * 100).toFixed(1), 'number', 'step="0.5" min="-50" max="100" placeholder="Ex: 7.0"')}
     <div class="mt-2 pt-3 border-t border-dark-400/30">
       <p class="text-sm font-medium text-gray-300 mb-3">Investissement programmé</p>
       ${inputField('apport', 'Apport initial (€)', item.apport || '', 'number', 'step="100" placeholder="Capital de départ"')}
@@ -215,7 +214,7 @@ export function openAddPlacementModal(store, navigate, targetPage, prefilledEnve
   const modal = openModal('Ajouter un placement', body, () => {
     const data = getFormData(document.getElementById('modal-body'));
     data.type = data.enveloppe;
-    data.rendement = (data.rendement || 0) / 100;
+    delete data.rendement; // rendement is managed from projection page
     data.croissanceDividende = (data.croissanceDividende || 0) / 100;
     data.dcaOverrides = collectDcaOverrides();
     data.cashInjections = collectCashInjections();
@@ -235,7 +234,7 @@ export function openEditPlacementModal(store, navigate, targetPage, placementId)
   const modal = openModal('Modifier le placement', body, () => {
     const data = getFormData(document.getElementById('modal-body'));
     data.type = data.enveloppe;
-    data.rendement = (data.rendement || 0) / 100;
+    delete data.rendement; // rendement is managed from projection page
     data.croissanceDividende = (data.croissanceDividende || 0) / 100;
     data.dcaOverrides = collectDcaOverrides();
     data.cashInjections = collectCashInjections();

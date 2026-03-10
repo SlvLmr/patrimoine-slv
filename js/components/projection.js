@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, getFormData, getPlacementGroupKey } from '../utils.js';
+import { formatCurrency, formatPercent, computeProjection, inputField, getFormData, getPlacementGroupKey } from '../utils.js?v=4';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=4';
 
@@ -113,7 +113,7 @@ export function render(store) {
                   const currentRend = rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05);
                   const icon = groupIcons[gk] || defaultIcon;
                   const dcaLabel = p.dcaMensuel ? `<span class="text-[9px] text-gray-600">${p.dcaMensuel}€/m</span>` : '';
-                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-pointer placement-row" data-placement-id="${p.id}">
+                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-pointer placement-row" draggable="true" data-placement-id="${p.id}">
                     ${icon}
                     <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
@@ -592,6 +592,45 @@ export function mount(store, navigate) {
       openEditPlacementModal(store, navigate, 'projection', row.dataset.placementId);
     });
   });
+
+  // Drag-and-drop reorder placements
+  {
+    let draggedId = null;
+    const cards = document.querySelectorAll('.placement-row[data-placement-id]');
+    cards.forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        draggedId = card.dataset.placementId;
+        card.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => {
+        card.style.opacity = '';
+        document.querySelectorAll('.placement-row').forEach(c => c.classList.remove('drag-over'));
+      });
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        card.classList.add('drag-over');
+      });
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('drag-over');
+      });
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+        const targetId = card.dataset.placementId;
+        if (!draggedId || draggedId === targetId) return;
+        const placements = store.get('actifs.placements');
+        const fromIdx = placements.findIndex(p => p.id === draggedId);
+        const toIdx = placements.findIndex(p => p.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = placements.splice(fromIdx, 1);
+        placements.splice(toIdx, 0, moved);
+        store.set('actifs.placements', placements);
+        navigate('projection');
+      });
+    });
+  }
 
   // Delete placement from projection
   document.querySelectorAll('.proj-del-plac').forEach(btn => {

@@ -194,6 +194,20 @@ input[type="number"] {
   100% { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
 }
 
+/* Drag-and-drop placement cards */
+.placement-row[draggable="true"] {
+  cursor: grab;
+}
+
+.placement-row[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.placement-row.drag-over {
+  border-color: rgba(96, 165, 250, 0.6) !important;
+  background: rgba(96, 165, 250, 0.08) !important;
+}
+
 /* Print styles */
 @media print {
   #sidebar, #menu-toggle, .no-print {
