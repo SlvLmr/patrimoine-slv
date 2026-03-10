@@ -151,6 +151,7 @@ export function computeProjection(store) {
   const rendementGroupes = params.rendementGroupes || {};
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjections = params.cashInjections || {};
+  const dcaOverridesParams = params.dcaOverridesParams || {};
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
     // Priority: per-placement override > group override > placement's own > global default
@@ -158,13 +159,23 @@ export function computeProjection(store) {
     if (rendementPlacements[p.id] !== undefined) rend = rendementPlacements[p.id];
     else if (rendementGroupes[gk] !== undefined) rend = rendementGroupes[gk];
     else rend = Number(p.rendement) || 0.05;
+    // DCA: param override > placement's own
+    const dcaParam = dcaOverridesParams[p.id];
+    const baseDca = dcaParam !== undefined ? dcaParam.dcaMensuel : (Number(p.dcaMensuel) || 0);
+    const baseOverrides = p.dcaOverrides || [];
+    const paramOverrides = dcaParam?.overrides || [];
+    // Merge: param overrides take precedence over placement overrides for same fromYear
+    const mergedMap = new Map();
+    baseOverrides.forEach(o => mergedMap.set(o.fromYear, o));
+    paramOverrides.forEach(o => mergedMap.set(o.fromYear, o));
+    const mergedOverrides = [...mergedMap.values()].sort((a, b) => a.fromYear - b.fromYear);
     return {
     groupKey: gk,
     id: p.id,
     value: Number(p.valeur) || 0,
     rendement: rend,
-    dcaMensuel: Number(p.dcaMensuel) || 0,
-    dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
+    dcaMensuel: baseDca,
+    dcaOverrides: mergedOverrides,
     cashInjections: (cashInjections[p.id] || []).sort((a, b) => a.year - b.year),
     isAirLiquide: !!p.isAirLiquide,
     loyaltyEligible: !!p.loyaltyEligible,

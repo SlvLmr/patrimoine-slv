@@ -8,6 +8,7 @@ export function render(store) {
   const rendementGroupes = params.rendementGroupes || {};
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjections = params.cashInjections || {};
+  const dcaOverridesParams = params.dcaOverridesParams || {};
   const placements = (store.getAll().actifs?.placements || []);
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
@@ -108,6 +109,9 @@ export function render(store) {
                   ? rendementPlacements[p.id]
                   : (rendementGroupes[gk] !== undefined ? rendementGroupes[gk] : (Number(p.rendement) || 0.05));
                 const injections = cashInjections[p.id] || [];
+                const dcaP = dcaOverridesParams[p.id];
+                const currentDca = dcaP !== undefined ? dcaP.dcaMensuel : (Number(p.dcaMensuel) || 0);
+                const dcaOvs = dcaP?.overrides || p.dcaOverrides || [];
                 return `
               <div class="flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-dark-800/40 border border-dark-400/20 placement-row" data-placement-id="${p.id}">
                 <span class="text-[10px] text-gray-400 w-28 truncate" title="${p.nom}">${p.nom}</span>
@@ -118,15 +122,32 @@ export function render(store) {
                     value="${(currentRend * 100).toFixed(1)}" min="0" max="50" step="0.5">
                   <span class="text-[9px] text-gray-600">%</span>
                 </div>
+                <div class="flex items-center gap-1">
+                  <label class="text-[9px] text-gray-600">DCA</label>
+                  <input type="number" class="plac-dca w-16 px-1 py-0.5 text-xs bg-dark-800 border border-dark-400/40 rounded text-amber-400/80 focus:ring-1 focus:ring-amber-400/30 text-center"
+                    value="${currentDca}" min="0" max="50000" step="10">
+                  <span class="text-[9px] text-gray-600">€/m</span>
+                </div>
+                <div class="flex items-center gap-1 dca-overrides-container">
+                  ${dcaOvs.map(ov => `
+                  <div class="flex items-center gap-0.5 dca-ov-row">
+                    <span class="text-[9px] text-gray-600">an</span>
+                    <input type="number" class="dca-ov-year w-10 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" value="${ov.fromYear}" min="1" max="50">
+                    <span class="text-[9px] text-gray-600">&rarr;</span>
+                    <input type="number" class="dca-ov-amount w-14 px-1 py-0.5 text-[10px] bg-dark-800 border border-amber-400/30 rounded text-amber-400/80 text-center" value="${ov.dcaMensuel}" step="10">
+                    <button class="dca-ov-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
+                  </div>`).join('')}
+                </div>
+                <button class="dca-ov-add text-[9px] text-amber-400/50 hover:text-amber-400 transition" title="Changer DCA à partir d'une année">+ DCA</button>
                 <div class="flex items-center gap-1 cash-injections-container">
-                  ${injections.map((inj, idx) => `
+                  ${injections.map(inj => `
                   <div class="flex items-center gap-0.5 cash-inj-row">
                     <input type="number" class="cash-inj-year w-12 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" value="${inj.year}" min="1" max="50" placeholder="An" title="Année">
                     <input type="number" class="cash-inj-amount w-16 px-1 py-0.5 text-[10px] bg-dark-800 border border-accent-green/30 rounded text-accent-green text-center" value="${inj.montant}" step="100" placeholder="€" title="Montant">
                     <button class="cash-inj-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
                   </div>`).join('')}
                 </div>
-                <button class="cash-inj-add text-[9px] text-accent-blue/70 hover:text-accent-blue transition" title="Ajouter un apport">+ apport</button>
+                <button class="cash-inj-add text-[9px] text-accent-blue/70 hover:text-accent-blue transition" title="Ajouter un apport ponctuel">+ apport</button>
               </div>`;
               }).join('')}
             </div>
@@ -458,15 +479,31 @@ export function mount(store, navigate) {
     });
     store.set('parametres.rendementGroupes', rendementGroupes);
 
-    // Per-placement rendement overrides
+    // Per-placement overrides
     const rendementPlacements = {};
     const cashInjections = {};
+    const dcaOverridesParams = {};
     document.querySelectorAll('.placement-row').forEach(row => {
       const pid = row.dataset.placementId;
       const rendInput = row.querySelector('.plac-rend');
       if (rendInput) {
         rendementPlacements[pid] = (parseFloat(rendInput.value) || 5) / 100;
       }
+      // DCA
+      const dcaInput = row.querySelector('.plac-dca');
+      const dcaOvRows = row.querySelectorAll('.dca-ov-row');
+      const dcaMensuel = parseFloat(dcaInput?.value) || 0;
+      const overrides = [];
+      dcaOvRows.forEach(ovr => {
+        const yr = parseInt(ovr.querySelector('.dca-ov-year')?.value);
+        const amt = parseFloat(ovr.querySelector('.dca-ov-amount')?.value);
+        if (yr > 0 && !isNaN(amt)) {
+          overrides.push({ fromYear: yr, dcaMensuel: amt });
+        }
+      });
+      dcaOverridesParams[pid] = { dcaMensuel, overrides };
+
+      // Cash injections
       const injRows = row.querySelectorAll('.cash-inj-row');
       if (injRows.length > 0) {
         const injs = [];
@@ -482,6 +519,7 @@ export function mount(store, navigate) {
     });
     store.set('parametres.rendementPlacements', rendementPlacements);
     store.set('parametres.cashInjections', cashInjections);
+    store.set('parametres.dcaOverridesParams', dcaOverridesParams);
 
     // Retirement milestones
     store.set('parametres.anneeRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-annee').value) || 2047);
@@ -512,5 +550,28 @@ export function mount(store, navigate) {
 
   document.querySelectorAll('.cash-inj-remove').forEach(btn => {
     btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
+  });
+
+  // Dynamic add/remove DCA override rows
+  document.querySelectorAll('.dca-ov-add').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.placement-row');
+      const container = row.querySelector('.dca-overrides-container');
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-0.5 dca-ov-row';
+      div.innerHTML = `
+        <span class="text-[9px] text-gray-600">an</span>
+        <input type="number" class="dca-ov-year w-10 px-1 py-0.5 text-[10px] bg-dark-800 border border-dark-400/40 rounded text-gray-300 text-center" min="1" max="50">
+        <span class="text-[9px] text-gray-600">&rarr;</span>
+        <input type="number" class="dca-ov-amount w-14 px-1 py-0.5 text-[10px] bg-dark-800 border border-amber-400/30 rounded text-amber-400/80 text-center" step="10">
+        <button class="dca-ov-remove text-gray-600 hover:text-red-400 text-xs leading-none" title="Supprimer">&times;</button>
+      `;
+      container.appendChild(div);
+      div.querySelector('.dca-ov-remove').addEventListener('click', () => div.remove());
+    });
+  });
+
+  document.querySelectorAll('.dca-ov-remove').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.dca-ov-row').remove());
   });
 }
