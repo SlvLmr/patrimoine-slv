@@ -24,7 +24,69 @@
 
 /* Sidebar transitions */
 #sidebar {
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+}
+
+/* Collapsed sidebar */
+#sidebar.sidebar-collapsed {
+  width: 4rem;
+}
+
+#sidebar.sidebar-collapsed #sidebar-logo .logo-text,
+#sidebar.sidebar-collapsed #profile-switcher span,
+#sidebar.sidebar-collapsed #profile-switcher svg:last-child,
+#sidebar.sidebar-collapsed #nav-links .nav-label,
+#sidebar.sidebar-collapsed #nav-links .section-title,
+#sidebar.sidebar-collapsed .bottom-label,
+#sidebar.sidebar-collapsed #user-bar span,
+#sidebar.sidebar-collapsed #user-bar .auth-label {
+  display: none;
+}
+
+#sidebar.sidebar-collapsed #nav-links a,
+#sidebar.sidebar-collapsed #nav-links button {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#sidebar.sidebar-collapsed #profile-switcher {
+  justify-content: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+#sidebar.sidebar-collapsed #profile-switcher > div {
+  justify-content: center;
+}
+
+#sidebar.sidebar-collapsed .p-4.border-t button {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#sidebar.sidebar-collapsed .p-4.border-t button span,
+#sidebar.sidebar-collapsed .p-4.border-t button .btn-text {
+  display: none;
+}
+
+#sidebar.sidebar-collapsed .logo-icon {
+  display: block !important;
+}
+
+#sidebar.sidebar-collapsed #sidebar-logo {
+  justify-content: center;
+  padding: 1rem;
+}
+
+#sidebar.sidebar-collapsed #collapse-icon {
+  transform: rotate(180deg);
+}
+
+/* Main content transition for collapsed sidebar */
+#main-content {
+  transition: margin-left 0.3s ease-in-out;
 }
 
 /* Table styles */

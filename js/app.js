@@ -94,7 +94,7 @@ function initNav() {
   const nav = document.getElementById('nav-links');
   nav.innerHTML = navItems.map(item => {
     if (item.sectionTitle) {
-      return `<div class="mt-4 mb-1.5 mx-3"><span class="text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
+      return `<div class="mt-4 mb-1.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
     }
     if (item.separator) {
       return `<div class="my-1.5 mx-3 h-px bg-gradient-to-r from-transparent via-dark-300/50 to-transparent"></div>`;
@@ -105,7 +105,7 @@ function initNav() {
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${item.icon}"/>
       </svg>
-      <span>${item.label}</span>
+      <span class="nav-label">${item.label}</span>
       ${item.live ? '<span class="live-dot"></span>' : ''}
     </a>`;
   }).join('');
@@ -248,7 +248,8 @@ function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1.5px" class="text-4xl font-bold text-center bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
+      <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1.5px" class="logo-text text-4xl font-bold text-center bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
+      <span style="font-family:'Space Grotesk',sans-serif" class="logo-icon hidden text-2xl font-bold bg-gradient-to-r from-accent-green to-accent-amber bg-clip-text text-transparent">H</span>
     `;
   }
   // Mobile
@@ -274,6 +275,42 @@ function initMobileMenu() {
   overlay?.addEventListener('click', () => {
     sidebar.classList.add('-translate-x-full');
     overlay.classList.add('hidden');
+  });
+}
+
+// Sidebar collapse toggle
+function initSidebarCollapse() {
+  const btn = document.getElementById('sidebar-collapse-btn');
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('main-content');
+  if (!btn || !sidebar) return;
+
+  const applySidebarState = (collapsed) => {
+    if (collapsed) {
+      sidebar.classList.add('sidebar-collapsed');
+      sidebar.classList.remove('w-64');
+      if (mainContent) {
+        mainContent.classList.remove('lg:ml-64');
+        mainContent.classList.add('lg:ml-16');
+      }
+    } else {
+      sidebar.classList.remove('sidebar-collapsed');
+      sidebar.classList.add('w-64');
+      if (mainContent) {
+        mainContent.classList.remove('lg:ml-16');
+        mainContent.classList.add('lg:ml-64');
+      }
+    }
+  };
+
+  // Restore collapsed state from localStorage
+  const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+  if (isCollapsed) applySidebarState(true);
+
+  btn.addEventListener('click', () => {
+    const willCollapse = !sidebar.classList.contains('sidebar-collapsed');
+    applySidebarState(willCollapse);
+    localStorage.setItem('sidebar-collapsed', willCollapse);
   });
 }
 
@@ -594,6 +631,7 @@ function showApp() {
     initNav();
     initProfileSwitcher();
     initMobileMenu();
+    initSidebarCollapse();
     initDataManagement();
     appStarted = true;
   }

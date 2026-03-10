@@ -159,7 +159,7 @@ export function render(store) {
   `;
 }
 
-function openHeritageModal(store, navigate, editItem = null) {
+export function openHeritageModal(store, navigate, editItem = null, targetPage = 'heritage') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
   const body = `
     ${inputField('nom', 'Nom / Description', editItem?.nom || '', 'text', 'placeholder="Ex: Maison familiale, Assurance-vie maman..."')}
@@ -192,7 +192,7 @@ function openHeritageModal(store, navigate, editItem = null) {
     } else {
       store.addItem('heritage', data);
     }
-    navigate('heritage');
+    navigate(targetPage);
   });
 }
 

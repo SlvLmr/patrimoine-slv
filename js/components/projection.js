@@ -1,6 +1,7 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, getFormData, getPlacementGroupKey } from '../utils.js?v=5';
+import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=5';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
+import { openHeritageModal } from './heritage.js?v=5';
 
 export function render(store) {
   const params = store.get('parametres');
@@ -8,6 +9,8 @@ export function render(store) {
   const groupKeys = snapshots.groupKeys || [];
   const rendementPlacements = params.rendementPlacements || {};
   const placements = (store.getAll().actifs?.placements || []);
+  const heritageItems = store.get('heritage') || [];
+  const capitalTransfers = params.capitalTransfers || [];
   const currentCalendarYear = new Date().getFullYear();
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
@@ -129,6 +132,60 @@ export function render(store) {
               ${placements.length > 0 ? placements.map(renderCard).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>'}
             </div>`;
               })()}
+          </div>
+
+          <!-- Row 3: Heritage -->
+          <div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Héritage</span>
+              <button id="proj-add-heritage" class="ml-2 w-7 h-7 flex items-center justify-center rounded-lg bg-accent-amber/20 text-accent-amber hover:bg-accent-amber/35 transition text-lg font-bold shadow-sm shadow-accent-amber/10" title="Ajouter un héritage">+</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
+              ${heritageItems.length > 0 ? heritageItems.map(h => {
+                const isImmo = h.type === 'Immobilier';
+                const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
+                return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-amber/40 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
+                  <svg class="w-2.5 h-2.5 shrink-0 ${isImmo ? 'text-accent-green' : 'text-accent-amber'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    ${isImmo
+                      ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>'
+                      : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>'}
+                  </svg>
+                  <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium" title="${h.nom}">${h.nom}</span>
+                  <span class="text-[9px] text-gray-600">${formatCurrency(h.montant)}</span>
+                  <span class="text-[10px] text-gray-500 ml-auto">${yearLabel}</span>
+                  <button class="proj-del-heritage opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${h.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
+                </div>`;
+              }).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-2">Aucun héritage — cliquez sur + pour en ajouter</p>'}
+            </div>
+          </div>
+
+          <!-- Row 4: Capital Transfers -->
+          <div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Transferts de capital</span>
+              <button id="proj-add-transfer" class="ml-2 w-7 h-7 flex items-center justify-center rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/35 transition text-lg font-bold shadow-sm shadow-purple-500/10" title="Ajouter un transfert">+</button>
+            </div>
+            <div class="space-y-1" id="capital-transfers-list">
+              ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
+                const destPlacement = placements.find(p => p.id === t.destinationId);
+                const destName = destPlacement ? destPlacement.nom : '(supprimé)';
+                const sourceLabel = t.source === 'heritage' ? 'Héritage' : 'Épargne';
+                const freqLabel = t.frequency === 'annual' ? '/an' : 'une fois';
+                return `<div class="group/card flex items-center gap-2 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-purple-400/40 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
+                  <svg class="w-2.5 h-2.5 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded-full ${t.source === 'heritage' ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-cyan/10 text-accent-cyan'}">${sourceLabel}</span>
+                  <span class="text-gray-500 text-xs">→</span>
+                  <span class="text-sm text-gray-200 font-medium truncate max-w-[8rem]">${destName}</span>
+                  <span class="text-[9px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
+                  <span class="text-[10px] text-gray-500 ml-auto">${t.startYear}</span>
+                  ${t.endYear ? `<span class="text-[10px] text-gray-600">→ ${t.endYear}</span>` : ''}
+                  <button class="proj-del-transfer opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${t.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
+                </div>`;
+              }).join('') : '<p class="text-center text-gray-600 text-sm py-2">Aucun transfert — cliquez sur + pour planifier un mouvement de capital</p>'}
+            </div>
+            <p class="text-xs text-gray-600 mt-1">Ex: En 2035, injecter 50 000€ d'héritage dans l'Assurance Vie</p>
           </div>
 
           <!-- Actions -->
@@ -368,6 +425,67 @@ Stratégie de sortie : ...`).replace(/</g, '&lt;')}</div>
       </details>
     </div>
   `;
+}
+
+function openTransferModal(store, navigate, editItem = null) {
+  const placements = store.get('actifs.placements') || [];
+  const currentYear = new Date().getFullYear();
+  const destOptions = placements.map(p => ({
+    value: p.id,
+    label: `${p.nom} (${p.enveloppe || p.type})`
+  }));
+
+  const title = editItem ? 'Modifier le transfert' : 'Planifier un transfert de capital';
+  const body = `
+    ${selectField('source', 'Source du capital', [
+      { value: 'epargne', label: 'Épargne (livrets, fonds euros)' },
+      { value: 'heritage', label: 'Héritage (liquidités)' }
+    ], editItem?.source || 'epargne')}
+    ${selectField('destinationId', 'Destination (placement)', destOptions, editItem?.destinationId || '')}
+    ${inputField('montant', 'Montant (€)', editItem?.montant || '', 'number', 'min="0" step="1000" placeholder="50000"')}
+    ${selectField('frequency', 'Fréquence', [
+      { value: 'once', label: 'Une seule fois' },
+      { value: 'annual', label: 'Chaque année' }
+    ], editItem?.frequency || 'once')}
+    ${inputField('startYear', 'Année de début', editItem?.startYear || currentYear + 1, 'number', `min="${currentYear}" max="${currentYear + 50}" step="1"`)}
+    <div id="transfer-end-year-wrapper">
+      ${inputField('endYear', 'Année de fin (si récurrent)', editItem?.endYear || '', 'number', `min="${currentYear}" max="${currentYear + 50}" step="1" placeholder="Optionnel"`)}
+    </div>
+    <div class="p-3 bg-dark-800/50 rounded-lg text-xs text-gray-500 space-y-1 mt-2">
+      <p><strong class="text-gray-400">Comment ça marche :</strong></p>
+      <p>Le montant est prélevé de la source (épargne ou héritage liquide) et injecté dans le placement choisi à l'année indiquée.</p>
+      <p>Si récurrent, le transfert se répète chaque année entre l'année de début et de fin.</p>
+    </div>
+  `;
+
+  const modal = openModal(title, body, () => {
+    const data = getFormData(document.getElementById('modal-body'));
+    if (!data.destinationId || !data.montant || !data.startYear) return;
+    data.montant = Number(data.montant);
+    data.startYear = Number(data.startYear);
+    if (data.endYear) data.endYear = Number(data.endYear);
+    else delete data.endYear;
+
+    const transfers = store.get('parametres')?.capitalTransfers || [];
+    if (editItem) {
+      const idx = transfers.findIndex(t => t.id === editItem.id);
+      if (idx !== -1) transfers[idx] = { ...transfers[idx], ...data };
+    } else {
+      data.id = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+      transfers.push(data);
+    }
+    store.set('parametres.capitalTransfers', transfers);
+    navigate('projection');
+  });
+
+  // Toggle end year visibility based on frequency
+  const freqSelect = modal.querySelector('#field-frequency');
+  const endWrapper = modal.querySelector('#transfer-end-year-wrapper');
+  if (freqSelect && endWrapper) {
+    const toggle = () => endWrapper.style.display = freqSelect.value === 'annual' ? '' : 'none';
+    toggle();
+    freqSelect.addEventListener('change', toggle);
+  }
 }
 
 export function mount(store, navigate) {
@@ -638,6 +756,54 @@ export function mount(store, navigate) {
       e.stopPropagation();
       if (confirm('Supprimer ce placement ?')) {
         store.removeItem('actifs.placements', btn.dataset.id);
+        navigate('projection');
+      }
+    });
+  });
+
+  // --- Heritage CRUD from projection ---
+  document.getElementById('proj-add-heritage')?.addEventListener('click', () => {
+    openHeritageModal(store, navigate, null, 'projection');
+  });
+
+  document.querySelectorAll('.heritage-row[data-heritage-id]').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      const item = (store.get('heritage') || []).find(h => h.id === row.dataset.heritageId);
+      if (item) openHeritageModal(store, navigate, item, 'projection');
+    });
+  });
+
+  document.querySelectorAll('.proj-del-heritage').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('Supprimer cet héritage ?')) {
+        store.removeItem('heritage', btn.dataset.id);
+        navigate('projection');
+      }
+    });
+  });
+
+  // --- Capital Transfers CRUD ---
+  document.getElementById('proj-add-transfer')?.addEventListener('click', () => {
+    openTransferModal(store, navigate);
+  });
+
+  document.querySelectorAll('.transfer-row[data-transfer-id]').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      const transfers = store.get('parametres')?.capitalTransfers || [];
+      const item = transfers.find(t => t.id === row.dataset.transferId);
+      if (item) openTransferModal(store, navigate, item);
+    });
+  });
+
+  document.querySelectorAll('.proj-del-transfer').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('Supprimer ce transfert ?')) {
+        const transfers = (store.get('parametres')?.capitalTransfers || []).filter(t => t.id !== btn.dataset.id);
+        store.set('parametres.capitalTransfers', transfers);
         navigate('projection');
       }
     });

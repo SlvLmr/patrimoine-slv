@@ -152,6 +152,9 @@ export function computeProjection(store) {
   });
   const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : (params.rendementEpargne || 0.02);
 
+  // Capital transfers (épargne/héritage → placement)
+  const capitalTransfers = params.capitalTransfers || [];
+
   // Build per-placement simulation state
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjectionsParams = params.cashInjections || {};
@@ -271,6 +274,34 @@ export function computeProjection(store) {
 
     // Héritage liquide
     if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
+
+    // Capital transfers (épargne/héritage → placement)
+    const calYear = currentYear + year;
+    for (const transfer of capitalTransfers) {
+      const startY = Number(transfer.startYear);
+      const endY = transfer.endYear ? Number(transfer.endYear) : startY;
+      const isActive = transfer.frequency === 'annual'
+        ? (calYear >= startY && calYear <= endY)
+        : (calYear === startY);
+      if (!isActive) continue;
+
+      const destSim = placSims.find(ps => ps.id === transfer.destinationId);
+      if (!destSim) continue;
+
+      let amount = Number(transfer.montant) || 0;
+      // Debit from source
+      if (transfer.source === 'heritage') {
+        amount = Math.min(amount, Math.max(0, heritage));
+        heritage -= amount;
+      } else {
+        amount = Math.min(amount, Math.max(0, epar));
+        epar -= amount;
+      }
+      if (amount > 0) {
+        destSim.value += amount;
+        destSim.totalApports += amount;
+      }
+    }
 
     // Per-placement growth + DCA
     // Collect PEA overflow per month to redirect to CTO
