@@ -21,11 +21,12 @@ export const CATEGORIES = [
 ];
 
 export function buildPlacementFormBody(item) {
+  const currentYear = new Date().getFullYear();
   const overrides = item.dcaOverrides || [];
   const overridesHtml = overrides.map((o, i) => `
     <div class="flex items-center gap-2 dca-override-row" data-idx="${i}">
       <div class="flex-1">
-        <input type="number" class="dca-ov-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${o.fromYear || ''}" placeholder="Année" min="1" max="50" step="1">
+        <input type="number" class="dca-ov-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${o.fromYear || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
       </div>
       <span class="text-gray-500 text-xs">→</span>
       <div class="flex-1">
@@ -39,7 +40,7 @@ export function buildPlacementFormBody(item) {
   const injectionsHtml = injections.map((inj, i) => `
     <div class="flex items-center gap-2 cash-inj-row" data-idx="${i}">
       <div class="flex-1">
-        <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${inj.year || ''}" placeholder="Année" min="1" max="50" step="1">
+        <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${inj.year || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
       </div>
       <span class="text-gray-500 text-xs">→</span>
       <div class="flex-1">
@@ -71,7 +72,7 @@ export function buildPlacementFormBody(item) {
           ${overridesHtml}
         </div>
         <button type="button" id="btn-add-dca-override" class="text-xs text-accent-blue hover:text-accent-blue/80 font-medium">+ Ajouter une période</button>
-        <p class="text-xs text-gray-600 mt-1">Ex: À partir de l'année 5, passer le DCA à 500€/mois</p>
+        <p class="text-xs text-gray-600 mt-1">Ex: À partir de 2030, passer le DCA à 500€/mois</p>
       </div>
 
       <div class="mt-3">
@@ -80,7 +81,7 @@ export function buildPlacementFormBody(item) {
           ${injectionsHtml}
         </div>
         <button type="button" id="btn-add-cash-injection" class="text-xs text-accent-green hover:text-accent-green/80 font-medium">+ Ajouter un apport</button>
-        <p class="text-xs text-gray-600 mt-1">Ex: Année 3, injecter 5 000€ en une fois</p>
+        <p class="text-xs text-gray-600 mt-1">Ex: En 2029, injecter 5 000€ en une fois</p>
       </div>
     </div>
 
@@ -165,7 +166,7 @@ export function initPlacementFormListeners(modal) {
       row.className = 'flex items-center gap-2 dca-override-row';
       row.innerHTML = `
         <div class="flex-1">
-          <input type="number" class="dca-ov-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="Année" min="1" max="50" step="1">
+          <input type="number" class="dca-ov-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
         </div>
         <span class="text-gray-500 text-xs">→</span>
         <div class="flex-1">
@@ -190,7 +191,7 @@ export function initPlacementFormListeners(modal) {
       row.className = 'flex items-center gap-2 cash-inj-row';
       row.innerHTML = `
         <div class="flex-1">
-          <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="Année" min="1" max="50" step="1">
+          <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
         </div>
         <span class="text-gray-500 text-xs">→</span>
         <div class="flex-1">

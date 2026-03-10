@@ -1,6 +1,6 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, getFormData, getPlacementGroupKey } from '../utils.js';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=3';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=4';
 
 export function render(store) {
   const params = store.get('parametres');

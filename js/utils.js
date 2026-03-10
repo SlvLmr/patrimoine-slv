@@ -173,8 +173,14 @@ export function computeProjection(store) {
     value: initialValue,
     rendement: rend,
     dcaMensuel: Number(p.dcaMensuel) || 0,
-    dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
-    cashInjections: mergedInj.sort((a, b) => a.year - b.year),
+    dcaOverrides: (p.dcaOverrides || []).map(ov => ({
+      ...ov,
+      fromYear: ov.fromYear > 100 ? ov.fromYear - currentCalendarYear : ov.fromYear
+    })).sort((a, b) => a.fromYear - b.fromYear),
+    cashInjections: mergedInj.map(inj => ({
+      ...inj,
+      year: inj.year > 100 ? inj.year - currentCalendarYear : inj.year
+    })).sort((a, b) => a.year - b.year),
     isAirLiquide: !!p.isAirLiquide,
     loyaltyEligible: !!p.loyaltyEligible,
     quantite: Number(p.quantite) || 0,
