@@ -8,12 +8,37 @@ const DEPENSE_TYPES = [
   { key: 'Investissement', label: 'Investissements', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
 ];
 
+const FREQ_OPTIONS = [
+  { value: 'Mensuel', label: 'Mensuel' },
+  { value: 'Annuel', label: 'Annuel' },
+];
+
+function getMensuelLisse(item) {
+  const montant = Number(item.montantMensuel) || 0;
+  return item.frequence === 'Annuel' ? montant / 12 : montant;
+}
+
 function getDepensesByType(depenses, typeKey) {
   return depenses.filter(d => (d.typeDepense || 'Fixe') === typeKey);
 }
 
-function sumDepenses(items) {
-  return items.reduce((s, d) => s + (Number(d.montantMensuel) || 0), 0);
+function sumLisse(items) {
+  return items.reduce((s, d) => s + getMensuelLisse(d), 0);
+}
+
+function formatFreqLabel(item) {
+  const montant = Number(item.montantMensuel) || 0;
+  if (item.frequence === 'Annuel') {
+    return `${formatCurrency(montant)}/an`;
+  }
+  return `${formatCurrency(montant)}/mois`;
+}
+
+function formatLisseLabel(item) {
+  if (item.frequence === 'Annuel') {
+    return `≈ ${formatCurrency(getMensuelLisse(item))}/mois`;
+  }
+  return '';
 }
 
 export function render(store) {
@@ -23,18 +48,24 @@ export function render(store) {
   const totalD = store.totalDepenses();
   const balance = totalR - totalD;
 
-  const depenseGroups = DEPENSE_TYPES.map(t => ({
-    ...t,
-    items: getDepensesByType(depenses, t.key),
-    total: sumDepenses(getDepensesByType(depenses, t.key))
-  }));
+  // Compute direct monthly totals (only items marked mensuel)
+  const revMensuelDirect = revenus.filter(r => r.frequence !== 'Annuel').reduce((s, r) => s + (Number(r.montantMensuel) || 0), 0);
+  const depMensuelDirect = depenses.filter(d => d.frequence !== 'Annuel').reduce((s, d) => s + (Number(d.montantMensuel) || 0), 0);
+
+  // Check if there are any annual items
+  const hasAnnualItems = revenus.some(r => r.frequence === 'Annuel') || depenses.some(d => d.frequence === 'Annuel');
+
+  const depenseGroups = DEPENSE_TYPES.map(t => {
+    const items = getDepensesByType(depenses, t.key);
+    return { ...t, items, total: sumLisse(items) };
+  });
 
   return `
     <div class="space-y-6">
       <h1 class="text-2xl font-bold text-gray-100">Revenus & Dépenses</h1>
 
       <!-- KPI -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-${hasAnnualItems ? '4' : '3'} gap-4">
         <div class="card-dark rounded-xl p-5 kpi-card glow-green">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center">
@@ -44,7 +75,7 @@ export function render(store) {
             </div>
             <p class="text-sm text-gray-400">Revenus mensuels</p>
           </div>
-          <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalR)}</p>
+          <p class="text-2xl font-bold text-accent-green">${formatCurrency(revMensuelDirect)}</p>
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card glow-red">
           <div class="flex items-center gap-3 mb-3">
@@ -55,8 +86,22 @@ export function render(store) {
             </div>
             <p class="text-sm text-gray-400">Dépenses mensuelles</p>
           </div>
-          <p class="text-2xl font-bold text-accent-red">${formatCurrency(totalD)}</p>
+          <p class="text-2xl font-bold text-accent-red">${formatCurrency(depMensuelDirect)}</p>
         </div>
+        ${hasAnnualItems ? `
+        <div class="card-dark rounded-xl p-5 kpi-card glow-amber">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-accent-amber/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400">Mensuel lissé</p>
+          </div>
+          <p class="text-2xl font-bold text-accent-amber">${formatCurrency(totalR - totalD)}</p>
+          <p class="text-xs text-gray-500 mt-1">Rev. ${formatCurrency(totalR)} − Dép. ${formatCurrency(totalD)}</p>
+        </div>
+        ` : ''}
         <div class="card-dark rounded-xl p-5 kpi-card glow-blue">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-lg ${balance >= 0 ? 'bg-accent-blue/20' : 'bg-accent-red/20'} flex items-center justify-center">
@@ -64,9 +109,9 @@ export function render(store) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-400">Balance mensuelle</p>
+            <p class="text-sm text-gray-400">Balance annuelle</p>
           </div>
-          <p class="text-2xl font-bold ${balance >= 0 ? 'text-accent-blue' : 'text-accent-red'}">${formatCurrency(balance)}</p>
+          <p class="text-2xl font-bold ${balance >= 0 ? 'text-accent-blue' : 'text-accent-red'}">${formatCurrency(balance * 12)}</p>
         </div>
       </div>
 
@@ -94,10 +139,13 @@ export function render(store) {
           <div class="flex items-center justify-between px-5 py-3 hover:bg-dark-600/30 transition">
             <div>
               <p class="font-medium text-sm text-gray-200">${r.nom}</p>
-              <p class="text-xs text-gray-600">${r.type || 'Autre'}</p>
+              <p class="text-xs text-gray-600">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
             </div>
             <div class="flex items-center gap-3">
-              <span class="font-medium text-accent-green">${formatCurrency(r.montantMensuel)}/mois</span>
+              <div class="text-right">
+                <span class="font-medium text-accent-green">${formatFreqLabel(r)}</span>
+                ${r.frequence === 'Annuel' ? `<p class="text-[10px] text-gray-500">${formatLisseLabel(r)}</p>` : ''}
+              </div>
               <button data-edit-rev="${r.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
               <button data-del-rev="${r.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
             </div>
@@ -131,10 +179,13 @@ export function render(store) {
             <div class="flex items-center justify-between px-5 py-3 hover:bg-dark-600/30 transition">
               <div>
                 <p class="font-medium text-sm text-gray-200">${d.nom}</p>
-                <p class="text-xs text-gray-600">${d.categorie || 'Autre'}</p>
+                <p class="text-xs text-gray-600">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
               </div>
               <div class="flex items-center gap-3">
-                <span class="font-medium text-accent-red">${formatCurrency(d.montantMensuel)}/mois</span>
+                <div class="text-right">
+                  <span class="font-medium text-accent-red">${formatFreqLabel(d)}</span>
+                  ${d.frequence === 'Annuel' ? `<p class="text-[10px] text-gray-500">${formatLisseLabel(d)}</p>` : ''}
+                </div>
                 <button data-edit-dep="${d.id}" class="text-accent-blue hover:text-accent-blue/80 text-xs font-medium">Modifier</button>
                 <button data-del-dep="${d.id}" class="text-accent-red/60 hover:text-accent-red text-xs font-medium">Suppr.</button>
               </div>
@@ -154,12 +205,12 @@ export function mount(store, navigate) {
   const totalR = store.totalRevenus();
   const totalD = store.totalDepenses();
 
-  // Chart - dark theme
+  // Chart
   if (document.getElementById('chart-rev-dep') && (totalR > 0 || totalD > 0)) {
     createChart('chart-rev-dep', {
       type: 'bar',
       data: {
-        labels: ['Mensuel', 'Annuel'],
+        labels: ['Mensuel lissé', 'Annuel'],
         datasets: [
           {
             label: 'Revenus',
@@ -210,7 +261,8 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('nom', 'Libellé', '', 'text', 'placeholder="Ex: Salaire net"')}
       ${selectField('type', 'Type', revenuTypes)}
-      ${inputField('montantMensuel', 'Montant mensuel (€)', '', 'number', 'step="50"')}
+      ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, 'Mensuel')}
+      ${inputField('montantMensuel', 'Montant (€)', '', 'number', 'step="50"')}
     `;
     openModal('Ajouter un revenu', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
@@ -227,7 +279,8 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Libellé', item.nom)}
         ${selectField('type', 'Type', revenuTypes, item.type)}
-        ${inputField('montantMensuel', 'Montant mensuel (€)', item.montantMensuel, 'number', 'step="50"')}
+        ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, item.frequence || 'Mensuel')}
+        ${inputField('montantMensuel', 'Montant (€)', item.montantMensuel, 'number', 'step="50"')}
       `;
       openModal('Modifier le revenu', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -273,7 +326,8 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Libellé', '', 'text', 'placeholder="Ex: Loyer"')}
         ${selectField('categorie', 'Catégorie', depCategories)}
-        ${inputField('montantMensuel', 'Montant mensuel (€)', '', 'number', 'step="10"')}
+        ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, 'Mensuel')}
+        ${inputField('montantMensuel', 'Montant (€)', '', 'number', 'step="10"')}
       `;
       openModal(`Ajouter — ${DEPENSE_TYPES.find(t => t.key === typeDepense)?.label || 'Dépense'}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -293,7 +347,8 @@ export function mount(store, navigate) {
         ${inputField('nom', 'Libellé', item.nom)}
         ${selectField('categorie', 'Catégorie', depCategories, item.categorie)}
         ${selectField('typeDepense', 'Type de dépense', depTypeOptions, item.typeDepense || 'Fixe')}
-        ${inputField('montantMensuel', 'Montant mensuel (€)', item.montantMensuel, 'number', 'step="10"')}
+        ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, item.frequence || 'Mensuel')}
+        ${inputField('montantMensuel', 'Montant (€)', item.montantMensuel, 'number', 'step="10"')}
       `;
       openModal('Modifier la dépense', body, () => {
         const data = getFormData(document.getElementById('modal-body'));

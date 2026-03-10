@@ -310,11 +310,17 @@ const Store = {
   },
 
   totalRevenus() {
-    return this._state.revenus.reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
+    return this._state.revenus.reduce((s, i) => {
+      const montant = Number(i.montantMensuel) || 0;
+      return s + (i.frequence === 'Annuel' ? montant / 12 : montant);
+    }, 0);
   },
 
   totalDepenses() {
-    return this._state.depenses.reduce((s, i) => s + (Number(i.montantMensuel) || 0), 0);
+    return this._state.depenses.reduce((s, i) => {
+      const montant = Number(i.montantMensuel) || 0;
+      return s + (i.frequence === 'Annuel' ? montant / 12 : montant);
+    }, 0);
   },
 
   capaciteEpargne() {
