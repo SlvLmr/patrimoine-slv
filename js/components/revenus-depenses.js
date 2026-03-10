@@ -115,15 +115,6 @@ export function render(store) {
         </div>
       </div>
 
-      ${(totalR > 0 || totalD > 0) ? `
-      <div class="card-dark rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Revenus vs Dépenses</h2>
-        <div class="h-48">
-          <canvas id="chart-rev-dep"></canvas>
-        </div>
-      </div>
-      ` : ''}
-
       <!-- Revenus & Dépenses — 5 colonnes côte à côte -->
       <div class="flex items-center justify-between mb-2">
         <div></div>
@@ -217,47 +208,6 @@ export function render(store) {
 
 export function mount(store, navigate) {
   const content = document.getElementById('app-content');
-  const totalR = store.totalRevenus();
-  const totalD = store.totalDepenses();
-
-  // Chart
-  if (document.getElementById('chart-rev-dep') && (totalR > 0 || totalD > 0)) {
-    createChart('chart-rev-dep', {
-      type: 'bar',
-      data: {
-        labels: ['Mensuel lissé', 'Annuel'],
-        datasets: [
-          {
-            label: 'Revenus',
-            data: [totalR, totalR * 12],
-            backgroundColor: COLORS.revenus,
-            borderRadius: 6
-          },
-          {
-            label: 'Dépenses',
-            data: [totalD, totalD * 12],
-            backgroundColor: COLORS.depenses,
-            borderRadius: 6
-          }
-        ]
-      },
-      options: {
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: COLORS.gridText }
-          },
-          y: {
-            grid: { color: COLORS.grid },
-            ticks: {
-              color: COLORS.gridText,
-              callback: v => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, notation: 'compact' }).format(v)
-            }
-          }
-        }
-      }
-    });
-  }
 
   // Revenus
   const revenuTypes = [

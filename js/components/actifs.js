@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, openModal, getFormData, inputField, selectField } from '../utils.js';
+import { formatCurrency, formatPercent, formatDate, openModal, getFormData, inputField, selectField } from '../utils.js';
 
 const ENVELOPPES = [
   { value: 'PEA', label: 'PEA' },
@@ -222,6 +222,7 @@ export function render(store) {
   const state = store.getAll();
   const { immobilier, placements, epargne } = state.actifs;
   const emprunts = store.get('passifs.emprunts');
+  const heritageItems = store.get('heritage') || [];
 
   // Group placements by envelope
   const envelopeGroups = {};
@@ -241,6 +242,7 @@ export function render(store) {
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const totalPlac = placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
   const totalEpar = epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const totalHeritage = heritageItems.reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   const sections = [
     {
@@ -278,6 +280,15 @@ export function render(store) {
       total: totalDette,
       count: emprunts.length,
       btnId: 'btn-add-emprunt',
+    },
+    {
+      key: 'heritage',
+      label: 'Héritage',
+      icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+      color: 'accent-cyan',
+      total: totalHeritage,
+      count: heritageItems.length,
+      btnId: 'btn-add-heritage',
     },
   ];
 
@@ -414,44 +425,70 @@ export function render(store) {
     }).join('')}</div>`;
   }
 
+  function renderHeritageContent() {
+    if (heritageItems.length === 0) return '<p class="px-2 py-1 text-gray-600 text-xs">Aucun héritage prévu.</p>';
+    return `<div class="space-y-1 p-2">${heritageItems.map(h => `
+        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+          <div class="flex items-center justify-between">
+            <span class="font-medium text-gray-200 text-xs">${h.nom}</span>
+            <span class="font-medium text-accent-cyan text-xs">${formatCurrency(h.montant)}</span>
+          </div>
+          <div class="flex items-center justify-between text-[10px] text-gray-400">
+            <span class="${h.type === 'Immobilier' ? 'text-accent-green' : 'text-accent-amber'}">${h.type || 'Liquidité'}</span>
+            ${h.dateInjection ? `<span>${formatDate(h.dateInjection)}</span>` : ''}
+          </div>
+          ${h.provenance ? `<div class="text-[10px] text-gray-500">${h.provenance}</div>` : ''}
+          <div class="flex gap-2 mt-1">
+            <button data-edit-heritage="${h.id}" class="text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium">Modifier</button>
+            <button data-del-heritage="${h.id}" class="text-accent-red/60 hover:text-accent-red text-[10px] font-medium">Suppr.</button>
+          </div>
+        </div>`).join('')}</div>`;
+  }
+
   const contentRenderers = {
     immobilier: renderImmoContent,
     placements: renderPlacContent,
     epargne: renderEparContent,
     emprunts: renderEmpruntContent,
+    heritage: renderHeritageContent,
   };
 
-  return `
-    <div class="space-y-6">
-      <h1 class="text-2xl font-bold text-gray-100">Actifs et passifs</h1>
-
-      <div class="grid grid-cols-1 xl:grid-cols-4 gap-3">
-        ${sections.map(s => `
-        <div class="card-dark rounded-xl overflow-hidden flex flex-col">
-          <!-- Header -->
-          <div class="px-3 py-2.5 border-b border-dark-400/30">
-            <div class="flex items-center gap-2 mb-1.5">
-              <div class="w-6 h-6 rounded bg-${s.color}/20 flex items-center justify-center flex-shrink-0">
-                <svg class="w-3 h-3 text-${s.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${s.icon}"/>
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <h2 class="text-xs font-semibold text-gray-200">${s.label}</h2>
-                <p class="text-[10px] text-gray-500">${s.count} élément${s.count > 1 ? 's' : ''}</p>
-              </div>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
-              <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white' : 'from-accent-green to-accent-amber text-dark-900'} text-[10px] rounded hover:opacity-90 transition font-medium">+ Ajouter</button>
-            </div>
+  const renderColumn = (s) => `
+    <div class="card-dark rounded-xl overflow-hidden flex flex-col">
+      <div class="px-3 py-2.5 border-b border-dark-400/30">
+        <div class="flex items-center gap-2 mb-1.5">
+          <div class="w-6 h-6 rounded bg-${s.color}/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-3 h-3 text-${s.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${s.icon}"/>
+            </svg>
           </div>
-          <!-- Content -->
-          <div class="flex-1 overflow-y-auto">
-            ${contentRenderers[s.key]()}
+          <div class="flex-1 min-w-0">
+            <h2 class="text-xs font-semibold text-gray-200">${s.label}</h2>
+            <p class="text-[10px] text-gray-500">${s.count} élément${s.count > 1 ? 's' : ''}</p>
           </div>
         </div>
-        `).join('')}
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
+          <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white' : s.key === 'heritage' ? 'from-accent-cyan to-accent-cyan text-dark-900' : 'from-accent-green to-accent-amber text-dark-900'} text-[10px] rounded hover:opacity-90 transition font-medium">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto">
+        ${contentRenderers[s.key]()}
+      </div>
+    </div>`;
+
+  const row1 = sections.filter(s => ['immobilier', 'epargne', 'placements'].includes(s.key));
+  const row2 = sections.filter(s => ['emprunts', 'heritage'].includes(s.key));
+
+  return `
+    <div class="space-y-4">
+      <h1 class="text-2xl font-bold text-gray-100">Actifs et passifs</h1>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+        ${row1.map(renderColumn).join('')}
+      </div>
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+        ${row2.map(renderColumn).join('')}
       </div>
     </div>
   `;
@@ -637,6 +674,50 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       if (confirm('Supprimer cet emprunt ?')) {
         store.removeItem('passifs.emprunts', btn.dataset.delEmprunt);
+        navigate('actifs');
+      }
+    });
+  });
+
+  // --- Héritage ---
+  const heritageForm = (item = {}) => `
+    ${inputField('nom', 'Nom / Description', item.nom || '', 'text', 'placeholder="Ex: Maison familiale"')}
+    ${selectField('type', 'Type', [
+      { value: 'Immobilier', label: 'Immobilier' },
+      { value: 'Liquidité', label: 'Liquidité' }
+    ], item.type || 'Immobilier')}
+    ${inputField('montant', 'Montant estimé (€)', item.montant || '', 'number', 'min="0" step="1000"')}
+    ${inputField('provenance', 'Provenance', item.provenance || '', 'text', 'placeholder="Ex: Parents"')}
+    ${inputField('dateInjection', "Date estimée d'injection", item.dateInjection || '', 'date')}
+  `;
+
+  document.getElementById('btn-add-heritage')?.addEventListener('click', () => {
+    openModal('Ajouter un héritage', heritageForm(), () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      if (!data.nom || !data.montant) return;
+      store.addItem('heritage', data);
+      navigate('actifs');
+    });
+  });
+
+  content.querySelectorAll('[data-edit-heritage]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.editHeritage;
+      const item = (store.get('heritage') || []).find(i => i.id === id);
+      if (!item) return;
+      openModal("Modifier l'héritage", heritageForm(item), () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        if (!data.nom || !data.montant) return;
+        store.updateItem('heritage', id, data);
+        navigate('actifs');
+      });
+    });
+  });
+
+  content.querySelectorAll('[data-del-heritage]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (confirm('Supprimer cet héritage ?')) {
+        store.removeItem('heritage', btn.dataset.delHeritage);
         navigate('actifs');
       }
     });
