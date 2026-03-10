@@ -127,16 +127,24 @@ input[type="number"] {
   height: 7px;
   border-radius: 50%;
   background: #ff4757;
-  margin-left: auto;
+  margin-left: 2px;
   flex-shrink: 0;
   position: relative;
-  animation: liveDotBlink 1.5s ease-in-out infinite;
-  box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+  animation: liveDotPulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(255, 71, 87, 0.7);
 }
 
-@keyframes liveDotBlink {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(255, 71, 87, 0.6); }
-  50% { opacity: 0.3; box-shadow: 0 0 2px rgba(255, 71, 87, 0.2); }
+@keyframes liveDotPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(255, 71, 87, 0.7), 0 0 16px rgba(255, 71, 87, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 3px rgba(255, 71, 87, 0.2);
+    transform: scale(0.75);
+  }
 }
 
 /* Logo halo effect */
