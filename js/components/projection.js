@@ -27,86 +27,68 @@ export function render(store) {
     <div class="space-y-6">
       <h1 class="text-2xl font-bold text-gray-100">Projection patrimoniale</h1>
 
-      <!-- Parameters -->
-      <div class="card-dark rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-gray-200 mb-4">Paramètres de simulation</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Horizon (années)</label>
-            <input type="number" id="param-years" value="${params.projectionYears}" min="1" max="50" step="1"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+      <!-- Parameters — collapsible -->
+      <details class="card-dark rounded-xl group" open>
+        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
+          <h2 class="text-sm font-semibold text-gray-300">Paramètres de simulation</h2>
+          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-4 pb-4 space-y-3">
+          <!-- Row 1: General -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+            ${[
+              ['param-years', 'Horizon', params.projectionYears, '1', '50', '1'],
+              ['param-age', 'Âge', params.ageFinAnnee || 43, '18', '100', '1'],
+              ['param-retraite', 'Retraite', params.ageRetraite || 64, '55', '70', '1'],
+              ['param-inflation', 'Inflation %', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', '0.5'],
+              ['param-rend-immo', 'Rdt immo %', ((params.rendementImmobilier || 0) * 100).toFixed(1), '0', '30', '0.5'],
+              ['param-rend-epar', 'Rdt épargne %', ((params.rendementEpargne || 0) * 100).toFixed(1), '0', '30', '0.5'],
+            ].map(([id, label, val, min, max, step]) => `
+            <div>
+              <label class="block text-[10px] text-gray-500 mb-0.5 truncate">${label}</label>
+              <input type="number" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
+                class="w-full px-2 py-1.5 text-xs bg-dark-800 border border-dark-400/40 rounded-md text-gray-300 focus:ring-1 focus:ring-accent-blue/30 focus:border-accent-blue/30 transition">
+            </div>`).join('')}
+            ${groupKeys.map(k => {
+              const val = rendementGroupes[k] !== undefined ? rendementGroupes[k] : (params.rendementPlacements || 0.05);
+              return `
+            <div>
+              <label class="block text-[10px] text-gray-500 mb-0.5 truncate">${k} %</label>
+              <input type="number" data-group-key="${k}" class="param-rend-group w-full px-2 py-1.5 text-xs bg-dark-800 border border-dark-400/40 rounded-md text-gray-300 focus:ring-1 focus:ring-accent-blue/30 focus:border-accent-blue/30 transition"
+                value="${(val * 100).toFixed(1)}" min="0" max="50" step="0.5">
+            </div>`;
+            }).join('')}
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Âge fin d'année</label>
-            <input type="number" id="param-age" value="${params.ageFinAnnee || 43}" min="18" max="100" step="1"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Âge retraite taux plein</label>
-            <input type="number" id="param-retraite" value="${params.ageRetraite || 64}" min="55" max="70" step="1"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Inflation annuelle (%)</label>
-            <input type="number" id="param-inflation" value="${((params.inflationRate || 0) * 100).toFixed(1)}" min="0" max="20" step="0.5"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-        </div>
-        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Rendements annuels</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Immobilier (%)</label>
-            <input type="number" id="param-rend-immo" value="${((params.rendementImmobilier || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Livrets / Épargne (%)</label>
-            <input type="number" id="param-rend-epar" value="${((params.rendementEpargne || 0) * 100).toFixed(1)}" min="0" max="30" step="0.5"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          ${groupKeys.map(k => {
-            const val = rendementGroupes[k] !== undefined ? rendementGroupes[k] : (params.rendementPlacements || 0.05);
-            return `<div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">${k} (%)</label>
-            <input type="number" data-group-key="${k}" class="param-rend-group w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition"
-              value="${(val * 100).toFixed(1)}" min="0" max="50" step="0.5">
-          </div>`;
-          }).join('')}
-          <div class="flex items-end">
-            <button id="btn-update-projection" class="w-full px-4 py-2.5 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-lg hover:opacity-90 transition font-medium">
+          <!-- Row 2: Retraite milestones + button -->
+          <div class="flex flex-wrap items-end gap-2">
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-dark-800/60 border border-dark-400/30">
+              <span class="text-[10px] text-amber-400/80">Légal</span>
+              <input type="number" id="param-retraite-legal-annee" value="${params.anneeRetraiteTauxLegal || 2047}" min="2025" max="2080" step="1"
+                class="w-14 px-1 py-0.5 text-xs bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
+              <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
+                class="w-16 px-1 py-0.5 text-xs bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center">
+              <span class="text-[10px] text-gray-600">€/m</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-dark-800/60 border border-dark-400/30">
+              <span class="text-[10px] text-cyan-400/80">Plein</span>
+              <input type="number" id="param-retraite-plein-annee" value="${params.anneeRetraiteTauxPlein || 2048}" min="2025" max="2080" step="1"
+                class="w-14 px-1 py-0.5 text-xs bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
+              <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
+                class="w-16 px-1 py-0.5 text-xs bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center">
+              <span class="text-[10px] text-gray-600">€/m</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/30">
+              <span class="text-[10px] text-purple-400">Souhaité</span>
+              <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
+                class="w-10 px-1 py-0.5 text-xs bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-medium">
+              <span class="text-[10px] text-gray-600">ans</span>
+            </div>
+            <button id="btn-update-projection" class="ml-auto px-4 py-1.5 text-xs font-medium bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded-md hover:opacity-90 transition">
               Recalculer
             </button>
           </div>
         </div>
-        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-4">Jalons retraite</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Taux légal (année)</label>
-            <input type="number" id="param-retraite-legal-annee" value="${params.anneeRetraiteTauxLegal || 2047}" min="2025" max="2080" step="1"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Pension légale (€/mois)</label>
-            <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Taux plein (année)</label>
-            <input type="number" id="param-retraite-plein-annee" value="${params.anneeRetraiteTauxPlein || 2048}" min="2025" max="2080" step="1"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Pension taux plein (€/mois)</label>
-            <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-purple-400 mb-1.5">Départ souhaité (âge)</label>
-            <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
-              class="w-full px-3 py-2.5 bg-dark-800 border border-purple-500/50 rounded-lg text-purple-400 focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition font-medium">
-          </div>
-        </div>
-      </div>
+      </details>
 
       <!-- Summary -->
       ${(() => {
