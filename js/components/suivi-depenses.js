@@ -72,7 +72,7 @@ export function render(store) {
     const editAttr = isRevenu ? `data-edit-revenu="${op.id}"` : `data-edit-expense="${op.id}"`;
     const delAttr = isRevenu ? `data-del-revenu="${op.id}"` : `data-del-expense="${op.id}"`;
     return `
-      <div class="flex items-center justify-between px-3 py-0.5 hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
+      <div class="flex items-center justify-between px-3 py-1.5 hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
         <div class="flex items-center gap-2 min-w-0">
           ${icon}
           <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>

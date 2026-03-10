@@ -141,7 +141,7 @@ export function render(store) {
           ${revenus.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
             ${revenus.map(r => `
-            <div class="flex items-center justify-between px-4 py-1 hover:bg-dark-600/30 transition group/row">
+            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row">
               <div class="flex items-center gap-3 min-w-0">
                 <p class="text-xs text-gray-200 truncate">${r.nom}</p>
                 <p class="text-[10px] text-gray-600 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
@@ -179,7 +179,7 @@ export function render(store) {
           ${g.items.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
             ${g.items.map(d => `
-            <div class="flex items-center justify-between px-4 py-1 hover:bg-dark-600/30 transition group/row">
+            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row">
               <div class="flex items-center gap-3 min-w-0">
                 <p class="text-xs text-gray-200 truncate">${d.nom}</p>
                 <p class="text-[10px] text-gray-600 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
