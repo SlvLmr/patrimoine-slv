@@ -1,9 +1,11 @@
 import { formatCurrency, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js';
 
 const CATEGORIES = [
-  'Alimentation', 'Transport', 'Logement', 'Santé', 'Loisirs',
-  'Shopping', 'Restaurant', 'Abonnements', 'Éducation', 'Autre'
+  'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
+  'Loisirs - Plaisirs', 'Petits travaux', 'Autre - Imprévu'
 ];
+
+const COMPTES = ['CIC', 'Trade Republic'];
 
 function getMonthKey(date) {
   const d = new Date(date);
@@ -126,7 +128,7 @@ export function render(store) {
               <span class="text-xs text-gray-500 w-16">${formatDate(i.date)}</span>
               <div>
                 <p class="text-sm text-gray-200">${i.description || '—'}</p>
-                <span class="text-xs text-gray-500">${i.categorie || ''}</span>
+                <span class="text-xs text-gray-500">${i.categorie || ''}${i.compte ? ` · ${i.compte}` : ''}</span>
               </div>
             </div>
             <div class="flex items-center gap-3">
@@ -184,9 +186,21 @@ export function mount(store, navigate) {
       ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Courses Carrefour"')}
       ${selectField('categorie', 'Catégorie', CATEGORIES)}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 45.50"')}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+        <div class="flex gap-3">
+          ${COMPTES.map((c, i) => `
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-blue/40 transition has-[:checked]:border-accent-blue has-[:checked]:bg-accent-blue/10">
+              <input type="radio" name="compte" value="${c}" ${i === 0 ? 'checked' : ''} class="w-4 h-4 text-accent-blue bg-dark-800 border-dark-400 focus:ring-accent-blue/40">
+              <span class="text-sm text-gray-200">${c}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
     `;
     openModal('Ajouter une dépense', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
       const items = store.get('suiviDepenses') || [];
       items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
