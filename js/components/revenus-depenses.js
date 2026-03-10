@@ -196,6 +196,10 @@ export function mount(store, navigate) {
   // Revenus
   const revenuTypes = [
     { value: 'Salaire', label: 'Salaire' },
+    { value: '13ème mois', label: '13ème mois' },
+    { value: 'Intéressement', label: 'Intéressement' },
+    { value: 'Participation', label: 'Participation' },
+    { value: 'Prime', label: 'Prime' },
     { value: 'Loyers', label: 'Revenus locatifs' },
     { value: 'Dividendes', label: 'Dividendes' },
     { value: 'Freelance', label: 'Freelance' },
