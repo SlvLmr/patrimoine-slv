@@ -277,29 +277,28 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-5 border-b border-dark-400/30">
           <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
+          <p class="text-[10px] text-gray-600 mt-1">Apports | <span class="italic">+Intérêts</span> | <span class="text-accent-red/70">-Impôts (taux)</span> — PEA &lt;5 ans: 30% PFU · PEA &gt;5 ans: 17,2% PS · AV &lt;8 ans: 30% · AV &gt;8 ans: 24,7% · CTO/Crypto: 30% · PEE: 17,2%</p>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-dark-800/50 text-gray-500 text-xs">
               <tr>
-                <th class="px-2 py-1.5 text-center">Année</th>
-                <th class="px-2 py-1.5 text-center">An</th>
-                <th class="px-2 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
-                <th class="px-2 py-1.5 text-center">Actions</th>
-                <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
-                <th class="px-2 py-1.5 text-center">ETF</th>
-                <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
-                <th class="px-2 py-1.5 text-center">Bitcoin</th>
-                <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
-                <th class="px-2 py-1.5 text-center">CTO</th>
-                <th class="px-2 py-1.5 text-center italic font-light">+ Intérêts</th>
-                <th class="px-2 py-1.5 text-center font-semibold">Total - Flat Tax</th>
-                <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Assurance Vie</th>
-                <th class="px-2 py-1.5 text-center">PEE</th>
-                <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40">Épargne</th>
-                <th class="px-2 py-1.5 text-center">Héritage</th>
-                <th class="px-2 py-1.5 text-center">Immobilier</th>
-                <th class="px-2 py-1.5 text-center font-semibold">Total liquidités</th>
+                <th class="px-2 py-1.5 text-center" rowspan="2">Année</th>
+                <th class="px-2 py-1.5 text-center" rowspan="2">An</th>
+                <th class="px-2 py-1.5 text-center border-r-2 border-dark-300/40" rowspan="2">Âge</th>
+                ${groupKeys.map(gk => `<th class="px-2 py-1.5 text-center border-l border-dark-300/20" colspan="3">${gk}</th>`).join('')}
+                <th class="px-2 py-1.5 text-center font-semibold border-l-2 border-dark-300/40" rowspan="2">Net d'impôts</th>
+                <th class="px-2 py-1.5 text-center border-l-2 border-dark-300/40" rowspan="2">Épargne</th>
+                <th class="px-2 py-1.5 text-center" rowspan="2">Héritage</th>
+                <th class="px-2 py-1.5 text-center" rowspan="2">Immobilier</th>
+                <th class="px-2 py-1.5 text-center font-semibold border-l-2 border-dark-300/40" rowspan="2">Total liq.</th>
+              </tr>
+              <tr>
+                ${groupKeys.map(() => `
+                  <th class="px-1 py-0.5 text-center text-[9px] border-l border-dark-300/20">Apports</th>
+                  <th class="px-1 py-0.5 text-center text-[9px] italic font-light">+Int.</th>
+                  <th class="px-1 py-0.5 text-center text-[9px] text-accent-red/50">-Impôts</th>
+                `).join('')}
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
@@ -320,21 +319,22 @@ export function render(store) {
                 </td>
                 <td class="px-2 py-1 text-center text-gray-500">${s.annee}</td>
                 <td class="px-2 py-1 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['PEA Actions'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['PEA Actions'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['PEA ETF'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['PEA ETF'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['Crypto'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['Crypto'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementApports['CTO'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-300 italic font-light">${formatCurrency(s.placementGains['CTO'] || 0)}</td>
-                <td class="px-2 py-1 text-center font-semibold text-accent-cyan">${formatCurrency(s.cashApresImpot)}</td>
-                <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.placementDetail['Assurance Vie'] || 0)}</td>
-                <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.placementDetail['PEE'] || 0)}</td>
+                ${groupKeys.map(gk => {
+                  const apports = s.placementApports[gk] || 0;
+                  const gains = s.placementGains[gk] || 0;
+                  const taxes = s.placementTaxes?.[gk] || 0;
+                  const rate = s.placementTaxRates?.[gk] || 0;
+                  const rateLabel = rate > 0 ? `${Math.round(rate * 100)}%` : '';
+                  return `
+                <td class="px-1 py-1 text-center text-gray-200 border-l border-dark-300/20">${formatCurrency(apports)}</td>
+                <td class="px-1 py-1 text-center text-gray-300 italic font-light">${formatCurrency(gains)}</td>
+                <td class="px-1 py-1 text-center text-accent-red/60 text-[10px]">${taxes > 0 ? `-${formatCurrency(taxes)}` : '-'}${rateLabel ? `<br><span class="text-[8px] text-gray-600">${rateLabel}</span>` : ''}</td>`;
+                }).join('')}
+                <td class="px-2 py-1 text-center font-semibold text-accent-cyan border-l-2 border-dark-300/40">${formatCurrency(s.cashApresImpot)}</td>
                 <td class="px-2 py-1 text-center text-gray-200 border-l-2 border-dark-300/40">${formatCurrency(s.epargne)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.heritage)}</td>
                 <td class="px-2 py-1 text-center text-gray-200">${formatCurrency(s.immobilier)}</td>
-                <td class="px-2 py-1 text-center font-semibold text-accent-green">${formatCurrency(s.totalLiquiditesNettes)}</td>
+                <td class="px-2 py-1 text-center font-semibold text-accent-green border-l-2 border-dark-300/40">${formatCurrency(s.totalLiquiditesNettes)}</td>
               </tr>`;
               }).join('')}
             </tbody>
@@ -489,6 +489,19 @@ export function render(store) {
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-teal-400 font-semibold mb-1">Assurance Vie</h3>
+              <p>Avant 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 30% (PFU)</code></p>
+              <p>Après 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 24.7% (17.2% PS + 7.5% IR)</code></p>
+              <p class="mt-1 text-xs text-gray-500">Après 8 ans, abattement de 4 600 € (célibataire) ou 9 200 € (couple) sur les gains avant le calcul du 7.5%. Non modélisé ici pour simplifier.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
+              <h3 class="text-emerald-400 font-semibold mb-1">PEE</h3>
+              <p>Prélèvements sociaux uniquement : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 17.2%</code></p>
+              <p class="mt-1 text-xs text-gray-500">Le PEE est exonéré d'impôt sur le revenu après 5 ans de blocage. Seuls les prélèvements sociaux (17.2%) s'appliquent sur les gains.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-pink-400 font-semibold mb-1">Immobilier</h3>
               <p>Croissance annuelle : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">valeur × (1 + rendement immo)</code></p>
               <p class="mt-1 text-xs text-gray-500">Appliqué proportionnellement au nombre de mois restants la 1ère année.</p>
@@ -507,9 +520,9 @@ export function render(store) {
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
-              <h3 class="text-gray-300 font-semibold mb-1">Total - Flat Tax</h3>
-              <p><code class="text-gray-300 bg-dark-900/60 px-1 rounded">Σ valeur placements − Σ impôts sur gains</code></p>
-              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui, après avoir payé les impôts sur chaque enveloppe selon sa fiscalité propre.</p>
+              <h3 class="text-gray-300 font-semibold mb-1">Net d'impôts (toutes enveloppes)</h3>
+              <p><code class="text-gray-300 bg-dark-900/60 px-1 rounded">Σ valeur placements − Σ impôts sur gains (par enveloppe)</code></p>
+              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui. Chaque enveloppe est taxée selon sa fiscalité propre : PEA (17.2% ou 30%), AV (24.7% ou 30%), CTO/Crypto (30%), PEE (17.2%).</p>
             </div>
           </div>
 

@@ -170,11 +170,17 @@ export function computeProjection(store) {
     const mergedInj = placInj.length > 0 ? placInj : paramInj;
     // Use valeur if set, otherwise fall back to apport as starting capital
     const initialValue = (Number(p.valeur) || 0) || (Number(p.apport) || 0);
+    // Compute envelope age in years at simulation start
+    const enveloppe = p.enveloppe || p.type || '';
+    const dateOuv = p.dateOuverture ? new Date(p.dateOuverture) : null;
+    const envelopeAgeAtStart = dateOuv ? (now - dateOuv) / (365.25 * 24 * 3600 * 1000) : 0;
     return {
     groupKey: gk,
     id: p.id,
     value: initialValue,
     rendement: rend,
+    enveloppe,
+    envelopeAgeAtStart,
     dcaMensuel: Number(p.dcaMensuel) || 0,
     dcaOverrides: (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear),
     cashInjections: mergedInj.sort((a, b) => a.year - b.year),
@@ -254,8 +260,35 @@ export function computeProjection(store) {
     }
   });
   let cumulInterets = 0;
-  const PFU_RATE = 0.33;
-  const PS_RATE = 0.172;
+  const PFU_RATE = 0.30;   // Prélèvement Forfaitaire Unique: 12.8% IR + 17.2% PS
+  const PS_RATE = 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
+  const AV_IR_AFTER8 = 0.075; // AV après 8 ans: 7.5% IR (hors abattement)
+  const AV_ABATTEMENT = 4600; // Abattement annuel AV > 8 ans (célibataire)
+
+  // Compute tax rate for a placement based on envelope type and age
+  function getPlacementTaxRate(ps, simulationYear) {
+    const envelopeAge = ps.envelopeAgeAtStart + simulationYear;
+    const gk = ps.groupKey;
+    const isPEA = gk.startsWith('PEA');
+    const isAV = gk === 'Assurance Vie';
+    const isPEE = ps.isPEE;
+
+    if (isPEA) {
+      // PEA: after 5 years → only social charges; before → full PFU
+      return envelopeAge >= 5 ? PS_RATE : PFU_RATE;
+    }
+    if (isAV) {
+      // AV: after 8 years → PS 17.2% + 7.5% IR (simplified, ignoring abatement for now)
+      // before 8 years → PFU 30%
+      return envelopeAge >= 8 ? (PS_RATE + AV_IR_AFTER8) : PFU_RATE;
+    }
+    if (isPEE) {
+      // PEE: only social charges on gains (no IR)
+      return PS_RATE;
+    }
+    // CTO, Crypto, PER, Autre → PFU 30%
+    return PFU_RATE;
+  }
 
   for (let year = 0; year <= years; year++) {
     // Inject heritage
@@ -327,8 +360,7 @@ export function computeProjection(store) {
       placSims.forEach(ps => {
         if (ps.value <= 0) return;
         const gains = Math.max(0, ps.totalGains);
-        const isPEA = ps.groupKey.startsWith('PEA');
-        const taxRate = isPEA && year >= 5 ? PS_RATE : PFU_RATE;
+        const taxRate = getPlacementTaxRate(ps, year);
         const taxes = gains * taxRate;
         epar += ps.value - taxes;
         ps.value = 0;
@@ -505,25 +537,22 @@ export function computeProjection(store) {
       return { ...e, capitalRestant: capital, dureeRestanteMois: Math.max(0, e.dureeRestanteMois - monthsInPeriod) };
     });
 
-    // Compute tax on gains per placement
-    // Tax computation per placement (PFU/PS rates defined above loop)
+    // Compute tax on gains per placement using envelope-specific rates
     let totalTaxes = 0;
     let totalApports = 0;
     let totalGainsAllPlacements = 0;
+    const groupTaxes = {};
+    const groupTaxRates = {};
     placSims.forEach(ps => {
       const gains = Math.max(0, ps.totalGains);
-      const gk = ps.groupKey;
-      const isPEA = gk.startsWith('PEA');
-      let taxRate;
-      if (isPEA) {
-        // PEA: after 5 years only social charges, before 5 years full PFU
-        taxRate = year >= 5 ? PS_RATE : PFU_RATE;
-      } else {
-        taxRate = PFU_RATE;
-      }
-      totalTaxes += gains * taxRate;
+      const taxRate = getPlacementTaxRate(ps, year);
+      const tax = gains * taxRate;
+      totalTaxes += tax;
       totalApports += ps.totalApports;
       totalGainsAllPlacements += gains;
+      // Accumulate per group
+      groupTaxes[ps.groupKey] = (groupTaxes[ps.groupKey] || 0) + tax;
+      groupTaxRates[ps.groupKey] = taxRate; // last one wins (same rate per group)
     });
 
     // Aggregate placement values, apports and gains by group
@@ -549,10 +578,14 @@ export function computeProjection(store) {
     const detail = {};
     const detailApports = {};
     const detailGains = {};
+    const detailTaxes = {};
+    const detailTaxRates = {};
     groupKeys.forEach(k => {
       detail[k] = Math.round(groupValues[k]);
       detailApports[k] = Math.round(groupApports[k]);
       detailGains[k] = Math.round(groupGains[k]);
+      detailTaxes[k] = Math.round(groupTaxes[k] || 0);
+      detailTaxRates[k] = groupTaxRates[k] || 0;
     });
 
     snapshots.push({
@@ -565,6 +598,8 @@ export function computeProjection(store) {
       placementDetail: detail,
       placementApports: detailApports,
       placementGains: detailGains,
+      placementTaxes: detailTaxes,
+      placementTaxRates: detailTaxRates,
       placements: Math.round(totalPlacements),
       epargne: Math.round(epar),
       heritage: Math.round(heritage),

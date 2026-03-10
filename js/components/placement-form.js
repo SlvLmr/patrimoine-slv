@@ -74,6 +74,7 @@ export function buildPlacementFormBody(item) {
     ${selectField('enveloppe', 'Enveloppe', ENVELOPPES, item.enveloppe || item.type || '')}
     ${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie || '')}
     ${inputField('isin', 'ISIN / Ticker', item.isin || item.ticker || '', 'text', 'placeholder="Ex: LU1681043599 ou CW8"')}
+    ${inputField('dateOuverture', "Date d'ouverture de l'enveloppe", item.dateOuverture || '', 'date', 'placeholder="Date d\'ouverture PEA/AV/CTO"')}
     <div class="grid grid-cols-2 gap-3">
       ${inputField('quantite', 'Quantité', item.quantite || '', 'number', 'step="0.0001" placeholder="Ex: 15.5"')}
       ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
