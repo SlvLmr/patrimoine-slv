@@ -66,24 +66,21 @@ export function render(store) {
   const renderOp = (op) => {
     const isRevenu = op.type === 'revenu';
     const icon = isRevenu
-      ? `<svg class="w-4 h-4 text-accent-green flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
-      : `<svg class="w-4 h-4 text-accent-red flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
-    const color = isRevenu ? 'text-accent-green' : 'text-accent-red';
+      ? `<svg class="w-3.5 h-3.5 text-accent-green flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
+      : `<svg class="w-3.5 h-3.5 text-accent-red flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
     const sign = isRevenu ? '+' : '-';
+    const editAttr = isRevenu ? `data-edit-revenu="${op.id}"` : `data-edit-expense="${op.id}"`;
     const delAttr = isRevenu ? `data-del-revenu="${op.id}"` : `data-del-expense="${op.id}"`;
     return `
-      <div class="flex items-center justify-between px-3 py-1.5 hover:bg-dark-600/30 transition group">
-        <div class="flex items-center gap-2">
+      <div class="flex items-center justify-between px-3 py-0.5 hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
+        <div class="flex items-center gap-2 min-w-0">
           ${icon}
-          <span class="text-xs text-gray-500 w-16">${formatDate(op.date)}</span>
-          <div>
-            <p class="text-sm text-gray-200 leading-tight">${op.description || '—'}</p>
-            <span class="text-[11px] text-gray-500">${op.categorie || ''}</span>
-          </div>
+          <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
+          <span class="text-[13px] text-gray-200 truncate">${op.description || '—'}</span>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-medium ${color}">${sign}${formatCurrencyCents(op.montant)}</span>
-          <button ${delAttr} class="opacity-0 group-hover:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition">Suppr.</button>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <span class="text-[13px] font-medium text-gray-100">${sign}${formatCurrencyCents(op.montant)}</span>
+          <button ${delAttr} class="opacity-0 group-hover:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition" onclick="event.stopPropagation()">✕</button>
         </div>
       </div>`;
   };
@@ -257,6 +254,74 @@ export function mount(store, navigate) {
       store.set('suiviDepenses', items);
 
       navigate('suivi-depenses');
+    });
+  });
+
+  // Edit expense
+  document.querySelectorAll('[data-edit-expense]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.editExpense;
+      const items = store.get('suiviDepenses') || [];
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      const body = `
+        ${inputField('date', 'Date', item.date, 'date')}
+        ${inputField('description', 'Description', item.description || '', 'text')}
+        ${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie)}
+        ${inputField('montant', 'Montant (€)', item.montant, 'number', 'step="0.01"')}
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+          <div class="flex gap-3">
+            ${COMPTES.map(c => `
+              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-blue/40 transition has-[:checked]:border-accent-blue has-[:checked]:bg-accent-blue/10">
+                <input type="radio" name="compte" value="${c}" ${c === item.compte ? 'checked' : ''} class="w-4 h-4 text-accent-blue bg-dark-800 border-dark-400 focus:ring-accent-blue/40">
+                <span class="text-sm text-gray-200">${c}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      openModal('Modifier la dépense', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        data.compte = document.querySelector('input[name="compte"]:checked')?.value || item.compte;
+        Object.assign(item, data);
+        store.set('suiviDepenses', items);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit revenu
+  document.querySelectorAll('[data-edit-revenu]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.editRevenu;
+      const revenus = store.get('suiviRevenus') || [];
+      const rev = revenus.find(r => r.id === id);
+      if (!rev) return;
+      const body = `
+        ${inputField('date', 'Date', rev.date, 'date')}
+        ${inputField('description', 'Description', rev.description || '', 'text')}
+        ${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS, rev.categorie)}
+        ${inputField('montant', 'Montant (€)', rev.montant, 'number', 'step="0.01"')}
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+          <div class="flex gap-3">
+            ${COMPTES.map(c => `
+              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-green/40 transition has-[:checked]:border-accent-green has-[:checked]:bg-accent-green/10">
+                <input type="radio" name="compte" value="${c}" ${c === rev.compte ? 'checked' : ''} class="w-4 h-4 text-accent-green bg-dark-800 border-dark-400 focus:ring-accent-green/40">
+                <span class="text-sm text-gray-200">${c}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      openModal('Modifier le revenu', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        data.compte = document.querySelector('input[name="compte"]:checked')?.value || rev.compte;
+        Object.assign(rev, data);
+        store.set('suiviRevenus', revenus);
+        navigate('suivi-depenses');
+      });
     });
   });
 
