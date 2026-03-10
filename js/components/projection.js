@@ -1,5 +1,5 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, getFormData } from '../utils.js';
-import { createChart, COLORS, createVerticalGradient } from '../charts/chart-config.js';
+import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 
 export function render(store) {
   const params = store.get('parametres');
@@ -261,46 +261,49 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('chart-repartition-temps');
     const ctx2d = canvas.getContext('2d');
 
-    const chartColors = ['#b8976c', '#c9a76c', '#dbb88a', '#a08553', '#d4b07a', '#e8d5b0', '#c4985a', '#8b7355'];
+    let colorIdx = 0;
+    const nextColor = () => VIVID_PALETTE[colorIdx++ % VIVID_PALETTE.length];
     const datasets = [];
 
     // Immobilier
+    const immColor = nextColor();
     datasets.push({
       label: 'Immobilier',
       data: snapshots.map(s => s.immobilier),
-      borderColor: '#b8976c',
-      backgroundColor: createVerticalGradient(ctx2d, '#b8976c', 0.5, 0.05),
+      borderColor: immColor,
+      backgroundColor: createVerticalGradient(ctx2d, immColor, 0.18, 0.02),
       fill: true,
       tension: 0.45,
       pointRadius: 0,
-      borderWidth: 2
+      borderWidth: 2.5
     });
 
     // Each placement group
-    groupKeys.forEach((k, i) => {
-      const color = chartColors[(i + 1) % chartColors.length];
+    groupKeys.forEach((k) => {
+      const color = nextColor();
       datasets.push({
         label: k,
         data: snapshots.map(s => s.placementDetail[k] || 0),
         borderColor: color,
-        backgroundColor: createVerticalGradient(ctx2d, color, 0.5, 0.05),
+        backgroundColor: createVerticalGradient(ctx2d, color, 0.18, 0.02),
         fill: true,
         tension: 0.45,
         pointRadius: 0,
-        borderWidth: 2
+        borderWidth: 2.5
       });
     });
 
     // Épargne
+    const epColor = nextColor();
     datasets.push({
       label: 'Épargne',
       data: snapshots.map(s => s.epargne),
-      borderColor: '#dbb88a',
-      backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.5, 0.05),
+      borderColor: epColor,
+      backgroundColor: createVerticalGradient(ctx2d, epColor, 0.18, 0.02),
       fill: true,
       tension: 0.45,
       pointRadius: 0,
-      borderWidth: 2
+      borderWidth: 2.5
     });
 
     createChart('chart-repartition-temps', {

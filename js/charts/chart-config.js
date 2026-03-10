@@ -20,19 +20,33 @@ export const COLORS = {
 
 // Warm gradient pairs for charts
 export const GRADIENT_PAIRS = [
-  ['#c9a76c', '#dbb88a'],   // gold → light gold
-  ['#b8976c', '#d4b07a'],   // bronze → warm gold
-  ['#a08553', '#c9a76c'],   // dark gold → gold
-  ['#dbb88a', '#e8d5b0'],   // light gold → cream
-  ['#f59e0b', '#dbb88a'],   // amber → light gold
-  ['#c9a76c', '#b8976c'],   // gold → bronze
-  ['#d4b07a', '#e8d5b0'],   // warm → cream
-  ['#a08553', '#b8976c'],   // dark → bronze
+  ['#3b82f6', '#60a5fa'],   // blue
+  ['#f59e0b', '#fbbf24'],   // amber
+  ['#a855f7', '#c084fc'],   // purple
+  ['#06b6d4', '#22d3ee'],   // cyan
+  ['#ec4899', '#f472b6'],   // pink
+  ['#f97316', '#fb923c'],   // orange
+  ['#6366f1', '#818cf8'],   // indigo
+  ['#14b8a6', '#2dd4bf'],   // teal
 ];
 
 export const PALETTE = [
   '#c9a76c', '#dbb88a', '#b8976c', '#a08553', '#e8d5b0',
   '#d4b07a', '#f59e0b', '#c4985a', '#8b7355', '#d9c4a0'
+];
+
+// Vivid, high-contrast palette for multi-line charts (no green/red)
+export const VIVID_PALETTE = [
+  '#3b82f6', // blue
+  '#f59e0b', // amber
+  '#a855f7', // purple
+  '#06b6d4', // cyan
+  '#ec4899', // pink
+  '#f97316', // orange
+  '#6366f1', // indigo
+  '#14b8a6', // teal
+  '#eab308', // yellow
+  '#8b5cf6', // violet
 ];
 
 // Create vertical gradient for line/area fills
