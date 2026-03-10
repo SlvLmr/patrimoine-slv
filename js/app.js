@@ -249,28 +249,14 @@ function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <div class="flex items-center gap-3">
-        <div class="logo-halo w-12 h-12 rounded-xl bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0">
-          <svg class="w-6 h-6 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
-          </svg>
-        </div>
-        <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1px" class="text-2xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-shimmer">Horizon</h1>
-      </div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-1px" class="text-2xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
     `;
   }
   // Mobile
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
-      <div class="flex items-center gap-2">
-        <div class="logo-halo w-9 h-9 rounded-lg bg-gradient-to-br from-accent-green to-accent-amber flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
-          </svg>
-        </div>
-        <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-shimmer">Horizon</span>
-      </div>
+      <span style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</span>
     `;
   }
 }

@@ -172,26 +172,18 @@ input[type="number"] {
   }
 }
 
-/* Logo shimmer / sparkle effect */
-.logo-shimmer {
-  position: relative;
-  background-size: 200% 100%;
-  animation: logoShimmer 4s ease-in-out infinite;
+/* Logo heartbeat glow */
+.logo-heartbeat {
+  animation: logoHeartbeat 1.8s ease-in-out infinite;
 }
 
-@keyframes logoShimmer {
-  0%, 70%, 100% {
-    filter: drop-shadow(0 0 8px rgba(201, 167, 108, 0.15)) brightness(1);
-  }
-  80% {
-    filter: drop-shadow(0 0 16px rgba(219, 184, 138, 0.6)) brightness(1.3);
-  }
-  85% {
-    filter: drop-shadow(0 0 8px rgba(201, 167, 108, 0.15)) brightness(1);
-  }
-  90% {
-    filter: drop-shadow(0 0 12px rgba(219, 184, 138, 0.4)) brightness(1.15);
-  }
+@keyframes logoHeartbeat {
+  0%   { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
+  14%  { filter: drop-shadow(0 0 18px rgba(219, 184, 138, 0.7)) brightness(1.35); }
+  28%  { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
+  42%  { filter: drop-shadow(0 0 12px rgba(219, 184, 138, 0.45)) brightness(1.2); }
+  56%  { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
+  100% { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
 }
 
 /* Print styles */
