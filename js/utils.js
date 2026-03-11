@@ -327,8 +327,8 @@ export function computeProjection(store) {
 
       const destSim = placSims.find(ps => ps.id === transfer.destinationId);
       if (!destSim) continue;
-      // Skip transfers to PEE at/after retirement (PEE is liquidated)
-      if (destSim.isPEE && currentAge >= ageRetraite) continue;
+      // Skip transfers to PEE after retirement (PEE is liquidated at end of retirement year)
+      if (destSim.isPEE && currentAge > ageRetraite) continue;
 
       // Monthly: multiply by months in period; annual/once: lump sum
       const multiplier = transfer.frequency === 'monthly' ? monthsInPeriod : 1;
@@ -389,8 +389,8 @@ export function computeProjection(store) {
     if (!cashedOut) {
     placSims.forEach(ps => {
       if (ps.id === '__cto_overflow__') return; // handled separately after
-      // PEE: skip growth/DCA at and after retirement age (will be liquidated)
-      if (ps.isPEE && currentAge >= ageRetraite) return;
+      // PEE: skip growth/DCA after retirement age (liquidated at end of retirement year)
+      if (ps.isPEE && currentAge > ageRetraite) return;
       const prevValue = ps.value;
       const prevApports = ps.totalApports;
 
