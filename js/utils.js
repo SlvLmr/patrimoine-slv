@@ -749,7 +749,11 @@ export function getFormData(container) {
   const data = {};
   container.querySelectorAll('input, select, textarea').forEach(el => {
     if (el.name) {
-      data[el.name] = el.type === 'number' ? parseNumberInput(el.value) : el.value;
+      if (el.type === 'checkbox') {
+        data[el.name] = el.checked;
+      } else {
+        data[el.name] = el.type === 'number' ? parseNumberInput(el.value) : el.value;
+      }
     }
   });
   return data;

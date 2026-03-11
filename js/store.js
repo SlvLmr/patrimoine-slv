@@ -20,12 +20,12 @@ const defaultState = {
   revenus: [
     { id: 'rev1', nom: 'Salaire net', type: 'Salaire', frequence: 'Mensuel', montantMensuel: 2758.17 },
     { id: 'rev2', nom: '13ème mois', type: '13ème mois', frequence: 'Annuel', montantMensuel: 3000 },
-    { id: 'rev3', nom: 'Participation', type: 'Participation', frequence: 'Annuel', montantMensuel: 2000 },
-    { id: 'rev4', nom: 'Intéressement', type: 'Intéressement', frequence: 'Annuel', montantMensuel: 500 },
+    { id: 'rev3', nom: 'Participation', type: 'Participation', frequence: 'Annuel', montantMensuel: 2000, informatif: true },
+    { id: 'rev4', nom: 'Intéressement', type: 'Intéressement', frequence: 'Annuel', montantMensuel: 500, informatif: true },
     { id: 'rev5', nom: 'Prime 1 nette', type: 'Prime', frequence: 'Annuel', montantMensuel: 750 },
     { id: 'rev6', nom: 'Prime 2 nette', type: 'Prime', frequence: 'Annuel', montantMensuel: 750 },
     { id: 'rev7', nom: 'NDF Internet', type: 'Autre', frequence: 'Annuel', montantMensuel: 439.89 },
-    { id: 'rev8', nom: 'Tickets Restaurants', type: 'Autre', frequence: 'Annuel', montantMensuel: 1650 },
+    { id: 'rev8', nom: 'Tickets Restaurants', type: 'Autre', frequence: 'Annuel', montantMensuel: 1650, informatif: true },
   ],
   depenses: [
     // Fixes
@@ -523,7 +523,7 @@ const Store = {
   },
 
   totalRevenus() {
-    return this._state.revenus.reduce((s, i) => {
+    return this._state.revenus.filter(i => !i.informatif).reduce((s, i) => {
       const montant = Number(i.montantMensuel) || 0;
       return s + (i.frequence === 'Annuel' ? montant / 12 : montant);
     }, 0);

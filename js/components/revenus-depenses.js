@@ -41,6 +41,16 @@ function formatLisseLabel(item) {
   return '';
 }
 
+function checkboxField(name, label, checked = false) {
+  return `
+    <div class="mb-4 flex items-center gap-3">
+      <input type="checkbox" name="${name}" id="field-${name}" ${checked ? 'checked' : ''}
+        class="w-4 h-4 rounded bg-dark-800 border-dark-400/50 text-accent-amber focus:ring-accent-amber/40">
+      <label for="field-${name}" class="text-sm text-gray-300">${label}</label>
+    </div>
+  `;
+}
+
 function montantFields(mensuel, lisse, annuel) {
   const cls = 'w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition';
   return `
@@ -121,8 +131,8 @@ export function render(store) {
   const totalD = store.totalDepenses();
   const balance = totalR - totalD;
 
-  // Compute direct monthly totals (only items marked mensuel)
-  const revMensuelDirect = revenus.filter(r => r.frequence !== 'Annuel').reduce((s, r) => s + (Number(r.montantMensuel) || 0), 0);
+  // Compute direct monthly totals (only items marked mensuel, excluding informatif)
+  const revMensuelDirect = revenus.filter(r => r.frequence !== 'Annuel' && !r.informatif).reduce((s, r) => s + (Number(r.montantMensuel) || 0), 0);
   const depMensuelDirect = depenses.filter(d => d.frequence !== 'Annuel').reduce((s, d) => s + (Number(d.montantMensuel) || 0), 0);
 
   // Check if there are any annual items
@@ -223,7 +233,7 @@ export function render(store) {
                 </svg>
               </div>
               <h2 class="text-sm font-semibold text-gray-200">Revenus</h2>
-              <span class="text-xs text-gray-400">${formatCurrencyCents(revenus.reduce((s, r) => s + getMensuelLisse(r), 0))}/mois</span>
+              <span class="text-xs text-gray-400">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0))}/mois</span>
             </div>
             <div class="flex items-center gap-3">
               <button id="btn-add-revenu" class="px-3 py-1 bg-accent-green/20 text-accent-green text-xs rounded-lg hover:bg-accent-green/30 transition font-medium" onclick="event.stopPropagation()">+ Ajouter</button>
@@ -245,14 +255,14 @@ export function render(store) {
               const lisse = getMensuelLisse(r);
               const annuel = lisse * 12;
               return `
-            <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-rev="${r.id}">
+            <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer ${r.informatif ? 'opacity-50' : ''}" data-edit-rev="${r.id}">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
                   <button data-move-rev-up="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
                   <button data-move-rev-down="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
                 </div>
                 <p class="text-xs text-gray-200 truncate">${r.nom}</p>
-                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
+                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}${r.informatif ? ' · Informatif' : ''}</p>
               </div>
               <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
               <span class="text-xs text-right whitespace-nowrap ${r.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
@@ -263,9 +273,9 @@ export function render(store) {
           </div>
           <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-2 border-t border-dark-400/40 bg-dark-700/30">
             <span class="text-xs font-bold text-gray-300 uppercase">Totaux</span>
-            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.reduce((s, r) => s + (r.frequence === 'Annuel' ? 0 : (Number(r.montantMensuel) || 0)), 0))}</span>
-            <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(revenus.reduce((s, r) => s + getMensuelLisse(r), 0))}</span>
-            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.reduce((s, r) => s + getMensuelLisse(r), 0) * 12)}</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + (r.frequence === 'Annuel' ? 0 : (Number(r.montantMensuel) || 0)), 0))}</span>
+            <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0))}</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0) * 12)}</span>
             <span></span>
           </div>
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
@@ -371,6 +381,7 @@ export function mount(store, navigate) {
       ${selectField('type', 'Type', revenuTypes)}
       ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, 'Mensuel')}
       ${montantFields('', '', '')}
+      ${checkboxField('informatif', 'Informatif (non comptabilisé dans les totaux)')}
     `;
     openModal('Ajouter un revenu', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
@@ -396,6 +407,7 @@ export function mount(store, navigate) {
         ${selectField('type', 'Type', revenuTypes, item.type)}
         ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, freq)}
         ${montantFields(mensuel, lisse, annuel)}
+        ${checkboxField('informatif', 'Informatif (non comptabilisé dans les totaux)', !!item.informatif)}
       `;
       openModal('Modifier le revenu', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
