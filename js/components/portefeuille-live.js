@@ -77,8 +77,8 @@ export function render(store) {
       </div>
 
       <!-- SVG Level 1 → 2 -->
-      <div id="ptf-svg-L1" class="hidden lg:block">
-        <svg id="ptf-svg-L1-svg" class="w-full" style="height: 55px;" fill="none">
+      <div id="ptf-svg-L1" class="hidden lg:block" style="height:55px;">
+        <svg id="ptf-svg-L1-svg" class="w-full" style="height:55px;" fill="none">
           <defs>
             <filter id="glow-indigo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
             <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
@@ -125,8 +125,8 @@ export function render(store) {
 
         <!-- Left branch -->
         <div>
-          <div id="ptf-svg-L2L" class="hidden lg:block">
-            <svg id="ptf-svg-L2L-svg" class="w-full" style="height: 45px;" fill="none">
+          <div id="ptf-svg-L2L" class="hidden lg:block" style="height:45px;">
+            <svg id="ptf-svg-L2L-svg" class="w-full" style="height:45px;" fill="none">
               <defs>
                 <filter id="glow-indigo2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
               </defs>
@@ -170,8 +170,8 @@ export function render(store) {
 
         <!-- Right branch -->
         <div>
-          <div id="ptf-svg-L2R" class="hidden lg:block">
-            <svg id="ptf-svg-L2R-svg" class="w-full" style="height: 45px;" fill="none">
+          <div id="ptf-svg-L2R" class="hidden lg:block" style="height:45px;">
+            <svg id="ptf-svg-L2R-svg" class="w-full" style="height:45px;" fill="none">
               <defs>
                 <filter id="glow-amber2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
               </defs>
@@ -228,6 +228,7 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
 
   const wrapRect = wrap.getBoundingClientRect();
   const w = wrapRect.width;
+  if (w <= 0) return; // Not yet laid out
   const h = parseInt(svg.style.height) || 55;
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
@@ -308,6 +309,11 @@ export function mount() {
     );
   }
 
-  drawAll();
+  // Wait for layout to be computed before drawing SVG connectors
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      drawAll();
+    });
+  });
   window.addEventListener('resize', drawAll);
 }
