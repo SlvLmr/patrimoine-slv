@@ -137,6 +137,7 @@ export function computeProjection(store) {
   const inflation = params.inflationRate || 0.02;
   const ageFinAnnee = params.ageFinAnnee || 43;
   const ageRetraite = params.ageRetraite || 64;
+  const ageRetraitePEE = params.ageRetraiteSouhaitee || ageRetraite;
   const rendImmo = params.rendementImmobilier || 0.02;
 
   const totalImmo = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
@@ -315,6 +316,7 @@ export function computeProjection(store) {
     // Héritage liquide
     if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
 
+    const currentAge = ageFinAnnee + year;
     // Capital transfers (épargne/héritage/CTO → placement) — skip after cash out
     const calYear = currentYear + year;
     if (!cashedOut) for (const transfer of capitalTransfers) {
@@ -327,8 +329,8 @@ export function computeProjection(store) {
 
       const destSim = placSims.find(ps => ps.id === transfer.destinationId);
       if (!destSim) continue;
-      // Skip transfers to PEE after retirement (PEE is liquidated at end of retirement year)
-      if (destSim.isPEE && currentAge > ageRetraite) continue;
+      // Skip transfers to PEE after souhaité retirement (PEE is liquidated at end of that year)
+      if (destSim.isPEE && currentAge > ageRetraitePEE) continue;
 
       // Monthly: multiply by months in period; annual/once: lump sum
       const multiplier = transfer.frequency === 'monthly' ? monthsInPeriod : 1;
@@ -359,8 +361,6 @@ export function computeProjection(store) {
       }
     }
 
-    const currentAge = ageFinAnnee + year;
-
     // Cash out: liquidate all placements into épargne (after tax)
     if (cashOutYear && calYear >= cashOutYear && !cashedOut) {
       cashedOut = true;
@@ -389,8 +389,8 @@ export function computeProjection(store) {
     if (!cashedOut) {
     placSims.forEach(ps => {
       if (ps.id === '__cto_overflow__') return; // handled separately after
-      // PEE: skip growth/DCA after retirement age (liquidated at end of retirement year)
-      if (ps.isPEE && currentAge > ageRetraite) return;
+      // PEE: skip growth/DCA after souhaité retirement (liquidated at end of that year)
+      if (ps.isPEE && currentAge > ageRetraitePEE) return;
       const prevValue = ps.value;
       const prevApports = ps.totalApports;
 
@@ -525,8 +525,8 @@ export function computeProjection(store) {
     }
     } // end if (!cashedOut)
 
-    // PEE: liquidate at retirement age (proceeds go to épargne after tax)
-    if (currentAge === ageRetraite) {
+    // PEE: liquidate at souhaité retirement age (proceeds go to épargne after tax)
+    if (currentAge === ageRetraitePEE) {
       placSims.forEach(ps => {
         if (!ps.isPEE || ps.value <= 0) return;
         const gains = Math.max(0, ps.totalGains);
