@@ -327,6 +327,8 @@ export function computeProjection(store) {
 
       const destSim = placSims.find(ps => ps.id === transfer.destinationId);
       if (!destSim) continue;
+      // Skip transfers to PEE at/after retirement (PEE is liquidated)
+      if (destSim.isPEE && currentAge >= ageRetraite) continue;
 
       // Monthly: multiply by months in period; annual/once: lump sum
       const multiplier = transfer.frequency === 'monthly' ? monthsInPeriod : 1;
