@@ -90,11 +90,11 @@ export function render(store) {
   // Compute live solde = base + revenus - depenses - checked monthly
   const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const soldeCIC = baseSoldeCIC + revCIC - depCIC - totalCochees;
+  const soldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
 
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const soldeTR = baseSoldeTR + revTR - depTR;
+  const soldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
