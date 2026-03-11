@@ -438,10 +438,12 @@ export function render(store) {
   `;
 }
 
+// Apply prices/text to cards immediately, queue charts for progressive rendering
 function applyQuotesToUI(quotesMap, store) {
   const watchlist = loadWatchlist();
   const placements = store?.get?.('actifs.placements') || [];
   let loadedCount = 0;
+  const chartQueue = [];
 
   watchlist.forEach(item => {
     const id = sid(item.isin);
@@ -460,8 +462,9 @@ function applyQuotesToUI(quotesMap, store) {
       loadedCount++;
       const isUp = pru > 0 ? quote.price >= pru : quote.change >= 0;
 
+      // Queue chart rendering instead of doing it synchronously
       if (quote.chartPoints && quote.chartPoints.length > 1) {
-        renderMiniChart(`chart-${id}`, quote.chartPoints, isUp, pru > 0 ? pru : null);
+        chartQueue.push({ canvasId: `chart-${id}`, chartPoints: quote.chartPoints, isUp, pru: pru > 0 ? pru : null });
       }
 
       const dayUp = quote.change >= 0;
@@ -502,7 +505,21 @@ function applyQuotesToUI(quotesMap, store) {
     }
   });
 
+  // Render charts progressively — one per animation frame to avoid UI freeze
+  renderChartsProgressively(chartQueue);
+
   return loadedCount;
+}
+
+function renderChartsProgressively(queue) {
+  let i = 0;
+  function next() {
+    if (i >= queue.length) return;
+    const { canvasId, chartPoints, isUp, pru } = queue[i++];
+    renderMiniChart(canvasId, chartPoints, isUp, pru);
+    requestAnimationFrame(next);
+  }
+  requestAnimationFrame(next);
 }
 
 function updateStatus(loadedCount, total, fromCache) {
