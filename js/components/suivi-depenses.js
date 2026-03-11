@@ -13,14 +13,11 @@ const CATEGORIES_REVENUS = [
 const COMPTES = ['CIC', 'Trade Republic'];
 
 const BANK_ICONS = {
-  CIC: `<svg viewBox="0 0 40 40" class="w-10 h-10" fill="none">
-    <rect width="40" height="40" rx="10" fill="#003366"/>
-    <text x="20" y="26" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="14" fill="#ffffff">CIC</text>
+  CIC: `<svg class="w-8 h-8 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/>
   </svg>`,
-  'Trade Republic': `<svg viewBox="0 0 40 40" class="w-10 h-10" fill="none">
-    <rect width="40" height="40" rx="10" fill="#1a1a2e"/>
-    <circle cx="20" cy="20" r="12" fill="none" stroke="#ffffff" stroke-width="2"/>
-    <polygon points="16,14 28,20 16,26" fill="#ffffff"/>
+  'Trade Republic': `<svg class="w-8 h-8 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
   </svg>`
 };
 
@@ -76,6 +73,11 @@ export function render(store) {
   ];
   const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
   const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
+
+  // Solde mois précédent
+  const soldePrecedent = store.get('soldeMoisPrecedent') || {};
+  const soldePrevCIC = Number(soldePrecedent.cic) || 0;
+  const soldePrevTR = Number(soldePrecedent.tr) || 0;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -160,6 +162,10 @@ export function render(store) {
             </div>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
+          <div class="flex items-center justify-between px-5 py-2 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
+            <span class="text-xs text-gray-500">Solde mois précédent</span>
+            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
+          </div>
           ${opsCIC.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
             ${opsCIC.map(renderOp).join('')}
@@ -211,6 +217,10 @@ export function render(store) {
               <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(soldeTR)}</p>
             </div>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
+          </div>
+          <div class="flex items-center justify-between px-5 py-2 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
+            <span class="text-xs text-gray-500">Solde mois précédent</span>
+            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
           ${opsTR.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
@@ -309,6 +319,23 @@ export function mount(store, navigate) {
         }
         actifs.comptesCourants = ccs;
         store.set('actifs', actifs);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit solde mois précédent
+  document.querySelectorAll('[data-edit-prev]').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.editPrev; // 'cic' or 'tr'
+      const label = key === 'cic' ? 'CIC' : 'Trade Republic';
+      const prev = store.get('soldeMoisPrecedent') || {};
+      const current = Number(prev[key]) || 0;
+      const body = inputField('solde', `Solde mois précédent ${label} (€)`, current, 'number', 'step="0.01"');
+      openModal(`Solde mois précédent — ${label}`, body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        prev[key] = Number(data.solde) || 0;
+        store.set('soldeMoisPrecedent', prev);
         navigate('suivi-depenses');
       });
     });
