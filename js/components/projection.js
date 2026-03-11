@@ -70,13 +70,6 @@ export function render(store) {
                 <input type="number" id="param-retraite" value="${params.ageRetraite || 64}" min="55" max="70" step="1"
                   class="param-input w-12 px-1 py-1 text-sm bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
               </div>
-              <div class="w-px h-4 bg-dark-400/30 hidden sm:block"></div>
-              <div class="flex items-center gap-1 px-2 py-1 rounded bg-red-500/8 border border-red-500/25">
-                <svg class="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-                <span class="text-xs text-red-400 font-medium">Cash out</span>
-                <input type="number" id="param-cashout-year" value="${params.cashOutYear || ''}" min="${currentCalendarYear}" max="${currentCalendarYear + 50}" step="1"
-                  class="param-input w-16 px-1 py-0.5 text-sm bg-transparent border-0 text-red-400 focus:ring-0 text-center font-semibold" placeholder="année">
-              </div>
             </div>
           </div>
 
@@ -249,6 +242,12 @@ export function render(store) {
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-200">Répartition des actifs dans le temps</h2>
           <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1 px-2 py-1 rounded bg-red-500/8 border border-red-500/25">
+              <svg class="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+              <span class="text-xs text-red-400 font-medium">Cash out</span>
+              <input type="number" id="param-cashout-year" value="${params.cashOutYear || ''}" min="${currentCalendarYear}" max="${currentCalendarYear + 50}" step="1"
+                class="param-input w-16 px-1 py-0.5 text-sm bg-transparent border-0 text-red-400 focus:ring-0 text-center font-semibold" placeholder="année">
+            </div>
             <div class="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/8 border border-purple-500/25">
               <span class="text-xs text-purple-400">Souhaité</span>
               <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
