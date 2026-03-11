@@ -148,72 +148,72 @@ export function render(store) {
       <h1 class="text-2xl font-bold text-gray-100">Revenus & Dépenses</h1>
 
       <!-- KPI -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="card-dark rounded-xl p-3 kpi-card glow-green">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-400">Revenus mensuels</p>
+            <p class="text-xs text-gray-400">Revenus mensuels</p>
           </div>
-          <p class="text-2xl font-bold text-accent-green">${formatCurrencyCents(revMensuelDirect)}</p>
+          <p class="text-lg font-bold text-accent-green">${formatCurrencyCents(revMensuelDirect)}</p>
         </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="card-dark rounded-xl p-3 kpi-card glow-green">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-400">Revenus mensuels lissés</p>
+            <p class="text-xs text-gray-400">Revenus mensuels lissés</p>
           </div>
-          <p class="text-2xl font-bold text-accent-green">${formatCurrencyCents(totalR)}</p>
+          <p class="text-lg font-bold text-accent-green">${formatCurrencyCents(totalR)}</p>
         </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="card-dark rounded-xl p-3 kpi-card glow-green">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-400">Revenus annuels</p>
+            <p class="text-xs text-gray-400">Revenus annuels</p>
           </div>
-          <p class="text-2xl font-bold text-accent-green">${formatCurrencyCents(totalR * 12)}</p>
+          <p class="text-lg font-bold text-accent-green">${formatCurrencyCents(totalR * 12)}</p>
         </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-red">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-red/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="card-dark rounded-xl p-3 kpi-card glow-red">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-accent-red/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-400">Dépenses mensuelles</p>
+            <p class="text-xs text-gray-400">Dépenses mensuelles</p>
           </div>
-          <p class="text-2xl font-bold text-accent-red">${formatCurrencyCents(depMensuelDirect)}</p>
+          <p class="text-lg font-bold text-accent-red">${formatCurrencyCents(depMensuelDirect)}</p>
         </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-red">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-red/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="card-dark rounded-xl p-3 kpi-card glow-red">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-accent-red/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-400">Dépenses mensuelles lissées</p>
+            <p class="text-xs text-gray-400">Dépenses mensuelles lissées</p>
           </div>
-          <p class="text-2xl font-bold text-accent-red">${formatCurrencyCents(totalD)}</p>
+          <p class="text-lg font-bold text-accent-red">${formatCurrencyCents(totalD)}</p>
         </div>
-        <div class="card-dark rounded-xl p-5 kpi-card glow-red">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg bg-accent-red/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="card-dark rounded-xl p-3 kpi-card glow-red">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-accent-red/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-400">Dépenses annuelles</p>
+            <p class="text-xs text-gray-400">Dépenses annuelles</p>
           </div>
-          <p class="text-2xl font-bold text-accent-red">${formatCurrencyCents(totalD * 12)}</p>
+          <p class="text-lg font-bold text-accent-red">${formatCurrencyCents(totalD * 12)}</p>
         </div>
       </div>
 
