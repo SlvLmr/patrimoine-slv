@@ -57,8 +57,9 @@ export function openModal(title, bodyHtml, onConfirm) {
   modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
   modal.innerHTML = `
     <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-dark-400/50">
-      <div class="p-6 border-b border-dark-400/50">
+      <div class="p-6 border-b border-dark-400/50 flex items-center justify-between">
         <h3 class="text-lg font-semibold text-gray-100">${title}</h3>
+        <button id="modal-close-x" class="text-gray-400 hover:text-gray-100 transition text-2xl leading-none px-1">&times;</button>
       </div>
       <div class="p-6" id="modal-body">
         ${bodyHtml}
@@ -73,11 +74,13 @@ export function openModal(title, bodyHtml, onConfirm) {
   document.body.appendChild(modal);
 
   modal.querySelector('#modal-cancel').addEventListener('click', () => modal.remove());
+  modal.querySelector('#modal-close-x').addEventListener('click', () => modal.remove());
 
   if (onConfirm) {
-    modal.querySelector('#modal-confirm').addEventListener('click', () => {
-      onConfirm();
-      modal.remove();
+    const confirmAndClose = () => { onConfirm(); modal.remove(); };
+    modal.querySelector('#modal-confirm').addEventListener('click', confirmAndClose);
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); confirmAndClose(); }
     });
   }
 
