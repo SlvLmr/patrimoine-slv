@@ -310,7 +310,7 @@ export function render(store) {
                   : s.annee === 0
                     ? 'bg-accent-blue/5'
                     : '';
-                const borderTop = isFiveYear ? 'border-t-[3px] border-t-gray-500/40' : '';
+                const borderTop = isFiveYear ? 'border-t-2 border-t-dark-300/40' : '';
                 // Helper: render a placement cell with tooltip
                 const placCell = (gk, extraClass = '') => {
                   const val = s.placementDetail[gk] || 0;
