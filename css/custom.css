@@ -282,8 +282,8 @@ input[type="number"] {
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  background: rgba(22, 22, 28, 0.97);
-  border: 1px solid rgba(56, 56, 63, 0.5);
+  background: rgba(45, 45, 55, 0.98);
+  border: 1px solid rgba(80, 80, 95, 0.6);
   border-radius: 8px;
   padding: 8px 10px;
   min-width: 170px;
@@ -301,7 +301,7 @@ input[type="number"] {
   left: 50%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-top-color: rgba(56, 56, 63, 0.5);
+  border-top-color: rgba(80, 80, 95, 0.6);
 }
 
 .proj-tip-wrap:hover > .proj-tip {
