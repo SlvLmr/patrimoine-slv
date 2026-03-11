@@ -239,7 +239,9 @@ export function render(store) {
                 </svg>
               </div>
               <h2 class="text-sm font-semibold text-gray-200">Revenus</h2>
-              <span class="text-xs text-gray-400">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0))}/mois</span>
+              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + (r.frequence === 'Annuel' ? 0 : (Number(r.montantMensuel) || 0)), 0))}/mois</span>
+              <span class="text-[10px] font-light text-accent-amber/60 tracking-wide">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0))}/mois lissé</span>
+              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0) * 12)}/an</span>
             </div>
             <div class="flex items-center gap-3">
               <button id="btn-add-revenu" class="px-3 py-1 bg-accent-green/20 text-accent-green text-xs rounded-lg hover:bg-accent-green/30 transition font-medium" onclick="event.stopPropagation()">+ Ajouter</button>
@@ -298,7 +300,11 @@ export function render(store) {
                 </svg>
               </div>
               <h2 class="text-sm font-semibold text-gray-200">${g.label}</h2>
-              ${g.total > 0 ? `<span class="text-xs text-gray-400">${formatCurrencyCents(g.total)}/mois</span>` : ''}
+              ${g.items.length > 0 ? `
+              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(g.items.reduce((s, d) => s + (d.frequence === 'Annuel' ? 0 : (Number(d.montantMensuel) || 0)), 0))}/mois</span>
+              <span class="text-[10px] font-light text-accent-amber/60 tracking-wide">${formatCurrencyCents(g.total)}/mois lissé</span>
+              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(g.total * 12)}/an</span>
+              ` : ''}
             </div>
             <div class="flex items-center gap-3">
               <button class="btn-add-depense px-3 py-1 bg-accent-red/20 text-accent-red text-xs rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}" onclick="event.stopPropagation()">+ Ajouter</button>
