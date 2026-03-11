@@ -274,8 +274,25 @@ export function render(store) {
             </div>
           </div>
         </div>
-        <div class="h-80">
-          <canvas id="chart-repartition-temps"></canvas>
+        <div class="relative">
+          <div id="chart-slide-0" class="h-80">
+            <canvas id="chart-repartition-temps"></canvas>
+          </div>
+          <div id="chart-slide-1" class="h-80 hidden">
+            <canvas id="chart-repartition-stacked"></canvas>
+          </div>
+          <!-- Navigation arrows -->
+          <button id="chart-prev" class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-dark-700/80 border border-dark-400/30 text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center justify-center hidden">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button id="chart-next" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-dark-700/80 border border-dark-400/30 text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <!-- Dots indicator -->
+          <div class="flex justify-center gap-2 mt-2">
+            <div id="chart-dot-0" class="w-2 h-2 rounded-full bg-accent-amber transition"></div>
+            <div id="chart-dot-1" class="w-2 h-2 rounded-full bg-dark-400 transition"></div>
+          </div>
         </div>
       </div>
 
@@ -781,6 +798,125 @@ export function mount(store, navigate) {
         }
       }
     });
+
+    // Stacked area chart (second slide)
+    if (document.getElementById('chart-repartition-stacked')) {
+      const canvasStacked = document.getElementById('chart-repartition-stacked');
+      const ctxStacked = canvasStacked.getContext('2d');
+
+      let sColorIdx = 0;
+      const sNextColor = () => VIVID_PALETTE[sColorIdx++ % VIVID_PALETTE.length];
+      const stackedDatasets = [];
+
+      // Immobilier
+      const sImmColor = sNextColor();
+      stackedDatasets.push({
+        label: 'Immobilier',
+        data: snapshots.map(s => s.immobilier),
+        borderColor: sImmColor,
+        backgroundColor: sImmColor + '99',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        borderWidth: 1.5
+      });
+
+      // Each placement group
+      groupKeys.forEach((k) => {
+        const color = sNextColor();
+        stackedDatasets.push({
+          label: k,
+          data: snapshots.map(s => s.placementDetail[k] || 0),
+          borderColor: color,
+          backgroundColor: color + '99',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          borderWidth: 1.5
+        });
+      });
+
+      // Épargne
+      const sEpColor = sNextColor();
+      stackedDatasets.push({
+        label: 'Épargne',
+        data: snapshots.map(s => s.epargne),
+        borderColor: sEpColor,
+        backgroundColor: sEpColor + '99',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        borderWidth: 1.5
+      });
+
+      // Héritage
+      const sHeritageItems = store.get('heritage') || [];
+      if (sHeritageItems.length > 0) {
+        const sHerColor = sNextColor();
+        stackedDatasets.push({
+          label: 'Héritage',
+          data: snapshots.map(s => s.heritage),
+          borderColor: sHerColor,
+          backgroundColor: sHerColor + '99',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          borderWidth: 1.5
+        });
+      }
+
+      createChart('chart-repartition-stacked', {
+        type: 'line',
+        data: { labels, datasets: stackedDatasets },
+        options: {
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            annotation: { annotations: milestoneAnnotations },
+            tooltip: {
+              callbacks: {
+                footer: (items) => {
+                  const total = items.reduce((s, i) => s + (i.parsed.y || 0), 0);
+                  return 'Total : ' + new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(total);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { display: false },
+              ticks: { color: COLORS.gridText }
+            },
+            y: {
+              stacked: true,
+              grid: { color: COLORS.grid },
+              ticks: {
+                color: COLORS.gridText,
+                callback: v => new Intl.NumberFormat('fr-FR', { notation: 'compact', style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Chart slide navigation
+    let currentSlide = 0;
+    const slides = [document.getElementById('chart-slide-0'), document.getElementById('chart-slide-1')];
+    const dots = [document.getElementById('chart-dot-0'), document.getElementById('chart-dot-1')];
+    const prevBtn = document.getElementById('chart-prev');
+    const nextBtn = document.getElementById('chart-next');
+
+    function showSlide(idx) {
+      slides.forEach((s, i) => { if (s) s.classList.toggle('hidden', i !== idx); });
+      dots.forEach((d, i) => { if (d) { d.classList.toggle('bg-accent-amber', i === idx); d.classList.toggle('bg-dark-400', i !== idx); }});
+      if (prevBtn) prevBtn.classList.toggle('hidden', idx === 0);
+      if (nextBtn) nextBtn.classList.toggle('hidden', idx === slides.length - 1);
+      currentSlide = idx;
+    }
+
+    prevBtn?.addEventListener('click', () => { if (currentSlide > 0) showSlide(currentSlide - 1); });
+    nextBtn?.addEventListener('click', () => { if (currentSlide < slides.length - 1) showSlide(currentSlide + 1); });
   }
 
   // Enter key triggers Recalculer on any param input
