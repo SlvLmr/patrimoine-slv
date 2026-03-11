@@ -47,8 +47,18 @@ export function render(store) {
   const liveSoldes = computeLiveSoldes(store);
   const comptesLive = comptes.map(c => ({
     nom: c.nom,
+    id: c.id,
     solde: c.id === 'cc-cic' ? liveSoldes.cic : c.id === 'cc-trade' ? liveSoldes.tr : (Number(c.solde) || 0)
   }));
+
+  // Split comptes by bank
+  const cicComptes = comptesLive.filter(c => c.id === 'cc-cic');
+  const trComptes = comptesLive.filter(c => c.id === 'cc-trade');
+  const otherComptes = comptesLive.filter(c => c.id !== 'cc-cic' && c.id !== 'cc-trade');
+  const totalCIC = cicComptes.reduce((s, c) => s + c.solde, 0);
+  const totalTR = trComptes.reduce((s, c) => s + c.solde, 0);
+  const totalOther = otherComptes.reduce((s, c) => s + c.solde, 0);
+
   const totalCC = comptesLive.reduce((s, c) => s + c.solde, 0);
   const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
   const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
@@ -58,17 +68,44 @@ export function render(store) {
   const totalActifs = totalLiquidites + totalPlac + totalImmo;
   const patrimoineNet = totalActifs - totalDette;
 
+  // Group placements by category
+  const actions = placements.filter(p => (p.categorie || '').includes('Action'));
+  const etfs = placements.filter(p => (p.categorie || '').includes('ETF'));
+  const cto = placements.filter(p => (p.enveloppe || '') === 'CTO');
+  const crypto = placements.filter(p => (p.categorie || '') === 'Crypto');
+  // Others not in above categories
+  const categorized = new Set([...actions, ...etfs, ...cto, ...crypto]);
+  const otherPlac = placements.filter(p => !categorized.has(p));
+
+  const totalActions = actions.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalETF = etfs.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalCTO = cto.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalCrypto = crypto.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalOtherPlac = otherPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+
+  function placList(items, color) {
+    if (items.length === 0) return '<p class="text-[10px] text-gray-600">Aucun</p>';
+    return items.map(p => `
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <div class="w-1 h-1 rounded-full ${color} flex-shrink-0"></div>
+          <span class="text-[10px] text-gray-400 truncate">${p.nom}</span>
+        </div>
+        <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(p.valeur) || 0)}</span>
+      </div>`).join('');
+  }
+
   return `
     <div class="space-y-0">
-      <h1 class="text-2xl font-bold text-gray-100 mb-6">Portefeuille Live</h1>
+      <h1 class="text-2xl font-bold text-gray-100 mb-4">Portefeuille Live</h1>
 
       <!-- LEVEL 1 — Patrimoine net -->
       <div class="flex justify-center">
-        <div class="card-dark rounded-2xl px-8 py-5 text-center inline-block">
-          <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Patrimoine net</p>
-          <p class="text-4xl font-extrabold text-accent-amber tracking-tight">${fmt(patrimoineNet)}</p>
+        <div class="card-dark rounded-2xl px-6 py-3 text-center inline-block">
+          <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Patrimoine net</p>
+          <p class="text-3xl font-extrabold text-accent-amber tracking-tight">${fmt(patrimoineNet)}</p>
           ${totalDette > 0 ? `
-          <div class="flex items-center justify-center gap-4 mt-1.5">
+          <div class="flex items-center justify-center gap-4 mt-1">
             <span class="text-[10px] text-gray-500">Actifs <span class="text-gray-300 font-medium">${fmt(totalActifs)}</span></span>
             <span class="text-[10px] text-gray-500">Dettes <span class="text-red-400 font-medium">−${fmt(totalDette)}</span></span>
           </div>` : ''}
@@ -76,151 +113,185 @@ export function render(store) {
       </div>
 
       <!-- SVG Level 1 → 2 -->
-      <div id="ptf-svg-L1" class="hidden lg:block" style="height:55px;">
-        <svg id="ptf-svg-L1-svg" class="w-full" style="height:55px;" fill="none">
+      <div id="ptf-svg-L1" class="hidden lg:block" style="height:40px;">
+        <svg id="ptf-svg-L1-svg" class="w-full" style="height:40px;" fill="none">
           <defs>
-            <filter id="glow-indigo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
-            <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
-            <filter id="glow-brown" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
+            <filter id="glow-indigo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
+            <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
+            <filter id="glow-brown" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
           </defs>
         </svg>
       </div>
 
       <!-- LEVEL 2 — Liquidités + Investissements + Immobilier -->
-      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
         <!-- Liquidités -->
-        <div id="ptf-card-liq" class="card-dark rounded-2xl p-5">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="ptf-card-liq" class="card-dark rounded-2xl p-3">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
               </svg>
             </div>
-            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Liquidités</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Liquidités</p>
           </div>
-          <p class="text-2xl font-bold text-indigo-400 mb-2 text-center">${fmt(totalLiquidites)}</p>
+          <p class="text-xl font-bold text-indigo-400 mb-1 text-center">${fmt(totalLiquidites)}</p>
         </div>
 
         <!-- Investissements -->
-        <div id="ptf-card-inv" class="card-dark rounded-2xl p-5">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-7 h-7 rounded-lg bg-accent-amber/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="ptf-card-inv" class="card-dark rounded-2xl p-3">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-lg bg-accent-amber/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3 h-3 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
               </svg>
             </div>
-            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Investissements</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Investissements</p>
           </div>
-          <p class="text-2xl font-bold text-accent-amber mb-2 text-center">${fmt(totalPlac)}</p>
+          <p class="text-xl font-bold text-accent-amber mb-1 text-center">${fmt(totalPlac)}</p>
         </div>
 
         <!-- Immobilier -->
-        <div id="ptf-card-immo" class="card-dark rounded-2xl p-5">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-7 h-7 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="ptf-card-immo" class="card-dark rounded-2xl p-3">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
             </div>
-            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Immobilier</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Immobilier</p>
           </div>
-          <p class="text-2xl font-bold text-amber-500 mb-2 text-center">${fmt(totalImmo)}</p>
+          <p class="text-xl font-bold text-amber-500 mb-1 text-center">${fmt(totalImmo)}</p>
         </div>
       </div>
 
       <!-- SVG Level 2 → 3 -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
-        <!-- Left branch: Liquidités → CC + Épargne -->
+        <!-- Left branch: Liquidités → CIC + Trade Republic + Épargne -->
         <div>
-          <div id="ptf-svg-L2L" class="hidden lg:block" style="height:45px;">
-            <svg id="ptf-svg-L2L-svg" class="w-full" style="height:45px;" fill="none">
+          <div id="ptf-svg-L2L" class="hidden lg:block" style="height:35px;">
+            <svg id="ptf-svg-L2L-svg" class="w-full" style="height:35px;" fill="none">
               <defs>
-                <filter id="glow-indigo2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
+                <filter id="glow-indigo2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
               </defs>
             </svg>
           </div>
-          <div id="ptf-L3L" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Comptes Courants -->
-            <div id="ptf-card-cc" class="card-dark rounded-2xl p-4">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Comptes courants</p>
-              <p class="text-lg font-bold text-indigo-400 text-center mb-3">${fmt(totalCC)}</p>
-              <div class="space-y-2">
-                ${comptesLive.map(c => `
+          <div id="ptf-L3L" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <!-- CIC -->
+            <div id="ptf-card-cic" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">CIC</p>
+              <p class="text-base font-bold text-indigo-400 text-center mb-2">${fmt(totalCIC)}</p>
+              <div class="space-y-1">
+                ${cicComptes.map(c => `
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-400/50 flex-shrink-0"></div>
-                    <span class="text-[11px] text-gray-400 truncate">${c.nom}</span>
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-1 h-1 rounded-full bg-indigo-400/50 flex-shrink-0"></div>
+                    <span class="text-[10px] text-gray-400 truncate">${c.nom}</span>
                   </div>
-                  <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(c.solde)}</span>
+                  <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(c.solde)}</span>
+                </div>`).join('')}
+              </div>
+            </div>
+            <!-- Trade Republic -->
+            <div id="ptf-card-tr" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Trade Republic</p>
+              <p class="text-base font-bold text-indigo-400 text-center mb-2">${fmt(totalTR)}</p>
+              <div class="space-y-1">
+                ${trComptes.map(c => `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-1 h-1 rounded-full bg-indigo-400/50 flex-shrink-0"></div>
+                    <span class="text-[10px] text-gray-400 truncate">${c.nom}</span>
+                  </div>
+                  <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(c.solde)}</span>
                 </div>`).join('')}
               </div>
             </div>
             <!-- Épargne -->
-            <div id="ptf-card-ep" class="card-dark rounded-2xl p-4">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Épargne</p>
-              <p class="text-lg font-bold text-indigo-400 text-center mb-3">${fmt(totalEpargne)}</p>
-              <div class="space-y-2">
+            <div id="ptf-card-ep" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Épargne</p>
+              <p class="text-base font-bold text-indigo-400 text-center mb-2">${fmt(totalEpargne)}</p>
+              <div class="space-y-1">
                 ${epargne.length > 0 ? epargne.map(e => `
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-400/50 flex-shrink-0"></div>
-                    <span class="text-[11px] text-gray-400 truncate">${e.nom}${e.tauxInteret ? ` <span class="text-gray-600">${(Number(e.tauxInteret) * 100).toFixed(1)}%</span>` : ''}</span>
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-1 h-1 rounded-full bg-indigo-400/50 flex-shrink-0"></div>
+                    <span class="text-[10px] text-gray-400 truncate">${e.nom}${e.tauxInteret ? ` <span class="text-gray-600">${(Number(e.tauxInteret) * 100).toFixed(1)}%</span>` : ''}</span>
                   </div>
-                  <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(e.solde) || 0)}</span>
-                </div>`).join('') : '<p class="text-[11px] text-gray-600">Aucun compte</p>'}
+                  <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(e.solde) || 0)}</span>
+                </div>`).join('') : '<p class="text-[10px] text-gray-600">Aucun compte</p>'}
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Center branch: Investissements → Placements -->
+        <!-- Center branch: Investissements → Actions + ETF + CTO + Crypto -->
         <div>
-          <div id="ptf-svg-L2C" class="hidden lg:block" style="height:45px;">
-            <svg id="ptf-svg-L2C-svg" class="w-full" style="height:45px;" fill="none">
+          <div id="ptf-svg-L2C" class="hidden lg:block" style="height:35px;">
+            <svg id="ptf-svg-L2C-svg" class="w-full" style="height:35px;" fill="none">
               <defs>
-                <filter id="glow-amber2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
+                <filter id="glow-amber2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
               </defs>
             </svg>
           </div>
-          <div id="ptf-card-plac" class="card-dark rounded-2xl p-4">
-            <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Placements</p>
-            <p class="text-lg font-bold text-accent-amber text-center mb-3">${fmt(totalPlac)}</p>
-            <div class="space-y-2">
-              ${placements.length > 0 ? placements.map(p => `
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 min-w-0">
-                  <div class="w-1.5 h-1.5 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
-                  <span class="text-[11px] text-gray-400 truncate">${p.nom}</span>
-                </div>
-                <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(p.valeur) || 0)}</span>
-              </div>`).join('') : '<p class="text-[11px] text-gray-600">Aucun placement</p>'}
+          <div id="ptf-L3C" class="grid grid-cols-2 gap-2">
+            <!-- Actions -->
+            <div id="ptf-card-actions" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Actions</p>
+              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalActions)}</p>
+              <div class="space-y-1">${placList(actions, 'bg-accent-amber/50')}</div>
             </div>
+            <!-- ETF -->
+            <div id="ptf-card-etf" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">ETF</p>
+              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalETF)}</p>
+              <div class="space-y-1">${placList(etfs, 'bg-accent-amber/50')}</div>
+            </div>
+            <!-- CTO -->
+            <div id="ptf-card-cto" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">CTO</p>
+              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalCTO)}</p>
+              <div class="space-y-1">${placList(cto, 'bg-accent-amber/50')}</div>
+            </div>
+            <!-- Crypto -->
+            <div id="ptf-card-crypto" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Crypto</p>
+              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalCrypto)}</p>
+              <div class="space-y-1">${placList(crypto, 'bg-accent-amber/50')}</div>
+            </div>
+            ${otherPlac.length > 0 ? `
+            <!-- Autres placements -->
+            <div id="ptf-card-otherplac" class="card-dark rounded-xl p-3 col-span-2">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Autres</p>
+              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalOtherPlac)}</p>
+              <div class="space-y-1">${placList(otherPlac, 'bg-accent-amber/50')}</div>
+            </div>` : ''}
           </div>
         </div>
 
-        <!-- Right branch: Immobilier → Biens -->
+        <!-- Right branch: Immobilier → Biens (compact) -->
         <div>
-          <div id="ptf-svg-L2R" class="hidden lg:block" style="height:45px;">
-            <svg id="ptf-svg-L2R-svg" class="w-full" style="height:45px;" fill="none">
+          <div id="ptf-svg-L2R" class="hidden lg:block" style="height:35px;">
+            <svg id="ptf-svg-L2R-svg" class="w-full" style="height:35px;" fill="none">
               <defs>
-                <filter id="glow-brown2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
+                <filter id="glow-brown2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
               </defs>
             </svg>
           </div>
-          <div id="ptf-card-biens" class="card-dark rounded-2xl p-4">
-            <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Biens immobiliers</p>
-            <p class="text-lg font-bold text-amber-500 text-center mb-3">${fmt(totalImmo)}</p>
-            <div class="space-y-2">
+          <div id="ptf-card-biens" class="card-dark rounded-xl p-3">
+            <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Biens immobiliers</p>
+            <p class="text-base font-bold text-amber-500 text-center mb-2">${fmt(totalImmo)}</p>
+            <div class="space-y-1">
               ${immobilier.length > 0 ? immobilier.map(i => `
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 min-w-0">
-                  <div class="w-1.5 h-1.5 rounded-full bg-amber-500/50 flex-shrink-0"></div>
-                  <span class="text-[11px] text-gray-400 truncate">${i.nom}</span>
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <div class="w-1 h-1 rounded-full bg-amber-500/50 flex-shrink-0"></div>
+                  <span class="text-[10px] text-gray-400 truncate">${i.nom}</span>
                 </div>
-                <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(i.valeurActuelle) || 0)}</span>
-              </div>`).join('') : '<p class="text-[11px] text-gray-600">Aucun bien</p>'}
+                <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(i.valeurActuelle) || 0)}</span>
+              </div>`).join('') : '<p class="text-[10px] text-gray-600">Aucun bien</p>'}
             </div>
           </div>
         </div>
@@ -241,7 +312,7 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
   const wrapRect = wrap.getBoundingClientRect();
   const w = wrapRect.width;
   if (w <= 0) return;
-  const h = parseInt(svg.style.height) || 55;
+  const h = parseInt(svg.style.height) || 40;
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
   const mid = w / 2;
@@ -257,13 +328,23 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
     const filter = filterIds[i % filterIds.length];
     const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
 
-    // Glow
+    // Outer glow
+    const glow2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    glow2.setAttribute('d', d);
+    glow2.setAttribute('stroke', color);
+    glow2.setAttribute('stroke-width', '6');
+    glow2.setAttribute('fill', 'none');
+    glow2.setAttribute('opacity', '0.15');
+    glow2.setAttribute('filter', `url(#${filter})`);
+    svg.appendChild(glow2);
+
+    // Inner glow
     const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     glow.setAttribute('d', d);
     glow.setAttribute('stroke', color);
     glow.setAttribute('stroke-width', '3');
     glow.setAttribute('fill', 'none');
-    glow.setAttribute('opacity', '0.3');
+    glow.setAttribute('opacity', '0.35');
     glow.setAttribute('filter', `url(#${filter})`);
     svg.appendChild(glow);
 
@@ -273,16 +354,16 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
     line.setAttribute('stroke', color);
     line.setAttribute('stroke-width', '1.5');
     line.setAttribute('fill', 'none');
-    line.setAttribute('opacity', '0.5');
+    line.setAttribute('opacity', '0.6');
     svg.appendChild(line);
 
     // Bottom dot
     const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     dot.setAttribute('cx', cx);
     dot.setAttribute('cy', h);
-    dot.setAttribute('r', '3');
+    dot.setAttribute('r', '2.5');
     dot.setAttribute('fill', color);
-    dot.setAttribute('opacity', '0.6');
+    dot.setAttribute('opacity', '0.7');
     svg.appendChild(dot);
   });
 
@@ -290,9 +371,9 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
   const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   topDot.setAttribute('cx', mid);
   topDot.setAttribute('cy', '0');
-  topDot.setAttribute('r', '3');
+  topDot.setAttribute('r', '2.5');
   topDot.setAttribute('fill', colors[0]);
-  topDot.setAttribute('opacity', '0.6');
+  topDot.setAttribute('opacity', '0.7');
   svg.appendChild(topDot);
 }
 
@@ -306,7 +387,7 @@ function drawStraightConnector(svgId, wrapId, cardId, color, filterId) {
   const wrapRect = wrap.getBoundingClientRect();
   const w = wrapRect.width;
   if (w <= 0) return;
-  const h = parseInt(svg.style.height) || 45;
+  const h = parseInt(svg.style.height) || 35;
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
   const mid = w / 2;
@@ -317,13 +398,23 @@ function drawStraightConnector(svgId, wrapId, cardId, color, filterId) {
 
   const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
 
-  // Glow
+  // Outer glow
+  const glow2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  glow2.setAttribute('d', d);
+  glow2.setAttribute('stroke', color);
+  glow2.setAttribute('stroke-width', '6');
+  glow2.setAttribute('fill', 'none');
+  glow2.setAttribute('opacity', '0.15');
+  glow2.setAttribute('filter', `url(#${filterId})`);
+  svg.appendChild(glow2);
+
+  // Inner glow
   const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   glow.setAttribute('d', d);
   glow.setAttribute('stroke', color);
   glow.setAttribute('stroke-width', '3');
   glow.setAttribute('fill', 'none');
-  glow.setAttribute('opacity', '0.3');
+  glow.setAttribute('opacity', '0.35');
   glow.setAttribute('filter', `url(#${filterId})`);
   svg.appendChild(glow);
 
@@ -332,24 +423,24 @@ function drawStraightConnector(svgId, wrapId, cardId, color, filterId) {
   line.setAttribute('stroke', color);
   line.setAttribute('stroke-width', '1.5');
   line.setAttribute('fill', 'none');
-  line.setAttribute('opacity', '0.5');
+  line.setAttribute('opacity', '0.6');
   svg.appendChild(line);
 
   // Dots
   const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   topDot.setAttribute('cx', mid);
   topDot.setAttribute('cy', '0');
-  topDot.setAttribute('r', '3');
+  topDot.setAttribute('r', '2.5');
   topDot.setAttribute('fill', color);
-  topDot.setAttribute('opacity', '0.6');
+  topDot.setAttribute('opacity', '0.7');
   svg.appendChild(topDot);
 
   const botDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   botDot.setAttribute('cx', cx);
   botDot.setAttribute('cy', h);
-  botDot.setAttribute('r', '3');
+  botDot.setAttribute('r', '2.5');
   botDot.setAttribute('fill', color);
-  botDot.setAttribute('opacity', '0.6');
+  botDot.setAttribute('opacity', '0.7');
   svg.appendChild(botDot);
 }
 
@@ -362,15 +453,19 @@ export function mount() {
       ['glow-indigo', 'glow-amber', 'glow-brown']
     );
 
-    // Level 2 → 3 Left: Liquidités → CC + Épargne
+    // Level 2 → 3 Left: Liquidités → CIC + Trade Republic + Épargne
     drawConnectors('ptf-svg-L2L-svg', 'ptf-svg-L2L',
-      ['ptf-card-cc', 'ptf-card-ep'],
-      ['#6366f1', '#6366f1'],
-      ['glow-indigo2', 'glow-indigo2']
+      ['ptf-card-cic', 'ptf-card-tr', 'ptf-card-ep'],
+      ['#6366f1', '#6366f1', '#6366f1'],
+      ['glow-indigo2', 'glow-indigo2', 'glow-indigo2']
     );
 
-    // Level 2 → 3 Center: Investissements → Placements
-    drawStraightConnector('ptf-svg-L2C-svg', 'ptf-svg-L2C', 'ptf-card-plac', '#c9a76c', 'glow-amber2');
+    // Level 2 → 3 Center: Investissements → Actions + ETF + CTO + Crypto
+    drawConnectors('ptf-svg-L2C-svg', 'ptf-svg-L2C',
+      ['ptf-card-actions', 'ptf-card-etf', 'ptf-card-cto', 'ptf-card-crypto'],
+      ['#c9a76c', '#c9a76c', '#c9a76c', '#c9a76c'],
+      ['glow-amber2', 'glow-amber2', 'glow-amber2', 'glow-amber2']
+    );
 
     // Level 2 → 3 Right: Immobilier → Biens
     drawStraightConnector('ptf-svg-L2R-svg', 'ptf-svg-L2R', 'ptf-card-biens', '#8b6914', 'glow-brown2');

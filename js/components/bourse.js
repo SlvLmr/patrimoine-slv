@@ -339,8 +339,8 @@ export function render(store) {
         </div>
       </div>
 
-      <div class="card-dark rounded-xl p-4">
-        <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+      <div class="card-dark rounded-xl p-3">
+        <div class="flex items-center gap-2 text-xs text-gray-500 mb-0.5">
           <div class="w-2 h-2 rounded-full bg-accent-green animate-pulse" id="market-indicator"></div>
           <span id="market-status">Chargement des cours...</span>
         </div>
@@ -348,27 +348,27 @@ export function render(store) {
       </div>
 
       <!-- Quotes grid with mini charts -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="quotes-grid">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="quotes-grid">
         ${watchlist.map(item => `
-        <div class="card-dark rounded-xl p-5 kpi-card relative group" id="quote-${sid(item.isin)}" draggable="true" data-isin="${item.isin}" style="cursor:grab">
-          <button class="btn-remove-ticker absolute top-2 right-2 w-6 h-6 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition opacity-0 group-hover:opacity-100 flex items-center justify-center z-10" data-isin="${item.isin}" title="Retirer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="card-dark rounded-xl p-3 kpi-card relative group" id="quote-${sid(item.isin)}" draggable="true" data-isin="${item.isin}" style="cursor:grab">
+          <button class="btn-remove-ticker absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition opacity-0 group-hover:opacity-100 flex items-center justify-center z-10" data-isin="${item.isin}" title="Retirer">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'ETF' ? 'bg-accent-green/10 text-accent-green' : item.type === 'Crypto' ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-blue/10 text-accent-blue'}">${item.type}</span>
-            <span class="text-xs text-gray-600 quote-ticker-label">—</span>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full ${item.type === 'ETF' ? 'bg-accent-green/10 text-accent-green' : item.type === 'Crypto' ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-blue/10 text-accent-blue'}">${item.type}</span>
+            <span class="text-[10px] text-gray-600 quote-ticker-label">—</span>
           </div>
-          <p class="text-sm font-medium text-gray-200 mb-1 truncate">${item.name}</p>
-          <p class="text-xs text-gray-600 mb-2">${item.isin}</p>
-          <div class="quote-chart mb-2" style="height:80px">
+          <p class="text-xs font-medium text-gray-200 mb-0.5 truncate">${item.name}</p>
+          <p class="text-[10px] text-gray-600 mb-1">${item.isin}</p>
+          <div class="quote-chart mb-1" style="height:55px">
             <canvas id="chart-${sid(item.isin)}"></canvas>
           </div>
           <div class="quote-price">
             <div class="flex items-center justify-between">
-              <span class="text-lg font-bold text-gray-300">—</span>
-              <span class="text-xs text-gray-500">—</span>
+              <span class="text-sm font-bold text-gray-300">—</span>
+              <span class="text-[10px] text-gray-500">—</span>
             </div>
           </div>
           ${(() => {
@@ -379,21 +379,21 @@ export function render(store) {
             const valTotale = Number(actif.valeur) || 0;
             const invested = qty * pru;
             return `
-            <div class="mt-3 pt-3 border-t border-dark-400/20 space-y-1.5 portfolio-info" data-qty="${qty}" data-pru="${pru}" data-invested="${invested}">
-              <p class="text-[10px] uppercase tracking-wider text-accent-amber/60 font-semibold mb-1">Mon portefeuille</p>
-              <div class="flex justify-between text-xs">
+            <div class="mt-2 pt-2 border-t border-dark-400/20 space-y-1 portfolio-info" data-qty="${qty}" data-pru="${pru}" data-invested="${invested}">
+              <p class="text-[9px] uppercase tracking-wider text-accent-amber/60 font-semibold mb-0.5">Mon portefeuille</p>
+              <div class="flex justify-between text-[11px]">
                 <span class="text-accent-amber/70">Parts</span>
                 <span class="text-accent-amber font-medium">${Number.isInteger(qty) ? formatNum(qty, 0) : formatNum(qty, 4)}</span>
               </div>
-              <div class="flex justify-between text-xs">
+              <div class="flex justify-between text-[11px]">
                 <span class="text-accent-amber/70">PRU</span>
                 <span class="text-accent-amber font-medium">${formatNum(pru)} €</span>
               </div>
-              <div class="flex justify-between text-xs">
+              <div class="flex justify-between text-[11px]">
                 <span class="text-accent-amber/70">Valeur totale</span>
                 <span class="text-accent-amber font-semibold portfolio-val-totale">${formatNum(valTotale)} €</span>
               </div>
-              <div class="flex justify-between text-xs portfolio-gain-row" style="display:none">
+              <div class="flex justify-between text-[11px] portfolio-gain-row" style="display:none">
                 <span class="text-accent-amber/70">+/- value</span>
                 <span class="font-semibold portfolio-gain-value">—</span>
               </div>
