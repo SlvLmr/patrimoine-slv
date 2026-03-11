@@ -1,5 +1,5 @@
 import { formatCurrencyCents, openModal, getFormData, inputField, selectField } from '../utils.js?v=5';
-import { createChart, COLORS } from '../charts/chart-config.js';
+import { createChart, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 const DEPENSE_TYPES = [
   { key: 'Fixe', label: 'Dépenses fixes', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -364,10 +364,10 @@ export function render(store) {
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
         </details>
 
-        <!-- Chart répartition dépenses -->
-        <div class="card-dark rounded-xl p-4 flex flex-col chart-glow">
+        <!-- Chart revenus vs dépenses -->
+        <div class="card-dark rounded-xl p-4 flex flex-col" id="chart-rev-dep-card">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-semibold text-gray-200">Répartition dépenses</h2>
+            <h2 class="text-sm font-semibold text-gray-200">Revenus vs Dépenses</h2>
             <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
               <button data-chart-tab="mensuel" class="chart-tab px-3 py-1 text-[10px] font-medium transition bg-dark-600 text-gray-200">Mensuel</button>
               <button data-chart-tab="lisse" class="chart-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Lissé</button>
@@ -375,7 +375,15 @@ export function render(store) {
             </div>
           </div>
           <div class="flex-1 min-h-[250px]">
-            <canvas id="chart-dep"></canvas>
+            <canvas id="chart-rev-dep"></canvas>
+          </div>
+          <div id="solde-block" class="mt-3 pt-3 border-t border-dark-400/30 flex items-center justify-center gap-3">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full" id="solde-dot"></div>
+              <span class="text-xs text-gray-500">Solde</span>
+            </div>
+            <span id="solde-value" class="text-lg font-bold"></span>
+            <span id="solde-suffix" class="text-xs text-gray-500"></span>
           </div>
         </div>
       </div>
@@ -396,8 +404,16 @@ export function render(store) {
 export function mount(store, navigate) {
   const content = document.getElementById('app-content');
 
-  // Chart répartition dépenses avec tabs
+  // ── Chart Revenus vs Dépenses (stacked bar) ──
+  const allRevenus = store.get('revenus').filter(r => !r.informatif);
   const allDepenses = store.get('depenses');
+
+  const revData = {
+    mensuel: allRevenus.reduce((s, r) => s + (r.frequence === 'Annuel' ? 0 : (Number(r.montantMensuel) || 0)), 0),
+    lisse: allRevenus.reduce((s, r) => s + getMensuelLisse(r), 0),
+    annuel: allRevenus.reduce((s, r) => s + getMensuelLisse(r), 0) * 12
+  };
+
   const depChartGroups = DEPENSE_TYPES.map(t => {
     const items = allDepenses.filter(d => (d.typeDepense || 'Fixe') === t.key);
     return {
@@ -407,51 +423,156 @@ export function mount(store, navigate) {
       annuel: items.reduce((s, d) => s + getMensuelLisse(d), 0) * 12
     };
   });
-  const depChartColors = ['#ef4444', '#f97316', '#06b6d4', '#a855f7'];
 
-  // Center text plugin
-  const centerTextPlugin = {
-    id: 'centerText',
+  const depChartColors = ['#ef4444', '#f97316', '#06b6d4', '#a855f7'];
+  const revColor = '#22c55e';
+
+  // Plugin: glow shadow on bars
+  const barGlowPlugin = {
+    id: 'barGlow',
+    beforeDatasetsDraw(chart) {
+      chart.ctx.save();
+      chart.ctx.shadowBlur = 18;
+      chart.ctx.shadowOffsetY = 4;
+    },
+    afterDatasetDraw(chart, args) {
+      const dsIndex = args.index;
+      const meta = chart.getDatasetMeta(dsIndex);
+      const color = meta.data[0]?.options?.backgroundColor;
+      if (color) chart.ctx.shadowColor = typeof color === 'string' ? color.replace(')', ',0.35)').replace('rgb(', 'rgba(') : 'transparent';
+    },
+    afterDatasetsDraw(chart) {
+      chart.ctx.restore();
+    }
+  };
+
+  // Plugin: balance line
+  const balanceLinePlugin = {
+    id: 'balanceLine',
     afterDraw(chart) {
-      const { ctx, chartArea } = chart;
-      const total = chart.data.datasets[0].data.reduce((s, v) => s + v, 0);
-      const suffix = chart.options._depSuffix || '/mois';
-      const cx = (chartArea.left + chartArea.right) / 2;
-      const cy = (chartArea.top + chartArea.bottom) / 2;
+      const solde = chart.options._solde;
+      if (solde == null) return;
+      const yScale = chart.scales.y;
+      const yPixel = yScale.getPixelForValue(solde);
+      if (yPixel < chart.chartArea.top || yPixel > chart.chartArea.bottom) return;
+      const ctx = chart.ctx;
       ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = 'bold 14px Inter, sans-serif';
-      ctx.fillStyle = '#e5e5e5';
-      ctx.fillText(formatCurrencyCents(total), cx, cy - 8);
-      ctx.font = '10px Inter, sans-serif';
-      ctx.fillStyle = '#88888a';
-      ctx.fillText(suffix, cx, cy + 10);
+      ctx.beginPath();
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = solde >= 0 ? 'rgba(168,85,247,0.6)' : 'rgba(249,115,22,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(chart.chartArea.left, yPixel);
+      ctx.lineTo(chart.chartArea.right, yPixel);
+      ctx.stroke();
       ctx.restore();
     }
   };
 
-  function renderDepChart(mode) {
-    const visibleIndices = depChartGroups.map((g, i) => g[mode] > 0 ? i : -1).filter(i => i >= 0);
-    const data = visibleIndices.map(i => depChartGroups[i][mode]);
-    const labels = visibleIndices.map(i => depChartGroups[i].label);
-    const colors = visibleIndices.map(i => depChartColors[i]);
+  function updateSoldeUI(solde, suffix) {
+    const dot = document.getElementById('solde-dot');
+    const val = document.getElementById('solde-value');
+    const suf = document.getElementById('solde-suffix');
+    const card = document.getElementById('chart-rev-dep-card');
+    if (!val) return;
+    const positive = solde >= 0;
+    val.textContent = `${positive ? '+' : ''}${formatCurrencyCents(solde)}`;
+    val.className = `text-lg font-bold ${positive ? 'text-purple-400' : 'text-orange-400'}`;
+    if (dot) dot.className = `w-2 h-2 rounded-full ${positive ? 'bg-purple-400' : 'bg-orange-400'}`;
+    if (suf) suf.textContent = suffix;
+    // Dynamic glow on the card based on balance
+    if (card) {
+      card.style.boxShadow = positive
+        ? '0 0 30px rgba(168,85,247,0.12), 0 0 60px rgba(34,197,94,0.08)'
+        : '0 0 30px rgba(249,115,22,0.15), 0 0 60px rgba(239,68,68,0.08)';
+    }
+  }
+
+  function renderRevDepChart(mode) {
+    const rev = revData[mode];
     const suffix = mode === 'annuel' ? '/an' : '/mois';
-    createChart('chart-dep', {
-      type: 'doughnut',
-      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
-      plugins: [centerTextPlugin],
+
+    const datasets = [
+      {
+        label: 'Revenus',
+        data: [rev, 0],
+        backgroundColor: function(ctx) {
+          return createVerticalGradient(ctx.chart.ctx, revColor, 0.9, 0.5);
+        },
+        borderColor: revColor,
+        borderWidth: 1,
+        borderRadius: 6,
+        stack: 'revenus',
+        barPercentage: 0.55,
+        categoryPercentage: 0.6,
+      },
+      ...depChartGroups.map((g, i) => ({
+        label: g.label.replace('Dépenses ', ''),
+        data: [0, g[mode]],
+        backgroundColor: depChartColors[i],
+        borderColor: depChartColors[i],
+        borderWidth: 0,
+        borderRadius: i === depChartGroups.length - 1 ? 6 : 0,
+        stack: 'depenses',
+        barPercentage: 0.55,
+        categoryPercentage: 0.6,
+      }))
+    ];
+
+    // Filter out empty dépenses datasets
+    const filteredDatasets = datasets.filter((ds, i) => i === 0 || ds.data[1] > 0);
+
+    // Fix borderRadius for the topmost visible dépense segment
+    const depDatasets = filteredDatasets.filter((_, i) => i > 0);
+    depDatasets.forEach((ds, i) => { ds.borderRadius = i === depDatasets.length - 1 ? 6 : 0; });
+
+    const totalDep = depChartGroups.reduce((s, g) => s + g[mode], 0);
+    const solde = rev - totalDep;
+    const maxVal = Math.max(rev, totalDep) * 1.12;
+
+    createChart('chart-rev-dep', {
+      type: 'bar',
+      data: { labels: ['Revenus', 'Dépenses'], datasets: filteredDatasets },
+      plugins: [barGlowPlugin, balanceLinePlugin],
       options: {
-        cutout: '55%',
-        _depSuffix: suffix,
+        _solde: rev,
         plugins: {
-          legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 11 } } },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}${suffix}` } }
+          legend: {
+            position: 'bottom',
+            labels: { padding: 10, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 10, family: 'Inter' } }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.raw > 0 ? ` ${ctx.dataset.label}: ${formatCurrencyCents(ctx.raw)}${suffix}` : null,
+              afterBody: () => [`─── Solde: ${solde >= 0 ? '+' : ''}${formatCurrencyCents(solde)}${suffix}`]
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { color: '#6b6b75', font: { size: 11, family: 'Inter', weight: '600' } },
+            border: { display: false }
+          },
+          y: {
+            stacked: true,
+            suggestedMax: maxVal,
+            grid: { color: 'rgba(56, 56, 63, 0.25)' },
+            ticks: {
+              color: '#6b6b75',
+              font: { size: 10, family: 'Inter' },
+              callback: v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
+            },
+            border: { display: false }
+          }
         }
       }
     });
+
+    updateSoldeUI(solde, suffix);
   }
-  renderDepChart('mensuel');
+
+  renderRevDepChart('mensuel');
 
   content.querySelectorAll('.chart-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -461,7 +582,7 @@ export function mount(store, navigate) {
       });
       tab.classList.add('bg-dark-600', 'text-gray-200');
       tab.classList.remove('text-gray-500');
-      renderDepChart(tab.dataset.chartTab);
+      renderRevDepChart(tab.dataset.chartTab);
     });
   });
 
