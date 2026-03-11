@@ -384,7 +384,7 @@ export function render(store) {
           </div>
           <!-- Sankey view (default) -->
           <div id="viz-sankey" class="flex-1">
-            <div id="sankey-wrap" style="position:relative;">
+            <div id="sankey-wrap" class="cursor-pointer overflow-hidden" style="position:relative; height:250px;" title="Cliquer pour agrandir">
               <svg id="sankey-svg" width="100%" height="100%"></svg>
             </div>
           </div>
@@ -571,43 +571,22 @@ export function mount(store, navigate) {
     return { sources, budget, groups, totalRevenu };
   }
 
-  function drawSankey(mode) {
-    const svg = document.getElementById('sankey-svg');
-    const wrap = document.getElementById('sankey-wrap');
-    if (!svg || !wrap) return;
-
+  function drawSankeyInto(svg, W, H, mode) {
     const data = buildSankeyData(mode);
     if (data.totalRevenu <= 0) {
       svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#6b6b75" font-size="12">Aucun revenu à afficher</text>';
       return;
     }
 
-    const suffix = mode === 'annuel' ? '/an' : '/mois';
     const fmtV = v => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 
-    // Layout constants
-    const W = wrap.clientWidth || 800;
     const nodeW = 6;
-    const gap = 8;
-    const padTop = 10;
-    const padBottom = 10;
-    const labelPad = 6;
+    const gap = 6;
+    const padTop = 8;
+    const padBottom = 8;
+    const labelPad = 5;
 
-    // Calculate total items across all groups for height
     const allItems = data.groups.flatMap(g => g.items);
-    const itemGaps = allItems.length > 1 ? (allItems.length - 1) * gap : 0;
-    const groupGaps = data.groups.length > 1 ? (data.groups.length - 1) * gap : 0;
-    const sourceGaps = data.sources.length > 1 ? (data.sources.length - 1) * gap : 0;
-
-    // Minimum height per item for readability
-    const minItemH = 14;
-    const neededH = Math.max(
-      allItems.length * minItemH + itemGaps,
-      data.groups.length * minItemH + groupGaps,
-      data.sources.length * minItemH + sourceGaps,
-      200
-    );
-    const H = neededH + padTop + padBottom;
     const drawH = H - padTop - padBottom;
 
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -619,7 +598,7 @@ export function mount(store, navigate) {
     const col2x = W * 0.58;
     const col3x = W * 0.78;
 
-    // Helper: stack nodes vertically proportional to value
+    const minItemH = 4;
     function stackNodes(items, totalVal, x, availH) {
       const totalGap = items.length > 1 ? (items.length - 1) * gap : 0;
       const usableH = availH - totalGap;
@@ -721,10 +700,104 @@ export function mount(store, navigate) {
     svg.innerHTML = `<defs>${defs}</defs>${body}`;
   }
 
+  // Wrapper: draw into inline small Sankey
+  function drawSankey(mode) {
+    const svg = document.getElementById('sankey-svg');
+    const wrap = document.getElementById('sankey-wrap');
+    if (!svg || !wrap) return;
+    const W = wrap.clientWidth || 800;
+    drawSankeyInto(svg, W, 250, mode);
+  }
+
+  // Popup: full-size Sankey
+  function openSankeyPopup() {
+    const existing = document.getElementById('sankey-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'sankey-modal';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+    modal.style.background = 'rgba(0,0,0,0.75)';
+    modal.style.backdropFilter = 'blur(6px)';
+    modal.innerHTML = `
+      <div class="card-dark rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-auto relative" style="animation: slideUp 0.2s ease-out;">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-200">Flux financier</h2>
+          <div class="flex items-center gap-3">
+            <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
+              <button data-popup-tab="mensuel" class="popup-sankey-tab px-3 py-1 text-[10px] font-medium transition ${currentMode === 'mensuel' ? 'bg-dark-600 text-gray-200' : 'text-gray-500 hover:text-gray-300'}">Mensuel</button>
+              <button data-popup-tab="lisse" class="popup-sankey-tab px-3 py-1 text-[10px] font-medium transition ${currentMode === 'lisse' ? 'bg-dark-600 text-gray-200' : 'text-gray-500 hover:text-gray-300'}">Lissé</button>
+              <button data-popup-tab="annuel" class="popup-sankey-tab px-3 py-1 text-[10px] font-medium transition ${currentMode === 'annuel' ? 'bg-dark-600 text-gray-200' : 'text-gray-500 hover:text-gray-300'}">Annuel</button>
+            </div>
+            <button id="sankey-modal-close" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-dark-500 transition text-gray-400 hover:text-gray-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="sankey-popup-wrap" style="position:relative;">
+          <svg id="sankey-popup-svg" width="100%" height="100%"></svg>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Draw full-size
+    requestAnimationFrame(() => {
+      const popSvg = document.getElementById('sankey-popup-svg');
+      const popWrap = document.getElementById('sankey-popup-wrap');
+      if (popSvg && popWrap) {
+        const W = popWrap.clientWidth || 900;
+        const data = buildSankeyData(currentMode);
+        const allItems = data.groups.flatMap(g => g.items);
+        const fullH = Math.max(allItems.length * 20 + (allItems.length - 1) * 6 + 20, 400);
+        drawSankeyInto(popSvg, W, fullH, currentMode);
+      }
+    });
+
+    // Close
+    document.getElementById('sankey-modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    // Tab switching inside popup
+    modal.querySelectorAll('.popup-sankey-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        modal.querySelectorAll('.popup-sankey-tab').forEach(t => {
+          t.classList.remove('bg-dark-600', 'text-gray-200');
+          t.classList.add('text-gray-500');
+        });
+        tab.classList.add('bg-dark-600', 'text-gray-200');
+        tab.classList.remove('text-gray-500');
+        currentMode = tab.dataset.popupTab;
+        // Sync inline tabs too
+        content.querySelectorAll('.viz-tab').forEach(t => {
+          t.classList.remove('bg-dark-600', 'text-gray-200');
+          t.classList.add('text-gray-500');
+          if (t.dataset.vizTab === currentMode) {
+            t.classList.add('bg-dark-600', 'text-gray-200');
+            t.classList.remove('text-gray-500');
+          }
+        });
+        const popSvg = document.getElementById('sankey-popup-svg');
+        const popWrap = document.getElementById('sankey-popup-wrap');
+        if (popSvg && popWrap) {
+          const W = popWrap.clientWidth || 900;
+          const data = buildSankeyData(currentMode);
+          const allItems = data.groups.flatMap(g => g.items);
+          const fullH = Math.max(allItems.length * 20 + (allItems.length - 1) * 6 + 20, 400);
+          drawSankeyInto(popSvg, W, fullH, currentMode);
+        }
+        drawSankey(currentMode);
+      });
+    });
+  }
+
+  // Click on inline Sankey → open popup
+  document.getElementById('sankey-wrap')?.addEventListener('click', openSankeyPopup);
+
   // ── Combined view switching (Sankey ↔ Doughnut) ──
   const vizViews = ['sankey', 'doughnut'];
   const vizTitles = { sankey: 'Flux financier', doughnut: 'Répartition dépenses' };
-  let currentViz = 0; // 0 = sankey (default)
+  let currentViz = 0;
   let currentMode = 'mensuel';
 
   function showViz(index) {
