@@ -409,8 +409,6 @@ export function mount(store, navigate) {
   });
   const depChartColors = ['#ef4444', '#f97316', '#06b6d4', '#a855f7'];
 
-  const depChartEmojis = ['🏠', '🛒', '🔄', '📈'];
-
   // Center text plugin
   const centerTextPlugin = {
     id: 'centerText',
@@ -433,46 +431,19 @@ export function mount(store, navigate) {
     }
   };
 
-  // Icons in slices plugin
-  const sliceIconsPlugin = {
-    id: 'sliceIcons',
-    afterDraw(chart) {
-      const { ctx, chartArea } = chart;
-      const meta = chart.getDatasetMeta(0);
-      const emojis = chart.options._depEmojis || [];
-      if (!meta || !emojis.length) return;
-      ctx.save();
-      meta.data.forEach((arc, i) => {
-        if (!emojis[i]) return;
-        const { startAngle, endAngle, innerRadius, outerRadius } = arc.getProps(['startAngle', 'endAngle', 'innerRadius', 'outerRadius']);
-        const midAngle = (startAngle + endAngle) / 2;
-        const midRadius = (innerRadius + outerRadius) / 2;
-        const x = arc.x + Math.cos(midAngle) * midRadius;
-        const y = arc.y + Math.sin(midAngle) * midRadius;
-        ctx.font = '14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(emojis[i], x, y);
-      });
-      ctx.restore();
-    }
-  };
-
   function renderDepChart(mode) {
     const visibleIndices = depChartGroups.map((g, i) => g[mode] > 0 ? i : -1).filter(i => i >= 0);
     const data = visibleIndices.map(i => depChartGroups[i][mode]);
     const labels = visibleIndices.map(i => depChartGroups[i].label);
     const colors = visibleIndices.map(i => depChartColors[i]);
-    const emojis = visibleIndices.map(i => depChartEmojis[i]);
     const suffix = mode === 'annuel' ? '/an' : '/mois';
     createChart('chart-dep', {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
-      plugins: [centerTextPlugin, sliceIconsPlugin],
+      plugins: [centerTextPlugin],
       options: {
         cutout: '55%',
         _depSuffix: suffix,
-        _depEmojis: emojis,
         plugins: {
           legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 11 } } },
           tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}${suffix}` } }
