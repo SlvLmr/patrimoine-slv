@@ -292,6 +292,7 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">CTO</th>
                 <th class="px-1 py-1.5 text-center">AV</th>
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">PEE</th>
+                <th class="px-1 py-1.5 text-center font-semibold text-gray-400">Apports</th>
                 <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
                 <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
                 <th class="px-1 py-1.5 text-center">Épargne</th>
@@ -335,6 +336,7 @@ export function render(store) {
                 ${placCell('CTO', 'border-r-2 border-dark-300/40')}
                 ${placCell('Assurance Vie')}
                 ${placCell('PEE', 'border-r-2 border-dark-300/40')}
+                <td class="px-1 py-0.5 text-center text-[11px] text-gray-400 font-semibold">${formatCurrency(s.totalApports)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-[11px] ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px]" title="Total placements: ${formatCurrency(s.placements)}\\nApports: ${formatCurrency(s.totalApports)}\\nImpôts totaux: -${formatCurrency(s.totalTaxes)}">${formatCurrency(s.cashApresImpot)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(s.totalApports)}</div></td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200">${formatCurrency(s.epargne)}</td>
