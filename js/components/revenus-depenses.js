@@ -297,21 +297,6 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Sankey flow diagram -->
-      <div class="card-dark rounded-xl p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-semibold text-gray-200">Flux financier</h2>
-          <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
-            <button data-sankey-tab="mensuel" class="sankey-tab px-3 py-1 text-[10px] font-medium transition bg-dark-600 text-gray-200">Mensuel</button>
-            <button data-sankey-tab="lisse" class="sankey-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Lissé</button>
-            <button data-sankey-tab="annuel" class="sankey-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Annuel</button>
-          </div>
-        </div>
-        <div id="sankey-wrap" style="min-height:350px; position:relative;">
-          <svg id="sankey-svg" width="100%" height="100%"></svg>
-        </div>
-      </div>
-
       <!-- Revenus & Dépenses — grille 2 colonnes -->
       <div class="flex items-center justify-end mb-2 gap-2">
         <button id="btn-seed-revenus" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut revenus</button>
@@ -379,26 +364,43 @@ export function render(store) {
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
         </details>
 
-        <!-- Chart répartition dépenses -->
+        <!-- Chart / Sankey combined card -->
         <div class="card-dark rounded-xl p-4 flex flex-col" id="chart-dep-card">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-semibold text-gray-200">Répartition dépenses</h2>
-            <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
-              <button data-chart-tab="mensuel" class="chart-tab px-3 py-1 text-[10px] font-medium transition bg-dark-600 text-gray-200">Mensuel</button>
-              <button data-chart-tab="lisse" class="chart-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Lissé</button>
-              <button data-chart-tab="annuel" class="chart-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Annuel</button>
-            </div>
-          </div>
-          <div class="flex-1 min-h-[250px]">
-            <canvas id="chart-dep"></canvas>
-          </div>
-          <div id="solde-block" class="mt-3 pt-3 border-t border-dark-400/30 flex items-center justify-center gap-3">
             <div class="flex items-center gap-2">
-              <div class="w-2 h-2 rounded-full" id="solde-dot"></div>
-              <span class="text-xs text-gray-500">Solde</span>
+              <button id="viz-prev" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-dark-500 transition text-gray-500 hover:text-gray-300">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <h2 id="viz-title" class="text-sm font-semibold text-gray-200">Flux financier</h2>
+              <button id="viz-next" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-dark-500 transition text-gray-500 hover:text-gray-300">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
             </div>
-            <span id="solde-value" class="text-lg font-bold"></span>
-            <span id="solde-suffix" class="text-xs text-gray-500"></span>
+            <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
+              <button data-viz-tab="mensuel" class="viz-tab px-3 py-1 text-[10px] font-medium transition bg-dark-600 text-gray-200">Mensuel</button>
+              <button data-viz-tab="lisse" class="viz-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Lissé</button>
+              <button data-viz-tab="annuel" class="viz-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Annuel</button>
+            </div>
+          </div>
+          <!-- Sankey view (default) -->
+          <div id="viz-sankey" class="flex-1">
+            <div id="sankey-wrap" style="position:relative;">
+              <svg id="sankey-svg" width="100%" height="100%"></svg>
+            </div>
+          </div>
+          <!-- Doughnut view (hidden by default) -->
+          <div id="viz-doughnut" class="flex-1 hidden">
+            <div class="min-h-[250px]">
+              <canvas id="chart-dep"></canvas>
+            </div>
+            <div id="solde-block" class="mt-3 pt-3 border-t border-dark-400/30 flex items-center justify-center gap-3">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full" id="solde-dot"></div>
+                <span class="text-xs text-gray-500">Solde</span>
+              </div>
+              <span id="solde-value" class="text-lg font-bold"></span>
+              <span id="solde-suffix" class="text-xs text-gray-500"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -527,7 +529,7 @@ export function mount(store, navigate) {
     updateSoldeUI(rev - totalDep, suffix);
   }
 
-  renderDepChart('mensuel');
+  // Don't render chart yet — Sankey is default view
 
   // ── Sankey flow diagram ──
   function buildSankeyData(mode) {
@@ -598,12 +600,12 @@ export function mount(store, navigate) {
     const sourceGaps = data.sources.length > 1 ? (data.sources.length - 1) * gap : 0;
 
     // Minimum height per item for readability
-    const minItemH = 16;
+    const minItemH = 14;
     const neededH = Math.max(
       allItems.length * minItemH + itemGaps,
       data.groups.length * minItemH + groupGaps,
       data.sources.length * minItemH + sourceGaps,
-      250
+      200
     );
     const H = neededH + padTop + padBottom;
     const drawH = H - padTop - padBottom;
@@ -719,31 +721,50 @@ export function mount(store, navigate) {
     svg.innerHTML = `<defs>${defs}</defs>${body}`;
   }
 
+  // ── Combined view switching (Sankey ↔ Doughnut) ──
+  const vizViews = ['sankey', 'doughnut'];
+  const vizTitles = { sankey: 'Flux financier', doughnut: 'Répartition dépenses' };
+  let currentViz = 0; // 0 = sankey (default)
+  let currentMode = 'mensuel';
+
+  function showViz(index) {
+    currentViz = index;
+    document.getElementById('viz-sankey').classList.toggle('hidden', index !== 0);
+    document.getElementById('viz-doughnut').classList.toggle('hidden', index !== 1);
+    document.getElementById('viz-title').textContent = vizTitles[vizViews[index]];
+    updateVizContent();
+  }
+
+  function updateVizContent() {
+    if (currentViz === 0) {
+      drawSankey(currentMode);
+    } else {
+      renderDepChart(currentMode);
+    }
+  }
+
+  document.getElementById('viz-prev')?.addEventListener('click', () => {
+    showViz(currentViz === 0 ? vizViews.length - 1 : currentViz - 1);
+  });
+  document.getElementById('viz-next')?.addEventListener('click', () => {
+    showViz((currentViz + 1) % vizViews.length);
+  });
+
+  content.querySelectorAll('.viz-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      content.querySelectorAll('.viz-tab').forEach(t => {
+        t.classList.remove('bg-dark-600', 'text-gray-200');
+        t.classList.add('text-gray-500');
+      });
+      tab.classList.add('bg-dark-600', 'text-gray-200');
+      tab.classList.remove('text-gray-500');
+      currentMode = tab.dataset.vizTab;
+      updateVizContent();
+    });
+  });
+
+  // Draw default view (Sankey)
   drawSankey('mensuel');
-
-  content.querySelectorAll('.sankey-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      content.querySelectorAll('.sankey-tab').forEach(t => {
-        t.classList.remove('bg-dark-600', 'text-gray-200');
-        t.classList.add('text-gray-500');
-      });
-      tab.classList.add('bg-dark-600', 'text-gray-200');
-      tab.classList.remove('text-gray-500');
-      drawSankey(tab.dataset.sankeyTab);
-    });
-  });
-
-  content.querySelectorAll('.chart-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      content.querySelectorAll('.chart-tab').forEach(t => {
-        t.classList.remove('bg-dark-600', 'text-gray-200');
-        t.classList.add('text-gray-500');
-      });
-      tab.classList.add('bg-dark-600', 'text-gray-200');
-      tab.classList.remove('text-gray-500');
-      renderDepChart(tab.dataset.chartTab);
-    });
-  });
 
   // Revenus
   const revenuTypes = [
