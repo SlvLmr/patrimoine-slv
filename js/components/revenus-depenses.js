@@ -400,12 +400,12 @@ export function render(store) {
             <div class="min-h-[250px]">
               <canvas id="chart-dep"></canvas>
             </div>
-            <div id="solde-block" class="mt-3 pt-3 border-t border-dark-400/30 flex items-center justify-center gap-3">
+            <div id="solde-block" class="mt-1 flex items-center justify-center gap-3">
               <div class="flex items-center gap-2">
                 <div class="w-2 h-2 rounded-full" id="solde-dot"></div>
                 <span class="text-xs text-gray-500">Solde</span>
               </div>
-              <span id="solde-value" class="text-lg font-bold"></span>
+              <span id="solde-value" class="text-sm font-bold"></span>
               <span id="solde-suffix" class="text-xs text-gray-500"></span>
             </div>
           </div>
@@ -517,6 +517,7 @@ export function mount(store, navigate) {
     const colors = visibleIndices.map(i => depChartColors[i]);
     const suffix = mode === 'annuel' ? '/an' : '/mois';
 
+    const totalForPct = data.reduce((s, v) => s + v, 0);
     createChart('chart-dep', {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 8, borderRadius: 3 }] },
@@ -525,8 +526,36 @@ export function mount(store, navigate) {
         cutout: '55%',
         _depSuffix: suffix,
         plugins: {
-          legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 11 } } },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}${suffix}` } }
+          legend: {
+            position: 'right',
+            labels: {
+              padding: 10,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              boxWidth: 8,
+              color: '#88888a',
+              font: { size: 11 },
+              generateLabels: (chart) => {
+                const ds = chart.data.datasets[0];
+                return chart.data.labels.map((label, i) => {
+                  const val = ds.data[i];
+                  const pct = totalForPct > 0 ? ((val / totalForPct) * 100).toFixed(0) : 0;
+                  return {
+                    text: `${label} (${pct}%)`,
+                    fillStyle: ds.backgroundColor[i],
+                    strokeStyle: ds.backgroundColor[i],
+                    hidden: !chart.getDataVisibility(i),
+                    index: i,
+                    pointStyle: 'circle'
+                  };
+                });
+              }
+            }
+          },
+          tooltip: { callbacks: { label: ctx => {
+            const pct = totalForPct > 0 ? ((ctx.raw / totalForPct) * 100).toFixed(1) : 0;
+            return ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}${suffix} (${pct}%)`;
+          } } }
         }
       }
     });
