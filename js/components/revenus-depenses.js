@@ -384,8 +384,15 @@ export function render(store) {
           </div>
           <!-- Sankey view (default) -->
           <div id="viz-sankey" class="flex-1">
-            <div id="sankey-wrap" class="cursor-pointer overflow-hidden" style="position:relative; height:250px;" title="Cliquer pour agrandir">
+            <div id="sankey-wrap" class="cursor-pointer overflow-hidden group/sankey" style="position:relative; height:250px;" title="Cliquer pour agrandir">
               <svg id="sankey-svg" width="100%" height="100%"></svg>
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="w-12 h-12 rounded-full bg-dark-700/60 border border-dark-400/40 flex items-center justify-center opacity-60 group-hover/sankey:opacity-100 transition">
+                  <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
           <!-- Doughnut view (hidden by default) -->
@@ -571,7 +578,7 @@ export function mount(store, navigate) {
     return { sources, budget, groups, totalRevenu };
   }
 
-  function drawSankeyInto(svg, W, H, mode) {
+  function drawSankeyInto(svg, W, H, mode, showLabels = true) {
     const data = buildSankeyData(mode);
     if (data.totalRevenu <= 0) {
       svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#6b6b75" font-size="12">Aucun revenu à afficher</text>';
@@ -678,35 +685,35 @@ export function mount(store, navigate) {
     // Sources (label inside/right of bar)
     srcNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="#6366f1"/>`;
-      body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     // Budget (label inside/right of bar)
     body += `<rect x="${budgetNode.x}" y="${budgetNode.y}" width="${nodeW}" height="${budgetNode.h}" rx="3" fill="#c9a76c"/>`;
-    body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e8d5b0" font-size="12" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
+    if (showLabels) body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e8d5b0" font-size="12" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
 
     // Groups (label left of bar)
     grpNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="${n.color}"/>`;
-      body += `<text x="${n.x - labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" text-anchor="end" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x - labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" text-anchor="end" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     // Items (label right of bar + small color square)
     itemNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="2" fill="${n.color}"/>`;
-      body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#9ca3af" font-size="10" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#9ca3af" font-size="10" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     svg.innerHTML = `<defs>${defs}</defs>${body}`;
   }
 
-  // Wrapper: draw into inline small Sankey
+  // Wrapper: draw into inline small Sankey (no labels — miniature mode)
   function drawSankey(mode) {
     const svg = document.getElementById('sankey-svg');
     const wrap = document.getElementById('sankey-wrap');
     if (!svg || !wrap) return;
     const W = wrap.clientWidth || 800;
-    drawSankeyInto(svg, W, 250, mode);
+    drawSankeyInto(svg, W, 250, mode, false);
   }
 
   // Popup: full-size Sankey
@@ -720,8 +727,8 @@ export function mount(store, navigate) {
     modal.style.background = 'rgba(0,0,0,0.75)';
     modal.style.backdropFilter = 'blur(6px)';
     modal.innerHTML = `
-      <div class="card-dark rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-auto relative" style="animation: slideUp 0.2s ease-out;">
-        <div class="flex items-center justify-between mb-4">
+      <div class="card-dark rounded-2xl p-4 relative flex flex-col" style="animation: slideUp 0.2s ease-out; width: calc(100vw - 2rem); height: calc(100vh - 2rem); max-width: 100%; max-height: 100%;">
+        <div class="flex items-center justify-between mb-3 flex-shrink-0">
           <h2 class="text-lg font-semibold text-gray-200">Flux financier</h2>
           <div class="flex items-center gap-3">
             <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
@@ -734,23 +741,21 @@ export function mount(store, navigate) {
             </button>
           </div>
         </div>
-        <div id="sankey-popup-wrap" style="position:relative;">
+        <div id="sankey-popup-wrap" class="flex-1 min-h-0" style="position:relative;">
           <svg id="sankey-popup-svg" width="100%" height="100%"></svg>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
 
-    // Draw full-size
+    // Draw full-size — fit to available space, no scroll
     requestAnimationFrame(() => {
       const popSvg = document.getElementById('sankey-popup-svg');
       const popWrap = document.getElementById('sankey-popup-wrap');
       if (popSvg && popWrap) {
         const W = popWrap.clientWidth || 900;
-        const data = buildSankeyData(currentMode);
-        const allItems = data.groups.flatMap(g => g.items);
-        const fullH = Math.max(allItems.length * 20 + (allItems.length - 1) * 6 + 20, 400);
-        drawSankeyInto(popSvg, W, fullH, currentMode);
+        const H = popWrap.clientHeight || 500;
+        drawSankeyInto(popSvg, W, H, currentMode, true);
       }
     });
 
@@ -781,10 +786,8 @@ export function mount(store, navigate) {
         const popWrap = document.getElementById('sankey-popup-wrap');
         if (popSvg && popWrap) {
           const W = popWrap.clientWidth || 900;
-          const data = buildSankeyData(currentMode);
-          const allItems = data.groups.flatMap(g => g.items);
-          const fullH = Math.max(allItems.length * 20 + (allItems.length - 1) * 6 + 20, 400);
-          drawSankeyInto(popSvg, W, fullH, currentMode);
+          const H = popWrap.clientHeight || 500;
+          drawSankeyInto(popSvg, W, H, currentMode, true);
         }
         drawSankey(currentMode);
       });
