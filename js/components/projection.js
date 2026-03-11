@@ -310,7 +310,7 @@ export function render(store) {
                   : s.annee === 0
                     ? 'bg-accent-blue/5'
                     : '';
-                const borderTop = isFiveYear ? 'border-t-2 border-t-dark-300/40' : '';
+                const bt = isFiveYear ? 'border-t-2 border-t-dark-300/40' : '';
                 // Helper: render a placement cell with tooltip
                 const placCell = (gk, extraClass = '') => {
                   const val = s.placementDetail[gk] || 0;
@@ -320,29 +320,29 @@ export function render(store) {
                   const rate = s.placementTaxRates?.[gk] || 0;
                   const rateStr = rate > 0 ? ` (${Math.round(rate * 100)}%)` : '';
                   const tip = `Apports: ${formatCurrency(ap)}\\nGains: ${formatCurrency(ga)}\\nImpôts: -${formatCurrency(tx)}${rateStr}\\nNet: ${formatCurrency(val - tx)}`;
-                  return `<td class="px-1 py-0.5 text-center text-[11px] text-gray-200 ${extraClass}" title="${tip}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(ap)}</div>` : '<span class=&quot;text-gray-700&quot;>-</span>'}</td>`;
+                  return `<td class="px-1 py-0.5 text-center text-[11px] text-gray-200 ${bt} ${extraClass}" title="${tip}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(ap)}</div>` : '<span class=&quot;text-gray-700&quot;>-</span>'}</td>`;
                 };
                 const totalGain = s.cashApresImpot - s.totalApports;
                 return `
-              <tr class="hover:bg-dark-600/30 transition ${rowClass} ${borderTop} text-[11px]">
-                <td class="px-1 py-1 text-center font-medium text-gray-200 truncate">
+              <tr class="hover:bg-dark-600/30 transition ${rowClass} text-[11px]">
+                <td class="px-1 py-1 text-center font-medium text-gray-200 truncate ${bt}">
                   ${s.label}${isRetirement ? ' <span class="text-[9px] text-accent-amber font-semibold">R</span>' : ''}
                 </td>
-                <td class="px-0 py-1 text-center text-gray-500">${s.annee + 1}</td>
-                <td class="px-0 py-1 text-center border-r-2 border-dark-300/40 ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
+                <td class="px-0 py-1 text-center text-gray-500 ${bt}">${s.annee + 1}</td>
+                <td class="px-0 py-1 text-center border-r-2 border-dark-300/40 ${bt} ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
                 ${placCell('PEA Actions')}
                 ${placCell('PEA ETF')}
                 ${placCell('Crypto')}
                 ${placCell('CTO', 'border-r-2 border-dark-300/40')}
                 ${placCell('Assurance Vie')}
                 ${placCell('PEE', 'border-r-2 border-dark-300/40')}
-                <td class="px-1 py-0.5 text-center text-[11px] text-gray-400 font-semibold">${formatCurrency(s.totalApports)}</td>
-                <td class="px-1 py-0.5 text-center font-semibold text-[11px] ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
-                <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px]" title="Total placements: ${formatCurrency(s.placements)}\\nApports: ${formatCurrency(s.totalApports)}\\nImpôts totaux: -${formatCurrency(s.totalTaxes)}">${formatCurrency(s.cashApresImpot)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(s.totalApports)}</div></td>
-                <td class="px-1 py-1 text-center text-[11px] text-gray-200">${formatCurrency(s.epargne)}</td>
-                <td class="px-1 py-1 text-center text-[11px] text-gray-200">${formatCurrency(s.heritage)}</td>
-                <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40">${formatCurrency(s.immobilier)}</td>
-                <td class="px-1 py-1 text-center font-semibold text-accent-green text-[11px]">${formatCurrency(s.totalLiquiditesNettes)}</td>
+                <td class="px-1 py-0.5 text-center text-[11px] text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
+                <td class="px-1 py-0.5 text-center font-semibold text-[11px] ${bt} ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
+                <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px] ${bt}" title="Total placements: ${formatCurrency(s.placements)}\\nApports: ${formatCurrency(s.totalApports)}\\nImpôts totaux: -${formatCurrency(s.totalTaxes)}">${formatCurrency(s.cashApresImpot)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(s.totalApports)}</div></td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-200 ${bt}">${formatCurrency(s.epargne)}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-200 ${bt}">${formatCurrency(s.heritage)}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
+                <td class="px-1 py-1 text-center font-semibold text-accent-green text-[11px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
               </tr>`;
               }).join('')}
             </tbody>
