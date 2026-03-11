@@ -4,6 +4,41 @@ function fmt(v) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v || 0);
 }
 
+function getCurrentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function computeLiveSoldes(store) {
+  const comptes = store.get('actifs')?.comptesCourants || [];
+  const baseCIC = Number(comptes.find(c => c.id === 'cc-cic')?.solde) || 0;
+  const baseTR = Number(comptes.find(c => c.id === 'cc-trade')?.solde) || 0;
+
+  const soldePrecedent = store.get('soldeMoisPrecedent') || {};
+  const prevCIC = Number(soldePrecedent.cic) || 0;
+  const prevTR = Number(soldePrecedent.tr) || 0;
+
+  const items = store.get('suiviDepenses') || [];
+  const revenus = store.get('suiviRevenus') || [];
+
+  const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+
+  const monthKey = getCurrentMonthKey();
+  const depMensuelles = store.get('depensesMensuellesCIC') || [];
+  const cicCochees = store.get('cicMensuellesCochees') || {};
+  const cocheesThisMonth = cicCochees[monthKey] || [];
+  const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+
+  const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+
+  return {
+    cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
+    tr: baseTR + prevTR + revTR - depTR
+  };
+}
+
 export function render(store) {
   const comptes = store.get('actifs.comptesCourants') || [];
   const epargne = store.get('actifs.epargne') || [];
@@ -11,7 +46,13 @@ export function render(store) {
   const immobilier = store.get('actifs.immobilier') || [];
   const emprunts = store.get('passifs.emprunts') || [];
 
-  const totalCC = comptes.reduce((s, c) => s + (Number(c.solde) || 0), 0);
+  // Soldes live des comptes courants (même calcul que Quotidien Live)
+  const liveSoldes = computeLiveSoldes(store);
+  const comptesLive = comptes.map(c => ({
+    nom: c.nom,
+    solde: c.id === 'cc-cic' ? liveSoldes.cic : c.id === 'cc-trade' ? liveSoldes.tr : (Number(c.solde) || 0)
+  }));
+  const totalCC = comptesLive.reduce((s, c) => s + c.solde, 0);
   const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
   const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
@@ -24,7 +65,7 @@ export function render(store) {
     {
       label: 'Comptes courants', total: totalCC, color: 'indigo', hex: '#6366f1',
       icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
-      items: comptes.map(c => ({ nom: c.nom, val: Number(c.solde) || 0 }))
+      items: comptesLive.map(c => ({ nom: c.nom, val: c.solde }))
     },
     {
       label: 'Épargne', total: totalEpargne, color: 'green', hex: '#22c55e',
@@ -108,12 +149,12 @@ export function render(store) {
 }
 
 export function mount(store) {
-  const comptes = store.get('actifs.comptesCourants') || [];
   const epargne = store.get('actifs.epargne') || [];
   const placements = store.get('actifs.placements') || [];
   const immobilier = store.get('actifs.immobilier') || [];
 
-  const totalCC = comptes.reduce((s, c) => s + (Number(c.solde) || 0), 0);
+  const liveSoldes = computeLiveSoldes(store);
+  const totalCC = liveSoldes.cic + liveSoldes.tr;
   const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
   const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
