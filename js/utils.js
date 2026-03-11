@@ -290,6 +290,9 @@ export function computeProjection(store) {
     return PFU_RATE;
   }
 
+  const cashOutYear = params.cashOutYear ? Number(params.cashOutYear) : null;
+  let cashedOut = false;
+
   for (let year = 0; year <= years; year++) {
     // Inject heritage
     if (heritageByYear[year]) {
@@ -310,9 +313,9 @@ export function computeProjection(store) {
     // Héritage liquide
     if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
 
-    // Capital transfers (épargne/héritage/CTO → placement)
+    // Capital transfers (épargne/héritage/CTO → placement) — skip after cash out
     const calYear = currentYear + year;
-    for (const transfer of capitalTransfers) {
+    if (!cashedOut) for (const transfer of capitalTransfers) {
       const startY = Number(transfer.startYear);
       const endY = transfer.endYear ? Number(transfer.endYear) : startY;
       const inRange = calYear >= startY && calYear <= endY;
@@ -352,10 +355,23 @@ export function computeProjection(store) {
       }
     }
 
+    // PEE: liquidate at retirement age (proceeds go to épargne after tax)
+    const currentAge = ageFinAnnee + year;
+    if (currentAge === ageRetraite) {
+      placSims.forEach(ps => {
+        if (!ps.isPEE || ps.value <= 0) return;
+        const gains = Math.max(0, ps.totalGains);
+        const taxRate = getPlacementTaxRate(ps, year);
+        const taxes = gains * taxRate;
+        epar += ps.value - taxes;
+        ps.value = 0;
+        ps.totalApports = 0;
+        ps.totalGains = 0;
+      });
+    }
+
     // Cash out: liquidate all placements into épargne (after tax)
-    const cashOutYear = params.cashOutYear ? Number(params.cashOutYear) : null;
-    let cashedOut = false;
-    if (cashOutYear && calYear === cashOutYear) {
+    if (cashOutYear && calYear >= cashOutYear && !cashedOut) {
       cashedOut = true;
       placSims.forEach(ps => {
         if (ps.value <= 0) return;
@@ -374,11 +390,12 @@ export function computeProjection(store) {
       }
     }
 
-    // Per-placement growth + DCA
+    // Per-placement growth + DCA (skipped after cash out)
     // Collect PEA overflow per month to redirect to CTO
     const ctoOverflowMonthly = new Array(monthsInPeriod).fill(0);
 
     let interetsAnnuels = 0;
+    if (!cashedOut) {
     placSims.forEach(ps => {
       if (ps.id === '__cto_overflow__') return; // handled separately after
       const prevValue = ps.value;
@@ -513,6 +530,7 @@ export function computeProjection(store) {
       const apportsThisPeriod = ctoOverflow.totalApports - prevApports;
       interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
     }
+    } // end if (!cashedOut)
 
     // Interest on épargne/héritage
     interetsAnnuels += epar * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
