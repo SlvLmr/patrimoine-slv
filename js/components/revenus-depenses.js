@@ -141,11 +141,11 @@ export function render(store) {
           ${revenus.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
             ${revenus.map(r => `
-            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row">
+            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-rev="${r.id}">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
-                  <button data-move-rev-up="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▲</button>
-                  <button data-move-rev-down="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▼</button>
+                  <button data-move-rev-up="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
+                  <button data-move-rev-down="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
                 </div>
                 <p class="text-xs text-gray-200 truncate">${r.nom}</p>
                 <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
@@ -153,8 +153,7 @@ export function render(store) {
               <div class="flex items-center gap-3 flex-shrink-0">
                 ${r.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(r)}</span>` : ''}
                 <span class="text-xs font-medium text-gray-100 whitespace-nowrap">${formatFreqLabel(r)}</span>
-                <button data-edit-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium transition">Mod.</button>
-                <button data-del-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition">✕</button>
+                <button data-del-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition" onclick="event.stopPropagation()">✕</button>
               </div>
             </div>
             `).join('')}
@@ -183,11 +182,11 @@ export function render(store) {
           ${g.items.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
             ${g.items.map(d => `
-            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row" data-dep-id="${d.id}" data-dep-type="${g.key}">
+            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-dep="${d.id}" data-dep-type="${g.key}">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
-                  <button data-move-dep-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▲</button>
-                  <button data-move-dep-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▼</button>
+                  <button data-move-dep-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
+                  <button data-move-dep-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
                 </div>
                 <p class="text-xs text-gray-200 truncate">${d.nom}</p>
                 <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
@@ -195,8 +194,7 @@ export function render(store) {
               <div class="flex items-center gap-3 flex-shrink-0">
                 ${d.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(d)}</span>` : ''}
                 <span class="text-xs font-medium text-gray-100 whitespace-nowrap">${formatFreqLabel(d)}</span>
-                <button data-edit-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium transition">Mod.</button>
-                <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition">✕</button>
+                <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition" onclick="event.stopPropagation()">✕</button>
               </div>
             </div>
             `).join('')}
