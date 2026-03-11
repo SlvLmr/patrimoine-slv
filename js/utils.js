@@ -178,6 +178,7 @@ export function computeProjection(store) {
     groupKey: gk,
     id: p.id,
     value: initialValue,
+    apportInitial: Number(p.apport) || initialValue, // real money invested (for PEA ceiling)
     rendement: rend,
     enveloppe,
     envelopeAgeAtStart,
@@ -253,10 +254,11 @@ export function computeProjection(store) {
   const PEA_PLAFOND = 150000;
   let peaApportsCumules = 0;
   placSims.forEach(ps => {
-    ps.totalApports = ps.value; // initial value counts as apport
+    ps.totalApports = ps.value; // initial value counts as apport (for gains tracking)
     ps.totalGains = 0;
     if (ps.groupKey.startsWith('PEA')) {
-      peaApportsCumules += ps.value;
+      // Use real apport (not market value) for PEA ceiling tracking
+      peaApportsCumules += ps.apportInitial;
     }
   });
   let cumulInterets = 0;
