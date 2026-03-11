@@ -390,10 +390,10 @@ export function render(store) {
           const lines = [];
           if (envSet.has('PEA')) lines.push(`PEA : plafond 150 000 € (versé ${formatCurrency(peaApports)}) — gains exonérés d'IR après 5 ans`);
           if (envSet.has('AV') || allPlac.some(p => (p.enveloppe || p.type || '').includes('AV'))) lines.push('Assurance Vie : pas de plafond, fiscalité avantageuse après 8 ans');
-          if (envSet.has('CTO') || allPlac.some(p => getPlacementGroupKey(p) === 'CTO')) lines.push('CTO : pas de plafond, flat tax 30% sur les plus-values');
+          if (envSet.has('CTO') || allPlac.some(p => getPlacementGroupKey(p) === 'CTO')) lines.push('CTO : pas de plafond, flat tax 31,4% sur les plus-values');
           if (envSet.has('PEE')) lines.push('PEE : abondement employeur, bloqué 5 ans');
           if (envSet.has('PER')) lines.push('PER : déductible du revenu imposable, bloqué jusqu\'à la retraite');
-          if (envSet.has('Crypto') || allPlac.some(p => getPlacementGroupKey(p) === 'Crypto')) lines.push('Crypto : flat tax 30% sur les plus-values réalisées');
+          if (envSet.has('Crypto') || allPlac.some(p => getPlacementGroupKey(p) === 'Crypto')) lines.push('Crypto : flat tax 31,4% sur les plus-values réalisées');
           return lines.join('\n');
         })() : 'Aucun placement configuré';
 
@@ -493,18 +493,18 @@ export function render(store) {
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-accent-cyan font-semibold mb-1">Fiscalité PEA (après 5 ans)</h3>
               <p>Prélèvements sociaux seuls : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 17.2%</code></p>
-              <p class="mt-1 text-xs text-gray-500">Avant 5 ans, c'est la flat tax complète (30%). Après 5 ans, exonération d'impôt sur le revenu → seulement 17.2% de cotisations sociales.</p>
+              <p class="mt-1 text-xs text-gray-500">Avant 5 ans, c'est la flat tax complète (31,4%). Après 5 ans, exonération d'impôt sur le revenu → seulement 17.2% de cotisations sociales.</p>
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
-              <h3 class="text-blue-400 font-semibold mb-1">Flat Tax CTO / Crypto (30%)</h3>
-              <p>Sur les plus-values : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 30%</code></p>
-              <p class="mt-1 text-xs text-gray-500">Le PFU (Prélèvement Forfaitaire Unique) = 12.8% d'IR + 17.2% de prélèvements sociaux. Appliqué uniquement sur les gains, pas sur le capital investi.</p>
+              <h3 class="text-blue-400 font-semibold mb-1">Flat Tax CTO / Crypto (31,4%)</h3>
+              <p>Sur les plus-values : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 31,4%</code></p>
+              <p class="mt-1 text-xs text-gray-500">Le PFU (Prélèvement Forfaitaire Unique) = 14.2% d'IR + 17.2% de prélèvements sociaux. Appliqué uniquement sur les gains, pas sur le capital investi.</p>
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-teal-400 font-semibold mb-1">Assurance Vie</h3>
-              <p>Avant 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 30% (PFU)</code></p>
+              <p>Avant 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 31,4% (PFU)</code></p>
               <p>Après 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 24.7% (17.2% PS + 7.5% IR)</code></p>
               <p class="mt-1 text-xs text-gray-500">Après 8 ans, abattement de 4 600 € (célibataire) ou 9 200 € (couple) sur les gains avant le calcul du 7.5%. Non modélisé ici pour simplifier.</p>
             </div>

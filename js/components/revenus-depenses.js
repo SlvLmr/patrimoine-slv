@@ -139,9 +139,21 @@ export function render(store) {
             </div>
           </summary>
           ${revenus.length > 0 ? `
+          <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider">Source</span>
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Mensuel</span>
+            <span class="text-[10px] text-accent-amber/60 uppercase tracking-wider text-right">Mensuel lissé</span>
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Annuel</span>
+            <span></span>
+          </div>
           <div class="divide-y divide-dark-400/20">
-            ${revenus.map(r => `
-            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-rev="${r.id}">
+            ${revenus.map(r => {
+              const montant = Number(r.montantMensuel) || 0;
+              const mensuel = r.frequence === 'Annuel' ? 0 : montant;
+              const lisse = getMensuelLisse(r);
+              const annuel = lisse * 12;
+              return `
+            <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-rev="${r.id}">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
                   <button data-move-rev-up="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
@@ -150,13 +162,19 @@ export function render(store) {
                 <p class="text-xs text-gray-200 truncate">${r.nom}</p>
                 <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
               </div>
-              <div class="flex items-center gap-3 flex-shrink-0">
-                ${r.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(r)}</span>` : ''}
-                <span class="text-xs font-medium text-gray-100 whitespace-nowrap">${formatFreqLabel(r)}</span>
-                <button data-del-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition" onclick="event.stopPropagation()">✕</button>
-              </div>
-            </div>
-            `).join('')}
+              <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
+              <span class="text-xs text-right whitespace-nowrap ${r.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
+              <span class="text-xs text-right whitespace-nowrap ${r.frequence === 'Annuel' ? 'text-gray-100 font-medium' : 'text-gray-400'}">${formatCurrencyCents(annuel)}</span>
+              <button data-del-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
+            </div>`;
+            }).join('')}
+          </div>
+          <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-2 border-t border-dark-400/40 bg-dark-700/30">
+            <span class="text-xs font-bold text-gray-300 uppercase">Totaux</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.reduce((s, r) => s + (r.frequence === 'Annuel' ? 0 : (Number(r.montantMensuel) || 0)), 0))}</span>
+            <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(revenus.reduce((s, r) => s + getMensuelLisse(r), 0))}</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.reduce((s, r) => s + getMensuelLisse(r), 0) * 12)}</span>
+            <span></span>
           </div>
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
         </details>
@@ -180,9 +198,18 @@ export function render(store) {
             </div>
           </summary>
           ${g.items.length > 0 ? `
+          <div class="grid grid-cols-[1fr_7rem_7rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider">Poste</span>
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Mensuel</span>
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Annuel</span>
+            <span></span>
+          </div>
           <div class="divide-y divide-dark-400/20">
-            ${g.items.map(d => `
-            <div class="flex items-center justify-between px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-dep="${d.id}" data-dep-type="${g.key}">
+            ${g.items.map(d => {
+              const mensuel = getMensuelLisse(d);
+              const annuel = mensuel * 12;
+              return `
+            <div class="grid grid-cols-[1fr_7rem_7rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-dep="${d.id}" data-dep-type="${g.key}">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
                   <button data-move-dep-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
@@ -191,13 +218,17 @@ export function render(store) {
                 <p class="text-xs text-gray-200 truncate">${d.nom}</p>
                 <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
               </div>
-              <div class="flex items-center gap-3 flex-shrink-0">
-                ${d.frequence === 'Annuel' ? `<span class="text-[10px] text-gray-500">${formatLisseLabel(d)}</span>` : ''}
-                <span class="text-xs font-medium text-gray-100 whitespace-nowrap">${formatFreqLabel(d)}</span>
-                <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition" onclick="event.stopPropagation()">✕</button>
-              </div>
-            </div>
-            `).join('')}
+              <span class="text-xs font-medium text-gray-100 text-right whitespace-nowrap">${formatCurrencyCents(mensuel)}</span>
+              <span class="text-xs text-gray-400 text-right whitespace-nowrap">${formatCurrencyCents(annuel)}</span>
+              <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
+            </div>`;
+            }).join('')}
+          </div>
+          <div class="grid grid-cols-[1fr_7rem_7rem_1.2rem] items-center px-4 py-2 border-t border-dark-400/40 bg-dark-700/30">
+            <span class="text-xs font-bold text-gray-300 uppercase">Total</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(g.total)}</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(g.total * 12)}</span>
+            <span></span>
           </div>
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucune dépense.</p>'}
         </details>

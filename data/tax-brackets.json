@@ -8,7 +8,7 @@
     { "min": 82342, "max": 177106, "taux": 0.41 },
     { "min": 177107, "max": null, "taux": 0.45 }
   ],
-  "pfu": 0.30,
+  "pfu": 0.314,
   "csg_crds": 0.172,
   "decote": {
     "seuil_celibataire": 1929,

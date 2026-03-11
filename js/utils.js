@@ -266,7 +266,7 @@ export function computeProjection(store) {
     }
   });
   let cumulInterets = 0;
-  const PFU_RATE = 0.30;   // Prélèvement Forfaitaire Unique: 12.8% IR + 17.2% PS
+  const PFU_RATE = 0.314;  // Prélèvement Forfaitaire Unique: 14.2% IR + 17.2% PS
   const PS_RATE = 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
   const AV_IR_AFTER8 = 0.075; // AV après 8 ans: 7.5% IR (hors abattement)
   const AV_ABATTEMENT = 4600; // Abattement annuel AV > 8 ans (célibataire)
@@ -285,14 +285,14 @@ export function computeProjection(store) {
     }
     if (isAV) {
       // AV: after 8 years → PS 17.2% + 7.5% IR (simplified, ignoring abatement for now)
-      // before 8 years → PFU 30%
+      // before 8 years → PFU 31.4%
       return envelopeAge >= 8 ? (PS_RATE + AV_IR_AFTER8) : PFU_RATE;
     }
     if (isPEE) {
       // PEE: only social charges on gains (no IR)
       return PS_RATE;
     }
-    // CTO, Crypto, PER, Autre → PFU 30%
+    // CTO, Crypto, PER, Autre → PFU 31.4%
     return PFU_RATE;
   }
 
