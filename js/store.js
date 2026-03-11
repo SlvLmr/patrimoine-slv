@@ -239,9 +239,28 @@ const Store = {
 
     this._profileId = activeId;
     this._state = loadState(activeId);
+    this._migrateInformatif();
     this._applyMonthlyDCA();
     this._archivePastExpenses();
     return this;
+  },
+
+  // Migrate: flag known informatif revenue types
+  _migrateInformatif() {
+    const revenus = this._state.revenus || [];
+    const informatifTypes = ['Intéressement', 'Participation'];
+    const informatifNames = ['tickets restaurants', 'ticket restaurant', 'tickets restau'];
+    let changed = false;
+    revenus.forEach(r => {
+      if (r.informatif !== undefined) return;
+      const isType = informatifTypes.includes(r.type);
+      const isName = informatifNames.includes((r.nom || '').toLowerCase());
+      if (isType || isName) {
+        r.informatif = true;
+        changed = true;
+      }
+    });
+    if (changed) saveState(this._profileId, this._state);
   },
 
   // Auto-apply DCA on the 2nd of each month
