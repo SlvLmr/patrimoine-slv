@@ -124,7 +124,7 @@ export function render(store) {
       </div>
 
       <!-- LEVEL 2 — Liquidités + Investissements + Immobilier -->
-      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-[5fr_5fr_2fr] gap-3">
 
         <!-- Liquidités -->
         <div id="ptf-card-liq" class="card-dark rounded-2xl p-3">
@@ -152,22 +152,32 @@ export function render(store) {
           <p class="text-xl font-bold text-accent-amber mb-1 text-center">${fmt(totalPlac)}</p>
         </div>
 
-        <!-- Immobilier -->
+        <!-- Immobilier (compact, includes details) -->
         <div id="ptf-card-immo" class="card-dark rounded-2xl p-3">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-6 h-6 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-5 h-5 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-2.5 h-2.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
             </div>
-            <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Immobilier</p>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Immobilier</p>
           </div>
-          <p class="text-xl font-bold text-amber-500 mb-1 text-center">${fmt(totalImmo)}</p>
+          <p class="text-lg font-bold text-amber-500 mb-1 text-center">${fmt(totalImmo)}</p>
+          <div class="space-y-1 mt-1 border-t border-dark-400/20 pt-1">
+            ${immobilier.length > 0 ? immobilier.map(i => `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <div class="w-1 h-1 rounded-full bg-amber-500/50 flex-shrink-0"></div>
+                <span class="text-[9px] text-gray-400 truncate">${i.nom}</span>
+              </div>
+              <span class="text-[9px] text-gray-300 font-medium flex-shrink-0 ml-1">${fmt(Number(i.valeurActuelle) || 0)}</span>
+            </div>`).join('') : '<p class="text-[9px] text-gray-600">Aucun bien</p>'}
+          </div>
         </div>
       </div>
 
       <!-- SVG Level 2 → 3 -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 lg:grid-cols-[5fr_5fr_2fr] gap-3">
 
         <!-- Left branch: Liquidités → Comptes Courants + Épargne → détails -->
         <div>
@@ -272,30 +282,8 @@ export function render(store) {
           </div>
         </div>
 
-        <!-- Right branch: Immobilier → Biens (compact) -->
-        <div>
-          <div id="ptf-svg-L2R" class="hidden lg:block" style="height:35px;">
-            <svg id="ptf-svg-L2R-svg" class="w-full" style="height:35px;" fill="none">
-              <defs>
-                <filter id="glow-brown2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter>
-              </defs>
-            </svg>
-          </div>
-          <div id="ptf-card-biens" class="card-dark rounded-xl p-3">
-            <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Biens immobiliers</p>
-            <p class="text-base font-bold text-amber-500 text-center mb-2">${fmt(totalImmo)}</p>
-            <div class="space-y-1">
-              ${immobilier.length > 0 ? immobilier.map(i => `
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 min-w-0">
-                  <div class="w-1 h-1 rounded-full bg-amber-500/50 flex-shrink-0"></div>
-                  <span class="text-[10px] text-gray-400 truncate">${i.nom}</span>
-                </div>
-                <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(i.valeurActuelle) || 0)}</span>
-              </div>`).join('') : '<p class="text-[10px] text-gray-600">Aucun bien</p>'}
-            </div>
-          </div>
-        </div>
+        <!-- Right: empty spacer for Immobilier (no sub-level) -->
+        <div></div>
 
       </div>
     </div>
@@ -485,8 +473,7 @@ export function mount() {
       ['glow-amber2', 'glow-amber2', 'glow-amber2', 'glow-amber2']
     );
 
-    // Level 2 → 3 Right: Immobilier → Biens
-    drawStraightConnector('ptf-svg-L2R-svg', 'ptf-svg-L2R', 'ptf-card-biens', '#8b6914', 'glow-brown2');
+    // Immobilier has no sub-level — details are inline
   }
 
   requestAnimationFrame(() => {
