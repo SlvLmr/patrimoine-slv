@@ -525,20 +525,6 @@ export function computeProjection(store) {
     }
     } // end if (!cashedOut)
 
-    // PEE: liquidate at souhaité retirement age (proceeds go to épargne after tax)
-    if (currentAge === ageRetraitePEE) {
-      placSims.forEach(ps => {
-        if (!ps.isPEE || ps.value <= 0) return;
-        const gains = Math.max(0, ps.totalGains);
-        const taxRate = getPlacementTaxRate(ps, year);
-        const taxes = gains * taxRate;
-        epar += ps.value - taxes;
-        ps.value = 0;
-        ps.totalApports = 0;
-        ps.totalGains = 0;
-      });
-    }
-
     // Interest on épargne/héritage
     interetsAnnuels += epar * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
     if (heritage > 0) interetsAnnuels += heritage * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
@@ -641,6 +627,20 @@ export function computeProjection(store) {
       mensualites: Math.round(mensualitesTotales),
       capaciteEpargne: Math.round(revenus - depenses - mensualitesTotales)
     });
+
+    // PEE: liquidate after snapshot so the final value is visible in the table
+    if (currentAge === ageRetraitePEE) {
+      placSims.forEach(ps => {
+        if (!ps.isPEE || ps.value <= 0) return;
+        const gains = Math.max(0, ps.totalGains);
+        const taxRate = getPlacementTaxRate(ps, year);
+        const taxes = gains * taxRate;
+        epar += ps.value - taxes;
+        ps.value = 0;
+        ps.totalApports = 0;
+        ps.totalGains = 0;
+      });
+    }
 
     if (year === years) break;
 
