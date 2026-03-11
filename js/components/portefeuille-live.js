@@ -70,9 +70,8 @@ export function render(store) {
 
       <!-- Patrimoine net — centered top node -->
       <div class="flex justify-center">
-        <div class="card-dark rounded-2xl px-8 py-5 relative overflow-hidden text-center inline-block" style="box-shadow: 0 0 50px rgba(201,167,108,0.12), 0 0 100px rgba(201,167,108,0.05)">
-          <div class="absolute inset-0 bg-gradient-to-br from-accent-amber/5 via-transparent to-purple-500/5 pointer-events-none"></div>
-          <div class="relative">
+        <div class="card-dark rounded-2xl px-8 py-5 text-center inline-block">
+          <div>
             <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Patrimoine net</p>
             <p class="text-4xl font-extrabold text-accent-amber tracking-tight">${fmt(patrimoineNet)}</p>
             ${totalDette > 0 ? `
@@ -112,7 +111,7 @@ export function render(store) {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         <!-- Liquidités -->
-        <div class="card-dark rounded-2xl p-5" style="box-shadow: 0 0 28px rgba(99,102,241,0.10)">
+        <div class="card-dark rounded-2xl p-5" >
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <div class="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
@@ -149,7 +148,7 @@ export function render(store) {
         </div>
 
         <!-- Investissements -->
-        <div class="card-dark rounded-2xl p-5" style="box-shadow: 0 0 28px rgba(201,167,108,0.10)">
+        <div class="card-dark rounded-2xl p-5" >
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <div class="w-7 h-7 rounded-lg bg-accent-amber/15 flex items-center justify-center flex-shrink-0">
@@ -175,7 +174,7 @@ export function render(store) {
         </div>
 
         <!-- Immobilier -->
-        <div class="card-dark rounded-2xl p-5" style="box-shadow: 0 0 28px rgba(139,105,20,0.12)">
+        <div class="card-dark rounded-2xl p-5" >
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <div class="w-7 h-7 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">

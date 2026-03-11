@@ -124,11 +124,14 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Dark card glass effect */
+/* Dark card glass effect with amber-purple gradient */
 .card-dark {
-  background: linear-gradient(135deg, rgba(26, 26, 31, 0.9), rgba(17, 17, 21, 0.95));
+  background:
+    linear-gradient(135deg, rgba(201, 167, 108, 0.03) 0%, transparent 40%, rgba(139, 92, 246, 0.03) 100%),
+    linear-gradient(135deg, rgba(26, 26, 31, 0.95), rgba(17, 17, 21, 0.98));
   border: 1px solid rgba(56, 56, 63, 0.35);
   backdrop-filter: blur(12px);
+  box-shadow: 0 0 30px rgba(201, 167, 108, 0.06), 0 0 60px rgba(139, 92, 246, 0.03);
 }
 
 /* Gradient text */
