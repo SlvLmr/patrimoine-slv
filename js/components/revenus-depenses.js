@@ -217,6 +217,12 @@ export function render(store) {
         </div>
       </div>
 
+      <!-- Balances -->
+      <div class="flex items-center justify-center gap-8 -mt-1">
+        <p class="text-sm font-semibold ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance mensuelle : ${formatCurrencyCents(balance)}</p>
+        <p class="text-sm font-semibold ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance annuelle : ${formatCurrencyCents(balance * 12)}</p>
+      </div>
+
       <!-- Revenus & Dépenses — blocs empilés, pliables -->
       <div class="flex items-center justify-end mb-2 gap-2">
         <button id="btn-seed-revenus" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut revenus</button>
