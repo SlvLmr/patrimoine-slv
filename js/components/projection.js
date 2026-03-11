@@ -292,6 +292,7 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">CTO</th>
                 <th class="px-1 py-1.5 text-center">AV</th>
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">PEE</th>
+                <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
                 <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
                 <th class="px-1 py-1.5 text-center">Épargne</th>
                 <th class="px-1 py-1.5 text-center">Hérit.</th>
@@ -318,8 +319,9 @@ export function render(store) {
                   const rate = s.placementTaxRates?.[gk] || 0;
                   const rateStr = rate > 0 ? ` (${Math.round(rate * 100)}%)` : '';
                   const tip = `Apports: ${formatCurrency(ap)}\\nGains: ${formatCurrency(ga)}\\nImpôts: -${formatCurrency(tx)}${rateStr}\\nNet: ${formatCurrency(val - tx)}`;
-                  return `<td class="px-1 py-1 text-center text-[11px] text-gray-200 ${extraClass}" title="${tip}">${val > 0 ? formatCurrency(val) : '<span class=&quot;text-gray-700&quot;>-</span>'}</td>`;
+                  return `<td class="px-1 py-0.5 text-center text-[11px] text-gray-200 ${extraClass}" title="${tip}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(ap)}</div>` : '<span class=&quot;text-gray-700&quot;>-</span>'}</td>`;
                 };
+                const totalGain = s.cashApresImpot - s.totalApports;
                 return `
               <tr class="hover:bg-dark-600/30 transition ${rowClass} ${borderTop} text-[11px]">
                 <td class="px-1 py-1 text-center font-medium text-gray-200 truncate">
@@ -333,7 +335,8 @@ export function render(store) {
                 ${placCell('CTO', 'border-r-2 border-dark-300/40')}
                 ${placCell('Assurance Vie')}
                 ${placCell('PEE', 'border-r-2 border-dark-300/40')}
-                <td class="px-1 py-1 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px]" title="Total placements: ${formatCurrency(s.placements)}\\nImpôts totaux: -${formatCurrency(s.totalTaxes)}">${formatCurrency(s.cashApresImpot)}</td>
+                <td class="px-1 py-0.5 text-center font-semibold text-[11px] ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
+                <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px]" title="Total placements: ${formatCurrency(s.placements)}\\nApports: ${formatCurrency(s.totalApports)}\\nImpôts totaux: -${formatCurrency(s.totalTaxes)}">${formatCurrency(s.cashApresImpot)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(s.totalApports)}</div></td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200">${formatCurrency(s.epargne)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200">${formatCurrency(s.heritage)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40">${formatCurrency(s.immobilier)}</td>
