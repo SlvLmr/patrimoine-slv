@@ -365,7 +365,7 @@ export function render(store) {
         </details>
 
         <!-- Chart répartition dépenses -->
-        <div class="card-dark rounded-xl p-4 flex flex-col">
+        <div class="card-dark rounded-xl p-4 flex flex-col chart-glow">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-sm font-semibold text-gray-200">Répartition dépenses</h2>
             <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
@@ -409,16 +409,70 @@ export function mount(store, navigate) {
   });
   const depChartColors = ['#ef4444', '#f97316', '#06b6d4', '#a855f7'];
 
+  const depChartEmojis = ['🏠', '🛒', '🔄', '📈'];
+
+  // Center text plugin
+  const centerTextPlugin = {
+    id: 'centerText',
+    afterDraw(chart) {
+      const { ctx, chartArea } = chart;
+      const total = chart.data.datasets[0].data.reduce((s, v) => s + v, 0);
+      const suffix = chart.options._depSuffix || '/mois';
+      const cx = (chartArea.left + chartArea.right) / 2;
+      const cy = (chartArea.top + chartArea.bottom) / 2;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 14px Inter, sans-serif';
+      ctx.fillStyle = '#e5e5e5';
+      ctx.fillText(formatCurrencyCents(total), cx, cy - 8);
+      ctx.font = '10px Inter, sans-serif';
+      ctx.fillStyle = '#88888a';
+      ctx.fillText(suffix, cx, cy + 10);
+      ctx.restore();
+    }
+  };
+
+  // Icons in slices plugin
+  const sliceIconsPlugin = {
+    id: 'sliceIcons',
+    afterDraw(chart) {
+      const { ctx, chartArea } = chart;
+      const meta = chart.getDatasetMeta(0);
+      const emojis = chart.options._depEmojis || [];
+      if (!meta || !emojis.length) return;
+      ctx.save();
+      meta.data.forEach((arc, i) => {
+        if (!emojis[i]) return;
+        const { startAngle, endAngle, innerRadius, outerRadius } = arc.getProps(['startAngle', 'endAngle', 'innerRadius', 'outerRadius']);
+        const midAngle = (startAngle + endAngle) / 2;
+        const midRadius = (innerRadius + outerRadius) / 2;
+        const x = arc.x + Math.cos(midAngle) * midRadius;
+        const y = arc.y + Math.sin(midAngle) * midRadius;
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(emojis[i], x, y);
+      });
+      ctx.restore();
+    }
+  };
+
   function renderDepChart(mode) {
-    const data = depChartGroups.map(g => g[mode]).filter((_, i) => depChartGroups[i][mode] > 0);
-    const labels = depChartGroups.filter(g => g[mode] > 0).map(g => g.label);
-    const colors = depChartGroups.map((_, i) => depChartColors[i]).filter((_, i) => depChartGroups[i][mode] > 0);
+    const visibleIndices = depChartGroups.map((g, i) => g[mode] > 0 ? i : -1).filter(i => i >= 0);
+    const data = visibleIndices.map(i => depChartGroups[i][mode]);
+    const labels = visibleIndices.map(i => depChartGroups[i].label);
+    const colors = visibleIndices.map(i => depChartColors[i]);
+    const emojis = visibleIndices.map(i => depChartEmojis[i]);
     const suffix = mode === 'annuel' ? '/an' : '/mois';
     createChart('chart-dep', {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
+      plugins: [centerTextPlugin, sliceIconsPlugin],
       options: {
-        cutout: '60%',
+        cutout: '55%',
+        _depSuffix: suffix,
+        _depEmojis: emojis,
         plugins: {
           legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 11 } } },
           tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}${suffix}` } }

@@ -156,6 +156,10 @@ input[type="number"] {
   box-shadow: 0 0 20px rgba(255, 71, 87, 0.1);
 }
 
+.chart-glow {
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.12), 0 0 60px rgba(249, 115, 22, 0.08), 0 0 90px rgba(168, 85, 247, 0.06);
+}
+
 /* KPI card hover effect */
 .kpi-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
