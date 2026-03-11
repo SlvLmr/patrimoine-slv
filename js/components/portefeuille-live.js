@@ -55,8 +55,7 @@ export function render(store) {
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const totalDette = emprunts.reduce((s, e) => s + (Number(e.capitalRestant) || 0), 0);
   const totalLiquidites = totalCC + totalEpargne;
-  const totalInvest = totalPlac + totalImmo;
-  const totalActifs = totalLiquidites + totalInvest;
+  const totalActifs = totalLiquidites + totalPlac + totalImmo;
   const patrimoineNet = totalActifs - totalDette;
 
   return `
@@ -82,48 +81,58 @@ export function render(store) {
           <defs>
             <filter id="glow-indigo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
             <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
+            <filter id="glow-brown" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
           </defs>
         </svg>
       </div>
 
-      <!-- LEVEL 2 — Liquidités + Investissements -->
-      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- LEVEL 2 — Liquidités + Investissements + Immobilier -->
+      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         <!-- Liquidités -->
         <div id="ptf-card-liq" class="card-dark rounded-2xl p-5">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
-                <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                </svg>
-              </div>
-              <p class="text-[10px] text-gray-500 uppercase tracking-wider">Liquidités</p>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
             </div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Liquidités</p>
           </div>
           <p class="text-2xl font-bold text-indigo-400 mb-2 text-center">${fmt(totalLiquidites)}</p>
         </div>
 
         <!-- Investissements -->
         <div id="ptf-card-inv" class="card-dark rounded-2xl p-5">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-accent-amber/15 flex items-center justify-center flex-shrink-0">
-                <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                </svg>
-              </div>
-              <p class="text-[10px] text-gray-500 uppercase tracking-wider">Investissements</p>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-7 h-7 rounded-lg bg-accent-amber/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+              </svg>
             </div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Investissements</p>
           </div>
-          <p class="text-2xl font-bold text-accent-amber mb-2 text-center">${fmt(totalInvest)}</p>
+          <p class="text-2xl font-bold text-accent-amber mb-2 text-center">${fmt(totalPlac)}</p>
+        </div>
+
+        <!-- Immobilier -->
+        <div id="ptf-card-immo" class="card-dark rounded-2xl p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-7 h-7 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+            </div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Immobilier</p>
+          </div>
+          <p class="text-2xl font-bold text-amber-500 mb-2 text-center">${fmt(totalImmo)}</p>
         </div>
       </div>
 
-      <!-- SVG Level 2 → 3 (left side: Liquidités children) -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- SVG Level 2 → 3 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        <!-- Left branch -->
+        <!-- Left branch: Liquidités → CC + Épargne -->
         <div>
           <div id="ptf-svg-L2L" class="hidden lg:block" style="height:45px;">
             <svg id="ptf-svg-L2L-svg" class="w-full" style="height:45px;" fill="none">
@@ -133,7 +142,6 @@ export function render(store) {
             </svg>
           </div>
           <div id="ptf-L3L" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
             <!-- Comptes Courants -->
             <div id="ptf-card-cc" class="card-dark rounded-2xl p-4">
               <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Comptes courants</p>
@@ -149,7 +157,6 @@ export function render(store) {
                 </div>`).join('')}
               </div>
             </div>
-
             <!-- Épargne -->
             <div id="ptf-card-ep" class="card-dark rounded-2xl p-4">
               <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Épargne</p>
@@ -168,47 +175,52 @@ export function render(store) {
           </div>
         </div>
 
-        <!-- Right branch -->
+        <!-- Center branch: Investissements → Placements -->
         <div>
-          <div id="ptf-svg-L2R" class="hidden lg:block" style="height:45px;">
-            <svg id="ptf-svg-L2R-svg" class="w-full" style="height:45px;" fill="none">
+          <div id="ptf-svg-L2C" class="hidden lg:block" style="height:45px;">
+            <svg id="ptf-svg-L2C-svg" class="w-full" style="height:45px;" fill="none">
               <defs>
                 <filter id="glow-amber2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
               </defs>
             </svg>
           </div>
-          <div id="ptf-L3R" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-            <!-- Placements -->
-            <div id="ptf-card-plac" class="card-dark rounded-2xl p-4">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Placements</p>
-              <p class="text-lg font-bold text-accent-amber text-center mb-3">${fmt(totalPlac)}</p>
-              <div class="space-y-2">
-                ${placements.length > 0 ? placements.map(p => `
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <div class="w-1.5 h-1.5 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
-                    <span class="text-[11px] text-gray-400 truncate">${p.nom}</span>
-                  </div>
-                  <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(p.valeur) || 0)}</span>
-                </div>`).join('') : '<p class="text-[11px] text-gray-600">Aucun placement</p>'}
-              </div>
+          <div id="ptf-card-plac" class="card-dark rounded-2xl p-4">
+            <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Placements</p>
+            <p class="text-lg font-bold text-accent-amber text-center mb-3">${fmt(totalPlac)}</p>
+            <div class="space-y-2">
+              ${placements.length > 0 ? placements.map(p => `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="w-1.5 h-1.5 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
+                  <span class="text-[11px] text-gray-400 truncate">${p.nom}</span>
+                </div>
+                <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(p.valeur) || 0)}</span>
+              </div>`).join('') : '<p class="text-[11px] text-gray-600">Aucun placement</p>'}
             </div>
+          </div>
+        </div>
 
-            <!-- Immobilier -->
-            <div id="ptf-card-immo" class="card-dark rounded-2xl p-4">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Immobilier</p>
-              <p class="text-lg font-bold text-amber-500 text-center mb-3">${fmt(totalImmo)}</p>
-              <div class="space-y-2">
-                ${immobilier.length > 0 ? immobilier.map(i => `
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <div class="w-1.5 h-1.5 rounded-full bg-amber-500/50 flex-shrink-0"></div>
-                    <span class="text-[11px] text-gray-400 truncate">${i.nom}</span>
-                  </div>
-                  <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(i.valeurActuelle) || 0)}</span>
-                </div>`).join('') : '<p class="text-[11px] text-gray-600">Aucun bien</p>'}
-              </div>
+        <!-- Right branch: Immobilier → Biens -->
+        <div>
+          <div id="ptf-svg-L2R" class="hidden lg:block" style="height:45px;">
+            <svg id="ptf-svg-L2R-svg" class="w-full" style="height:45px;" fill="none">
+              <defs>
+                <filter id="glow-brown2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2"/></filter>
+              </defs>
+            </svg>
+          </div>
+          <div id="ptf-card-biens" class="card-dark rounded-2xl p-4">
+            <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">Biens immobiliers</p>
+            <p class="text-lg font-bold text-amber-500 text-center mb-3">${fmt(totalImmo)}</p>
+            <div class="space-y-2">
+              ${immobilier.length > 0 ? immobilier.map(i => `
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="w-1.5 h-1.5 rounded-full bg-amber-500/50 flex-shrink-0"></div>
+                  <span class="text-[11px] text-gray-400 truncate">${i.nom}</span>
+                </div>
+                <span class="text-[11px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(i.valeurActuelle) || 0)}</span>
+              </div>`).join('') : '<p class="text-[11px] text-gray-600">Aucun bien</p>'}
             </div>
           </div>
         </div>
@@ -228,7 +240,7 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
 
   const wrapRect = wrap.getBoundingClientRect();
   const w = wrapRect.width;
-  if (w <= 0) return; // Not yet laid out
+  if (w <= 0) return;
   const h = parseInt(svg.style.height) || 55;
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
@@ -238,7 +250,6 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
     return r.left + r.width / 2 - wrapRect.left;
   });
 
-  // Clear previous paths (keep defs)
   svg.querySelectorAll('path, circle').forEach(el => el.remove());
 
   centers.forEach((cx, i) => {
@@ -285,13 +296,70 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
   svg.appendChild(topDot);
 }
 
+// Straight vertical connector (single child)
+function drawStraightConnector(svgId, wrapId, cardId, color, filterId) {
+  const svg = document.getElementById(svgId);
+  const wrap = document.getElementById(wrapId);
+  const card = document.getElementById(cardId);
+  if (!svg || !wrap || !card) return;
+
+  const wrapRect = wrap.getBoundingClientRect();
+  const w = wrapRect.width;
+  if (w <= 0) return;
+  const h = parseInt(svg.style.height) || 45;
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+  const mid = w / 2;
+  const cardRect = card.getBoundingClientRect();
+  const cx = cardRect.left + cardRect.width / 2 - wrapRect.left;
+
+  svg.querySelectorAll('path, circle, line').forEach(el => el.remove());
+
+  const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
+
+  // Glow
+  const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  glow.setAttribute('d', d);
+  glow.setAttribute('stroke', color);
+  glow.setAttribute('stroke-width', '3');
+  glow.setAttribute('fill', 'none');
+  glow.setAttribute('opacity', '0.3');
+  glow.setAttribute('filter', `url(#${filterId})`);
+  svg.appendChild(glow);
+
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  line.setAttribute('d', d);
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', '1.5');
+  line.setAttribute('fill', 'none');
+  line.setAttribute('opacity', '0.5');
+  svg.appendChild(line);
+
+  // Dots
+  const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  topDot.setAttribute('cx', mid);
+  topDot.setAttribute('cy', '0');
+  topDot.setAttribute('r', '3');
+  topDot.setAttribute('fill', color);
+  topDot.setAttribute('opacity', '0.6');
+  svg.appendChild(topDot);
+
+  const botDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  botDot.setAttribute('cx', cx);
+  botDot.setAttribute('cy', h);
+  botDot.setAttribute('r', '3');
+  botDot.setAttribute('fill', color);
+  botDot.setAttribute('opacity', '0.6');
+  svg.appendChild(botDot);
+}
+
 export function mount() {
   function drawAll() {
-    // Level 1 → 2: Patrimoine → Liquidités + Investissements
+    // Level 1 → 2: Patrimoine → Liquidités + Investissements + Immobilier
     drawConnectors('ptf-svg-L1-svg', 'ptf-svg-L1',
-      ['ptf-card-liq', 'ptf-card-inv'],
-      ['#6366f1', '#c9a76c'],
-      ['glow-indigo', 'glow-amber']
+      ['ptf-card-liq', 'ptf-card-inv', 'ptf-card-immo'],
+      ['#6366f1', '#c9a76c', '#8b6914'],
+      ['glow-indigo', 'glow-amber', 'glow-brown']
     );
 
     // Level 2 → 3 Left: Liquidités → CC + Épargne
@@ -301,15 +369,13 @@ export function mount() {
       ['glow-indigo2', 'glow-indigo2']
     );
 
-    // Level 2 → 3 Right: Investissements → Placements + Immobilier
-    drawConnectors('ptf-svg-L2R-svg', 'ptf-svg-L2R',
-      ['ptf-card-plac', 'ptf-card-immo'],
-      ['#c9a76c', '#8b6914'],
-      ['glow-amber2', 'glow-amber2']
-    );
+    // Level 2 → 3 Center: Investissements → Placements
+    drawStraightConnector('ptf-svg-L2C-svg', 'ptf-svg-L2C', 'ptf-card-plac', '#c9a76c', 'glow-amber2');
+
+    // Level 2 → 3 Right: Immobilier → Biens
+    drawStraightConnector('ptf-svg-L2R-svg', 'ptf-svg-L2R', 'ptf-card-biens', '#8b6914', 'glow-brown2');
   }
 
-  // Wait for layout to be computed before drawing SVG connectors
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       drawAll();
