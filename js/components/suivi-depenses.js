@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=5';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=5';
 
 const CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -156,7 +156,7 @@ export function render(store) {
             ${BANK_ICONS['CIC']}
             <div class="flex-1">
               <p class="text-sm text-gray-400">Compte courant CIC</p>
-              <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeCIC)}</p>
+              <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(soldeCIC)}</p>
             </div>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
@@ -175,7 +175,7 @@ export function render(store) {
                 <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${depMensuelles.length}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-medium text-accent-red">${formatCurrency(totalCochees)}</span>
+                <span class="text-xs font-medium text-accent-red">${formatCurrencyCents(totalCochees)}</span>
                 <button id="btn-add-mensuel-cic" class="text-accent-amber hover:text-accent-amber/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
@@ -208,7 +208,7 @@ export function render(store) {
             ${BANK_ICONS['Trade Republic']}
             <div class="flex-1">
               <p class="text-sm text-gray-400">Compte courant Trade Republic</p>
-              <p class="text-xl font-bold text-gray-100">${formatCurrency(soldeTR)}</p>
+              <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(soldeTR)}</p>
             </div>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
@@ -243,11 +243,11 @@ export function render(store) {
               <span class="text-sm text-gray-300 capitalize">${label}</span>
               <div class="flex items-center gap-3">
                 <span class="text-xs text-gray-500">${a.count} dépense${a.count > 1 ? 's' : ''}</span>
-                <span class="text-sm font-semibold text-accent-red">${formatCurrency(a.total)}</span>
+                <span class="text-sm font-semibold text-accent-red">${formatCurrencyCents(a.total)}</span>
               </div>
             </div>
             ${cats.length > 0 ? `<div class="flex flex-wrap gap-1 mt-1">${cats.map(([cat, val]) =>
-              `<span class="text-[10px] px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-500">${cat} ${formatCurrency(val)}</span>`
+              `<span class="text-[10px] px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-500">${cat} ${formatCurrencyCents(val)}</span>`
             ).join('')}</div>` : ''}
           </div>`;
           }).join('')}

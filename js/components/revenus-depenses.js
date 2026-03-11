@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, getFormData, inputField, selectField } from '../utils.js?v=5';
+import { formatCurrencyCents, openModal, getFormData, inputField, selectField } from '../utils.js?v=5';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 const DEPENSE_TYPES = [
@@ -29,14 +29,14 @@ function sumLisse(items) {
 function formatFreqLabel(item) {
   const montant = Number(item.montantMensuel) || 0;
   if (item.frequence === 'Annuel') {
-    return `${formatCurrency(montant)}/an`;
+    return `${formatCurrencyCents(montant)}/an`;
   }
-  return `${formatCurrency(montant)}/mois`;
+  return `${formatCurrencyCents(montant)}/mois`;
 }
 
 function formatLisseLabel(item) {
   if (item.frequence === 'Annuel') {
-    return `≈ ${formatCurrency(getMensuelLisse(item))}/mois`;
+    return `≈ ${formatCurrencyCents(getMensuelLisse(item))}/mois`;
   }
   return '';
 }
@@ -75,7 +75,7 @@ export function render(store) {
             </div>
             <p class="text-sm text-gray-400">Revenus mensuels</p>
           </div>
-          <p class="text-2xl font-bold text-accent-green">${formatCurrency(revMensuelDirect)}</p>
+          <p class="text-2xl font-bold text-accent-green">${formatCurrencyCents(revMensuelDirect)}</p>
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card glow-red">
           <div class="flex items-center gap-3 mb-3">
@@ -86,7 +86,7 @@ export function render(store) {
             </div>
             <p class="text-sm text-gray-400">Dépenses mensuelles</p>
           </div>
-          <p class="text-2xl font-bold text-accent-red">${formatCurrency(depMensuelDirect)}</p>
+          <p class="text-2xl font-bold text-accent-red">${formatCurrencyCents(depMensuelDirect)}</p>
         </div>
         ${hasAnnualItems ? `
         <div class="card-dark rounded-xl p-5 kpi-card glow-amber">
@@ -98,8 +98,8 @@ export function render(store) {
             </div>
             <p class="text-sm text-gray-400">Mensuel lissé</p>
           </div>
-          <p class="text-2xl font-bold text-accent-amber">${formatCurrency(totalR - totalD)}</p>
-          <p class="text-xs text-gray-500 mt-1">Rev. ${formatCurrency(totalR)} − Dép. ${formatCurrency(totalD)}</p>
+          <p class="text-2xl font-bold text-accent-amber">${formatCurrencyCents(totalR - totalD)}</p>
+          <p class="text-xs text-gray-500 mt-1">Rev. ${formatCurrencyCents(totalR)} − Dép. ${formatCurrencyCents(totalD)}</p>
         </div>
         ` : ''}
         <div class="card-dark rounded-xl p-5 kpi-card glow-blue">
@@ -111,7 +111,7 @@ export function render(store) {
             </div>
             <p class="text-sm text-gray-400">Balance annuelle</p>
           </div>
-          <p class="text-3xl font-bold ${balance >= 0 ? 'text-accent-blue' : 'text-accent-red'}">${formatCurrency(balance * 12)}</p>
+          <p class="text-3xl font-bold ${balance >= 0 ? 'text-accent-blue' : 'text-accent-red'}">${formatCurrencyCents(balance * 12)}</p>
         </div>
       </div>
 
@@ -131,7 +131,7 @@ export function render(store) {
                 </svg>
               </div>
               <h2 class="text-sm font-semibold text-gray-200">Revenus</h2>
-              <span class="text-xs text-gray-400">${formatCurrency(revenus.reduce((s, r) => s + getMensuelLisse(r), 0))}/mois</span>
+              <span class="text-xs text-gray-400">${formatCurrencyCents(revenus.reduce((s, r) => s + getMensuelLisse(r), 0))}/mois</span>
             </div>
             <div class="flex items-center gap-3">
               <button id="btn-add-revenu" class="px-3 py-1 bg-accent-green/20 text-accent-green text-xs rounded-lg hover:bg-accent-green/30 transition font-medium" onclick="event.stopPropagation()">+ Ajouter</button>
@@ -173,7 +173,7 @@ export function render(store) {
                 </svg>
               </div>
               <h2 class="text-sm font-semibold text-gray-200">${g.label}</h2>
-              ${g.total > 0 ? `<span class="text-xs text-gray-400">${formatCurrency(g.total)}/mois</span>` : ''}
+              ${g.total > 0 ? `<span class="text-xs text-gray-400">${formatCurrencyCents(g.total)}/mois</span>` : ''}
             </div>
             <div class="flex items-center gap-3">
               <button class="btn-add-depense px-3 py-1 bg-accent-red/20 text-accent-red text-xs rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}" onclick="event.stopPropagation()">+ Ajouter</button>
