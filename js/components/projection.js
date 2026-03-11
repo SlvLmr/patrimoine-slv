@@ -253,8 +253,7 @@ export function render(store) {
               <span class="text-xs text-purple-400">Souhaité</span>
               <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
                 class="param-input w-12 px-1 py-0.5 text-sm bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-semibold">
-              <input type="number" id="param-salaire" value="${params.salaireNet || 2758}" min="0" max="50000" step="10"
-                class="param-input w-18 px-1 py-0.5 text-sm bg-transparent border-0 text-purple-400/80 focus:ring-0 text-center font-semibold">
+              <span class="text-sm text-purple-400/80 font-semibold">1650</span>
               <span class="text-[10px] text-gray-500">€</span>
             </div>
             <div class="flex items-center gap-1 px-2 py-1 rounded bg-amber-400/5 border border-amber-400/20">
@@ -816,7 +815,7 @@ export function mount(store, navigate) {
     store.set('parametres.rendementPlacements', rendementPlacements);
 
     // Salaire
-    store.set('parametres.salaireNet', parseInt(document.getElementById('param-salaire').value) || 2758);
+    store.set('parametres.salaireNet', 1650);
 
     // Retirement milestones
     store.set('parametres.ageRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-age').value) || 64);
