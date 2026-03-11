@@ -137,7 +137,7 @@ export function computeProjection(store) {
   const inflation = params.inflationRate || 0.02;
   const ageFinAnnee = params.ageFinAnnee || 43;
   const ageRetraite = params.ageRetraite || 64;
-  const ageRetraitePEE = params.ageRetraiteSouhaitee || ageRetraite;
+  const ageRetraitePEE = ageRetraite;
   const rendImmo = params.rendementImmobilier || 0.02;
 
   const totalImmo = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
