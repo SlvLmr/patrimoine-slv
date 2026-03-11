@@ -364,11 +364,18 @@ export function render(store) {
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
         </details>
 
-        <!-- Chart répartition -->
+        <!-- Chart répartition dépenses -->
         <div class="card-dark rounded-xl p-4 flex flex-col">
-          <h2 class="text-sm font-semibold text-gray-200 mb-3">Répartition mensuelle lissée</h2>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-gray-200">Répartition dépenses</h2>
+            <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
+              <button data-chart-tab="mensuel" class="chart-tab px-3 py-1 text-[10px] font-medium transition bg-dark-600 text-gray-200">Mensuel</button>
+              <button data-chart-tab="lisse" class="chart-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Lissé</button>
+              <button data-chart-tab="annuel" class="chart-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Annuel</button>
+            </div>
+          </div>
           <div class="flex-1 min-h-[250px]">
-            <canvas id="chart-rev-dep"></canvas>
+            <canvas id="chart-dep"></canvas>
           </div>
         </div>
       </div>
@@ -389,41 +396,48 @@ export function render(store) {
 export function mount(store, navigate) {
   const content = document.getElementById('app-content');
 
-  // Chart répartition revenus vs dépenses
-  const revenus = store.get('revenus').filter(r => !r.informatif);
-  const depenses = store.get('depenses');
-  const revTotal = revenus.reduce((s, r) => s + getMensuelLisse(r), 0);
-  const depGroups = DEPENSE_TYPES.map(t => ({
-    label: t.label,
-    total: depenses.filter(d => (d.typeDepense || 'Fixe') === t.key).reduce((s, d) => s + getMensuelLisse(d), 0)
-  })).filter(g => g.total > 0);
+  // Chart répartition dépenses avec tabs
+  const allDepenses = store.get('depenses');
+  const depChartGroups = DEPENSE_TYPES.map(t => {
+    const items = allDepenses.filter(d => (d.typeDepense || 'Fixe') === t.key);
+    return {
+      label: t.label,
+      mensuel: items.reduce((s, d) => s + (d.frequence === 'Annuel' ? 0 : (Number(d.montantMensuel) || 0)), 0),
+      lisse: items.reduce((s, d) => s + getMensuelLisse(d), 0),
+      annuel: items.reduce((s, d) => s + getMensuelLisse(d), 0) * 12
+    };
+  });
+  const depChartColors = ['#ef4444', '#f97316', '#06b6d4', '#a855f7'];
 
-  const chartLabels = ['Revenus', ...depGroups.map(g => g.label)];
-  const chartData = [revTotal, ...depGroups.map(g => g.total)];
-  const chartColors = ['#22c55e', '#ef4444', '#f97316', '#06b6d4', '#a855f7'];
-
-  createChart('chart-rev-dep', {
-    type: 'doughnut',
-    data: {
-      labels: chartLabels,
-      datasets: [{
-        data: chartData,
-        backgroundColor: chartColors.slice(0, chartLabels.length),
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      cutout: '60%',
-      plugins: {
-        legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 11 } } },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}/mois`
-          }
+  function renderDepChart(mode) {
+    const data = depChartGroups.map(g => g[mode]).filter((_, i) => depChartGroups[i][mode] > 0);
+    const labels = depChartGroups.filter(g => g[mode] > 0).map(g => g.label);
+    const colors = depChartGroups.map((_, i) => depChartColors[i]).filter((_, i) => depChartGroups[i][mode] > 0);
+    const suffix = mode === 'annuel' ? '/an' : '/mois';
+    createChart('chart-dep', {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
+      options: {
+        cutout: '60%',
+        plugins: {
+          legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}${suffix}` } }
         }
       }
-    }
+    });
+  }
+  renderDepChart('mensuel');
+
+  content.querySelectorAll('.chart-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      content.querySelectorAll('.chart-tab').forEach(t => {
+        t.classList.remove('bg-dark-600', 'text-gray-200');
+        t.classList.add('text-gray-500');
+      });
+      tab.classList.add('bg-dark-600', 'text-gray-200');
+      tab.classList.remove('text-gray-500');
+      renderDepChart(tab.dataset.chartTab);
+    });
   });
 
   // Revenus
