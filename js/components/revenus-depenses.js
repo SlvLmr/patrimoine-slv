@@ -65,7 +65,7 @@ export function render(store) {
       <h1 class="text-2xl font-bold text-gray-100">Revenus & Dépenses</h1>
 
       <!-- KPI -->
-      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
         <div class="card-dark rounded-xl p-5 kpi-card glow-green">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center">
@@ -87,6 +87,17 @@ export function render(store) {
             <p class="text-sm text-gray-400">Revenus mensuels lissés</p>
           </div>
           <p class="text-2xl font-bold text-accent-green">${formatCurrencyCents(totalR)}</p>
+        </div>
+        <div class="card-dark rounded-xl p-5 kpi-card glow-green">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400">Revenus annuels</p>
+          </div>
+          <p class="text-2xl font-bold text-accent-green">${formatCurrencyCents(totalR * 12)}</p>
         </div>
         <div class="card-dark rounded-xl p-5 kpi-card glow-red">
           <div class="flex items-center gap-3 mb-3">
