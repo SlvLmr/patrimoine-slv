@@ -124,6 +124,70 @@ function getMontantFromModal() {
   return freq === 'Annuel' ? annuel : mensuel;
 }
 
+function renderDepenseBlock(g) {
+  return `
+        <details open class="card-dark rounded-xl overflow-hidden group">
+          <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-lg bg-accent-red/15 flex items-center justify-center flex-shrink-0">
+                <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${g.icon}"/>
+                </svg>
+              </div>
+              <h2 class="text-sm font-semibold text-gray-200">${g.label}</h2>
+              ${g.items.length > 0 ? `
+              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(g.items.reduce((s, d) => s + (d.frequence === 'Annuel' ? 0 : (Number(d.montantMensuel) || 0)), 0))}/mois</span>
+              <span class="text-[10px] font-light text-accent-amber/60 tracking-wide">${formatCurrencyCents(g.total)}/mois lissé</span>
+              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(g.total * 12)}/an</span>
+              ` : ''}
+            </div>
+            <div class="flex items-center gap-3">
+              <button class="btn-add-depense px-3 py-1 bg-accent-red/20 text-accent-red text-xs rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}" onclick="event.stopPropagation()">+ Ajouter</button>
+              <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
+          ${g.items.length > 0 ? `
+          <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider">Poste</span>
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Mensuel</span>
+            <span class="text-[10px] text-accent-amber/60 uppercase tracking-wider text-right">Lissé</span>
+            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Annuel</span>
+            <span></span>
+          </div>
+          <div class="divide-y divide-dark-400/20">
+            ${g.items.map(d => {
+              const montant = Number(d.montantMensuel) || 0;
+              const mensuel = d.frequence === 'Annuel' ? 0 : montant;
+              const lisse = getMensuelLisse(d);
+              const annuel = lisse * 12;
+              return `
+            <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-dep="${d.id}" data-dep-type="${g.key}">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
+                  <button data-move-dep-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
+                  <button data-move-dep-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
+                </div>
+                <p class="text-xs text-gray-200 truncate">${d.nom}</p>
+                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · An' : ''}</p>
+              </div>
+              <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
+              <span class="text-xs text-right whitespace-nowrap ${d.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
+              <span class="text-xs text-right whitespace-nowrap ${d.frequence === 'Annuel' ? 'text-gray-100 font-medium' : 'text-gray-400'}">${formatCurrencyCents(annuel)}</span>
+              <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
+            </div>`;
+            }).join('')}
+          </div>
+          <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-2 border-t border-dark-400/40 bg-dark-700/30">
+            <span class="text-xs font-bold text-gray-300 uppercase">Total</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(g.items.reduce((s, d) => s + (d.frequence === 'Annuel' ? 0 : (Number(d.montantMensuel) || 0)), 0))}</span>
+            <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(g.total)}</span>
+            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(g.total * 12)}</span>
+            <span></span>
+          </div>
+          ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucune dépense.</p>'}
+        </details>`;
+}
+
 export function render(store) {
   const revenus = store.get('revenus');
   const depenses = store.get('depenses');
@@ -219,17 +283,28 @@ export function render(store) {
 
       <!-- Balances -->
       <div class="flex items-center justify-center gap-8 -mt-1">
-        <p class="text-sm font-semibold ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance mensuelle : ${formatCurrencyCents(balance)}</p>
-        <p class="text-sm font-semibold ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance annuelle : ${formatCurrencyCents(balance * 12)}</p>
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 ${(revMensuelDirect - depMensuelDirect) >= 0 ? 'text-purple-400' : 'text-orange-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+          </svg>
+          <p class="text-sm font-semibold ${(revMensuelDirect - depMensuelDirect) >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance mensuelle : ${formatCurrencyCents(revMensuelDirect - depMensuelDirect)}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+          </svg>
+          <p class="text-sm font-semibold ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance annuelle : ${formatCurrencyCents(balance * 12)}</p>
+        </div>
       </div>
 
-      <!-- Revenus & Dépenses — blocs empilés, pliables -->
+      <!-- Revenus & Dépenses — grille 2 colonnes -->
       <div class="flex items-center justify-end mb-2 gap-2">
         <button id="btn-seed-revenus" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut revenus</button>
         <button id="btn-seed-depenses" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut dépenses</button>
       </div>
-      <div class="space-y-3">
-        <!-- Revenus -->
+
+      <!-- Row 1: Revenus + Chart -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <details open class="card-dark rounded-xl overflow-hidden group">
           <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
             <div class="flex items-center gap-3">
@@ -249,10 +324,10 @@ export function render(store) {
             </div>
           </summary>
           ${revenus.length > 0 ? `
-          <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
+          <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
             <span class="text-[10px] text-gray-500 uppercase tracking-wider">Source</span>
             <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Mensuel</span>
-            <span class="text-[10px] text-accent-amber/60 uppercase tracking-wider text-right">Mensuel lissé</span>
+            <span class="text-[10px] text-accent-amber/60 uppercase tracking-wider text-right">Lissé</span>
             <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Annuel</span>
             <span></span>
           </div>
@@ -263,14 +338,14 @@ export function render(store) {
               const lisse = getMensuelLisse(r);
               const annuel = lisse * 12;
               return `
-            <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer ${r.informatif ? 'opacity-50' : ''}" data-edit-rev="${r.id}">
-              <div class="flex items-center gap-3 min-w-0">
+            <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer ${r.informatif ? 'opacity-50' : ''}" data-edit-rev="${r.id}">
+              <div class="flex items-center gap-2 min-w-0">
                 <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
                   <button data-move-rev-up="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
                   <button data-move-rev-down="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
                 </div>
                 <p class="text-xs text-gray-200 truncate">${r.nom}</p>
-                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · Annuel' : ''}${r.informatif ? ' · Informatif' : ''}</p>
+                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · An' : ''}${r.informatif ? ' · Info' : ''}</p>
               </div>
               <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
               <span class="text-xs text-right whitespace-nowrap ${r.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
@@ -279,7 +354,7 @@ export function render(store) {
             </div>`;
             }).join('')}
           </div>
-          <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-2 border-t border-dark-400/40 bg-dark-700/30">
+          <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-2 border-t border-dark-400/40 bg-dark-700/30">
             <span class="text-xs font-bold text-gray-300 uppercase">Totaux</span>
             <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + (r.frequence === 'Annuel' ? 0 : (Number(r.montantMensuel) || 0)), 0))}</span>
             <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0))}</span>
@@ -289,69 +364,23 @@ export function render(store) {
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
         </details>
 
-        <!-- 4 blocs dépenses -->
-        ${depenseGroups.map(g => `
-        <details open class="card-dark rounded-xl overflow-hidden group">
-          <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
-            <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-lg bg-accent-red/15 flex items-center justify-center flex-shrink-0">
-                <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${g.icon}"/>
-                </svg>
-              </div>
-              <h2 class="text-sm font-semibold text-gray-200">${g.label}</h2>
-              ${g.items.length > 0 ? `
-              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(g.items.reduce((s, d) => s + (d.frequence === 'Annuel' ? 0 : (Number(d.montantMensuel) || 0)), 0))}/mois</span>
-              <span class="text-[10px] font-light text-accent-amber/60 tracking-wide">${formatCurrencyCents(g.total)}/mois lissé</span>
-              <span class="text-[10px] font-light text-gray-500 tracking-wide">${formatCurrencyCents(g.total * 12)}/an</span>
-              ` : ''}
-            </div>
-            <div class="flex items-center gap-3">
-              <button class="btn-add-depense px-3 py-1 bg-accent-red/20 text-accent-red text-xs rounded-lg hover:bg-accent-red/30 transition font-medium" data-type="${g.key}" onclick="event.stopPropagation()">+ Ajouter</button>
-              <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </div>
-          </summary>
-          ${g.items.length > 0 ? `
-          <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
-            <span class="text-[10px] text-gray-500 uppercase tracking-wider">Poste</span>
-            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Mensuel</span>
-            <span class="text-[10px] text-accent-amber/60 uppercase tracking-wider text-right">Mensuel lissé</span>
-            <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Annuel</span>
-            <span></span>
+        <!-- Chart répartition -->
+        <div class="card-dark rounded-xl p-4 flex flex-col">
+          <h2 class="text-sm font-semibold text-gray-200 mb-3">Répartition mensuelle lissée</h2>
+          <div class="flex-1 min-h-[250px]">
+            <canvas id="chart-rev-dep"></canvas>
           </div>
-          <div class="divide-y divide-dark-400/20">
-            ${g.items.map(d => {
-              const montant = Number(d.montantMensuel) || 0;
-              const mensuel = d.frequence === 'Annuel' ? 0 : montant;
-              const lisse = getMensuelLisse(d);
-              const annuel = lisse * 12;
-              return `
-            <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-dep="${d.id}" data-dep-type="${g.key}">
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
-                  <button data-move-dep-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
-                  <button data-move-dep-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
-                </div>
-                <p class="text-xs text-gray-200 truncate">${d.nom}</p>
-                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · Annuel' : ''}</p>
-              </div>
-              <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
-              <span class="text-xs text-right whitespace-nowrap ${d.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
-              <span class="text-xs text-right whitespace-nowrap ${d.frequence === 'Annuel' ? 'text-gray-100 font-medium' : 'text-gray-400'}">${formatCurrencyCents(annuel)}</span>
-              <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
-            </div>`;
-            }).join('')}
-          </div>
-          <div class="grid grid-cols-[1fr_7rem_7rem_7rem_1.2rem] items-center px-4 py-2 border-t border-dark-400/40 bg-dark-700/30">
-            <span class="text-xs font-bold text-gray-300 uppercase">Total</span>
-            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(g.items.reduce((s, d) => s + (d.frequence === 'Annuel' ? 0 : (Number(d.montantMensuel) || 0)), 0))}</span>
-            <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(g.total)}</span>
-            <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(g.total * 12)}</span>
-            <span></span>
-          </div>
-          ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucune dépense.</p>'}
-        </details>
-        `).join('')}
+        </div>
+      </div>
+
+      <!-- Row 2: Dépenses fixes + variables -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        ${depenseGroups.filter(g => g.key === 'Fixe' || g.key === 'Variable').map(g => renderDepenseBlock(g)).join('')}
+      </div>
+
+      <!-- Row 3: Abonnements + Investissements -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        ${depenseGroups.filter(g => g.key === 'Abonnement' || g.key === 'Investissement').map(g => renderDepenseBlock(g)).join('')}
       </div>
     </div>
   `;
@@ -359,6 +388,43 @@ export function render(store) {
 
 export function mount(store, navigate) {
   const content = document.getElementById('app-content');
+
+  // Chart répartition revenus vs dépenses
+  const revenus = store.get('revenus').filter(r => !r.informatif);
+  const depenses = store.get('depenses');
+  const revTotal = revenus.reduce((s, r) => s + getMensuelLisse(r), 0);
+  const depGroups = DEPENSE_TYPES.map(t => ({
+    label: t.label,
+    total: depenses.filter(d => (d.typeDepense || 'Fixe') === t.key).reduce((s, d) => s + getMensuelLisse(d), 0)
+  })).filter(g => g.total > 0);
+
+  const chartLabels = ['Revenus', ...depGroups.map(g => g.label)];
+  const chartData = [revTotal, ...depGroups.map(g => g.total)];
+  const chartColors = ['#22c55e', '#ef4444', '#f97316', '#06b6d4', '#a855f7'];
+
+  createChart('chart-rev-dep', {
+    type: 'doughnut',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        data: chartData,
+        backgroundColor: chartColors.slice(0, chartLabels.length),
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#88888a', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${formatCurrencyCents(ctx.raw)}/mois`
+          }
+        }
+      }
+    }
+  });
 
   // Revenus
   const revenuTypes = [
