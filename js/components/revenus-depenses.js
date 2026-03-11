@@ -426,17 +426,29 @@ export function mount(store, navigate) {
 
   const depChartColors = ['#ef4444', '#f97316', '#06b6d4', '#a855f7'];
 
-  // Plugin: glow on doughnut slices
+  // Plugin: glow halo around doughnut slices
   const doughnutGlowPlugin = {
     id: 'doughnutGlow',
-    beforeDraw(chart) {
+    afterDatasetDraw(chart) {
+      const meta = chart.getDatasetMeta(0);
       const ctx = chart.ctx;
       ctx.save();
-      ctx.shadowBlur = 16;
-      ctx.shadowOffsetY = 2;
-    },
-    afterDraw(chart) {
-      chart.ctx.restore();
+      meta.data.forEach((arc, i) => {
+        const color = chart.data.datasets[0].backgroundColor[i] || '#fff';
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 22;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.beginPath();
+        const { x, y, innerRadius, outerRadius, startAngle, endAngle } = arc.getProps(['x', 'y', 'innerRadius', 'outerRadius', 'startAngle', 'endAngle'], true);
+        ctx.arc(x, y, (innerRadius + outerRadius) / 2, startAngle, endAngle);
+        ctx.lineWidth = outerRadius - innerRadius;
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = 0.25;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      });
+      ctx.restore();
     }
   };
 
@@ -466,18 +478,12 @@ export function mount(store, navigate) {
     const dot = document.getElementById('solde-dot');
     const val = document.getElementById('solde-value');
     const suf = document.getElementById('solde-suffix');
-    const card = document.getElementById('chart-dep-card');
     if (!val) return;
     const positive = solde >= 0;
     val.textContent = `${positive ? '+' : ''}${formatCurrencyCents(solde)}`;
     val.className = `text-lg font-bold ${positive ? 'text-purple-400' : 'text-orange-400'}`;
     if (dot) dot.className = `w-2 h-2 rounded-full ${positive ? 'bg-purple-400' : 'bg-orange-400'}`;
     if (suf) suf.textContent = suffix;
-    if (card) {
-      card.style.boxShadow = positive
-        ? '0 0 30px rgba(168,85,247,0.12), 0 0 60px rgba(34,197,94,0.08)'
-        : '0 0 30px rgba(249,115,22,0.15), 0 0 60px rgba(239,68,68,0.08)';
-    }
   }
 
   function renderDepChart(mode) {
