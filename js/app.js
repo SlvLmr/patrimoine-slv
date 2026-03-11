@@ -9,6 +9,7 @@ import * as Projection from './components/projection.js?v=5';
 import * as Fiscalite from './components/fiscalite.js';
 import * as Enfants from './components/enfants.js';
 import * as SuiviDepenses from './components/suivi-depenses.js';
+import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Bourse from './components/bourse.js';
 import { isGdriveConfigured, setClientId, saveToDrive, listDriveFiles, loadFromDrive } from './gdrive.js';
 
@@ -19,6 +20,7 @@ const routes = {
   heritage: Heritage,
   'revenus-depenses': RevenusDepenses,
   'suivi-depenses': SuiviDepenses,
+  'portefeuille-live': PortefeuilleLive,
   projection: Projection,
   bourse: Bourse,
   fiscalite: Fiscalite,
@@ -30,6 +32,7 @@ const navItems = [
   { id: '_title_quotidien', sectionTitle: 'Quotidien' },
   { id: 'revenus-depenses', label: 'Revenus et dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'suivi-depenses', label: 'Quotidien Live', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
+  { id: 'portefeuille-live', label: 'Portefeuille Live', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', live: true },
   { id: 'bourse', label: 'Bourse Live', icon: 'M3 3v18h18M9 17V9m4 8V5m4 12v-4', live: true },
   { id: '_title_demain', sectionTitle: 'Demain' },
   { id: 'projection', label: 'Projection', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
