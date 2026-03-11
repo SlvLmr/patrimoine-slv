@@ -9,6 +9,31 @@ const REFRESH_SLOTS = [
   { h: 20, m: 30 }
 ];
 
+// Multiple CORS proxies for resilience
+const CORS_PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+
+async function fetchWithProxy(url, timeoutMs = 8000) {
+  for (const makeProxy of CORS_PROXIES) {
+    const proxyUrl = makeProxy(url);
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.warn(`Proxy failed for ${url}:`, e.message);
+      // Try next proxy
+    }
+  }
+  throw new Error('All proxies failed');
+}
+
 function getLastSlotTime() {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -110,10 +135,7 @@ async function resolveIsinToTicker(identifier) {
 
   try {
     const searchUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(identifier)}&quotesCount=1&newsCount=0`;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(searchUrl)}`;
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error('Search failed');
-    const data = await res.json();
+    const data = await fetchWithProxy(searchUrl);
     const quote = data.quotes?.[0];
     if (quote?.symbol) {
       tickerCache[identifier] = quote.symbol;
@@ -130,11 +152,8 @@ async function fetchQuoteWithHistory(isin) {
   if (!ticker) return null;
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=1mo&interval=1d`;
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
   try {
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error('Network error');
-    const data = await res.json();
+    const data = await fetchWithProxy(url);
     const result = data.chart?.result?.[0];
     if (!result) return null;
 
