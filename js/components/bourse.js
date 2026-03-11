@@ -1,6 +1,62 @@
 import { createChart, createVerticalGradient } from '../charts/chart-config.js';
 
 const WATCHLIST_STORAGE_KEY = 'patrimoine-slv-watchlist';
+const QUOTES_CACHE_KEY = 'patrimoine-slv-quotes-cache';
+const REFRESH_SLOTS = [
+  { h: 8, m: 30 },
+  { h: 12, m: 30 },
+  { h: 17, m: 30 },
+  { h: 20, m: 30 }
+];
+
+function getLastSlotTime() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let lastSlot = null;
+  for (const slot of REFRESH_SLOTS) {
+    const slotTime = new Date(today.getTime() + slot.h * 3600000 + slot.m * 60000);
+    if (now >= slotTime) lastSlot = slotTime;
+  }
+  if (!lastSlot) {
+    // Before first slot today → use last slot from yesterday
+    const yesterday = new Date(today.getTime() - 86400000);
+    const last = REFRESH_SLOTS[REFRESH_SLOTS.length - 1];
+    lastSlot = new Date(yesterday.getTime() + last.h * 3600000 + last.m * 60000);
+  }
+  return lastSlot;
+}
+
+function getNextSlotTime() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  for (const slot of REFRESH_SLOTS) {
+    const slotTime = new Date(today.getTime() + slot.h * 3600000 + slot.m * 60000);
+    if (now < slotTime) return slotTime;
+  }
+  // After last slot today → first slot tomorrow
+  const tomorrow = new Date(today.getTime() + 86400000);
+  const first = REFRESH_SLOTS[0];
+  return new Date(tomorrow.getTime() + first.h * 3600000 + first.m * 60000);
+}
+
+function loadQuotesCache() {
+  try {
+    const raw = localStorage.getItem(QUOTES_CACHE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+function saveQuotesCache(data) {
+  localStorage.setItem(QUOTES_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+}
+
+function isCacheFresh() {
+  const cache = loadQuotesCache();
+  if (!cache || !cache.timestamp) return false;
+  const lastSlot = getLastSlotTime();
+  return cache.timestamp >= lastSlot.getTime();
+}
 
 const DEFAULT_WATCHLIST = [
   { isin: 'FR0011550185', name: 'Lyxor PEA MSCI World', type: 'ETF' },
@@ -269,6 +325,7 @@ export function render(store) {
           <div class="w-2 h-2 rounded-full bg-accent-green animate-pulse" id="market-indicator"></div>
           <span id="market-status">Chargement des cours...</span>
         </div>
+        <p class="text-[10px] text-gray-600">Rafraîchissement auto : 8h30 · 12h30 · 17h30 · 20h30 — Bouton "Actualiser" pour forcer</p>
       </div>
 
       <!-- Quotes grid with mini charts -->
@@ -362,11 +419,105 @@ export function render(store) {
   `;
 }
 
-async function loadAllQuotes(store) {
+function applyQuotesToUI(quotesMap, store) {
   const watchlist = loadWatchlist();
   const placements = store?.get?.('actifs.placements') || [];
+  let loadedCount = 0;
+
+  watchlist.forEach(item => {
+    const id = sid(item.isin);
+    const quote = quotesMap[item.isin] || null;
+    const actif = findMatchingActif(item, placements);
+    const pru = actif ? Number(actif.pru) || 0 : 0;
+
+    const card = document.getElementById(`quote-${id}`);
+    if (!card) return;
+
+    const tickerLabel = card.querySelector('.quote-ticker-label');
+    if (tickerLabel && quote?.ticker) tickerLabel.textContent = quote.ticker;
+
+    const priceDiv = card.querySelector('.quote-price');
+    if (quote) {
+      loadedCount++;
+      const isUp = pru > 0 ? quote.price >= pru : quote.change >= 0;
+
+      if (quote.chartPoints && quote.chartPoints.length > 1) {
+        renderMiniChart(`chart-${id}`, quote.chartPoints, isUp, pru > 0 ? pru : null);
+      }
+
+      const dayUp = quote.change >= 0;
+      priceDiv.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-lg font-bold ${isUp ? 'text-accent-green' : 'text-red-500'}">${formatPrice(quote.price, quote.currency)}</span>
+          <span class="text-xs font-medium ${dayUp ? 'text-accent-green' : 'text-red-500'}">
+            ${dayUp ? '▲' : '▼'} ${dayUp ? '+' : ''}${quote.changePct.toFixed(2)}%
+          </span>
+        </div>
+      `;
+
+      const portfolioInfo = card.querySelector('.portfolio-info');
+      if (portfolioInfo) {
+        const qty = Number(portfolioInfo.dataset.qty) || 0;
+        const invested = Number(portfolioInfo.dataset.invested) || 0;
+        if (qty > 0 && invested > 0) {
+          const liveValue = qty * quote.price;
+          const gain = liveValue - invested;
+          const gainPct = (gain / invested) * 100;
+          const gainPositive = gain >= 0;
+          const sym = quote.currency === 'USD' ? '$' : '€';
+
+          const valEl = portfolioInfo.querySelector('.portfolio-val-totale');
+          if (valEl) valEl.textContent = `${formatNum(liveValue)} ${sym}`;
+
+          const gainRow = portfolioInfo.querySelector('.portfolio-gain-row');
+          const gainVal = portfolioInfo.querySelector('.portfolio-gain-value');
+          if (gainRow && gainVal) {
+            gainRow.style.display = '';
+            gainVal.className = `font-semibold ${gainPositive ? 'text-accent-green' : 'text-accent-red'}`;
+            gainVal.textContent = `${gainPositive ? '+' : ''}${formatNum(gain)} ${sym} (${gainPositive ? '+' : ''}${gainPct.toFixed(1)}%)`;
+          }
+        }
+      }
+    } else {
+      priceDiv.innerHTML = `<p class="text-sm text-accent-amber/60">Erreur de chargement</p>`;
+    }
+  });
+
+  return loadedCount;
+}
+
+function updateStatus(loadedCount, total, fromCache) {
   const statusEl = document.getElementById('market-status');
   const indicatorEl = document.getElementById('market-indicator');
+  const nextSlot = getNextSlotTime();
+  const nextStr = nextSlot.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const cache = loadQuotesCache();
+  const lastUpdate = cache?.timestamp ? new Date(cache.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+
+  if (statusEl) {
+    statusEl.textContent = `${loadedCount}/${total} cours${fromCache ? ' (cache)' : ''} — MAJ : ${lastUpdate} — Prochaine : ${nextStr}`;
+  }
+  if (indicatorEl) {
+    indicatorEl.className = loadedCount > 0
+      ? `w-2 h-2 rounded-full ${fromCache ? 'bg-accent-amber' : 'bg-accent-green'}`
+      : 'w-2 h-2 rounded-full bg-red-500';
+  }
+}
+
+async function loadAllQuotes(store, forceRefresh = false) {
+  const watchlist = loadWatchlist();
+  const statusEl = document.getElementById('market-status');
+
+  // Try cache first
+  if (!forceRefresh && isCacheFresh()) {
+    const cache = loadQuotesCache();
+    if (cache?.data) {
+      if (statusEl) statusEl.textContent = 'Chargement depuis le cache...';
+      const count = applyQuotesToUI(cache.data, store);
+      updateStatus(count, watchlist.length, true);
+      return;
+    }
+  }
 
   if (statusEl) statusEl.textContent = 'Chargement des cours...';
 
@@ -374,93 +525,29 @@ async function loadAllQuotes(store) {
     watchlist.map(item => fetchQuoteWithHistory(item.isin))
   );
 
-  let loadedCount = 0;
-
+  // Build cache map
+  const quotesMap = {};
   results.forEach((result, i) => {
     const item = watchlist[i];
-    const id = sid(item.isin);
-    const quote = result.status === 'fulfilled' ? result.value : null;
-    const actif = findMatchingActif(item, placements);
-    const pru = actif ? Number(actif.pru) || 0 : 0;
-
-    const card = document.getElementById(`quote-${id}`);
-    if (card) {
-      // Show resolved ticker
-      const tickerLabel = card.querySelector('.quote-ticker-label');
-      if (tickerLabel && quote?.ticker) {
-        tickerLabel.textContent = quote.ticker;
-      }
-
-      const priceDiv = card.querySelector('.quote-price');
-      if (quote) {
-        loadedCount++;
-        // Chart color: green if in profit (price > PRU), red if at loss
-        const isUp = pru > 0 ? quote.price >= pru : quote.change >= 0;
-
-        // Mini chart with PRU line
-        if (quote.chartPoints && quote.chartPoints.length > 1) {
-          renderMiniChart(`chart-${id}`, quote.chartPoints, isUp, pru > 0 ? pru : null);
-        }
-
-        const dayUp = quote.change >= 0;
-        priceDiv.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-lg font-bold ${isUp ? 'text-accent-green' : 'text-red-500'}">${formatPrice(quote.price, quote.currency)}</span>
-            <span class="text-xs font-medium ${dayUp ? 'text-accent-green' : 'text-red-500'}">
-              ${dayUp ? '▲' : '▼'} ${dayUp ? '+' : ''}${quote.changePct.toFixed(2)}%
-            </span>
-          </div>
-        `;
-        // Update gain/loss with live price
-        const portfolioInfo = card.querySelector('.portfolio-info');
-        if (portfolioInfo) {
-          const qty = Number(portfolioInfo.dataset.qty) || 0;
-          const invested = Number(portfolioInfo.dataset.invested) || 0;
-          if (qty > 0 && invested > 0) {
-            const liveValue = qty * quote.price;
-            const gain = liveValue - invested;
-            const gainPct = (gain / invested) * 100;
-            const gainPositive = gain >= 0;
-
-            const sym = quote.currency === 'USD' ? '$' : '€';
-
-            // Update valeur totale with live value
-            const valEl = portfolioInfo.querySelector('.portfolio-val-totale');
-            if (valEl) valEl.textContent = `${formatNum(liveValue)} ${sym}`;
-
-            // Show gain/loss row
-            const gainRow = portfolioInfo.querySelector('.portfolio-gain-row');
-            const gainVal = portfolioInfo.querySelector('.portfolio-gain-value');
-            if (gainRow && gainVal) {
-              gainRow.style.display = '';
-              gainVal.className = `font-semibold ${gainPositive ? 'text-accent-green' : 'text-accent-red'}`;
-              gainVal.textContent = `${gainPositive ? '+' : ''}${formatNum(gain)} ${sym} (${gainPositive ? '+' : ''}${gainPct.toFixed(1)}%)`;
-            }
-          }
-        }
-      } else {
-        priceDiv.innerHTML = `<p class="text-sm text-accent-amber/60">Erreur de chargement</p>`;
-      }
+    if (result.status === 'fulfilled' && result.value) {
+      quotesMap[item.isin] = result.value;
     }
-
   });
 
-  if (statusEl) {
-    const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    statusEl.textContent = `${loadedCount}/${watchlist.length} cours chargés — Dernière mise à jour : ${now}`;
+  // Save to cache
+  if (Object.keys(quotesMap).length > 0) {
+    saveQuotesCache(quotesMap);
   }
-  if (indicatorEl) {
-    indicatorEl.className = loadedCount > 0
-      ? 'w-2 h-2 rounded-full bg-accent-green'
-      : 'w-2 h-2 rounded-full bg-accent-amber';
-  }
+
+  const count = applyQuotesToUI(quotesMap, store);
+  updateStatus(count, watchlist.length, false);
 }
 
 export function mount(store, navigate) {
   loadAllQuotes(store);
 
   document.getElementById('btn-refresh-quotes')?.addEventListener('click', () => {
-    loadAllQuotes(store);
+    loadAllQuotes(store, true);
   });
 
   // Open add modal
