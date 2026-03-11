@@ -68,20 +68,40 @@ export function render(store) {
   const totalActifs = totalLiquidites + totalPlac + totalImmo;
   const patrimoineNet = totalActifs - totalDette;
 
-  // Group placements by category
-  const actions = placements.filter(p => (p.categorie || '').includes('Action'));
-  const etfs = placements.filter(p => (p.categorie || '').includes('ETF'));
-  const cto = placements.filter(p => (p.enveloppe || '') === 'CTO');
-  const crypto = placements.filter(p => (p.categorie || '') === 'Crypto');
-  // Others not in above categories
-  const categorized = new Set([...actions, ...etfs, ...cto, ...crypto]);
-  const otherPlac = placements.filter(p => !categorized.has(p));
+  // Group placements by envelope
+  const peaPlac = placements.filter(p => (p.enveloppe || '').startsWith('PEA'));
+  const ctoPlac = placements.filter(p => (p.enveloppe || '') === 'CTO');
+  const cryptoPlac = placements.filter(p => (p.categorie || '') === 'Crypto');
+  const categorizedEnv = new Set([...peaPlac, ...ctoPlac, ...cryptoPlac]);
+  const otherPlac = placements.filter(p => !categorizedEnv.has(p));
 
-  const totalActions = actions.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalETF = etfs.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalCTO = cto.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalCrypto = crypto.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  // Sub-groups under PEA
+  const peaActions = peaPlac.filter(p => (p.categorie || '').includes('Action'));
+  const peaETF = peaPlac.filter(p => (p.categorie || '').includes('ETF'));
+  const peaOther = peaPlac.filter(p => !peaActions.includes(p) && !peaETF.includes(p));
+
+  const totalPEA = peaPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalCTO = ctoPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalCrypto = cryptoPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
   const totalOtherPlac = otherPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalPeaActions = peaActions.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalPeaETF = peaETF.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalPeaOther = peaOther.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+
+  // Level 2 envelopes (only show if total > 0)
+  const l2Envelopes = [
+    { id: 'pea', label: 'PEA', total: totalPEA },
+    { id: 'cto', label: 'CTO', total: totalCTO },
+    { id: 'crypto', label: 'Crypto', total: totalCrypto },
+    { id: 'otherplac', label: 'Autres', total: totalOtherPlac },
+  ].filter(e => e.total > 0);
+
+  // Level 3 under PEA (only show if total > 0)
+  const l3PEA = [
+    { id: 'pea-actions', label: 'Actions', items: peaActions, total: totalPeaActions },
+    { id: 'pea-etf', label: 'ETF', items: peaETF, total: totalPeaETF },
+    { id: 'pea-other', label: 'Autres PEA', items: peaOther, total: totalPeaOther },
+  ].filter(e => e.total > 0);
 
   function placList(items, color) {
     if (items.length === 0) return '<p class="text-[10px] text-gray-600">Aucun</p>';
@@ -238,8 +258,9 @@ export function render(store) {
           </div>
         </div>
 
-        <!-- Center branch: Investissements → Actions + ETF + CTO + Crypto -->
+        <!-- Center branch: Investissements → PEA + CTO + Crypto → sous-niveaux -->
         <div>
+          <!-- SVG Investissements → enveloppes -->
           <div id="ptf-svg-L2C" class="hidden lg:block" style="height:35px;">
             <svg id="ptf-svg-L2C-svg" class="w-full" style="height:35px;" fill="none">
               <defs>
@@ -247,39 +268,37 @@ export function render(store) {
               </defs>
             </svg>
           </div>
-          <div id="ptf-L3C" class="grid grid-cols-2 gap-2">
-            <!-- Actions -->
-            <div id="ptf-card-actions" class="card-dark rounded-xl p-3">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Actions</p>
-              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalActions)}</p>
-              <div class="space-y-1">${placList(actions, 'bg-accent-amber/50')}</div>
-            </div>
-            <!-- ETF -->
-            <div id="ptf-card-etf" class="card-dark rounded-xl p-3">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">ETF</p>
-              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalETF)}</p>
-              <div class="space-y-1">${placList(etfs, 'bg-accent-amber/50')}</div>
-            </div>
-            <!-- CTO -->
-            <div id="ptf-card-cto" class="card-dark rounded-xl p-3">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">CTO</p>
-              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalCTO)}</p>
-              <div class="space-y-1">${placList(cto, 'bg-accent-amber/50')}</div>
-            </div>
-            <!-- Crypto -->
-            <div id="ptf-card-crypto" class="card-dark rounded-xl p-3">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Crypto</p>
-              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalCrypto)}</p>
-              <div class="space-y-1">${placList(crypto, 'bg-accent-amber/50')}</div>
-            </div>
-            ${otherPlac.length > 0 ? `
-            <!-- Autres placements -->
-            <div id="ptf-card-otherplac" class="card-dark rounded-xl p-3 col-span-2">
-              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">Autres</p>
-              <p class="text-base font-bold text-accent-amber text-center mb-2">${fmt(totalOtherPlac)}</p>
-              <div class="space-y-1">${placList(otherPlac, 'bg-accent-amber/50')}</div>
-            </div>` : ''}
+          <!-- Ligne 2 investissements: enveloppes (PEA, CTO, Crypto) -->
+          <div id="ptf-L3C" class="grid grid-cols-${l2Envelopes.length || 1} gap-2">
+            ${l2Envelopes.map(env => `
+            <div id="ptf-card-${env.id}" class="card-dark rounded-xl p-3">
+              <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-semibold">${env.label}</p>
+              <p class="text-base font-bold text-accent-amber text-center">${fmt(env.total)}</p>
+              ${env.id !== 'pea' ? `<div class="space-y-1 mt-1">${placList(
+                env.id === 'cto' ? ctoPlac : env.id === 'crypto' ? cryptoPlac : otherPlac, 'bg-accent-amber/50'
+              )}</div>` : ''}
+            </div>`).join('')}
           </div>
+          ${totalPEA > 0 && l3PEA.length > 0 ? `
+          <!-- SVG PEA → Actions + ETF -->
+          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-2">
+            <div id="ptf-svg-L3C-pea" class="hidden lg:block" style="height:30px;">
+              <svg id="ptf-svg-L3C-pea-svg" class="w-full" style="height:30px;" fill="none">
+                <defs><filter id="glow-amber3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
+              </svg>
+            </div>
+          </div>
+          <!-- Ligne 3 sous PEA: Actions + ETF -->
+          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-2">
+            <div class="grid grid-cols-${l3PEA.length} gap-1.5">
+              ${l3PEA.map(sub => `
+              <div id="ptf-card-${sub.id}" class="card-dark rounded-xl p-2.5">
+                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold">${sub.label}</p>
+                <p class="text-sm font-bold text-accent-amber text-center mb-1">${fmt(sub.total)}</p>
+                <div class="space-y-1">${placList(sub.items, 'bg-accent-amber/50')}</div>
+              </div>`).join('')}
+            </div>
+          </div>` : ''}
         </div>
 
         <!-- Right: empty spacer for Immobilier (no sub-level) -->
@@ -466,12 +485,25 @@ export function mount() {
       );
     }
 
-    // Level 2 → 3 Center: Investissements → Actions + ETF + CTO + Crypto
-    drawConnectors('ptf-svg-L2C-svg', 'ptf-svg-L2C',
-      ['ptf-card-actions', 'ptf-card-etf', 'ptf-card-cto', 'ptf-card-crypto'],
-      ['#c9a76c', '#c9a76c', '#c9a76c', '#c9a76c'],
-      ['glow-amber2', 'glow-amber2', 'glow-amber2', 'glow-amber2']
-    );
+    // Level 2 → 3 Center: Investissements → enveloppes (dynamic)
+    const envCards = [...document.querySelectorAll('#ptf-L3C > [id^="ptf-card-"]')].map(el => el.id);
+    if (envCards.length > 0) {
+      drawConnectors('ptf-svg-L2C-svg', 'ptf-svg-L2C',
+        envCards,
+        envCards.map(() => '#c9a76c'),
+        envCards.map(() => 'glow-amber2')
+      );
+    }
+
+    // Level 3 → 4 Center: PEA → Actions + ETF (dynamic)
+    const peaSubCards = [...document.querySelectorAll('[id^="ptf-card-pea-"]')].map(el => el.id);
+    if (peaSubCards.length > 0) {
+      drawConnectors('ptf-svg-L3C-pea-svg', 'ptf-svg-L3C-pea',
+        peaSubCards,
+        peaSubCards.map(() => '#c9a76c'),
+        peaSubCards.map(() => 'glow-amber3')
+      );
+    }
 
     // Immobilier has no sub-level — details are inline
   }
