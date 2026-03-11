@@ -357,20 +357,7 @@ export function computeProjection(store) {
       }
     }
 
-    // PEE: liquidate at retirement age (proceeds go to épargne after tax)
     const currentAge = ageFinAnnee + year;
-    if (currentAge === ageRetraite) {
-      placSims.forEach(ps => {
-        if (!ps.isPEE || ps.value <= 0) return;
-        const gains = Math.max(0, ps.totalGains);
-        const taxRate = getPlacementTaxRate(ps, year);
-        const taxes = gains * taxRate;
-        epar += ps.value - taxes;
-        ps.value = 0;
-        ps.totalApports = 0;
-        ps.totalGains = 0;
-      });
-    }
 
     // Cash out: liquidate all placements into épargne (after tax)
     if (cashOutYear && calYear >= cashOutYear && !cashedOut) {
@@ -400,6 +387,8 @@ export function computeProjection(store) {
     if (!cashedOut) {
     placSims.forEach(ps => {
       if (ps.id === '__cto_overflow__') return; // handled separately after
+      // PEE: skip growth/DCA at and after retirement age (will be liquidated)
+      if (ps.isPEE && currentAge >= ageRetraite) return;
       const prevValue = ps.value;
       const prevApports = ps.totalApports;
 
@@ -533,6 +522,20 @@ export function computeProjection(store) {
       interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
     }
     } // end if (!cashedOut)
+
+    // PEE: liquidate at retirement age (proceeds go to épargne after tax)
+    if (currentAge === ageRetraite) {
+      placSims.forEach(ps => {
+        if (!ps.isPEE || ps.value <= 0) return;
+        const gains = Math.max(0, ps.totalGains);
+        const taxRate = getPlacementTaxRate(ps, year);
+        const taxes = gains * taxRate;
+        epar += ps.value - taxes;
+        ps.value = 0;
+        ps.totalApports = 0;
+        ps.totalGains = 0;
+      });
+    }
 
     // Interest on épargne/héritage
     interetsAnnuels += epar * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
