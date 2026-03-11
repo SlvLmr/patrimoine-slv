@@ -297,6 +297,21 @@ export function render(store) {
         </div>
       </div>
 
+      <!-- Sankey flow diagram -->
+      <div class="card-dark rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-200">Flux financier</h2>
+          <div class="flex rounded-lg overflow-hidden border border-dark-400/50">
+            <button data-sankey-tab="mensuel" class="sankey-tab px-3 py-1 text-[10px] font-medium transition bg-dark-600 text-gray-200">Mensuel</button>
+            <button data-sankey-tab="lisse" class="sankey-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Lissé</button>
+            <button data-sankey-tab="annuel" class="sankey-tab px-3 py-1 text-[10px] font-medium transition text-gray-500 hover:text-gray-300">Annuel</button>
+          </div>
+        </div>
+        <div id="sankey-wrap" style="min-height:350px; position:relative;">
+          <svg id="sankey-svg" width="100%" height="100%"></svg>
+        </div>
+      </div>
+
       <!-- Revenus & Dépenses — grille 2 colonnes -->
       <div class="flex items-center justify-end mb-2 gap-2">
         <button id="btn-seed-revenus" class="px-3 py-1.5 text-gray-500 hover:text-accent-amber text-xs rounded-lg hover:bg-dark-500 transition">Défaut revenus</button>
@@ -513,6 +528,210 @@ export function mount(store, navigate) {
   }
 
   renderDepChart('mensuel');
+
+  // ── Sankey flow diagram ──
+  function buildSankeyData(mode) {
+    const revs = store.get('revenus').filter(r => !r.informatif);
+    const deps = store.get('depenses');
+
+    function val(item) {
+      const m = Number(item.montantMensuel) || 0;
+      if (mode === 'mensuel') return item.frequence === 'Annuel' ? 0 : m;
+      if (mode === 'lisse') return item.frequence === 'Annuel' ? m / 12 : m;
+      return (item.frequence === 'Annuel' ? m : m * 12); // annuel
+    }
+
+    // Column 0: Revenue sources
+    const sources = revs.map(r => ({ id: r.id, label: r.nom, value: val(r) })).filter(s => s.value > 0);
+    const totalRevenu = sources.reduce((s, r) => s + r.value, 0);
+
+    // Column 1: Budget (single node)
+    const budget = { id: 'budget', label: 'Budget', value: totalRevenu };
+
+    // Column 2: Expense groups (typeDepense)
+    const groupMap = {};
+    deps.forEach(d => {
+      const type = d.typeDepense || 'Fixe';
+      const v = val(d);
+      if (v <= 0) return;
+      if (!groupMap[type]) groupMap[type] = { items: [], total: 0 };
+      groupMap[type].items.push({ id: d.id, label: d.nom, value: v });
+      groupMap[type].total += v;
+    });
+
+    const groupLabels = { 'Fixe': 'Dépenses fixes', 'Variable': 'Dépenses variables', 'Abonnement': 'Abonnements', 'Investissement': 'Investissements' };
+    const groupColors = { 'Fixe': '#ef4444', 'Variable': '#f97316', 'Abonnement': '#06b6d4', 'Investissement': '#a855f7' };
+    const groups = Object.entries(groupMap).map(([key, g]) => ({
+      id: `grp-${key}`, key, label: groupLabels[key] || key, value: g.total,
+      color: groupColors[key] || '#888', items: g.items
+    })).sort((a, b) => b.value - a.value);
+
+    return { sources, budget, groups, totalRevenu };
+  }
+
+  function drawSankey(mode) {
+    const svg = document.getElementById('sankey-svg');
+    const wrap = document.getElementById('sankey-wrap');
+    if (!svg || !wrap) return;
+
+    const data = buildSankeyData(mode);
+    if (data.totalRevenu <= 0) {
+      svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#6b6b75" font-size="12">Aucun revenu à afficher</text>';
+      return;
+    }
+
+    const suffix = mode === 'annuel' ? '/an' : '/mois';
+    const fmtV = v => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+
+    // Layout constants
+    const W = wrap.clientWidth || 800;
+    const nodeW = 6;
+    const gap = 8;
+    const padTop = 10;
+    const padBottom = 10;
+    const labelPad = 6;
+
+    // Calculate total items across all groups for height
+    const allItems = data.groups.flatMap(g => g.items);
+    const itemGaps = allItems.length > 1 ? (allItems.length - 1) * gap : 0;
+    const groupGaps = data.groups.length > 1 ? (data.groups.length - 1) * gap : 0;
+    const sourceGaps = data.sources.length > 1 ? (data.sources.length - 1) * gap : 0;
+
+    // Minimum height per item for readability
+    const minItemH = 16;
+    const neededH = Math.max(
+      allItems.length * minItemH + itemGaps,
+      data.groups.length * minItemH + groupGaps,
+      data.sources.length * minItemH + sourceGaps,
+      250
+    );
+    const H = neededH + padTop + padBottom;
+    const drawH = H - padTop - padBottom;
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.style.height = H + 'px';
+
+    // Column x positions (leave space for labels)
+    const col0x = 8;
+    const col1x = W * 0.30;
+    const col2x = W * 0.58;
+    const col3x = W * 0.78;
+
+    // Helper: stack nodes vertically proportional to value
+    function stackNodes(items, totalVal, x, availH) {
+      const totalGap = items.length > 1 ? (items.length - 1) * gap : 0;
+      const usableH = availH - totalGap;
+      let y = padTop;
+      return items.map(item => {
+        const h = Math.max(totalVal > 0 ? (item.value / totalVal) * usableH : minItemH, minItemH);
+        const node = { ...item, x, y, h };
+        y += h + gap;
+        return node;
+      });
+    }
+
+    // Stack each column
+    const maxVal = data.totalRevenu;
+    const srcNodes = stackNodes(data.sources, maxVal, col0x, drawH);
+    const budgetNode = { ...data.budget, x: col1x, y: padTop, h: drawH };
+    const grpNodes = stackNodes(data.groups, maxVal, col2x, drawH);
+    const itemNodes = [];
+    let itemY = padTop;
+    const totalItemGapSpace = allItems.length > 1 ? (allItems.length - 1) * gap : 0;
+    const itemUsableH = drawH - totalItemGapSpace;
+    data.groups.forEach(grp => {
+      grp.items.forEach(item => {
+        const h = Math.max(maxVal > 0 ? (item.value / maxVal) * itemUsableH : minItemH, minItemH);
+        itemNodes.push({ ...item, x: col3x, y: itemY, h, color: grp.color });
+        itemY += h + gap;
+      });
+    });
+
+    // Draw
+    let defs = '';
+    let body = '';
+    function addGradient(id, c1, c2) {
+      defs += `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${c1}" stop-opacity="0.4"/><stop offset="100%" stop-color="${c2}" stop-opacity="0.4"/></linearGradient>`;
+    }
+
+    // Flow path helper (horizontal bezier)
+    function flowPath(x0, y0, h0, x1, y1, h1) {
+      const mx = (x0 + x1) / 2;
+      return `M ${x0} ${y0} C ${mx} ${y0}, ${mx} ${y1}, ${x1} ${y1} L ${x1} ${y1 + h1} C ${mx} ${y1 + h1}, ${mx} ${y0 + h0}, ${x0} ${y0 + h0} Z`;
+    }
+
+    // -- Flows: Sources → Budget --
+    let budgetInY = budgetNode.y;
+    srcNodes.forEach((src, i) => {
+      const gid = `sg-${i}`;
+      addGradient(gid, '#6366f1', '#818cf8');
+      const bh = maxVal > 0 ? (src.value / maxVal) * budgetNode.h : src.h;
+      body += `<path d="${flowPath(src.x + nodeW, src.y, src.h, budgetNode.x, budgetInY, bh)}" fill="url(#${gid})"/>`;
+      budgetInY += bh;
+    });
+
+    // -- Flows: Budget → Groups --
+    let budgetOutY = budgetNode.y;
+    grpNodes.forEach((grp, i) => {
+      const gid = `bg-${i}`;
+      addGradient(gid, '#c9a76c', grp.color);
+      const bh = maxVal > 0 ? (grp.value / maxVal) * budgetNode.h : grp.h;
+      body += `<path d="${flowPath(budgetNode.x + nodeW, budgetOutY, bh, grp.x, grp.y, grp.h)}" fill="url(#${gid})"/>`;
+      budgetOutY += bh;
+    });
+
+    // -- Flows: Groups → Items --
+    const grpOutY = {};
+    grpNodes.forEach(g => { grpOutY[g.key] = g.y; });
+    itemNodes.forEach((item, i) => {
+      const grp = grpNodes.find(g => g.items.some(it => it.id === item.id));
+      if (!grp) return;
+      const gid = `gi-${i}`;
+      addGradient(gid, grp.color, grp.color);
+      const gh = grp.value > 0 ? (item.value / grp.value) * grp.h : item.h;
+      body += `<path d="${flowPath(grp.x + nodeW, grpOutY[grp.key], gh, item.x, item.y, item.h)}" fill="url(#${gid})"/>`;
+      grpOutY[grp.key] += gh;
+    });
+
+    // -- Node rectangles + labels --
+    // Sources (label inside/right of bar)
+    srcNodes.forEach(n => {
+      body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="#6366f1"/>`;
+      body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+    });
+
+    // Budget (label inside/right of bar)
+    body += `<rect x="${budgetNode.x}" y="${budgetNode.y}" width="${nodeW}" height="${budgetNode.h}" rx="3" fill="#c9a76c"/>`;
+    body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e8d5b0" font-size="12" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
+
+    // Groups (label left of bar)
+    grpNodes.forEach(n => {
+      body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="${n.color}"/>`;
+      body += `<text x="${n.x - labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" text-anchor="end" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+    });
+
+    // Items (label right of bar + small color square)
+    itemNodes.forEach(n => {
+      body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="2" fill="${n.color}"/>`;
+      body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#9ca3af" font-size="10" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+    });
+
+    svg.innerHTML = `<defs>${defs}</defs>${body}`;
+  }
+
+  drawSankey('mensuel');
+
+  content.querySelectorAll('.sankey-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      content.querySelectorAll('.sankey-tab').forEach(t => {
+        t.classList.remove('bg-dark-600', 'text-gray-200');
+        t.classList.add('text-gray-500');
+      });
+      tab.classList.add('bg-dark-600', 'text-gray-200');
+      tab.classList.remove('text-gray-500');
+      drawSankey(tab.dataset.sankeyTab);
+    });
+  });
 
   content.querySelectorAll('.chart-tab').forEach(tab => {
     tab.addEventListener('click', () => {
