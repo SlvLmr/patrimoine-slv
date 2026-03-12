@@ -102,9 +102,9 @@ export function render(store) {
   const trInterets = Math.round(trSoldeBase * trInterestRate / 12 * 100) / 100;
 
   // Saveback : 1% des paiements CB Trade Republic → portefeuille Bitcoin (cadeau TR, ne se déduit pas du solde)
-  // Les virements ne sont pas des paiements CB, donc exclus du saveback et du round-up
+  // Les virements et NDF ne sont pas des paiements CB, donc exclus du saveback et du round-up
   const trDepenseItems = items.filter(i => i.compte === 'Trade Republic');
-  const trCBItems = trDepenseItems.filter(i => (i.categorie || '') !== 'Virement');
+  const trCBItems = trDepenseItems.filter(i => (i.categorie || '') !== 'Virement' && (i.categorie || '') !== 'NDF');
   const trSaveback = Math.round(trCBItems.reduce((s, i) => s + (Number(i.montant) || 0), 0) * 0.01 * 100) / 100;
 
   // Round-up : arrondi à l'euro supérieur de chaque paiement CB → CTO (se déduit du solde)
