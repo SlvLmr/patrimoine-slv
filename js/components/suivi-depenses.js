@@ -94,7 +94,25 @@ export function render(store) {
 
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const soldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
+
+  // Trade Republic features
+  // Intérêts : 2% annuel sur le solde courant, proratisé au mois
+  const trInterestRate = 0.02;
+  const trSoldeBase = baseSoldeTR + soldePrevTR;
+  const trInterets = Math.round(trSoldeBase * trInterestRate / 12 * 100) / 100;
+
+  // Saveback : 1% des paiements CB Trade Republic → portefeuille Bitcoin (cadeau TR, ne se déduit pas du solde)
+  const trDepenseItems = items.filter(i => i.compte === 'Trade Republic');
+  const trSaveback = Math.round(trDepenseItems.reduce((s, i) => s + (Number(i.montant) || 0), 0) * 0.01 * 100) / 100;
+
+  // Round-up : arrondi à l'euro supérieur de chaque paiement → CTO (se déduit du solde)
+  const trRoundup = Math.round(trDepenseItems.reduce((s, i) => {
+    const montant = Number(i.montant) || 0;
+    const cents = montant % 1;
+    return s + (cents > 0.001 ? (1 - cents) : 0);
+  }, 0) * 100) / 100;
+
+  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup;
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
@@ -226,6 +244,18 @@ export function render(store) {
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
             <span class="text-xs text-gray-500">Solde mois précédent</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
+            <span class="text-[11px] text-gray-500">Intérêts (2%/an)</span>
+            <span class="text-[11px] font-medium text-accent-green">+${formatCurrencyCents(trInterets)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
+            <span class="text-[11px] text-gray-500">Saveback 1% → Bitcoin</span>
+            <span class="text-[11px] font-medium text-accent-amber">${formatCurrencyCents(trSaveback)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
+            <span class="text-[11px] text-gray-500">Round-up → CTO</span>
+            <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
           </div>
           ${opsTR.length > 0 ? `
           <div class="divide-y divide-dark-400/20">
