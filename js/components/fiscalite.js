@@ -624,30 +624,45 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
 
 function renderConseilsHTML(conseils, enfants) {
   if (conseils.length === 0) return '';
-  return conseils.map((c, idx) => c.isGlobal ? `
-    <div class="bg-gradient-to-r from-accent-green/5 to-accent-blue/5 border border-accent-green/20 rounded-xl p-4">
-      <div class="flex items-center gap-2 mb-1">
-        <span class="text-lg">${c.icon}</span>
-        <h3 class="text-sm font-bold text-accent-green">${c.titre}</h3>
-      </div>
-      <p class="text-sm text-gray-300">${c.description}</p>
-    </div>
-  ` : `
-    <details class="group bg-dark-800/30 border border-dark-400/15 rounded-xl overflow-hidden hover:border-dark-400/30 transition" ${idx <= 1 ? 'open' : ''}>
-      <summary class="flex items-center gap-3 p-3 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
-        <span class="text-lg shrink-0">${c.icon}</span>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h3 class="text-sm font-bold text-gray-200">${c.titre}</h3>
-            ${c.economie > 0 ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-green/10 text-accent-green">-${formatCurrency(c.economie)}</span>` : ''}
-            ${c.type === 'investissement' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-blue/10 text-accent-blue">Investissement</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-amber/10 text-accent-amber">Donation</span>'}
+  let stepNum = 0;
+  return conseils.map((c, idx) => {
+    if (c.isGlobal) {
+      return `
+      <div class="relative bg-gradient-to-r from-accent-green/10 via-accent-cyan/5 to-accent-blue/10 border border-accent-green/20 rounded-xl p-4 overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-accent-green/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="relative flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-accent-green/20 flex items-center justify-center text-xl shrink-0">${c.icon}</div>
+          <div>
+            <h3 class="text-sm font-bold text-accent-green">${c.titre}</h3>
+            <p class="text-xs text-gray-300 mt-0.5">${c.description}</p>
           </div>
         </div>
-        <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open/conseil:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </div>`;
+    }
+    stepNum++;
+    const borderColor = c.type === 'investissement' ? 'border-accent-blue' : 'border-accent-amber';
+    const stepColor = c.type === 'investissement' ? 'bg-accent-blue text-dark-900' : 'bg-accent-amber text-dark-900';
+    return `
+    <details class="group rounded-xl overflow-hidden border-l-4 ${borderColor} bg-dark-800/20 hover:bg-dark-800/40 transition" ${idx <= 2 ? 'open' : ''}>
+      <summary class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
+        <div class="w-7 h-7 rounded-lg ${stepColor} flex items-center justify-center text-xs font-black shrink-0">${stepNum}</div>
+        <span class="text-base shrink-0">${c.icon}</span>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-bold text-gray-100">${c.titre}</h3>
+        </div>
+        ${c.economie > 0 ? `<div class="text-right shrink-0 mr-2">
+          <p class="text-sm font-bold text-accent-green">-${formatCurrency(c.economie)}</p>
+          <p class="text-[9px] text-gray-500 uppercase">de droits</p>
+        </div>` : ''}
+        <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </summary>
-      <div class="px-3 pb-3 border-t border-dark-400/10">
-        <p class="text-xs text-gray-400 leading-relaxed mt-2 mb-2">${c.description}</p>
-        ${c.action ? `<div class="flex items-center gap-2 mb-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-cyan shrink-0"></span><p class="text-xs text-accent-cyan font-medium">${c.action}</p></div>` : ''}
+      <div class="px-4 pb-4 border-t border-dark-400/10 ml-10">
+        <p class="text-xs text-gray-400 leading-relaxed mt-3 mb-2">${c.description}</p>
+        ${c.action ? `
+          <div class="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-lg bg-accent-cyan/5 border border-accent-cyan/15">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent-cyan shrink-0"></span>
+            <p class="text-xs text-accent-cyan font-medium">${c.action}</p>
+          </div>` : ''}
         ${c.detail ? `
           <div class="mt-2 px-3 py-2 rounded-lg bg-dark-900/40 border border-dark-400/10">
             <p class="text-[10px] text-gray-500 leading-relaxed">${c.detail}</p>
@@ -664,8 +679,8 @@ function renderConseilsHTML(conseils, enfants) {
           </div>
         ` : ''}
       </div>
-    </details>
-  `).join('');
+    </details>`;
+  }).join('');
 }
 
 // ============================================================================
@@ -725,6 +740,24 @@ export function render(store) {
 
   // === TIMELINE DE VIE ===
   const timeline = genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store);
+
+  // === ANNÉE DE DÉPART DU PLAN ===
+  // Trouver la 1re année où les liquidités couvrent l'abattement total par enfant
+  const abattTotalParEnfant = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
+  const abattTotalFamille = abattTotalParEnfant * nbEnfants;
+  let anneeDepart = null;
+  let ageDepart = null;
+  if (nbEnfants > 0) {
+    for (let i = 0; i < snapshots.length; i++) {
+      const s = snapshots[i];
+      const liq = (s.patrimoineNet || 0) - (s.immobilier || 0);
+      if (liq >= abattTotalFamille) {
+        anneeDepart = s.calendarYear;
+        ageDepart = s.age;
+        break;
+      }
+    }
+  }
 
   // === TYPES DE DONATION ===
   const typeDonOptions = [
@@ -864,25 +897,7 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- CONSEILLER FISCAL (mis à jour dynamiquement par le slider) -->
-      ${conseils.length > 0 ? `
-      <div class="card-dark rounded-xl p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 rounded-lg bg-accent-amber/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-          </div>
-          <h2 class="text-sm font-bold text-gray-200">Conseiller fiscal & investissement</h2>
-          <span class="text-xs text-gray-500 ml-2" id="conseils-subtitle">Recommandations basées sur votre patrimoine en ${snap?.calendarYear || currentYear}</span>
-        </div>
-        <div class="space-y-3" id="conseils-container">
-          ${renderConseilsHTML(conseils, enfants)}
-        </div>
-      </div>
-      ` : ''}
-
-      <!-- TIMELINE DE VIE — Horizontal scrollable -->
+      <!-- PLAN D'ACTION RECOMMANDÉ (timeline) — above conseils -->
       ${timeline.length > 0 ? `
       <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-2 mb-4">
@@ -892,7 +907,20 @@ export function render(store) {
             </svg>
           </div>
           <h2 class="text-sm font-bold text-gray-200">Plan d'action recommandé</h2>
-          <span class="text-xs text-gray-500 ml-2">Faites défiler votre feuille de route</span>
+          ${anneeDepart ? `
+          <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-green/10 border border-accent-green/20">
+            <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <div>
+              <p class="text-[10px] text-gray-400 leading-none">Début possible</p>
+              <p class="text-sm font-bold text-accent-green leading-tight">${anneeDepart} <span class="text-[10px] font-normal text-gray-400">(${ageDepart} ans)</span></p>
+            </div>
+          </div>
+          ` : nbEnfants > 0 ? `
+          <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-amber/10 border border-accent-amber/20">
+            <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="text-[10px] text-accent-amber">Liquidités insuffisantes sur l'horizon</p>
+          </div>
+          ` : ''}
         </div>
         <div class="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
           <div class="flex items-start gap-0 min-w-max relative" style="padding-top:4px">
@@ -907,12 +935,32 @@ export function render(store) {
                 <div class="w-8 h-8 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20 ring-4 ring-${ev.color}/10` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-sm z-10 relative">
                   ${ev.icon}
                 </div>
-                <span class="text-[10px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.age} ans</span>
+                <span class="text-[10px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.annee} <span class="text-gray-500">(${ev.age} ans)</span></span>
                 <p class="text-[11px] font-medium text-gray-200 text-center mt-1.5 px-2 leading-tight">${ev.titre}</p>
                 <p class="text-[10px] text-gray-500 text-center mt-1 px-2 leading-tight">${shortDesc}</p>
               </div>`;
             }).join('')}
           </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- CONSEILLER FISCAL (mis à jour dynamiquement par le slider) -->
+      ${conseils.length > 0 ? `
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-amber/30 to-accent-amber/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-200">Conseiller fiscal & investissement</h2>
+            <p class="text-[10px] text-gray-500" id="conseils-subtitle">Recommandations basées sur votre patrimoine en ${snap?.calendarYear || currentYear}</p>
+          </div>
+        </div>
+        <div class="space-y-2" id="conseils-container">
+          ${renderConseilsHTML(conseils, enfants)}
         </div>
       </div>
       ` : ''}
