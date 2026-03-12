@@ -835,42 +835,39 @@ function renderConseilsHTML(conseils, enfants) {
 function renderImpactHTML(totalDroitsSansdon, succSansdon, totalFiscaliteAvecdon, totalDonne, totalDroitsDonation, patrimoineResiduelHorsAV, totalDroitsSuccResiduelle, economie, patrimoine) {
   const pctEco = totalDroitsSansdon > 0 ? Math.round(economie / totalDroitsSansdon * 100) : 0;
   return `
-    <div class="grid grid-cols-3 gap-3">
-      <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-red/20 text-center">
-        <p class="text-[10px] text-gray-500 mb-2">Si vous ne faites rien</p>
-        <p class="text-2xl font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
-        <p class="text-[10px] text-gray-500 mt-1">de droits de succession</p>
-        ${succSansdon ? `<details class="mt-2 text-left">
-          <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
+    <div class="grid grid-cols-3 gap-2">
+      <div class="rounded-lg px-3 py-2 bg-dark-800/40 border border-accent-red/20 text-center">
+        <p class="text-[10px] text-gray-500 mb-1">Si vous ne faites rien</p>
+        <p class="text-lg font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
+        <p class="text-[10px] text-gray-500">de droits de succession</p>
+        ${succSansdon ? `<details class="mt-1 text-left">
+          <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail</summary>
           <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
-            <p>Chaque enfant hérite de ${formatCurrency(succSansdon.partBrute)}</p>
-            <p>Après abattement de ${formatCurrency(succSansdon.abattement)}, il reste ${formatCurrency(succSansdon.taxable)} taxable</p>
-            <p>= ${formatCurrency(succSansdon.droits)} de droits par enfant</p>
-            ${patrimoine.assuranceVie > 0 ? `<p>+ ${formatCurrency(succSansdon.avDroits)} de droits sur l'AV par enfant</p>` : ''}
+            <p>Part par enfant : ${formatCurrency(succSansdon.partBrute)}</p>
+            <p>Taxable : ${formatCurrency(succSansdon.taxable)} → ${formatCurrency(succSansdon.droits)} droits/enfant</p>
+            ${patrimoine.assuranceVie > 0 ? `<p>+ ${formatCurrency(succSansdon.avDroits)} droits AV/enfant</p>` : ''}
           </div>
         </details>` : ''}
       </div>
-      <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-green/20 text-center">
-        <p class="text-[10px] text-gray-500 mb-2">Avec vos donations</p>
-        <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
-        <p class="text-[10px] text-gray-500 mt-1">total droits à payer</p>
-        <details class="mt-2 text-left">
-          <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
+      <div class="rounded-lg px-3 py-2 bg-dark-800/40 border border-accent-green/20 text-center">
+        <p class="text-[10px] text-gray-500 mb-1">Avec vos donations</p>
+        <p class="text-lg font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
+        <p class="text-[10px] text-gray-500">total droits à payer</p>
+        <details class="mt-1 text-left">
+          <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail</summary>
           <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
-            <p>Vous donnez ${formatCurrency(totalDonne)} de votre vivant</p>
-            <p>Droits sur ces donations : ${formatCurrency(totalDroitsDonation)}</p>
-            <p>Il reste ${formatCurrency(patrimoineResiduelHorsAV)} à la succession</p>
-            <p>Droits succession résiduelle : ${formatCurrency(totalDroitsSuccResiduelle)}</p>
+            <p>Donné : ${formatCurrency(totalDonne)} · Droits : ${formatCurrency(totalDroitsDonation)}</p>
+            <p>Résiduel : ${formatCurrency(patrimoineResiduelHorsAV)} → ${formatCurrency(totalDroitsSuccResiduelle)} droits</p>
           </div>
         </details>
       </div>
-      <div class="rounded-xl p-4 ${economie > 0 ? 'bg-gradient-to-br from-accent-cyan/10 to-accent-green/5 border border-accent-cyan/30' : 'bg-dark-800/40 border border-dark-400/20'} text-center">
-        <p class="text-[10px] text-gray-500 mb-2">Vos enfants économisent</p>
-        <p class="text-2xl font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${formatCurrency(economie)}</p>
-        <p class="text-[10px] text-gray-500 mt-1">${economie > 0 ? 'en moins de droits' : 'ajoutez des donations ci-dessous'}</p>
+      <div class="rounded-lg px-3 py-2 ${economie > 0 ? 'bg-gradient-to-br from-accent-cyan/10 to-accent-green/5 border border-accent-cyan/30' : 'bg-dark-800/40 border border-dark-400/20'} text-center">
+        <p class="text-[10px] text-gray-500 mb-1">Vos enfants économisent</p>
+        <p class="text-lg font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${formatCurrency(economie)}</p>
+        <p class="text-[10px] text-gray-500">${economie > 0 ? 'en moins de droits' : 'ajoutez des donations ci-dessous'}</p>
         ${totalDroitsSansdon > 0 ? `
-        <div class="mt-2 flex items-center gap-2">
-          <div class="flex-1 h-1.5 bg-dark-600 rounded-full overflow-hidden">
+        <div class="mt-1 flex items-center gap-2">
+          <div class="flex-1 h-1 bg-dark-600 rounded-full overflow-hidden">
             <div class="h-full bg-accent-cyan rounded-full transition-all" style="width: ${Math.min(100, Math.max(0, pctEco))}%"></div>
           </div>
           <span class="text-[10px] font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${pctEco}%</span>
@@ -1123,9 +1120,11 @@ export function render(store) {
         <!-- IMPACT DES DONATIONS — intégré sous le slider -->
         <div class="mt-4 pt-4 border-t border-dark-400/20">
           <div class="flex items-center gap-2 mb-3">
-            <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
+              <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
             <div>
-              <h3 class="text-xs font-bold text-gray-200">Impact de vos donations</h3>
+              <h2 class="text-sm font-bold text-gray-200">Impact de vos donations</h2>
               <p class="text-[10px] text-gray-500" id="impact-subtitle">Basé sur votre patrimoine en ${snap?.calendarYear || currentYear} (${snap?.age || ageDonateur} ans)</p>
             </div>
           </div>
