@@ -63,12 +63,20 @@
 
 #sidebar.sidebar-collapsed #profile-switcher {
   justify-content: center;
-  padding-left: 0;
-  padding-right: 0;
+  padding: 0.5rem;
+  border-bottom: none;
 }
 
 #sidebar.sidebar-collapsed #profile-switcher > div {
   justify-content: center;
+}
+
+#sidebar.sidebar-collapsed #profile-switcher > div > div {
+  justify-content: center;
+}
+
+#sidebar.sidebar-collapsed .p-4.border-t {
+  padding: 0.5rem;
 }
 
 #sidebar.sidebar-collapsed .p-4.border-t button {
@@ -88,7 +96,7 @@
 
 #sidebar.sidebar-collapsed #sidebar-logo {
   justify-content: center;
-  padding: 1rem;
+  padding: 0.75rem 0.5rem;
 }
 
 #sidebar.sidebar-collapsed #collapse-icon {
