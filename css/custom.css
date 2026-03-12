@@ -37,10 +37,21 @@
 #sidebar.sidebar-collapsed #profile-switcher svg:last-child,
 #sidebar.sidebar-collapsed #nav-links .nav-label,
 #sidebar.sidebar-collapsed #nav-links .section-title,
+#sidebar.sidebar-collapsed #nav-links .live-dot,
 #sidebar.sidebar-collapsed .bottom-label,
 #sidebar.sidebar-collapsed #user-bar span,
 #sidebar.sidebar-collapsed #user-bar .auth-label {
   display: none;
+}
+
+/* Hide section title wrappers in collapsed mode */
+#sidebar.sidebar-collapsed #nav-links .section-title-wrap {
+  display: none;
+}
+
+/* Reduce nav padding when collapsed */
+#sidebar.sidebar-collapsed #nav-links {
+  padding: 0.5rem;
 }
 
 #sidebar.sidebar-collapsed #nav-links a,
@@ -52,8 +63,8 @@
 
 #sidebar.sidebar-collapsed #profile-switcher {
   justify-content: center;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 #sidebar.sidebar-collapsed #profile-switcher > div {

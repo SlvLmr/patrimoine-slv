@@ -90,7 +90,7 @@ function initNav() {
   const nav = document.getElementById('nav-links');
   nav.innerHTML = navItems.map(item => {
     if (item.sectionTitle) {
-      return `<div class="mt-4 mb-1.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
+      return `<div class="section-title-wrap mt-4 mb-1.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
     }
     if (item.separator) {
       return `<div class="my-1.5 mx-3 h-px bg-gradient-to-r from-transparent via-dark-300/50 to-transparent"></div>`;
