@@ -121,7 +121,7 @@ export function render(store) {
     const moveDownAttr = isRevenu ? `data-move-rev-down="${op.id}"` : `data-move-exp-down="${op.id}"`;
     const moveAccount = `data-move-compte="${op.compte}"`;
     return `
-      <div class="flex items-center justify-between px-3 py-0.5 hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
+      <div class="flex items-center justify-between px-3 py-px hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
         <div class="flex items-center gap-2 min-w-0">
           <div class="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
             <button ${moveUpAttr} ${moveAccount} class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
@@ -174,9 +174,10 @@ export function render(store) {
 
           <!-- Dépenses mensuelles fixes -->
           <div class="border-t border-dark-400/30">
-            <div class="flex items-center justify-between px-3 py-1.5 bg-dark-700/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
               <div class="flex items-center gap-2">
-                <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <div class="flex flex-col gap-0.5 flex-shrink-0 invisible"><span class="leading-none text-[10px]">▲</span><span class="leading-none text-[10px]">▼</span></div>
+                <svg class="w-3.5 h-3.5 text-accent-amber flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 <span class="text-xs font-semibold text-gray-300">Dépenses mensuelles</span>
                 <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${depMensuelles.length}</span>
               </div>
@@ -189,7 +190,7 @@ export function render(store) {
               ${depMensuelles.map((d, idx) => {
                 const checked = cocheesThisMonth.includes(d.id);
                 return `
-              <div class="flex items-center justify-between pl-8 pr-3 py-0.5 hover:bg-dark-600/30 transition group/mc">
+              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/mc">
                 <div class="flex items-center gap-2 min-w-0">
                   <div class="flex flex-col gap-0.5 opacity-0 group-hover/mc:opacity-100 transition flex-shrink-0">
                     <button data-mc-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▲</button>
