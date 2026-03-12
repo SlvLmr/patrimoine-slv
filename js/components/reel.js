@@ -17,7 +17,9 @@ function reelStore(store) {
         parametres: store.get('parametresReel') || store.get('parametres') || {},
         actifs: store.get('actifsReel') || JSON.parse(JSON.stringify(REEL_DEFAULTS.actifs)),
         passifs: store.get('passifsReel') || JSON.parse(JSON.stringify(REEL_DEFAULTS.passifs)),
-        heritage: store.get('heritageReel') || []
+        heritage: store.get('heritageReel') || [],
+        revenus: store.get('revenus') || [],
+        depenses: store.get('depenses') || []
       };
     },
     get(path) {
