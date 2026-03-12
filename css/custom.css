@@ -315,6 +315,11 @@ input[type="number"] {
   display: block;
 }
 
+/* Hide default details marker for custom summaries */
+summary[style*="list-style:none"]::-webkit-details-marker {
+  display: none;
+}
+
 /* Print styles */
 @media print {
   #sidebar, #menu-toggle, .no-print {

@@ -190,10 +190,10 @@ export function render(store) {
             <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
             <span class="font-medium text-accent-amber text-xs">${formatCurrency(i.solde)}</span>
           </div>
-          <div class="flex items-center justify-between text-[10px] text-gray-400">
-            <span>${formatPercent(i.tauxInteret || 0)}</span>
-            ${i.plafond ? `<span>${formatCurrency(i.plafond)}</span>` : ''}
-          </div>
+          ${i.plafond ? `<div class="flex items-center justify-between text-[10px] text-gray-400">
+            <span></span>
+            <span>${formatCurrency(i.plafond)}</span>
+          </div>` : ''}
           ${i.plafond ? `
           <div class="flex items-center gap-1">
             <div class="progress-bar h-1 flex-1">
@@ -287,33 +287,35 @@ export function render(store) {
 
   const renderColumn = (s) => {
     const isEnvelope = s.key.startsWith('plac-');
+    const collapseByDefault = isEnvelope && (s.envKey === 'PEA' || s.envKey === 'CTO');
     const btnColorClass = s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white'
       : s.key === 'heritage' ? 'from-accent-cyan to-accent-cyan text-dark-900'
       : isEnvelope ? `from-${s.color} to-${s.color} text-dark-900`
       : 'from-accent-green to-accent-amber text-dark-900';
     return `
-    <div class="card-dark rounded-xl overflow-hidden flex flex-col">
-      <div class="px-3 py-2.5 border-b border-dark-400/30">
+    <details ${collapseByDefault ? '' : 'open'} class="card-dark rounded-xl overflow-hidden flex flex-col group/block">
+      <summary class="px-3 py-2.5 border-b border-dark-400/30 cursor-pointer select-none" style="list-style:none">
         <div class="flex items-center gap-2 mb-1.5">
-          <div class="w-6 h-6 rounded bg-${s.color}/20 flex items-center justify-center flex-shrink-0">
-            <svg class="w-3 h-3 text-${s.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-8 h-8 rounded-lg bg-${s.color}/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-${s.color}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${s.icon}"/>
             </svg>
           </div>
           <div class="flex-1 min-w-0">
-            <h2 class="text-xs font-semibold text-gray-200">${s.label}</h2>
+            <h2 class="text-sm font-bold text-gray-200">${s.label}</h2>
             <p class="text-[10px] text-gray-500">${s.count} élément${s.count > 1 ? 's' : ''}</p>
           </div>
+          <svg class="w-4 h-4 text-gray-500 transition-transform group-open/block:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
-          <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${btnColorClass} text-[10px] rounded hover:opacity-90 transition font-medium">+ Ajouter</button>
+          <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${btnColorClass} text-[10px] rounded hover:opacity-90 transition font-medium" onclick="event.stopPropagation(); event.preventDefault();">+ Ajouter</button>
         </div>
-      </div>
+      </summary>
       <div class="flex-1 overflow-y-auto">
         ${contentRenderers[s.key]()}
       </div>
-    </div>`;
+    </details>`;
   };
 
   // Row 1: Immobilier + Épargne

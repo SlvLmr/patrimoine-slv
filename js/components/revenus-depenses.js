@@ -607,7 +607,7 @@ export function mount(store, navigate) {
     return { sources, budget, groups, totalRevenu };
   }
 
-  function drawSankeyInto(svg, W, H, mode, showLabels = true) {
+  function drawSankeyInto(svg, W, H, mode, showLabels = true, fontScale = 1) {
     const data = buildSankeyData(mode);
     if (data.totalRevenu <= 0) {
       svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#6b6b75" font-size="12">Aucun revenu à afficher</text>';
@@ -711,26 +711,28 @@ export function mount(store, navigate) {
     });
 
     // -- Node rectangles + labels --
+    const fs = (base) => Math.round(base * fontScale);
+
     // Sources (label inside/right of bar)
     srcNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="#6366f1"/>`;
-      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#d1d5db" font-size="${fs(11)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     // Budget (label inside/right of bar)
     body += `<rect x="${budgetNode.x}" y="${budgetNode.y}" width="${nodeW}" height="${budgetNode.h}" rx="3" fill="#c9a76c"/>`;
-    if (showLabels) body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e8d5b0" font-size="12" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
+    if (showLabels) body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e8d5b0" font-size="${fs(12)}" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
 
     // Groups (label left of bar)
     grpNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="${n.color}"/>`;
-      if (showLabels) body += `<text x="${n.x - labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" text-anchor="end" fill="#d1d5db" font-size="11" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x - labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" text-anchor="end" fill="#d1d5db" font-size="${fs(11)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     // Items (label right of bar + small color square)
     itemNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="2" fill="${n.color}"/>`;
-      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#9ca3af" font-size="10" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#9ca3af" font-size="${fs(10)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     svg.innerHTML = `<defs>${defs}</defs>${body}`;
@@ -756,7 +758,7 @@ export function mount(store, navigate) {
     modal.style.background = 'rgba(0,0,0,0.75)';
     modal.style.backdropFilter = 'blur(6px)';
     modal.innerHTML = `
-      <div class="card-dark rounded-2xl p-4 relative flex flex-col" style="animation: slideUp 0.2s ease-out; width: calc(100vw - 2rem); height: calc(100vh - 2rem); max-width: 100%; max-height: 100%;">
+      <div class="card-dark rounded-2xl p-4 relative flex flex-col" style="animation: slideUp 0.2s ease-out; width: calc(100vw - 2rem); height: calc(100vh - 6rem); max-width: 100%; max-height: 100%;">
         <div class="flex items-center justify-between mb-3 flex-shrink-0">
           <h2 class="text-lg font-semibold text-gray-200">Flux financier</h2>
           <div class="flex items-center gap-3">
@@ -784,7 +786,7 @@ export function mount(store, navigate) {
       if (popSvg && popWrap) {
         const W = popWrap.clientWidth || 900;
         const H = popWrap.clientHeight || 500;
-        drawSankeyInto(popSvg, W, H, currentMode, true);
+        drawSankeyInto(popSvg, W, H, currentMode, true, 1.4);
       }
     });
 
@@ -816,7 +818,7 @@ export function mount(store, navigate) {
         if (popSvg && popWrap) {
           const W = popWrap.clientWidth || 900;
           const H = popWrap.clientHeight || 500;
-          drawSankeyInto(popSvg, W, H, currentMode, true);
+          drawSankeyInto(popSvg, W, H, currentMode, true, 1.4);
         }
         drawSankey(currentMode);
       });
