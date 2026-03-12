@@ -768,6 +768,54 @@ function renderConseilsHTML(conseils, enfants) {
   }).join('');
 }
 
+function renderImpactHTML(totalDroitsSansdon, succSansdon, totalFiscaliteAvecdon, totalDonne, totalDroitsDonation, patrimoineResiduelHorsAV, totalDroitsSuccResiduelle, economie, patrimoine) {
+  const pctEco = totalDroitsSansdon > 0 ? Math.round(economie / totalDroitsSansdon * 100) : 0;
+  return `
+    <div class="grid grid-cols-3 gap-3">
+      <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-red/20 text-center">
+        <p class="text-[10px] text-gray-500 mb-2">Si vous ne faites rien</p>
+        <p class="text-2xl font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
+        <p class="text-[10px] text-gray-500 mt-1">de droits de succession</p>
+        ${succSansdon ? `<details class="mt-2 text-left">
+          <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
+          <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
+            <p>Chaque enfant hérite de ${formatCurrency(succSansdon.partBrute)}</p>
+            <p>Après abattement de ${formatCurrency(succSansdon.abattement)}, il reste ${formatCurrency(succSansdon.taxable)} taxable</p>
+            <p>= ${formatCurrency(succSansdon.droits)} de droits par enfant</p>
+            ${patrimoine.assuranceVie > 0 ? `<p>+ ${formatCurrency(succSansdon.avDroits)} de droits sur l'AV par enfant</p>` : ''}
+          </div>
+        </details>` : ''}
+      </div>
+      <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-green/20 text-center">
+        <p class="text-[10px] text-gray-500 mb-2">Avec vos donations</p>
+        <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
+        <p class="text-[10px] text-gray-500 mt-1">total droits à payer</p>
+        <details class="mt-2 text-left">
+          <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
+          <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
+            <p>Vous donnez ${formatCurrency(totalDonne)} de votre vivant</p>
+            <p>Droits sur ces donations : ${formatCurrency(totalDroitsDonation)}</p>
+            <p>Il reste ${formatCurrency(patrimoineResiduelHorsAV)} à la succession</p>
+            <p>Droits succession résiduelle : ${formatCurrency(totalDroitsSuccResiduelle)}</p>
+          </div>
+        </details>
+      </div>
+      <div class="rounded-xl p-4 ${economie > 0 ? 'bg-gradient-to-br from-accent-cyan/10 to-accent-green/5 border border-accent-cyan/30' : 'bg-dark-800/40 border border-dark-400/20'} text-center">
+        <p class="text-[10px] text-gray-500 mb-2">Vos enfants économisent</p>
+        <p class="text-2xl font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${formatCurrency(economie)}</p>
+        <p class="text-[10px] text-gray-500 mt-1">${economie > 0 ? 'en moins de droits' : 'ajoutez des donations ci-dessous'}</p>
+        ${totalDroitsSansdon > 0 ? `
+        <div class="mt-2 flex items-center gap-2">
+          <div class="flex-1 h-1.5 bg-dark-600 rounded-full overflow-hidden">
+            <div class="h-full bg-accent-cyan rounded-full transition-all" style="width: ${Math.min(100, Math.max(0, pctEco))}%"></div>
+          </div>
+          <span class="text-[10px] font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${pctEco}%</span>
+        </div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
 const CHILD_COLORS = ['accent-purple', 'accent-cyan', 'accent-green', 'accent-amber', 'accent-blue', 'accent-red'];
 
 function renderTimelineHTML(timeline, ageDonateur) {
@@ -1067,55 +1115,11 @@ export function render(store) {
           </div>
           <div>
             <h2 class="text-sm font-bold text-gray-200">Impact de vos donations</h2>
-            <p class="text-[10px] text-gray-500">Ce que vos enfants paieront au fisc à votre décès, avec ou sans donations</p>
+            <p class="text-[10px] text-gray-500" id="impact-subtitle">Basé sur votre patrimoine en ${snap?.calendarYear || currentYear} (${snap?.age || ageDonateur} ans)</p>
           </div>
         </div>
-        <div class="grid grid-cols-3 gap-3">
-          <!-- Si vous ne faites rien -->
-          <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-red/20 text-center">
-            <p class="text-[10px] text-gray-500 mb-2">Si vous ne faites rien</p>
-            <p class="text-2xl font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
-            <p class="text-[10px] text-gray-500 mt-1">de droits de succession</p>
-            <details class="mt-2 text-left">
-              <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
-              <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
-                <p>Chaque enfant hérite de ${formatCurrency(succSansdon.partBrute)}</p>
-                <p>Après abattement de ${formatCurrency(succSansdon.abattement)}, il reste ${formatCurrency(succSansdon.taxable)} taxable</p>
-                <p>= ${formatCurrency(succSansdon.droits)} de droits par enfant</p>
-                ${patrimoine.assuranceVie > 0 ? `<p>+ ${formatCurrency(succSansdon.avDroits)} de droits sur l'AV par enfant</p>` : ''}
-              </div>
-            </details>
-          </div>
-
-          <!-- Avec vos donations -->
-          <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-green/20 text-center">
-            <p class="text-[10px] text-gray-500 mb-2">Avec vos donations</p>
-            <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
-            <p class="text-[10px] text-gray-500 mt-1">total droits à payer</p>
-            <details class="mt-2 text-left">
-              <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
-              <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
-                <p>Vous donnez ${formatCurrency(totalDonne)} de votre vivant</p>
-                <p>Droits sur ces donations : ${formatCurrency(totalDroitsDonation)}</p>
-                <p>Il reste ${formatCurrency(patrimoineResiduelHorsAV)} à la succession</p>
-                <p>Droits succession résiduelle : ${formatCurrency(totalDroitsSuccResiduelle)}</p>
-              </div>
-            </details>
-          </div>
-
-          <!-- Vous économisez -->
-          <div class="rounded-xl p-4 ${economie > 0 ? 'bg-gradient-to-br from-accent-cyan/10 to-accent-green/5 border border-accent-cyan/30' : 'bg-dark-800/40 border border-dark-400/20'} text-center">
-            <p class="text-[10px] text-gray-500 mb-2">Vos enfants économisent</p>
-            <p class="text-2xl font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${economie > 0 ? '' : ''}${formatCurrency(economie)}</p>
-            <p class="text-[10px] text-gray-500 mt-1">${economie > 0 ? 'en moins de droits' : 'ajoutez des donations ci-dessous'}</p>
-            ${totalDroitsSansdon > 0 ? `
-            <div class="mt-2 flex items-center gap-2">
-              <div class="flex-1 h-1.5 bg-dark-600 rounded-full overflow-hidden">
-                <div class="h-full bg-accent-cyan rounded-full transition-all" style="width: ${Math.min(100, Math.max(0, economie / totalDroitsSansdon * 100))}%"></div>
-              </div>
-              <span class="text-[10px] font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${Math.round(economie / totalDroitsSansdon * 100)}%</span>
-            </div>` : ''}
-          </div>
+        <div id="impact-container">
+          ${renderImpactHTML(totalDroitsSansdon, succSansdon, totalFiscaliteAvecdon, totalDonne, totalDroitsDonation, patrimoineResiduelHorsAV, totalDroitsSuccResiduelle, economie, patrimoine)}
         </div>
       </div>
 
@@ -1400,6 +1404,37 @@ export function mount(store, navigate) {
         conseilsContainer.innerHTML = renderConseilsHTML(newConseils, enfants);
         if (conseilsSubtitle) conseilsSubtitle.textContent = `Recommandations basées sur votre patrimoine en ${s.calendarYear}`;
         bindConseilApply();
+      }
+
+      // Rebuild impact section with patrimoine at selected year
+      const impactContainer = document.getElementById('impact-container');
+      const impactSubtitle = document.getElementById('impact-subtitle');
+      if (impactContainer && nbEnfants > 0) {
+        const avParEnfant = snapPatrimoine.assuranceVie ? snapPatrimoine.assuranceVie / nbEnfants : 0;
+        const snapSuccSansdon = calculerSuccessionParEnfant(snapPatrimoine.patrimoineHorsAV, nbEnfants, avParEnfant);
+        const snapTotalSansdon = (snapSuccSansdon.droits + snapSuccSansdon.avDroits) * nbEnfants;
+
+        let snapTotalDroitsDonation = 0;
+        let snapTotalDonne = 0;
+        for (const enf of enfants) {
+          const dons = (cfg.donations || []).filter(d => d.enfantId === enf.id).sort((a, b) => a.annee - b.annee);
+          const results = simulerDonations(enf, dons, ageDonateur);
+          snapTotalDonne += results.reduce((sum, r) => sum + r.exonere + r.taxable, 0);
+          snapTotalDroitsDonation += results.reduce((sum, r) => sum + r.droits, 0);
+        }
+
+        const snapResiduelHorsAV = Math.max(0, snapPatrimoine.patrimoineHorsAV - snapTotalDonne);
+        const snapSuccAvecdon = calculerSuccessionParEnfant(snapResiduelHorsAV, nbEnfants, avParEnfant);
+        const snapTotalSuccResiduelle = (snapSuccAvecdon.droits + snapSuccAvecdon.avDroits) * nbEnfants;
+        const snapTotalAvecdon = snapTotalDroitsDonation + snapTotalSuccResiduelle;
+        const snapEconomie = snapTotalSansdon - snapTotalAvecdon;
+
+        impactContainer.innerHTML = renderImpactHTML(
+          snapTotalSansdon, snapSuccSansdon, snapTotalAvecdon,
+          snapTotalDonne, snapTotalDroitsDonation, snapResiduelHorsAV,
+          snapTotalSuccResiduelle, snapEconomie, snapPatrimoine
+        );
+        if (impactSubtitle) impactSubtitle.textContent = `Basé sur votre patrimoine en ${s.calendarYear} (${s.age} ans)`;
       }
 
       // Rebuild timeline with updated patrimoine
