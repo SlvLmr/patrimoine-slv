@@ -133,7 +133,7 @@ export function render(store) {
     const isRevenu = op.type === 'revenu';
     const isVirement = !isRevenu && (op.categorie || '') === 'Virement';
     const isNDF = !isRevenu && (op.categorie || '') === 'NDF';
-    const arrowColor = isRevenu ? 'text-accent-green' : isVirement ? 'text-accent-amber' : isNDF ? 'text-purple-400' : 'text-accent-red';
+    const arrowColor = isRevenu ? 'text-green-500' : isVirement ? 'text-accent-amber' : isNDF ? 'text-purple-400' : 'text-accent-red';
     const icon = isRevenu
       ? `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
       : `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
@@ -172,7 +172,7 @@ export function render(store) {
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
             Clôturer le mois
           </button>
-          <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-green text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un revenu</button>
+          <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un revenu</button>
           <button id="btn-add-expense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une dépense</button>
           <button id="btn-add-virement" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un virement</button>
           <button id="btn-add-ndf" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une NDF</button>
@@ -400,8 +400,8 @@ export function mount(store, navigate) {
         <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
         <div class="flex gap-3">
           ${COMPTES.map((c, i) => `
-            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-green/40 transition has-[:checked]:border-accent-green has-[:checked]:bg-accent-green/10">
-              <input type="radio" name="compte" value="${c}" ${i === 0 ? 'checked' : ''} class="w-4 h-4 text-accent-green bg-dark-800 border-dark-400 focus:ring-accent-green/40">
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-green-500/40 transition has-[:checked]:border-green-500 has-[:checked]:bg-green-500/10">
+              <input type="radio" name="compte" value="${c}" ${i === 0 ? 'checked' : ''} class="w-4 h-4 text-green-500 bg-dark-800 border-dark-400 focus:ring-green-500/40">
               <span class="text-sm text-gray-200">${c}</span>
             </label>
           `).join('')}
@@ -412,7 +412,7 @@ export function mount(store, navigate) {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
       const revenus = store.get('suiviRevenus') || [];
-      revenus.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      revenus.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviRevenus', revenus);
 
       navigate('suivi-depenses');
@@ -484,7 +484,7 @@ export function mount(store, navigate) {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
       const items = store.get('suiviDepenses') || [];
-      items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
 
       navigate('suivi-depenses');
@@ -541,8 +541,8 @@ export function mount(store, navigate) {
           <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
           <div class="flex gap-3">
             ${COMPTES.map(c => `
-              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-green/40 transition has-[:checked]:border-accent-green has-[:checked]:bg-accent-green/10">
-                <input type="radio" name="compte" value="${c}" ${c === rev.compte ? 'checked' : ''} class="w-4 h-4 text-accent-green bg-dark-800 border-dark-400 focus:ring-accent-green/40">
+              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-green-500/40 transition has-[:checked]:border-green-500 has-[:checked]:bg-green-500/10">
+                <input type="radio" name="compte" value="${c}" ${c === rev.compte ? 'checked' : ''} class="w-4 h-4 text-green-500 bg-dark-800 border-dark-400 focus:ring-green-500/40">
                 <span class="text-sm text-gray-200">${c}</span>
               </label>
             `).join('')}
@@ -766,7 +766,7 @@ export function mount(store, navigate) {
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || 'Trade Republic';
       data.categorie = 'Virement';
       const items = store.get('suiviDepenses') || [];
-      items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
       navigate('suivi-depenses');
     });
@@ -795,7 +795,7 @@ export function mount(store, navigate) {
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || 'Trade Republic';
       data.categorie = 'NDF';
       const items = store.get('suiviDepenses') || [];
-      items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
       navigate('suivi-depenses');
     });
