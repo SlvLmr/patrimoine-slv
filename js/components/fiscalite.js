@@ -494,6 +494,179 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
 }
 
 // ============================================================================
+// TIMELINE DE VIE — Plan d'action recommandé
+// ============================================================================
+
+function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store) {
+  const nbEnfants = enfants.length;
+  if (nbEnfants === 0 || snapshots.length === 0) return [];
+
+  const events = [];
+  const state = store.getAll();
+  const allPlacements = state.actifs?.placements || [];
+  const peaPlacements = allPlacements.filter(p => (p.enveloppe || '').toUpperCase().startsWith('PEA') && (p.enveloppe || '').toUpperCase() !== 'PEE');
+  const peaApports = peaPlacements.reduce((s, p) => s + (Number(p.pru || 0) * Number(p.quantite || 0)), 0);
+  const PLAFOND_PEA = 150000;
+  const dcaMensuelPEA = peaPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+  const peaRestant = Math.max(0, PLAFOND_PEA - peaApports);
+
+  // 1. Maintenant : premier cycle de donations
+  const abattTotal = (ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants;
+  events.push({
+    age: ageDonateur,
+    annee: currentYear,
+    icon: '🎯',
+    color: 'accent-green',
+    titre: `1er cycle de donations`,
+    description: `Donnez jusqu'à ${formatCurrency(ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA)} par enfant (${formatCurrency(abattTotal)} total) à 0 € de droits. Abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + TEPA ${formatCurrency(DON_FAMILIAL_TEPA)}.`
+  });
+
+  // 2. PEA plein
+  if (dcaMensuelPEA > 0 && peaRestant > 0) {
+    const moisPEA = Math.ceil(peaRestant / dcaMensuelPEA);
+    const anneePEA = currentYear + Math.floor(moisPEA / 12);
+    const agePEA = ageDonateur + Math.floor(moisPEA / 12);
+    if (agePEA < ageDonateur + 30) {
+      events.push({
+        age: agePEA,
+        annee: anneePEA,
+        icon: '📊',
+        color: 'accent-blue',
+        titre: `PEA plein (${formatCurrency(PLAFOND_PEA)})`,
+        description: `Basculez vos versements vers l'AV (abattement ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant) puis le CTO.`
+      });
+    }
+  }
+
+  // 3. Nue-propriété — trouver l'âge optimal
+  if (patrimoine.immobilier > 0) {
+    let bestAge = null;
+    for (const t of BAREME_USUFRUIT) {
+      const npParEnfant = Math.round(patrimoine.immobilier * t.nuePropriete / nbEnfants);
+      if (npParEnfant <= ABATTEMENT_PARENT_ENFANT) {
+        bestAge = t.ageMax === 20 ? 20 : (BAREME_USUFRUIT.indexOf(t) === 0 ? 20 : BAREME_USUFRUIT[BAREME_USUFRUIT.indexOf(t) - 1].ageMax + 1);
+        break;
+      }
+    }
+    if (bestAge && bestAge >= ageDonateur) {
+      const rate = getUsufruitRate(bestAge);
+      events.push({
+        age: bestAge,
+        annee: currentYear + (bestAge - ageDonateur),
+        icon: '🏠',
+        color: 'accent-amber',
+        titre: `Donner la nue-propriété (NP ${(rate.nuePropriete * 100).toFixed(0)}%)`,
+        description: `À ${bestAge} ans, la NP par enfant (${formatCurrency(Math.round(patrimoine.immobilier * rate.nuePropriete / nbEnfants))}) passe dans l'abattement = 0 € de droits sur ${formatCurrency(patrimoine.immobilier)} d'immobilier.`
+      });
+    }
+  }
+
+  // 4. 2ème cycle (15 ans après)
+  const age2 = ageDonateur + RENOUVELLEMENT_ANNEES;
+  if (age2 < 85) {
+    events.push({
+      age: age2,
+      annee: currentYear + RENOUVELLEMENT_ANNEES,
+      icon: '🔄',
+      color: 'accent-cyan',
+      titre: `2e cycle de donations`,
+      description: `Les abattements sont reconstitués. Re-donnez jusqu'à ${formatCurrency(abattTotal)} exonérés.`
+    });
+  }
+
+  // 5. Avant 70 ans : maximiser l'AV
+  if (ageDonateur < 70) {
+    const avParEnfant = patrimoine.assuranceVie / Math.max(1, nbEnfants);
+    const avManque = AV_ABATTEMENT_PAR_BENEFICIAIRE - avParEnfant;
+    if (avManque > 10000) {
+      events.push({
+        age: 69,
+        annee: currentYear + (69 - ageDonateur),
+        icon: '🛡️',
+        color: 'accent-purple',
+        titre: `Deadline AV : avant 70 ans`,
+        description: `Versez ${formatCurrency(avManque * nbEnfants)} en AV avant 70 ans pour profiter de l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant (art. 990 I). Après 70 ans, abattement global limité à ${formatCurrency(AV_ABATTEMENT_APRES_70)}.`
+      });
+    }
+  }
+
+  // 6. 80 ans : deadline TEPA
+  if (ageDonateur < AGE_MAX_DONATEUR_TEPA) {
+    events.push({
+      age: 79,
+      annee: currentYear + (79 - ageDonateur),
+      icon: '⏰',
+      color: 'accent-red',
+      titre: `Deadline TEPA : avant 80 ans`,
+      description: `Dernier moment pour utiliser le don familial TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G). Après 80 ans, cette exonération est perdue.`
+    });
+  }
+
+  // 7. 3ème cycle (30 ans après)
+  const age3 = ageDonateur + 2 * RENOUVELLEMENT_ANNEES;
+  if (age3 < 90) {
+    events.push({
+      age: age3,
+      annee: currentYear + 2 * RENOUVELLEMENT_ANNEES,
+      icon: '🔄',
+      color: 'accent-cyan',
+      titre: `3e cycle de donations`,
+      description: `Nouveau renouvellement des abattements. ${formatCurrency(abattTotal)} exonérés à nouveau (si < 80 ans pour le TEPA).`
+    });
+  }
+
+  return events.sort((a, b) => a.age - b.age);
+}
+
+// ============================================================================
+// HTML HELPERS — réutilisés par render et par le slider
+// ============================================================================
+
+function renderConseilsHTML(conseils, enfants) {
+  if (conseils.length === 0) return '';
+  return conseils.map(c => c.isGlobal ? `
+    <div class="bg-gradient-to-r from-accent-green/5 to-accent-blue/5 border border-accent-green/20 rounded-xl p-4">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-lg">${c.icon}</span>
+        <h3 class="text-sm font-bold text-accent-green">${c.titre}</h3>
+      </div>
+      <p class="text-sm text-gray-300">${c.description}</p>
+    </div>
+  ` : `
+    <div class="bg-dark-800/30 border border-dark-400/15 rounded-xl p-4 hover:border-dark-400/30 transition">
+      <div class="flex items-start gap-3">
+        <span class="text-lg mt-0.5">${c.icon}</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
+            <h3 class="text-sm font-bold text-gray-200">${c.titre}</h3>
+            ${c.economie > 0 ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-green/10 text-accent-green">-${formatCurrency(c.economie)} de droits</span>` : ''}
+            ${c.type === 'investissement' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-blue/10 text-accent-blue">Investissement</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-amber/10 text-accent-amber">Donation</span>'}
+          </div>
+          <p class="text-xs text-gray-400 leading-relaxed mb-2">${c.description}</p>
+          ${c.action ? `<p class="text-xs text-accent-cyan font-medium">${c.action}</p>` : ''}
+          ${c.detail ? `
+            <details class="mt-2">
+              <summary class="text-[10px] text-gray-500 cursor-pointer hover:text-gray-400">Base légale & détails</summary>
+              <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">${c.detail}</p>
+            </details>
+          ` : ''}
+          ${c.suggestions && c.suggestions.length > 0 ? `
+            <div class="mt-2 flex gap-2 flex-wrap">
+              ${c.suggestions.map(s => `
+                <button class="conseil-apply px-2 py-1 rounded-lg bg-accent-green/10 text-accent-green text-[10px] font-medium hover:bg-accent-green/20 transition"
+                  data-enfant-id="${s.enfantId}" data-type="${s.type}" data-montant="${s.montant}" data-annee="${s.annee}">
+                  + Appliquer pour ${enfants.find(e => e.id === s.enfantId)?.prenom || '?'}
+                </button>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================================
 // RENDER
 // ============================================================================
 
@@ -547,6 +720,9 @@ export function render(store) {
   const conseils = nbEnfants > 0
     ? genererConseils(patrimoine, snap, enfants, cfg.donations || [], ageDonateur, currentYear, store)
     : [];
+
+  // === TIMELINE DE VIE ===
+  const timeline = genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store);
 
   // === TYPES DE DONATION ===
   const typeDonOptions = [
@@ -743,7 +919,7 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- CONSEILLER FISCAL -->
+      <!-- CONSEILLER FISCAL (mis à jour dynamiquement par le slider) -->
       ${conseils.length > 0 ? `
       <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-2 mb-4">
@@ -753,50 +929,48 @@ export function render(store) {
             </svg>
           </div>
           <h2 class="text-sm font-bold text-gray-200">Conseiller fiscal & investissement</h2>
-          <span class="text-xs text-gray-500 ml-2">Recommandations basées sur votre patrimoine en ${snap?.calendarYear || currentYear}</span>
+          <span class="text-xs text-gray-500 ml-2" id="conseils-subtitle">Recommandations basées sur votre patrimoine en ${snap?.calendarYear || currentYear}</span>
         </div>
+        <div class="space-y-3" id="conseils-container">
+          ${renderConseilsHTML(conseils, enfants)}
+        </div>
+      </div>
+      ` : ''}
 
-        <div class="space-y-3">
-          ${conseils.map(c => c.isGlobal ? `
-            <div class="bg-gradient-to-r from-accent-green/5 to-accent-blue/5 border border-accent-green/20 rounded-xl p-4">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-lg">${c.icon}</span>
-                <h3 class="text-sm font-bold text-accent-green">${c.titre}</h3>
-              </div>
-              <p class="text-sm text-gray-300">${c.description}</p>
-            </div>
-          ` : `
-            <div class="bg-dark-800/30 border border-dark-400/15 rounded-xl p-4 hover:border-dark-400/30 transition">
-              <div class="flex items-start gap-3">
-                <span class="text-lg mt-0.5">${c.icon}</span>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 class="text-sm font-bold text-gray-200">${c.titre}</h3>
-                    ${c.economie > 0 ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-green/10 text-accent-green">-${formatCurrency(c.economie)} de droits</span>` : ''}
-                    ${c.type === 'investissement' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-blue/10 text-accent-blue">Investissement</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-amber/10 text-accent-amber">Donation</span>'}
-                  </div>
-                  <p class="text-xs text-gray-400 leading-relaxed mb-2">${c.description}</p>
-                  ${c.action ? `<p class="text-xs text-accent-cyan font-medium">${c.action}</p>` : ''}
-                  ${c.detail ? `
-                    <details class="mt-2">
-                      <summary class="text-[10px] text-gray-500 cursor-pointer hover:text-gray-400">Base légale & détails</summary>
-                      <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">${c.detail}</p>
-                    </details>
-                  ` : ''}
-                  ${c.suggestions && c.suggestions.length > 0 ? `
-                    <div class="mt-2 flex gap-2 flex-wrap">
-                      ${c.suggestions.map((s, si) => `
-                        <button class="conseil-apply px-2 py-1 rounded-lg bg-accent-green/10 text-accent-green text-[10px] font-medium hover:bg-accent-green/20 transition"
-                          data-enfant-id="${s.enfantId}" data-type="${s.type}" data-montant="${s.montant}" data-annee="${s.annee}">
-                          + Appliquer pour ${enfants.find(e => e.id === s.enfantId)?.prenom || '?'}
-                        </button>
-                      `).join('')}
-                    </div>
-                  ` : ''}
+      <!-- TIMELINE DE VIE -->
+      ${timeline.length > 0 ? `
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h2 class="text-sm font-bold text-gray-200">Plan d'action recommandé</h2>
+          <span class="text-xs text-gray-500 ml-2">Votre feuille de route patrimoniale</span>
+        </div>
+        <div class="relative pl-6">
+          <!-- Ligne verticale -->
+          <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-dark-400/30"></div>
+          <div class="space-y-4">
+            ${timeline.map((ev, i) => {
+              const isPast = ev.age < ageDonateur;
+              const isCurrent = ev.age >= ageDonateur && ev.age <= ageDonateur + 2;
+              return `
+              <div class="relative flex gap-3 ${isPast ? 'opacity-50' : ''}">
+                <div class="absolute -left-6 top-1 w-5 h-5 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-[10px]">
+                  ${isCurrent ? ev.icon : ''}
                 </div>
-              </div>
-            </div>
-          `).join('')}
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[10px] font-bold text-${ev.color} px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.age} ans · ${ev.annee}</span>
+                    <span class="text-sm font-medium text-gray-200">${ev.icon} ${ev.titre}</span>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1 leading-relaxed">${ev.description}</p>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
         </div>
       </div>
       ` : ''}
@@ -996,7 +1170,28 @@ export function mount(store, navigate) {
 
   // --- Slider projection ---
   const snapshots = computeProjection(store);
+  const patrimoine = getPatrimoineFromStore(store);
   const slider = document.getElementById('projection-year-slider');
+
+  // Helper to rebind "Appliquer" buttons after rebuilding conseils HTML
+  function bindConseilApply() {
+    document.querySelectorAll('.conseil-apply').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const c = getConfig(store);
+        if (!c.donations) c.donations = [];
+        c.donations.push({
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          enfantId: btn.dataset.enfantId,
+          type: btn.dataset.type,
+          montant: Number(btn.dataset.montant),
+          annee: Number(btn.dataset.annee),
+        });
+        saveConfig(store, c);
+        navigate('fiscalite');
+      });
+    });
+  }
+
   if (slider) {
     slider.addEventListener('input', () => {
       const year = parseInt(slider.value);
@@ -1010,9 +1205,6 @@ export function mount(store, navigate) {
       document.getElementById('proj-placements').textContent = formatCurrency(s.placements);
       document.getElementById('proj-epargne').textContent = formatCurrency(s.epargne);
       document.getElementById('proj-cap-epargne').textContent = `Capacité d'épargne : ${formatCurrency((s.capaciteEpargne || 0) * 12)}/an`;
-
-      const ageLabel = document.getElementById('proj-age-label');
-      if (ageLabel) ageLabel.textContent = `·`;
 
       // Update per-child donation capacities
       const liqEls = document.querySelectorAll('.proj-liq-enfant');
@@ -1036,15 +1228,33 @@ export function mount(store, navigate) {
         npVal.textContent = formatCurrency(Math.round(immo * rate.nuePropriete));
         if (npEnf) npEnf.textContent = formatCurrency(Math.round(immo * rate.nuePropriete / Math.max(1, nbEnfants)));
       }
+
+      // Rebuild conseils with patrimoine at selected year
+      const conseilsContainer = document.getElementById('conseils-container');
+      const conseilsSubtitle = document.getElementById('conseils-subtitle');
+      if (conseilsContainer && nbEnfants > 0) {
+        // Build a synthetic patrimoine from the snapshot
+        const snapPatrimoine = {
+          ...patrimoine,
+          immobilier: s.immobilier || 0,
+          placements: (s.placements || 0),
+          patrimoineNet: s.patrimoineNet || 0,
+          patrimoineHorsAV: (s.patrimoineNet || 0) - patrimoine.assuranceVie,
+        };
+        const newConseils = genererConseils(snapPatrimoine, s, enfants, cfg.donations || [], ageDonateur, currentYear, store);
+        conseilsContainer.innerHTML = renderConseilsHTML(newConseils, enfants);
+        if (conseilsSubtitle) conseilsSubtitle.textContent = `Recommandations basées sur votre patrimoine en ${s.calendarYear}`;
+        // Rebind "Appliquer" buttons
+        bindConseilApply();
+      }
     });
 
-    // Save selected year on change (debounced via mouseup/touchend)
-    const saveYear = () => {
+    // Save selected year on change
+    slider.addEventListener('change', () => {
       const c = getConfig(store);
       c.selectedProjectionYear = parseInt(slider.value);
       saveConfig(store, c);
-    };
-    slider.addEventListener('change', saveYear);
+    });
   }
 
   // --- Ajouter enfant ---
@@ -1140,22 +1350,8 @@ export function mount(store, navigate) {
     });
   });
 
-  // --- Appliquer un conseil (ajouter donation suggérée) ---
-  document.querySelectorAll('.conseil-apply').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const c = getConfig(store);
-      if (!c.donations) c.donations = [];
-      c.donations.push({
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        enfantId: btn.dataset.enfantId,
-        type: btn.dataset.type,
-        montant: Number(btn.dataset.montant),
-        annee: Number(btn.dataset.annee),
-      });
-      saveConfig(store, c);
-      navigate('fiscalite');
-    });
-  });
+  // --- Appliquer un conseil (bind initial + rebind dynamique via slider) ---
+  bindConseilApply();
 
   // --- Chart timeline ---
   const canvas = document.getElementById('chart-donations');
