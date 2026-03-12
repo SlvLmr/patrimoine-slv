@@ -524,15 +524,35 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     patrimoineNet: startSnap.patrimoineNet || 0,
   };
 
+  // Helper: compute succession cost per child (without donations)
+  const succSansDon = (patNet, av) => {
+    const part = patNet / nbEnfants;
+    const taxable = Math.max(0, part - ABATTEMENT_PARENT_ENFANT);
+    return { droits: calculerDroitsDonation(taxable), partBrute: part };
+  };
+
   // 1. Premier cycle de donations (à l'année de départ du plan)
   const abattTotal = (ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants;
+  const montantParEnfantCycle1 = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
+  const avantCycle1 = succSansDon(startPatrimoine.patrimoineNet - startPatrimoine.assuranceVie, startPatrimoine.assuranceVie);
+  const residuelApresCycle1 = Math.max(0, (startPatrimoine.patrimoineNet - startPatrimoine.assuranceVie) - abattTotal);
+  const apresCycle1 = succSansDon(residuelApresCycle1, startPatrimoine.assuranceVie);
   events.push({
     age: startAge,
     annee: startYear,
     icon: '🎯',
     color: 'accent-green',
+    type: 'donation_cycle',
     titre: `1er cycle de donations`,
-    description: `Donnez jusqu'à ${formatCurrency(ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA)} par enfant (${formatCurrency(abattTotal)} total) à 0 € de droits. Abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + TEPA ${formatCurrency(DON_FAMILIAL_TEPA)}.`
+    description: `Donnez jusqu'à ${formatCurrency(montantParEnfantCycle1)} par enfant (${formatCurrency(abattTotal)} total) à 0 € de droits. Abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + TEPA ${formatCurrency(DON_FAMILIAL_TEPA)}.`,
+    impactParEnfant: enfants.map(enf => ({
+      prenom: enf.prenom,
+      id: enf.id,
+      montantRecu: montantParEnfantCycle1,
+      droitsAvant: avantCycle1.droits,
+      droitsApres: apresCycle1.droits,
+      economie: avantCycle1.droits - apresCycle1.droits,
+    }))
   });
 
   // 2. PEA plein
@@ -546,8 +566,14 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         annee: anneePEA,
         icon: '📊',
         color: 'accent-blue',
+        type: 'pea_plein',
         titre: `PEA plein (${formatCurrency(PLAFOND_PEA)})`,
-        description: `Basculez vos versements vers l'AV (abattement ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant) puis le CTO.`
+        description: `Basculez vos versements vers l'AV (abattement ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant) puis le CTO.`,
+        impactParEnfant: enfants.map(enf => ({
+          prenom: enf.prenom, id: enf.id,
+          montantRecu: 0,
+          detail: `Réorientez vers AV : ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} exonérés au décès`,
+        }))
       });
     }
   }
@@ -564,18 +590,30 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     }
     if (bestAge && bestAge >= ageDonateur) {
       const rate = getUsufruitRate(bestAge);
+      const npParEnfant = Math.round(startPatrimoine.immobilier * rate.nuePropriete / nbEnfants);
+      const taxableNP = Math.max(0, npParEnfant - ABATTEMENT_PARENT_ENFANT);
+      const droitsNPParEnfant = calculerDroitsDonation(taxableNP);
+      const droitsSuccImmoParEnfant = calculerDroitsDonation(Math.max(0, startPatrimoine.immobilier / nbEnfants - ABATTEMENT_PARENT_ENFANT));
       events.push({
         age: bestAge,
         annee: currentYear + (bestAge - ageDonateur),
         icon: '🏠',
         color: 'accent-amber',
+        type: 'nue_propriete',
         titre: `Donner la nue-propriété (NP ${(rate.nuePropriete * 100).toFixed(0)}%)`,
-        description: `À ${bestAge} ans, la NP par enfant (${formatCurrency(Math.round(startPatrimoine.immobilier * rate.nuePropriete / nbEnfants))}) passe dans l'abattement = 0 € de droits sur ${formatCurrency(startPatrimoine.immobilier)} d'immobilier.`
+        description: `À ${bestAge} ans, la NP par enfant (${formatCurrency(npParEnfant)}) passe dans l'abattement = 0 € de droits sur ${formatCurrency(startPatrimoine.immobilier)} d'immobilier.`,
+        impactParEnfant: enfants.map(enf => ({
+          prenom: enf.prenom, id: enf.id,
+          montantRecu: npParEnfant,
+          droitsAvant: droitsSuccImmoParEnfant,
+          droitsApres: droitsNPParEnfant,
+          economie: droitsSuccImmoParEnfant - droitsNPParEnfant,
+        }))
       });
     }
   }
 
-  // 4. 2ème cycle (15 ans après le 1er cycle)
+  // 4. 2eme cycle (15 ans apres le 1er cycle)
   const age2 = startAge + RENOUVELLEMENT_ANNEES;
   if (age2 < 85) {
     events.push({
@@ -583,8 +621,16 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       annee: startYear + RENOUVELLEMENT_ANNEES,
       icon: '🔄',
       color: 'accent-cyan',
+      type: 'donation_cycle',
       titre: `2e cycle de donations`,
-      description: `Les abattements sont reconstitués. Re-donnez jusqu'à ${formatCurrency(abattTotal)} exonérés.`
+      description: `Les abattements sont reconstitués. Re-donnez jusqu'à ${formatCurrency(abattTotal)} exonérés.`,
+      impactParEnfant: enfants.map(enf => ({
+        prenom: enf.prenom, id: enf.id,
+        montantRecu: montantParEnfantCycle1,
+        droitsAvant: calculerDroitsDonation(montantParEnfantCycle1),
+        droitsApres: 0,
+        economie: calculerDroitsDonation(montantParEnfantCycle1),
+      }))
     });
   }
 
@@ -598,8 +644,17 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         annee: currentYear + (69 - ageDonateur),
         icon: '🛡️',
         color: 'accent-purple',
+        type: 'av_deadline',
         titre: `Deadline AV : avant 70 ans`,
-        description: `Versez ${formatCurrency(avManque * nbEnfants)} en AV avant 70 ans pour profiter de l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant (art. 990 I). Après 70 ans, abattement global limité à ${formatCurrency(AV_ABATTEMENT_APRES_70)}.`
+        description: `Versez ${formatCurrency(avManque * nbEnfants)} en AV avant 70 ans pour profiter de l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant (art. 990 I). Après 70 ans, abattement global limité à ${formatCurrency(AV_ABATTEMENT_APRES_70)}.`,
+        impactParEnfant: enfants.map(enf => ({
+          prenom: enf.prenom, id: enf.id,
+          montantRecu: avManque,
+          droitsAvant: Math.round(avManque * 0.20),
+          droitsApres: 0,
+          economie: Math.round(avManque * 0.20),
+          detail: `${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} exonérés (art. 990 I)`,
+        }))
       });
     }
   }
@@ -611,8 +666,16 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       annee: currentYear + (79 - ageDonateur),
       icon: '⏰',
       color: 'accent-red',
+      type: 'tepa_deadline',
       titre: `Deadline TEPA : avant 80 ans`,
-      description: `Dernier moment pour utiliser le don familial TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G). Après 80 ans, cette exonération est perdue.`
+      description: `Dernier moment pour utiliser le don familial TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G). Après 80 ans, cette exonération est perdue.`,
+      impactParEnfant: enfants.map(enf => ({
+        prenom: enf.prenom, id: enf.id,
+        montantRecu: DON_FAMILIAL_TEPA,
+        droitsAvant: calculerDroitsDonation(DON_FAMILIAL_TEPA),
+        droitsApres: 0,
+        economie: calculerDroitsDonation(DON_FAMILIAL_TEPA),
+      }))
     });
   }
 
@@ -624,8 +687,16 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       annee: startYear + 2 * RENOUVELLEMENT_ANNEES,
       icon: '🔄',
       color: 'accent-cyan',
+      type: 'donation_cycle',
       titre: `3e cycle de donations`,
-      description: `Nouveau renouvellement des abattements. ${formatCurrency(abattTotal)} exonérés à nouveau (si < 80 ans pour le TEPA).`
+      description: `Nouveau renouvellement des abattements. ${formatCurrency(abattTotal)} exonérés à nouveau (si < 80 ans pour le TEPA).`,
+      impactParEnfant: enfants.map(enf => ({
+        prenom: enf.prenom, id: enf.id,
+        montantRecu: montantParEnfantCycle1,
+        droitsAvant: calculerDroitsDonation(montantParEnfantCycle1),
+        droitsApres: 0,
+        economie: calculerDroitsDonation(montantParEnfantCycle1),
+      }))
     });
   }
 
@@ -695,6 +766,98 @@ function renderConseilsHTML(conseils, enfants) {
       </div>
     </details>`;
   }).join('');
+}
+
+const CHILD_COLORS = ['accent-purple', 'accent-cyan', 'accent-green', 'accent-amber', 'accent-blue', 'accent-red'];
+
+function renderTimelineHTML(timeline, ageDonateur) {
+  if (!timeline || timeline.length === 0) return '<p class="text-sm text-gray-500 text-center py-4">Ajoutez des enfants pour voir le plan</p>';
+  return `
+    <div class="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
+      <div class="flex items-start gap-0 min-w-max relative" style="padding-top:4px">
+        <div class="absolute top-[19px] left-[20px] right-[20px] h-[2px] bg-dark-400/30 rounded-full"></div>
+        ${timeline.map((ev, i) => {
+          const isPast = ev.age < ageDonateur;
+          const isCurrent = ev.age >= ageDonateur && ev.age <= ageDonateur + 2;
+          const shortDesc = ev.description.length > 100 ? ev.description.substring(0, 100) + '...' : ev.description;
+          return `
+          <div class="timeline-event flex flex-col items-center shrink-0 relative cursor-pointer group/ev ${isPast ? 'opacity-40' : ''}" style="width:160px" data-event-idx="${i}">
+            <div class="w-8 h-8 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20 ring-4 ring-${ev.color}/10` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-sm z-10 relative group-hover/ev:scale-110 transition-transform">
+              ${ev.icon}
+            </div>
+            <span class="text-[10px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.annee} <span class="text-gray-500">(${ev.age} ans)</span></span>
+            <p class="text-[11px] font-medium text-gray-200 text-center mt-1.5 px-2 leading-tight">${ev.titre}</p>
+            <p class="text-[10px] text-gray-500 text-center mt-1 px-2 leading-tight">${shortDesc}</p>
+            <span class="text-[9px] text-${ev.color} mt-1 opacity-0 group-hover/ev:opacity-100 transition">Cliquer pour voir l'impact</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div id="timeline-impact-panel" class="hidden mt-4"></div>
+  `;
+}
+
+function renderImpactPanel(ev) {
+  if (!ev || !ev.impactParEnfant || ev.impactParEnfant.length === 0) return '';
+  const nbEnfants = ev.impactParEnfant.length;
+  const totalEconomie = ev.impactParEnfant.reduce((s, e) => s + (e.economie || 0), 0);
+
+  return `
+    <div class="rounded-xl border border-${ev.color}/20 bg-dark-800/30 p-4 animate-fadeIn">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-lg">${ev.icon}</span>
+        <div>
+          <h3 class="text-sm font-bold text-gray-200">${ev.titre} — ${ev.annee}</h3>
+          ${totalEconomie > 0 ? `<p class="text-[10px] text-accent-green">Economie totale : ${formatCurrency(totalEconomie)} de droits</p>` : ''}
+        </div>
+        <button class="close-impact-panel ml-auto w-6 h-6 rounded-full bg-dark-600/50 text-gray-500 hover:text-gray-300 flex items-center justify-center transition text-xs">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-1 ${nbEnfants >= 2 ? 'md:grid-cols-' + Math.min(nbEnfants, 4) : ''} gap-3">
+        ${ev.impactParEnfant.map((child, i) => {
+          const color = CHILD_COLORS[i % CHILD_COLORS.length];
+          const hasBeforeAfter = child.droitsAvant !== undefined && child.droitsApres !== undefined;
+          return `
+          <div class="rounded-xl p-4 bg-dark-900/40 border border-${color}/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-16 h-16 bg-${color}/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div class="relative">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-full bg-${color}/20 border border-${color}/30 flex items-center justify-center text-xs font-bold text-${color}">
+                  ${(child.prenom || '?')[0].toUpperCase()}
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-gray-200">${child.prenom || 'Enfant'}</p>
+                  ${child.montantRecu ? `<p class="text-[10px] text-gray-500">Reçoit ${formatCurrency(child.montantRecu)}</p>` : ''}
+                </div>
+              </div>
+
+              ${hasBeforeAfter ? `
+              <div class="flex items-center gap-2 mb-2">
+                <div class="flex-1 text-center p-2 rounded-lg bg-accent-red/5 border border-accent-red/10">
+                  <p class="text-[9px] text-gray-500 uppercase">Sans action</p>
+                  <p class="text-sm font-bold text-accent-red">${formatCurrency(child.droitsAvant)}</p>
+                  <p class="text-[9px] text-gray-500">de droits</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                <div class="flex-1 text-center p-2 rounded-lg bg-accent-green/5 border border-accent-green/10">
+                  <p class="text-[9px] text-gray-500 uppercase">Avec action</p>
+                  <p class="text-sm font-bold text-accent-green">${formatCurrency(child.droitsApres)}</p>
+                  <p class="text-[9px] text-gray-500">de droits</p>
+                </div>
+              </div>
+              ${child.economie > 0 ? `
+              <div class="text-center px-2 py-1.5 rounded-lg bg-accent-cyan/5 border border-accent-cyan/15">
+                <span class="text-xs font-bold text-accent-cyan">-${formatCurrency(child.economie)} economises</span>
+              </div>` : ''}
+              ` : ''}
+
+              ${child.detail ? `<p class="text-[10px] text-gray-500 mt-2">${child.detail}</p>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
 }
 
 // ============================================================================
@@ -792,37 +955,15 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- ENFANTS (compact) -->
-      <div class="card-dark rounded-xl p-4">
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-lg bg-accent-purple/20 flex items-center justify-center">
-            <svg class="w-3.5 h-3.5 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-          </div>
-          <h2 class="text-sm font-bold text-gray-200">Famille</h2>
-          <span class="text-xs text-gray-500">${ageDonateur} ans · Patrimoine net : ${formatCurrency(patrimoine.patrimoineNet)}</span>
-          <button id="btn-add-enfant" class="ml-auto px-2 py-1 bg-accent-purple text-dark-900 text-[11px] font-bold rounded-lg hover:opacity-90 transition">+ Enfant</button>
+      ${nbEnfants === 0 ? `
+      <div class="card-dark rounded-xl p-6 text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-accent-purple/20 flex items-center justify-center">
+          <svg class="w-6 h-6 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </div>
-        ${enfants.length === 0 ? `
-          <p class="text-sm text-gray-500 text-center py-3">Ajoutez vos enfants pour lancer la simulation</p>
-        ` : `
-          <div class="flex flex-wrap gap-2 mt-3">
-            ${enfants.map((enf, i) => {
-              const age = enf.dateNaissance ? Math.floor((Date.now() - new Date(enf.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000)) : '?';
-              const nbDons = (cfg.donations || []).filter(d => d.enfantId === enf.id).length;
-              return `
-              <div class="flex items-center gap-2 bg-dark-800/40 rounded-full px-3 py-1.5 group">
-                <div class="w-6 h-6 rounded-full bg-dark-600 flex items-center justify-center text-[11px] font-bold text-gray-300">${(enf.prenom || '?')[0].toUpperCase()}</div>
-                <span class="text-sm font-medium text-gray-200">${enf.prenom || 'Sans nom'}</span>
-                <span class="text-[10px] text-gray-500">${age} ans · ${nbDons} don${nbDons > 1 ? 's' : ''}</span>
-                <button class="enfant-edit text-accent-blue/70 hover:text-accent-blue text-[10px] opacity-0 group-hover:opacity-100 transition" data-id="${enf.id}">&#9998;</button>
-                <button class="enfant-delete text-accent-red/50 hover:text-accent-red text-[10px] opacity-0 group-hover:opacity-100 transition" data-id="${enf.id}">&times;</button>
-              </div>`;
-            }).join('')}
-          </div>
-        `}
+        <p class="text-sm text-gray-400 mb-3">Ajoutez vos enfants dans l'onglet <strong class="text-accent-purple">Enfants</strong> pour lancer la simulation</p>
+        <button id="btn-go-enfants" class="px-4 py-2 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition">Aller dans Enfants</button>
       </div>
+      ` : ''}
 
       <!-- SIMULATEUR PROJECTION -->
       <div class="card-dark rounded-xl p-5">
@@ -878,7 +1019,7 @@ export function render(store) {
             </svg>
           </div>
           <h2 class="text-sm font-bold text-gray-200">Plan d'action recommandé</h2>
-          <span class="text-xs text-gray-500 ml-2">Faites défiler votre feuille de route</span>
+          <span class="text-xs text-gray-500 ml-2">Cliquez sur une étape pour voir l'impact</span>
           <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg ${anneeDepart ? 'bg-accent-green/10 border border-accent-green/20' : 'bg-accent-amber/10 border border-accent-amber/20'}">
             <svg class="w-3.5 h-3.5 ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <div>
@@ -891,25 +1032,8 @@ export function render(store) {
             </div>
           </div>
         </div>
-        <div class="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
-          <div class="flex items-start gap-0 min-w-max relative" style="padding-top:4px">
-            <!-- Connecting line -->
-            <div class="absolute top-[19px] left-[20px] right-[20px] h-[2px] bg-dark-400/30 rounded-full"></div>
-            ${timeline.map((ev, i) => {
-              const isPast = ev.age < ageDonateur;
-              const isCurrent = ev.age >= ageDonateur && ev.age <= ageDonateur + 2;
-              const shortDesc = ev.description.length > 100 ? ev.description.substring(0, 100) + '...' : ev.description;
-              return `
-              <div class="flex flex-col items-center shrink-0 relative ${isPast ? 'opacity-40' : ''}" style="width:160px">
-                <div class="w-8 h-8 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20 ring-4 ring-${ev.color}/10` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-sm z-10 relative">
-                  ${ev.icon}
-                </div>
-                <span class="text-[10px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.annee} <span class="text-gray-500">(${ev.age} ans)</span></span>
-                <p class="text-[11px] font-medium text-gray-200 text-center mt-1.5 px-2 leading-tight">${ev.titre}</p>
-                <p class="text-[10px] text-gray-500 text-center mt-1 px-2 leading-tight">${shortDesc}</p>
-              </div>`;
-            }).join('')}
-          </div>
+        <div id="timeline-container">
+          ${renderTimelineHTML(timeline, ageDonateur)}
         </div>
       </div>
       ` : ''}
@@ -1137,11 +1261,71 @@ export function mount(store, navigate) {
   const currentYear = new Date().getFullYear();
   const cfg = getConfig(store);
   const enfants = cfg.enfants || [];
+  const nbEnfants = enfants.length;
 
   // --- Slider projection ---
   const snapshots = computeProjection(store);
   const patrimoine = getPatrimoineFromStore(store);
   const slider = document.getElementById('projection-year-slider');
+
+  // Current timeline data (updated on slider move or plan start year change)
+  let currentTimeline = null;
+
+  // Helper: compute anneeDepart
+  function computeAnneeDepart() {
+    if (nbEnfants === 0) return null;
+    const abattTotalFamille = (ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants;
+    for (const s of snapshots) {
+      const liq = (s.patrimoineNet || 0) - (s.immobilier || 0);
+      if (liq >= abattTotalFamille) return s.calendarYear;
+    }
+    return null;
+  }
+
+  // Helper: bind timeline click events
+  function bindTimelineEvents(timeline) {
+    currentTimeline = timeline;
+    document.querySelectorAll('.timeline-event').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.eventIdx);
+        const ev = timeline[idx];
+        if (!ev) return;
+
+        // Highlight selected
+        document.querySelectorAll('.timeline-event').forEach(e => e.classList.remove('ring-2', 'ring-accent-green', 'ring-accent-cyan', 'ring-accent-amber', 'ring-accent-purple', 'ring-accent-red', 'ring-accent-blue'));
+        el.classList.add('ring-2', `ring-${ev.color}`);
+
+        // Show impact panel
+        const panel = document.getElementById('timeline-impact-panel');
+        if (panel) {
+          panel.innerHTML = renderImpactPanel(ev);
+          panel.classList.remove('hidden');
+
+          // Bind close button
+          panel.querySelector('.close-impact-panel')?.addEventListener('click', () => {
+            panel.classList.add('hidden');
+            document.querySelectorAll('.timeline-event').forEach(e => e.classList.remove('ring-2', 'ring-accent-green', 'ring-accent-cyan', 'ring-accent-amber', 'ring-accent-purple', 'ring-accent-red', 'ring-accent-blue'));
+          });
+
+          // Smooth scroll into view
+          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+  }
+
+  // Helper: rebuild timeline with current state
+  function rebuildTimeline(snapPatrimoine) {
+    const c = getConfig(store);
+    const anneeDepart = computeAnneeDepart();
+    const planStartYear = c.anneeDepartPlan || anneeDepart || currentYear;
+    const timeline = genererTimeline(snapshots, snapPatrimoine || patrimoine, enfants, ageDonateur, currentYear, store, planStartYear);
+    const container = document.getElementById('timeline-container');
+    if (container) {
+      container.innerHTML = renderTimelineHTML(timeline, ageDonateur);
+      bindTimelineEvents(timeline);
+    }
+  }
 
   // Helper to rebind "Appliquer" buttons after rebuilding conseils HTML
   function bindConseilApply() {
@@ -1167,7 +1351,6 @@ export function mount(store, navigate) {
       const year = parseInt(slider.value);
       const idx = Math.max(0, Math.min(snapshots.length - 1, year - currentYear));
       const s = snapshots[idx] || snapshots[0];
-      const nbEnfants = enfants.length;
 
       document.getElementById('projection-year-label').textContent = year;
       document.getElementById('proj-patrimoine').textContent = formatCurrency(s.patrimoineNet);
@@ -1175,6 +1358,7 @@ export function mount(store, navigate) {
       document.getElementById('proj-placements').textContent = formatCurrency(s.placements);
       document.getElementById('proj-epargne').textContent = formatCurrency(s.epargne);
       document.getElementById('proj-cap-epargne').textContent = `Capacité d'épargne : ${formatCurrency((s.capaciteEpargne || 0) * 12)}/an`;
+      document.getElementById('proj-age-label').textContent = `À ${s.age} ans (fin ${s.calendarYear})`;
 
       // Update per-child donation capacities
       const liqEls = document.querySelectorAll('.proj-liq-enfant');
@@ -1199,24 +1383,27 @@ export function mount(store, navigate) {
         if (npEnf) npEnf.textContent = formatCurrency(Math.round(immo * rate.nuePropriete / Math.max(1, nbEnfants)));
       }
 
-      // Rebuild conseils with patrimoine at selected year
+      // Build synthetic patrimoine for this snapshot
+      const snapPatrimoine = {
+        ...patrimoine,
+        immobilier: s.immobilier || 0,
+        placements: (s.placements || 0),
+        patrimoineNet: s.patrimoineNet || 0,
+        patrimoineHorsAV: (s.patrimoineNet || 0) - patrimoine.assuranceVie,
+      };
+
+      // Rebuild conseils
       const conseilsContainer = document.getElementById('conseils-container');
       const conseilsSubtitle = document.getElementById('conseils-subtitle');
       if (conseilsContainer && nbEnfants > 0) {
-        // Build a synthetic patrimoine from the snapshot
-        const snapPatrimoine = {
-          ...patrimoine,
-          immobilier: s.immobilier || 0,
-          placements: (s.placements || 0),
-          patrimoineNet: s.patrimoineNet || 0,
-          patrimoineHorsAV: (s.patrimoineNet || 0) - patrimoine.assuranceVie,
-        };
         const newConseils = genererConseils(snapPatrimoine, s, enfants, cfg.donations || [], ageDonateur, currentYear, store);
         conseilsContainer.innerHTML = renderConseilsHTML(newConseils, enfants);
         if (conseilsSubtitle) conseilsSubtitle.textContent = `Recommandations basées sur votre patrimoine en ${s.calendarYear}`;
-        // Rebind "Appliquer" buttons
         bindConseilApply();
       }
+
+      // Rebuild timeline with updated patrimoine
+      rebuildTimeline(snapPatrimoine);
     });
 
     // Save selected year on change
@@ -1236,58 +1423,23 @@ export function mount(store, navigate) {
         const c = getConfig(store);
         c.anneeDepartPlan = val;
         saveConfig(store, c);
-        navigate('fiscalite'); // re-render with updated timeline
+        navigate('fiscalite');
       }
     });
   }
 
-  // --- Ajouter enfant ---
-  document.getElementById('btn-add-enfant')?.addEventListener('click', () => {
-    openModal('Ajouter un enfant', `
-      ${inputField('prenom', 'Prénom', '', 'text')}
-      ${inputField('dateNaissance', 'Date de naissance', '', 'date')}
-    `, () => {
-      const data = getFormData(document.getElementById('modal-body'));
-      if (!data.prenom) return;
-      const c = getConfig(store);
-      if (!c.enfants) c.enfants = [];
-      c.enfants.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), prenom: data.prenom, dateNaissance: data.dateNaissance });
-      saveConfig(store, c);
-      navigate('fiscalite');
-    });
+  // --- Navigate to enfants page ---
+  document.getElementById('btn-go-enfants')?.addEventListener('click', () => {
+    navigate('enfants');
   });
 
-  // --- Modifier enfant ---
-  document.querySelectorAll('.enfant-edit').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const c = getConfig(store);
-      const enf = (c.enfants || []).find(e => e.id === id);
-      if (!enf) return;
-      openModal('Modifier l\'enfant', `
-        ${inputField('prenom', 'Prénom', enf.prenom || '', 'text')}
-        ${inputField('dateNaissance', 'Date de naissance', enf.dateNaissance || '', 'date')}
-      `, () => {
-        const data = getFormData(document.getElementById('modal-body'));
-        enf.prenom = data.prenom || enf.prenom;
-        enf.dateNaissance = data.dateNaissance || enf.dateNaissance;
-        saveConfig(store, c);
-        navigate('fiscalite');
-      });
-    });
-  });
-
-  // --- Supprimer enfant ---
-  document.querySelectorAll('.enfant-delete').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const c = getConfig(store);
-      c.enfants = (c.enfants || []).filter(e => e.id !== id);
-      c.donations = (c.donations || []).filter(d => d.enfantId !== id);
-      saveConfig(store, c);
-      navigate('fiscalite');
-    });
-  });
+  // --- Initial timeline binding ---
+  {
+    const anneeDepart = computeAnneeDepart();
+    const planStartYear = cfg.anneeDepartPlan || anneeDepart || currentYear;
+    const timeline = genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store, planStartYear);
+    bindTimelineEvents(timeline);
+  }
 
   // --- Ajouter donation ---
   document.getElementById('btn-add-donation')?.addEventListener('click', () => {
