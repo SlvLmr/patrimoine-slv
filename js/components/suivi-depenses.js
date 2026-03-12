@@ -79,6 +79,11 @@ export function render(store) {
   const soldePrevCIC = Number(soldePrecedent.cic) || 0;
   const soldePrevTR = Number(soldePrecedent.tr) || 0;
 
+  // Solde obligatoire
+  const soldeObligatoire = store.get('soldeObligatoire') || {};
+  const soldeObligCIC = Number(soldeObligatoire.cic) || 0;
+  const soldeObligTR = Number(soldeObligatoire.tr) || 0;
+
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
   const cicCochees = store.get('cicMensuellesCochees') || {};
@@ -190,9 +195,13 @@ export function render(store) {
             </div>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-prev="cic">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
             <span class="text-xs text-gray-500">Solde mois précédent</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="cic">
+            <span class="text-xs text-gray-500">Solde obligatoire</span>
+            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldeObligCIC)}</span>
           </div>
           ${opsCIC.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-cic">
@@ -247,9 +256,13 @@ export function render(store) {
             </div>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-prev="tr">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
             <span class="text-xs text-gray-500">Solde mois précédent</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="tr">
+            <span class="text-xs text-gray-500">Solde obligatoire</span>
+            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
             <span class="text-[11px] text-gray-500">Intérêts (2%/an)</span>
@@ -456,6 +469,23 @@ export function mount(store, navigate) {
         const data = getFormData(document.getElementById('modal-body'));
         prev[key] = Number(data.solde) || 0;
         store.set('soldeMoisPrecedent', prev);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit solde obligatoire
+  document.querySelectorAll('[data-edit-oblig]').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.editOblig; // 'cic' or 'tr'
+      const label = key === 'cic' ? 'CIC' : 'Trade Republic';
+      const oblig = store.get('soldeObligatoire') || {};
+      const current = Number(oblig[key]) || 0;
+      const body = inputField('solde', `Solde obligatoire ${label} (€)`, current, 'number', 'step="0.01"');
+      openModal(`Solde obligatoire — ${label}`, body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        oblig[key] = Number(data.solde) || 0;
+        store.set('soldeObligatoire', oblig);
         navigate('suivi-depenses');
       });
     });
