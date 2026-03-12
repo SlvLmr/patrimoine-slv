@@ -383,8 +383,8 @@ export function render(store) {
             </div>
           </div>
           <!-- Sankey view (default) -->
-          <div id="viz-sankey" class="flex-1">
-            <div id="sankey-wrap" class="cursor-pointer overflow-hidden group/sankey h-full" style="position:relative; min-height:200px;" title="Cliquer pour agrandir">
+          <div id="viz-sankey" class="flex-1 relative" style="min-height:200px;">
+            <div id="sankey-wrap" class="cursor-pointer overflow-hidden group/sankey absolute inset-0" title="Cliquer pour agrandir">
               <svg id="sankey-svg" width="100%" height="100%"></svg>
               <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div class="w-12 h-12 rounded-full bg-dark-700/60 border border-dark-400/40 flex items-center justify-center opacity-60 group-hover/sankey:opacity-100 transition">
