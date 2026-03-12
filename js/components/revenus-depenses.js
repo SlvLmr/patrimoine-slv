@@ -384,7 +384,7 @@ export function render(store) {
           </div>
           <!-- Sankey view (default) -->
           <div id="viz-sankey" class="flex-1">
-            <div id="sankey-wrap" class="cursor-pointer overflow-hidden group/sankey" style="position:relative; height:250px;" title="Cliquer pour agrandir">
+            <div id="sankey-wrap" class="cursor-pointer overflow-hidden group/sankey h-full" style="position:relative; min-height:200px;" title="Cliquer pour agrandir">
               <svg id="sankey-svg" width="100%" height="100%"></svg>
               <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div class="w-12 h-12 rounded-full bg-dark-700/60 border border-dark-400/40 flex items-center justify-center opacity-60 group-hover/sankey:opacity-100 transition">
@@ -744,7 +744,8 @@ export function mount(store, navigate) {
     const wrap = document.getElementById('sankey-wrap');
     if (!svg || !wrap) return;
     const W = wrap.clientWidth || 800;
-    drawSankeyInto(svg, W, 250, mode, false);
+    const H = wrap.clientHeight || 250;
+    drawSankeyInto(svg, W, H, mode, false);
   }
 
   // Popup: full-size Sankey
