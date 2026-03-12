@@ -264,6 +264,87 @@ async function fetchQuoteWithHistory(isin) {
   }
 }
 
+// Batch fetch: resolve all tickers, then use batch Yahoo endpoints
+async function fetchAllQuotesBatch(watchlist) {
+  // Step 1: Resolve all tickers in parallel (most are in KNOWN_TICKERS, instant)
+  const tickerResults = await Promise.allSettled(
+    watchlist.map(item => resolveIsinToTicker(item.isin))
+  );
+  const isinToTicker = {};
+  const tickerToIsin = {};
+  const tickers = [];
+  tickerResults.forEach((r, i) => {
+    if (r.status === 'fulfilled' && r.value) {
+      const isin = watchlist[i].isin;
+      isinToTicker[isin] = r.value;
+      tickerToIsin[r.value] = isin;
+      tickers.push(r.value);
+    }
+  });
+  if (tickers.length === 0) return {};
+
+  const symbolsParam = tickers.join(',');
+  const quotesMap = {};
+
+  // Step 2: Fetch spark (chart data) and quote (prices) in parallel — 2 calls total
+  const sparkUrl = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(symbolsParam)}&range=1mo&interval=1d`;
+  const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbolsParam)}`;
+
+  const [sparkResult, quoteResult] = await Promise.allSettled([
+    fetchWithProxy(sparkUrl, 8000),
+    fetchWithProxy(quoteUrl, 8000)
+  ]);
+
+  // Parse quote data
+  const quoteData = {};
+  if (quoteResult.status === 'fulfilled' && quoteResult.value?.quoteResponse?.result) {
+    for (const q of quoteResult.value.quoteResponse.result) {
+      quoteData[q.symbol] = q;
+    }
+  }
+
+  // Parse spark data
+  const sparkData = {};
+  if (sparkResult.status === 'fulfilled' && sparkResult.value?.spark?.result) {
+    for (const item of sparkResult.value.spark.result) {
+      if (item.response?.[0]?.indicators?.quote?.[0]?.close) {
+        sparkData[item.symbol] = item.response[0];
+      }
+    }
+  }
+
+  // Step 3: Combine into quotesMap keyed by ISIN
+  for (const ticker of tickers) {
+    const isin = tickerToIsin[ticker];
+    const q = quoteData[ticker];
+    const s = sparkData[ticker];
+
+    if (!q && !s) continue;
+
+    const price = q?.regularMarketPrice || 0;
+    const previousClose = q?.regularMarketPreviousClose || q?.previousClose || price;
+    const change = q?.regularMarketChange ?? (price - previousClose);
+    const changePct = q?.regularMarketChangePercent ?? (previousClose ? (change / previousClose) * 100 : 0);
+    const currency = q?.currency || 'EUR';
+
+    let chartPoints = [];
+    if (s) {
+      const timestamps = s.timestamp || [];
+      const closes = s.indicators?.quote?.[0]?.close || [];
+      chartPoints = timestamps.map((ts, i) => ({
+        date: new Date(ts * 1000),
+        close: closes[i]
+      })).filter(d => d.close !== null);
+    }
+
+    if (price > 0 || chartPoints.length > 0) {
+      quotesMap[isin] = { ticker, price, previousClose, change, changePct, currency, chartPoints };
+    }
+  }
+
+  return quotesMap;
+}
+
 function formatPrice(value, currency) {
   if (currency === 'USD') {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value);
@@ -404,21 +485,20 @@ function formatNum(v, decimals = 2) {
 export async function backgroundRefresh() {
   if (isCacheFresh()) return; // already up to date
   const watchlist = loadWatchlist();
-  const BATCH_SIZE = 3;
-  const quotesMap = {};
-  for (let i = 0; i < watchlist.length; i += BATCH_SIZE) {
-    const batch = watchlist.slice(i, i + BATCH_SIZE);
+  let quotesMap = {};
+  try {
+    quotesMap = await fetchAllQuotesBatch(watchlist);
+  } catch (e) {
+    console.warn('Batch background refresh failed, falling back to individual:', e);
+    // Fallback to individual fetches
     const results = await Promise.allSettled(
-      batch.map(item => fetchQuoteWithHistory(item.isin))
+      watchlist.map(item => fetchQuoteWithHistory(item.isin))
     );
     results.forEach((result, j) => {
       if (result.status === 'fulfilled' && result.value) {
-        quotesMap[batch[j].isin] = result.value;
+        quotesMap[watchlist[j].isin] = result.value;
       }
     });
-    if (i + BATCH_SIZE < watchlist.length) {
-      await new Promise(r => setTimeout(r, 300));
-    }
   }
   if (Object.keys(quotesMap).length > 0) saveQuotesCache(quotesMap);
 }
@@ -464,11 +544,23 @@ export function render(store) {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="quotes-grid">
         ${watchlist.map(item => `
         <div class="card-dark rounded-xl p-3 kpi-card relative group" id="quote-${sid(item.isin)}" draggable="true" data-isin="${item.isin}" style="cursor:grab">
-          <button class="btn-remove-ticker absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition opacity-0 group-hover:opacity-100 flex items-center justify-center z-10" data-isin="${item.isin}" title="Retirer">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+          <div class="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition z-10">
+            <button class="btn-move-up w-5 h-5 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition flex items-center justify-center" data-isin="${item.isin}" title="Monter">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+              </svg>
+            </button>
+            <button class="btn-move-down w-5 h-5 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition flex items-center justify-center" data-isin="${item.isin}" title="Descendre">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <button class="btn-remove-ticker w-5 h-5 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition flex items-center justify-center" data-isin="${item.isin}" title="Retirer">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
           <div class="flex items-center justify-between mb-1">
             <span class="text-[10px] px-1.5 py-0.5 rounded-full ${item.type === 'ETF' ? 'bg-accent-green/10 text-accent-green' : item.type === 'Crypto' ? 'bg-accent-amber/10 text-accent-amber' : 'bg-accent-blue/10 text-accent-blue'}">${item.type}</span>
             <span class="text-[10px] text-gray-600 quote-ticker-label">—</span>
@@ -670,23 +762,26 @@ async function loadAllQuotes(store, forceRefresh = false) {
 
   if (statusEl) statusEl.textContent = 'Chargement des cours...';
 
-  // Fetch in small batches to avoid overwhelming CORS proxies
-  const BATCH_SIZE = 3;
-  const quotesMap = {};
-  for (let i = 0; i < watchlist.length; i += BATCH_SIZE) {
-    const batch = watchlist.slice(i, i + BATCH_SIZE);
-    const results = await Promise.allSettled(
-      batch.map(item => fetchQuoteWithHistory(item.isin))
+  let quotesMap = {};
+
+  // Try batch fetch first (2 API calls for all tickers)
+  try {
+    quotesMap = await fetchAllQuotesBatch(watchlist);
+  } catch (e) {
+    console.warn('Batch fetch failed, falling back to individual:', e);
+  }
+
+  // Fallback: fetch individually for any missing tickers
+  const missing = watchlist.filter(item => !quotesMap[item.isin]);
+  if (missing.length > 0) {
+    const fallbackResults = await Promise.allSettled(
+      missing.map(item => fetchQuoteWithHistory(item.isin))
     );
-    results.forEach((result, j) => {
+    fallbackResults.forEach((result, j) => {
       if (result.status === 'fulfilled' && result.value) {
-        quotesMap[batch[j].isin] = result.value;
+        quotesMap[missing[j].isin] = result.value;
       }
     });
-    // Small delay between batches to avoid rate limiting
-    if (i + BATCH_SIZE < watchlist.length) {
-      await new Promise(r => setTimeout(r, 300));
-    }
   }
 
   // Save to cache
@@ -751,6 +846,35 @@ export function mount(store, navigate) {
       const updated = watchlist.filter(w => w.isin !== isin);
       if (updated.length < watchlist.length) {
         saveWatchlist(updated);
+        navigate('bourse');
+      }
+    });
+  });
+
+  // Move up / Move down buttons
+  document.querySelectorAll('.btn-move-up').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isin = btn.dataset.isin;
+      const watchlist = loadWatchlist();
+      const idx = watchlist.findIndex(w => w.isin === isin);
+      if (idx > 0) {
+        [watchlist[idx - 1], watchlist[idx]] = [watchlist[idx], watchlist[idx - 1]];
+        saveWatchlist(watchlist);
+        navigate('bourse');
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-move-down').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isin = btn.dataset.isin;
+      const watchlist = loadWatchlist();
+      const idx = watchlist.findIndex(w => w.isin === isin);
+      if (idx >= 0 && idx < watchlist.length - 1) {
+        [watchlist[idx], watchlist[idx + 1]] = [watchlist[idx + 1], watchlist[idx]];
+        saveWatchlist(watchlist);
         navigate('bourse');
       }
     });
