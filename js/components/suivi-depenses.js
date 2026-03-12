@@ -2,7 +2,7 @@ import { formatCurrencyCents, formatDate, openModal, inputField, selectField, ge
 
 const CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
-  'Loisirs - Plaisirs', 'Petits travaux', 'Virement', 'Autre - Imprévu'
+  'Loisirs - Plaisirs', 'Petits travaux', 'Virement', 'NDF', 'Autre - Imprévu'
 ];
 
 const CATEGORIES_REVENUS = [
@@ -132,23 +132,23 @@ export function render(store) {
   const renderOp = (op) => {
     const isRevenu = op.type === 'revenu';
     const isVirement = !isRevenu && (op.categorie || '') === 'Virement';
-    const arrowColor = isRevenu ? 'text-accent-green' : isVirement ? 'text-accent-amber' : 'text-accent-red';
+    const isNDF = !isRevenu && (op.categorie || '') === 'NDF';
+    const arrowColor = isRevenu ? 'text-accent-green' : isVirement ? 'text-accent-amber' : isNDF ? 'text-purple-400' : 'text-accent-red';
     const icon = isRevenu
       ? `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
       : `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
     const sign = isRevenu ? '+' : '-';
     const editAttr = isRevenu ? `data-edit-revenu="${op.id}"` : `data-edit-expense="${op.id}"`;
     const delAttr = isRevenu ? `data-del-revenu="${op.id}"` : `data-del-expense="${op.id}"`;
-    const moveUpAttr = isRevenu ? `data-move-rev-up="${op.id}"` : `data-move-exp-up="${op.id}"`;
-    const moveDownAttr = isRevenu ? `data-move-rev-down="${op.id}"` : `data-move-exp-down="${op.id}"`;
-    const moveAccount = `data-move-compte="${op.compte}"`;
     return `
-      <div class="flex items-center justify-between px-3 py-px hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
+      <div class="op-row flex items-center justify-between px-3 py-px hover:bg-dark-600/30 transition group cursor-grab active:cursor-grabbing"
+           draggable="true" data-op-id="${op.id}" data-op-type="${op.type}" data-op-compte="${op.compte}" ${editAttr}>
         <div class="flex items-center gap-2 min-w-0">
-          <div class="flex flex-col gap-0.5 flex-shrink-0">
-            <button ${moveUpAttr} ${moveAccount} class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5" onclick="event.stopPropagation()">▲</button>
-            <button ${moveDownAttr} ${moveAccount} class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5" onclick="event.stopPropagation()">▼</button>
-          </div>
+          <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+            <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+            <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+          </svg>
           ${icon}
           <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
           <span class="ml-2 text-[13px] text-gray-200 truncate">${op.description || '—'}</span>
@@ -174,6 +174,8 @@ export function render(store) {
           </button>
           <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-green text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un revenu</button>
           <button id="btn-add-expense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une dépense</button>
+          <button id="btn-add-virement" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un virement</button>
+          <button id="btn-add-ndf" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une NDF</button>
         </div>
       </div>
 
@@ -193,7 +195,7 @@ export function render(store) {
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
           ${opsCIC.length > 0 ? `
-          <div class="divide-y divide-dark-400/20">
+          <div class="divide-y divide-dark-400/20" id="ops-drop-cic">
             ${opsCIC.map(renderOp).join('')}
           </div>
           ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
@@ -262,7 +264,7 @@ export function render(store) {
             <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
           </div>
           ${opsTR.length > 0 ? `
-          <div class="divide-y divide-dark-400/20">
+          <div class="divide-y divide-dark-400/20" id="ops-drop-tr">
             ${opsTR.map(renderOp).join('')}
           </div>
           ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
@@ -655,73 +657,147 @@ export function mount(store, navigate) {
     });
   });
 
-  // Move operations up/down (suivi dépenses)
-  document.querySelectorAll('[data-move-exp-up]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.moveExpUp;
-      const compte = btn.dataset.moveCompte;
+  // Drag and drop for operations
+  function setupDragDrop(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    let draggedEl = null;
+
+    container.querySelectorAll('.op-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => {
+        draggedEl = row;
+        row.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', row.dataset.opId);
+      });
+
+      row.addEventListener('dragend', () => {
+        row.style.opacity = '';
+        container.querySelectorAll('.op-row').forEach(r => {
+          r.classList.remove('border-t-2', 'border-accent-green');
+        });
+        draggedEl = null;
+      });
+
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        container.querySelectorAll('.op-row').forEach(r => {
+          r.classList.remove('border-t-2', 'border-accent-green');
+        });
+        row.classList.add('border-t-2', 'border-accent-green');
+      });
+
+      row.addEventListener('dragleave', () => {
+        row.classList.remove('border-t-2', 'border-accent-green');
+      });
+
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        row.classList.remove('border-t-2', 'border-accent-green');
+        if (!draggedEl || draggedEl === row) return;
+
+        const srcId = draggedEl.dataset.opId;
+        const srcType = draggedEl.dataset.opType;
+        const tgtId = row.dataset.opId;
+        const tgtType = row.dataset.opType;
+        const compte = row.dataset.opCompte;
+
+        // Get current visual order from DOM
+        const rows = [...container.querySelectorAll('.op-row')];
+        const order = rows.map(r => ({ id: r.dataset.opId, type: r.dataset.opType }));
+
+        // Move src to before tgt
+        const srcIdx = order.findIndex(o => o.id === srcId);
+        const tgtIdx = order.findIndex(o => o.id === tgtId);
+        if (srcIdx === -1 || tgtIdx === -1) return;
+
+        const [moved] = order.splice(srcIdx, 1);
+        const newTgtIdx = order.findIndex(o => o.id === tgtId);
+        order.splice(newTgtIdx, 0, moved);
+
+        // Apply new order to store arrays
+        const depenses = store.get('suiviDepenses') || [];
+        const revenus = store.get('suiviRevenus') || [];
+
+        const depOrder = order.filter(o => o.type === 'depense').map(o => o.id);
+        const revOrder = order.filter(o => o.type === 'revenu').map(o => o.id);
+
+        // Reorder depenses for this compte
+        const otherDep = depenses.filter(d => d.compte !== compte);
+        const compteDep = depenses.filter(d => d.compte === compte);
+        compteDep.sort((a, b) => depOrder.indexOf(a.id) - depOrder.indexOf(b.id));
+        store.set('suiviDepenses', [...otherDep, ...compteDep]);
+
+        // Reorder revenus for this compte
+        const otherRev = revenus.filter(r => r.compte !== compte);
+        const compteRev = revenus.filter(r => r.compte === compte);
+        compteRev.sort((a, b) => revOrder.indexOf(a.id) - revOrder.indexOf(b.id));
+        store.set('suiviRevenus', [...otherRev, ...compteRev]);
+
+        navigate('suivi-depenses');
+      });
+    });
+  }
+
+  setupDragDrop('ops-drop-cic');
+  setupDragDrop('ops-drop-tr');
+
+  // Add virement (shortcut)
+  document.getElementById('btn-add-virement')?.addEventListener('click', () => {
+    const body = `
+      ${inputField('date', 'Date', getToday(), 'date')}
+      ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Virement vers CIC"')}
+      ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 500"')}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+        <div class="flex gap-3">
+          ${COMPTES.map(c => `
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-amber-400/40 transition has-[:checked]:border-amber-400 has-[:checked]:bg-amber-400/10">
+              <input type="radio" name="compte" value="${c}" ${c === 'Trade Republic' ? 'checked' : ''} class="w-4 h-4 text-amber-400 bg-dark-800 border-dark-400 focus:ring-amber-400/40">
+              <span class="text-sm text-gray-200">${c}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    openModal('Ajouter un virement', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || 'Trade Republic';
+      data.categorie = 'Virement';
       const items = store.get('suiviDepenses') || [];
-      const filtered = items.filter(i => i.compte === compte);
-      const fIdx = filtered.findIndex(i => i.id === id);
-      if (fIdx > 0) {
-        const globalIdxCurrent = items.indexOf(filtered[fIdx]);
-        const globalIdxPrev = items.indexOf(filtered[fIdx - 1]);
-        [items[globalIdxPrev], items[globalIdxCurrent]] = [items[globalIdxCurrent], items[globalIdxPrev]];
-        store.set('suiviDepenses', items);
-        navigate('suivi-depenses');
-      }
+      items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      store.set('suiviDepenses', items);
+      navigate('suivi-depenses');
     });
   });
 
-  document.querySelectorAll('[data-move-exp-down]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.moveExpDown;
-      const compte = btn.dataset.moveCompte;
+  // Add NDF (shortcut)
+  document.getElementById('btn-add-ndf')?.addEventListener('click', () => {
+    const body = `
+      ${inputField('date', 'Date', getToday(), 'date')}
+      ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Restaurant client"')}
+      ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 35.50"')}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+        <div class="flex gap-3">
+          ${COMPTES.map(c => `
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-purple-400/40 transition has-[:checked]:border-purple-400 has-[:checked]:bg-purple-400/10">
+              <input type="radio" name="compte" value="${c}" ${c === 'Trade Republic' ? 'checked' : ''} class="w-4 h-4 text-purple-400 bg-dark-800 border-dark-400 focus:ring-purple-400/40">
+              <span class="text-sm text-gray-200">${c}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    openModal('Ajouter une NDF', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || 'Trade Republic';
+      data.categorie = 'NDF';
       const items = store.get('suiviDepenses') || [];
-      const filtered = items.filter(i => i.compte === compte);
-      const fIdx = filtered.findIndex(i => i.id === id);
-      if (fIdx >= 0 && fIdx < filtered.length - 1) {
-        const globalIdxCurrent = items.indexOf(filtered[fIdx]);
-        const globalIdxNext = items.indexOf(filtered[fIdx + 1]);
-        [items[globalIdxCurrent], items[globalIdxNext]] = [items[globalIdxNext], items[globalIdxCurrent]];
-        store.set('suiviDepenses', items);
-        navigate('suivi-depenses');
-      }
-    });
-  });
-
-  // Move revenus up/down (suivi revenus)
-  document.querySelectorAll('[data-move-rev-up]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.moveRevUp;
-      const compte = btn.dataset.moveCompte;
-      const revenus = store.get('suiviRevenus') || [];
-      const filtered = revenus.filter(r => r.compte === compte);
-      const fIdx = filtered.findIndex(r => r.id === id);
-      if (fIdx > 0) {
-        const globalIdxCurrent = revenus.indexOf(filtered[fIdx]);
-        const globalIdxPrev = revenus.indexOf(filtered[fIdx - 1]);
-        [revenus[globalIdxPrev], revenus[globalIdxCurrent]] = [revenus[globalIdxCurrent], revenus[globalIdxPrev]];
-        store.set('suiviRevenus', revenus);
-        navigate('suivi-depenses');
-      }
-    });
-  });
-
-  document.querySelectorAll('[data-move-rev-down]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.moveRevDown;
-      const compte = btn.dataset.moveCompte;
-      const revenus = store.get('suiviRevenus') || [];
-      const filtered = revenus.filter(r => r.compte === compte);
-      const fIdx = filtered.findIndex(r => r.id === id);
-      if (fIdx >= 0 && fIdx < filtered.length - 1) {
-        const globalIdxCurrent = revenus.indexOf(filtered[fIdx]);
-        const globalIdxNext = revenus.indexOf(filtered[fIdx + 1]);
-        [revenus[globalIdxCurrent], revenus[globalIdxNext]] = [revenus[globalIdxNext], revenus[globalIdxCurrent]];
-        store.set('suiviRevenus', revenus);
-        navigate('suivi-depenses');
-      }
+      items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      store.set('suiviDepenses', items);
+      navigate('suivi-depenses');
     });
   });
 
