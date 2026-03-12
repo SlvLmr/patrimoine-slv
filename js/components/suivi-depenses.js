@@ -2,7 +2,7 @@ import { formatCurrencyCents, formatDate, openModal, inputField, selectField, ge
 
 const CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
-  'Loisirs - Plaisirs', 'Petits travaux', 'Autre - Imprévu'
+  'Loisirs - Plaisirs', 'Petits travaux', 'Virement', 'Autre - Imprévu'
 ];
 
 const CATEGORIES_REVENUS = [
@@ -102,11 +102,13 @@ export function render(store) {
   const trInterets = Math.round(trSoldeBase * trInterestRate / 12 * 100) / 100;
 
   // Saveback : 1% des paiements CB Trade Republic → portefeuille Bitcoin (cadeau TR, ne se déduit pas du solde)
+  // Les virements ne sont pas des paiements CB, donc exclus du saveback et du round-up
   const trDepenseItems = items.filter(i => i.compte === 'Trade Republic');
-  const trSaveback = Math.round(trDepenseItems.reduce((s, i) => s + (Number(i.montant) || 0), 0) * 0.01 * 100) / 100;
+  const trCBItems = trDepenseItems.filter(i => (i.categorie || '') !== 'Virement');
+  const trSaveback = Math.round(trCBItems.reduce((s, i) => s + (Number(i.montant) || 0), 0) * 0.01 * 100) / 100;
 
-  // Round-up : arrondi à l'euro supérieur de chaque paiement → CTO (se déduit du solde)
-  const trRoundup = Math.round(trDepenseItems.reduce((s, i) => {
+  // Round-up : arrondi à l'euro supérieur de chaque paiement CB → CTO (se déduit du solde)
+  const trRoundup = Math.round(trCBItems.reduce((s, i) => {
     const montant = Number(i.montant) || 0;
     const cents = montant % 1;
     return s + (cents > 0.001 ? (1 - cents) : 0);
@@ -129,9 +131,11 @@ export function render(store) {
 
   const renderOp = (op) => {
     const isRevenu = op.type === 'revenu';
+    const isVirement = !isRevenu && (op.categorie || '') === 'Virement';
+    const arrowColor = isRevenu ? 'text-accent-green' : isVirement ? 'text-accent-amber' : 'text-accent-red';
     const icon = isRevenu
-      ? `<svg class="w-3.5 h-3.5 text-accent-green flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
-      : `<svg class="w-3.5 h-3.5 text-accent-red flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
+      ? `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
+      : `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
     const sign = isRevenu ? '+' : '-';
     const editAttr = isRevenu ? `data-edit-revenu="${op.id}"` : `data-edit-expense="${op.id}"`;
     const delAttr = isRevenu ? `data-del-revenu="${op.id}"` : `data-del-expense="${op.id}"`;

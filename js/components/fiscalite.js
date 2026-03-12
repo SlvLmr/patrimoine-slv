@@ -624,7 +624,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
 
 function renderConseilsHTML(conseils, enfants) {
   if (conseils.length === 0) return '';
-  return conseils.map(c => c.isGlobal ? `
+  return conseils.map((c, idx) => c.isGlobal ? `
     <div class="bg-gradient-to-r from-accent-green/5 to-accent-blue/5 border border-accent-green/20 rounded-xl p-4">
       <div class="flex items-center gap-2 mb-1">
         <span class="text-lg">${c.icon}</span>
@@ -633,36 +633,38 @@ function renderConseilsHTML(conseils, enfants) {
       <p class="text-sm text-gray-300">${c.description}</p>
     </div>
   ` : `
-    <div class="bg-dark-800/30 border border-dark-400/15 rounded-xl p-4 hover:border-dark-400/30 transition">
-      <div class="flex items-start gap-3">
-        <span class="text-lg mt-0.5">${c.icon}</span>
+    <details class="group bg-dark-800/30 border border-dark-400/15 rounded-xl overflow-hidden hover:border-dark-400/30 transition" ${idx <= 1 ? 'open' : ''}>
+      <summary class="flex items-center gap-3 p-3 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
+        <span class="text-lg shrink-0">${c.icon}</span>
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-1 flex-wrap">
+          <div class="flex items-center gap-2 flex-wrap">
             <h3 class="text-sm font-bold text-gray-200">${c.titre}</h3>
-            ${c.economie > 0 ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-green/10 text-accent-green">-${formatCurrency(c.economie)} de droits</span>` : ''}
+            ${c.economie > 0 ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-green/10 text-accent-green">-${formatCurrency(c.economie)}</span>` : ''}
             ${c.type === 'investissement' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-blue/10 text-accent-blue">Investissement</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-amber/10 text-accent-amber">Donation</span>'}
           </div>
-          <p class="text-xs text-gray-400 leading-relaxed mb-2">${c.description}</p>
-          ${c.action ? `<p class="text-xs text-accent-cyan font-medium">${c.action}</p>` : ''}
-          ${c.detail ? `
-            <details class="mt-2">
-              <summary class="text-[10px] text-gray-500 cursor-pointer hover:text-gray-400">Base légale & détails</summary>
-              <p class="text-[10px] text-gray-500 mt-1 leading-relaxed">${c.detail}</p>
-            </details>
-          ` : ''}
-          ${c.suggestions && c.suggestions.length > 0 ? `
-            <div class="mt-2 flex gap-2 flex-wrap">
-              ${c.suggestions.map(s => `
-                <button class="conseil-apply px-2 py-1 rounded-lg bg-accent-green/10 text-accent-green text-[10px] font-medium hover:bg-accent-green/20 transition"
-                  data-enfant-id="${s.enfantId}" data-type="${s.type}" data-montant="${s.montant}" data-annee="${s.annee}">
-                  + Appliquer pour ${enfants.find(e => e.id === s.enfantId)?.prenom || '?'}
-                </button>
-              `).join('')}
-            </div>
-          ` : ''}
         </div>
+        <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open/conseil:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="px-3 pb-3 border-t border-dark-400/10">
+        <p class="text-xs text-gray-400 leading-relaxed mt-2 mb-2">${c.description}</p>
+        ${c.action ? `<div class="flex items-center gap-2 mb-2"><span class="w-1.5 h-1.5 rounded-full bg-accent-cyan shrink-0"></span><p class="text-xs text-accent-cyan font-medium">${c.action}</p></div>` : ''}
+        ${c.detail ? `
+          <div class="mt-2 px-3 py-2 rounded-lg bg-dark-900/40 border border-dark-400/10">
+            <p class="text-[10px] text-gray-500 leading-relaxed">${c.detail}</p>
+          </div>
+        ` : ''}
+        ${c.suggestions && c.suggestions.length > 0 ? `
+          <div class="mt-3 flex gap-2 flex-wrap">
+            ${c.suggestions.map(s => `
+              <button class="conseil-apply px-3 py-1.5 rounded-lg bg-accent-green/10 text-accent-green text-[11px] font-medium hover:bg-accent-green/20 border border-accent-green/20 transition"
+                data-enfant-id="${s.enfantId}" data-type="${s.type}" data-montant="${s.montant}" data-annee="${s.annee}">
+                + Appliquer pour ${enfants.find(e => e.id === s.enfantId)?.prenom || '?'}
+              </button>
+            `).join('')}
+          </div>
+        ` : ''}
       </div>
-    </div>
+    </details>
   `).join('');
 }
 
@@ -743,93 +745,36 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- ROW 1 : PATRIMOINE + ENFANTS -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        <!-- PATRIMOINE (lecture depuis le store) -->
-        <div class="card-dark rounded-xl p-5">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg bg-accent-blue/20 flex items-center justify-center">
-              <svg class="w-4 h-4 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-            </div>
-            <h2 class="text-sm font-bold text-gray-200">Votre patrimoine</h2>
-            <span class="ml-auto text-lg font-bold text-accent-green">${formatCurrency(patrimoine.patrimoineNet)}</span>
+      <!-- ENFANTS (compact) -->
+      <div class="card-dark rounded-xl p-4">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-accent-purple/20 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
           </div>
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between text-gray-300">
-              <span>Immobilier</span><span class="font-medium">${formatCurrency(patrimoine.immobilier)}</span>
-            </div>
-            <div class="flex justify-between text-gray-300">
-              <span>Placements (hors AV)</span><span class="font-medium">${formatCurrency(patrimoine.placements)}</span>
-            </div>
-            ${patrimoine.cto > 0 ? `<div class="flex justify-between text-gray-400 text-xs pl-3">
-              <span>dont CTO</span><span>${formatCurrency(patrimoine.cto)}</span>
-            </div>` : ''}
-            <div class="flex justify-between text-gray-300">
-              <span>Assurance-vie</span><span class="font-medium">${formatCurrency(patrimoine.assuranceVie)}</span>
-            </div>
-            <div class="flex justify-between text-gray-300">
-              <span>Épargne</span><span class="font-medium">${formatCurrency(patrimoine.epargne)}</span>
-            </div>
-            <div class="flex justify-between text-gray-300">
-              <span>Comptes courants</span><span class="font-medium">${formatCurrency(patrimoine.comptesCourants)}</span>
-            </div>
-            ${patrimoine.emprunts > 0 ? `
-            <div class="border-t border-dark-400/20 pt-2 flex justify-between text-accent-red">
-              <span>Emprunts</span><span class="font-medium">-${formatCurrency(patrimoine.emprunts)}</span>
-            </div>` : ''}
-            <div class="border-t border-dark-400/20 pt-2">
-              <div class="flex justify-between text-gray-400 text-xs">
-                <span>Hors AV (soumis aux droits de succession)</span>
-                <span class="font-medium">${formatCurrency(patrimoine.patrimoineHorsAV)}</span>
-              </div>
-              <div class="flex justify-between text-gray-400 text-xs mt-1">
-                <span>AV (fiscalité spécifique art. 990 I)</span>
-                <span class="font-medium">${formatCurrency(patrimoine.assuranceVie)}</span>
-              </div>
-            </div>
-          </div>
-          <div class="mt-3 px-3 py-2 rounded-lg bg-dark-800/50 text-xs text-gray-400">
-            <span class="text-gray-300 font-medium">Votre âge :</span> ${ageDonateur} ans (${currentYear})
-          </div>
+          <h2 class="text-sm font-bold text-gray-200">Famille</h2>
+          <span class="text-xs text-gray-500">${ageDonateur} ans · Patrimoine net : ${formatCurrency(patrimoine.patrimoineNet)}</span>
+          <button id="btn-add-enfant" class="ml-auto px-2 py-1 bg-accent-purple text-dark-900 text-[11px] font-bold rounded-lg hover:opacity-90 transition">+ Enfant</button>
         </div>
-
-        <!-- ENFANTS -->
-        <div class="card-dark rounded-xl p-5">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 rounded-lg bg-accent-purple/20 flex items-center justify-center">
-              <svg class="w-4 h-4 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-            </div>
-            <h2 class="text-sm font-bold text-gray-200">Vos enfants</h2>
-            <button id="btn-add-enfant" class="ml-auto px-3 py-1 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition">+ Ajouter</button>
+        ${enfants.length === 0 ? `
+          <p class="text-sm text-gray-500 text-center py-3">Ajoutez vos enfants pour lancer la simulation</p>
+        ` : `
+          <div class="flex flex-wrap gap-2 mt-3">
+            ${enfants.map((enf, i) => {
+              const age = enf.dateNaissance ? Math.floor((Date.now() - new Date(enf.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000)) : '?';
+              const nbDons = (cfg.donations || []).filter(d => d.enfantId === enf.id).length;
+              return `
+              <div class="flex items-center gap-2 bg-dark-800/40 rounded-full px-3 py-1.5 group">
+                <div class="w-6 h-6 rounded-full bg-dark-600 flex items-center justify-center text-[11px] font-bold text-gray-300">${(enf.prenom || '?')[0].toUpperCase()}</div>
+                <span class="text-sm font-medium text-gray-200">${enf.prenom || 'Sans nom'}</span>
+                <span class="text-[10px] text-gray-500">${age} ans · ${nbDons} don${nbDons > 1 ? 's' : ''}</span>
+                <button class="enfant-edit text-accent-blue/70 hover:text-accent-blue text-[10px] opacity-0 group-hover:opacity-100 transition" data-id="${enf.id}">&#9998;</button>
+                <button class="enfant-delete text-accent-red/50 hover:text-accent-red text-[10px] opacity-0 group-hover:opacity-100 transition" data-id="${enf.id}">&times;</button>
+              </div>`;
+            }).join('')}
           </div>
-          ${enfants.length === 0 ? `
-            <div class="text-center py-8 text-gray-500">
-              <p class="text-sm">Ajoutez vos enfants pour lancer la simulation</p>
-            </div>
-          ` : `
-            <div class="space-y-2">
-              ${enfants.map((enf, i) => {
-                const age = enf.dateNaissance ? Math.floor((Date.now() - new Date(enf.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000)) : '?';
-                const nbDons = (cfg.donations || []).filter(d => d.enfantId === enf.id).length;
-                return `
-                <div class="flex items-center gap-3 bg-dark-800/40 rounded-lg px-3 py-2 group">
-                  <div class="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-sm font-bold text-gray-300">${(enf.prenom || '?')[0].toUpperCase()}</div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-200 truncate">${enf.prenom || 'Sans nom'}</p>
-                    <p class="text-xs text-gray-500">${age} ans${enf.dateNaissance ? ` · né(e) le ${new Date(enf.dateNaissance).toLocaleDateString('fr-FR')}` : ''} · ${nbDons} donation${nbDons > 1 ? 's' : ''}</p>
-                  </div>
-                  <button class="enfant-edit text-accent-blue/70 hover:text-accent-blue text-xs opacity-0 group-hover:opacity-100 transition" data-id="${enf.id}">Modifier</button>
-                  <button class="enfant-delete text-accent-red/50 hover:text-accent-red text-xs opacity-0 group-hover:opacity-100 transition" data-id="${enf.id}">✕</button>
-                </div>`;
-              }).join('')}
-            </div>
-          `}
-        </div>
+        `}
       </div>
 
       <!-- SIMULATEUR PROJECTION -->
@@ -937,7 +882,7 @@ export function render(store) {
       </div>
       ` : ''}
 
-      <!-- TIMELINE DE VIE -->
+      <!-- TIMELINE DE VIE — Horizontal scrollable -->
       ${timeline.length > 0 ? `
       <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-2 mb-4">
@@ -947,27 +892,24 @@ export function render(store) {
             </svg>
           </div>
           <h2 class="text-sm font-bold text-gray-200">Plan d'action recommandé</h2>
-          <span class="text-xs text-gray-500 ml-2">Votre feuille de route patrimoniale</span>
+          <span class="text-xs text-gray-500 ml-2">Faites défiler votre feuille de route</span>
         </div>
-        <div class="relative pl-6">
-          <!-- Ligne verticale -->
-          <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-dark-400/30"></div>
-          <div class="space-y-4">
+        <div class="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
+          <div class="flex items-start gap-0 min-w-max relative" style="padding-top:4px">
+            <!-- Connecting line -->
+            <div class="absolute top-[19px] left-[20px] right-[20px] h-[2px] bg-dark-400/30 rounded-full"></div>
             ${timeline.map((ev, i) => {
               const isPast = ev.age < ageDonateur;
               const isCurrent = ev.age >= ageDonateur && ev.age <= ageDonateur + 2;
+              const shortDesc = ev.description.length > 100 ? ev.description.substring(0, 100) + '...' : ev.description;
               return `
-              <div class="relative flex gap-3 ${isPast ? 'opacity-50' : ''}">
-                <div class="absolute -left-6 top-1 w-5 h-5 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-[10px]">
-                  ${isCurrent ? ev.icon : ''}
+              <div class="flex flex-col items-center shrink-0 relative ${isPast ? 'opacity-40' : ''}" style="width:160px">
+                <div class="w-8 h-8 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20 ring-4 ring-${ev.color}/10` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-sm z-10 relative">
+                  ${ev.icon}
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-[10px] font-bold text-${ev.color} px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.age} ans · ${ev.annee}</span>
-                    <span class="text-sm font-medium text-gray-200">${ev.icon} ${ev.titre}</span>
-                  </div>
-                  <p class="text-xs text-gray-400 mt-1 leading-relaxed">${ev.description}</p>
-                </div>
+                <span class="text-[10px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.age} ans</span>
+                <p class="text-[11px] font-medium text-gray-200 text-center mt-1.5 px-2 leading-tight">${ev.titre}</p>
+                <p class="text-[10px] text-gray-500 text-center mt-1 px-2 leading-tight">${shortDesc}</p>
               </div>`;
             }).join('')}
           </div>
