@@ -29,7 +29,11 @@ function reelStore(store) {
         .replace(/^passifs/, 'passifsReel')
         .replace(/^heritage/, 'heritageReel');
       let val = store.get(mapped);
-      // Fallback: init reel actifs from defaults if not set
+      // Fallback: if reel-specific key not set, fall back to main store key
+      if (val === undefined && mapped.startsWith('parametresReel')) {
+        const sub = mapped.replace('parametresReel', 'parametres');
+        return store.get(sub) || {};
+      }
       if (val === undefined && mapped.startsWith('actifsReel')) {
         const sub = mapped.replace('actifsReel', '');
         if (!sub || sub === '') return JSON.parse(JSON.stringify(REEL_DEFAULTS.actifs));
