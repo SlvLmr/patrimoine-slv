@@ -1124,6 +1124,7 @@ export function render(store) {
       </div>
       ` : ''}
 
+      ${nbEnfants === 0 ? '' : `
       <!-- ROW 3 : PLAN DE DONATION PAR ENFANT -->
       <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-2 mb-4">
