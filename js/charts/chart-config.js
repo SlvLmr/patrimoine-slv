@@ -99,7 +99,7 @@ export function createChart(canvasId, config) {
           pointStyle: 'circle',
           boxWidth: 8,
           boxHeight: 8,
-          color: '#88888a',
+          color: '#e5e7eb',
           font: { size: 12, family: 'Inter' }
         }
       },
