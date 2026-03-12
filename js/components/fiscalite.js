@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=5';
+import { formatCurrency, openModal, inputField, selectField, getFormData, computeProjection } from '../utils.js?v=5';
 import { createChart, COLORS, VIVID_PALETTE } from '../charts/chart-config.js';
 
 // ============================================================================
@@ -243,6 +243,12 @@ export function render(store) {
   const enfants = cfg.enfants || [];
   const nbEnfants = enfants.length;
 
+  // === PROJECTION ===
+  const snapshots = computeProjection(store);
+  const selectedYear = cfg.selectedProjectionYear || currentYear;
+  const snapshotIdx = Math.max(0, Math.min(snapshots.length - 1, selectedYear - currentYear));
+  const snap = snapshots[snapshotIdx] || snapshots[0];
+
   // === CALCUL SUCCESSION SANS DONATION ===
   const succSansdon = nbEnfants > 0
     ? calculerSuccessionParEnfant(patrimoine.patrimoineHorsAV, nbEnfants, patrimoine.assuranceVie / nbEnfants)
@@ -379,6 +385,93 @@ export function render(store) {
               }).join('')}
             </div>
           `}
+        </div>
+      </div>
+
+      <!-- SIMULATEUR PROJECTION -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+            </svg>
+          </div>
+          <h2 class="text-sm font-bold text-gray-200">Projection du patrimoine</h2>
+          <span class="text-xs text-gray-500 ml-2">Simulez à quelle année vous pourriez donner</span>
+        </div>
+
+        <div class="flex items-center gap-4 mb-4">
+          <label class="text-sm text-gray-300 whitespace-nowrap">Année :</label>
+          <input type="range" id="projection-year-slider" min="${currentYear}" max="${currentYear + (params.projectionYears || 30)}" value="${selectedYear}" step="1"
+            class="flex-1 h-2 bg-dark-600 rounded-full appearance-none cursor-pointer accent-accent-cyan">
+          <span id="projection-year-label" class="text-sm font-bold text-accent-cyan min-w-[4rem] text-center">${selectedYear}</span>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+            <p class="text-[10px] text-gray-500 uppercase">Patrimoine net</p>
+            <p class="text-lg font-bold text-accent-green" id="proj-patrimoine">${formatCurrency(snap?.patrimoineNet || 0)}</p>
+          </div>
+          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+            <p class="text-[10px] text-gray-500 uppercase">Immobilier</p>
+            <p class="text-lg font-bold text-pink-400" id="proj-immobilier">${formatCurrency(snap?.immobilier || 0)}</p>
+          </div>
+          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+            <p class="text-[10px] text-gray-500 uppercase">Placements</p>
+            <p class="text-lg font-bold text-purple-400" id="proj-placements">${formatCurrency(snap?.placements || 0)}</p>
+          </div>
+          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+            <p class="text-[10px] text-gray-500 uppercase">Épargne</p>
+            <p class="text-lg font-bold text-amber-400" id="proj-epargne">${formatCurrency(snap?.epargne || 0)}</p>
+          </div>
+        </div>
+
+        <div class="bg-dark-800/30 rounded-lg p-3 text-xs text-gray-400">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-gray-300 font-medium">À ${snap?.age || ageDonateur} ans (fin ${snap?.calendarYear || currentYear})</span>
+            <span id="proj-age-label" class="text-gray-500">·</span>
+            <span id="proj-cap-epargne" class="text-gray-500">Capacité d'épargne : ${formatCurrency((snap?.capaciteEpargne || 0) * 12)}/an</span>
+          </div>
+          ${nbEnfants > 0 ? `
+          <div class="border-t border-dark-400/15 pt-2 mt-2">
+            <p class="text-gray-300 font-medium mb-1">Ce que vous pourriez donner à cette date :</p>
+            <div class="grid grid-cols-1 md:grid-cols-${Math.min(nbEnfants, 3)} gap-2" id="proj-donation-capacities">
+              ${enfants.map(enf => {
+                const partParEnfant = snap ? Math.round((snap.patrimoineNet - (snap.immobilier || 0)) / nbEnfants) : 0;
+                const abattMax = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
+                const donnableExonere = Math.min(partParEnfant, abattMax);
+                return `
+                <div class="bg-dark-800/40 rounded-lg px-3 py-2">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-5 h-5 rounded-full bg-dark-600 flex items-center justify-center text-[10px] font-bold text-gray-300">${(enf.prenom || '?')[0].toUpperCase()}</div>
+                    <span class="text-sm text-gray-200">${enf.prenom}</span>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="flex justify-between">
+                      <span>Liquidités disponibles /enfant</span>
+                      <span class="text-gray-200 font-medium proj-liq-enfant">${formatCurrency(partParEnfant)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Exonérable (abatt. + TEPA)</span>
+                      <span class="text-accent-green font-medium proj-exo-enfant">${formatCurrency(donnableExonere)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Droits si don du max liquide</span>
+                      <span class="text-accent-red font-medium proj-droits-enfant">${formatCurrency(calculerDroitsDonation(Math.max(0, partParEnfant - ABATTEMENT_PARENT_ENFANT)))}</span>
+                    </div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+            ${patrimoine.immobilier > 0 ? `
+            <div class="mt-2 pt-2 border-t border-dark-400/15">
+              <p class="text-gray-300 font-medium mb-1">Donation immobilière en nue-propriété :</p>
+              <div class="flex gap-4">
+                <span>Valeur NP (${(getUsufruitRate(snap?.age || ageDonateur).nuePropriete * 100).toFixed(0)}%) : <span class="text-amber-400 font-medium" id="proj-np-val">${formatCurrency(Math.round(patrimoine.immobilier * getUsufruitRate(snap?.age || ageDonateur).nuePropriete))}</span></span>
+                <span>Par enfant : <span class="text-amber-400 font-medium" id="proj-np-enfant">${formatCurrency(Math.round(patrimoine.immobilier * getUsufruitRate(snap?.age || ageDonateur).nuePropriete / Math.max(1, nbEnfants)))}</span></span>
+              </div>
+            </div>` : ''}
+          </div>` : '<p class="text-gray-500 text-center py-2">Ajoutez des enfants pour voir les capacités de donation</p>'}
         </div>
       </div>
 
@@ -574,6 +667,59 @@ export function mount(store, navigate) {
   const currentYear = new Date().getFullYear();
   const cfg = getConfig(store);
   const enfants = cfg.enfants || [];
+
+  // --- Slider projection ---
+  const snapshots = computeProjection(store);
+  const slider = document.getElementById('projection-year-slider');
+  if (slider) {
+    slider.addEventListener('input', () => {
+      const year = parseInt(slider.value);
+      const idx = Math.max(0, Math.min(snapshots.length - 1, year - currentYear));
+      const s = snapshots[idx] || snapshots[0];
+      const nbEnfants = enfants.length;
+
+      document.getElementById('projection-year-label').textContent = year;
+      document.getElementById('proj-patrimoine').textContent = formatCurrency(s.patrimoineNet);
+      document.getElementById('proj-immobilier').textContent = formatCurrency(s.immobilier);
+      document.getElementById('proj-placements').textContent = formatCurrency(s.placements);
+      document.getElementById('proj-epargne').textContent = formatCurrency(s.epargne);
+      document.getElementById('proj-cap-epargne').textContent = `Capacité d'épargne : ${formatCurrency((s.capaciteEpargne || 0) * 12)}/an`;
+
+      const ageLabel = document.getElementById('proj-age-label');
+      if (ageLabel) ageLabel.textContent = `·`;
+
+      // Update per-child donation capacities
+      const liqEls = document.querySelectorAll('.proj-liq-enfant');
+      const exoEls = document.querySelectorAll('.proj-exo-enfant');
+      const droitsEls = document.querySelectorAll('.proj-droits-enfant');
+      const liquidites = s.patrimoineNet - (s.immobilier || 0);
+      const partParEnfant = nbEnfants > 0 ? Math.round(liquidites / nbEnfants) : 0;
+      const abattMax = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
+      const donnableExonere = Math.min(partParEnfant, abattMax);
+
+      liqEls.forEach(el => el.textContent = formatCurrency(partParEnfant));
+      exoEls.forEach(el => el.textContent = formatCurrency(donnableExonere));
+      droitsEls.forEach(el => el.textContent = formatCurrency(calculerDroitsDonation(Math.max(0, partParEnfant - ABATTEMENT_PARENT_ENFANT))));
+
+      // Update nue-propriété if present
+      const npVal = document.getElementById('proj-np-val');
+      const npEnf = document.getElementById('proj-np-enfant');
+      if (npVal) {
+        const immo = s.immobilier || 0;
+        const rate = getUsufruitRate(s.age);
+        npVal.textContent = formatCurrency(Math.round(immo * rate.nuePropriete));
+        if (npEnf) npEnf.textContent = formatCurrency(Math.round(immo * rate.nuePropriete / Math.max(1, nbEnfants)));
+      }
+    });
+
+    // Save selected year on change (debounced via mouseup/touchend)
+    const saveYear = () => {
+      const c = getConfig(store);
+      c.selectedProjectionYear = parseInt(slider.value);
+      saveConfig(store, c);
+    };
+    slider.addEventListener('change', saveYear);
+  }
 
   // --- Ajouter enfant ---
   document.getElementById('btn-add-enfant')?.addEventListener('click', () => {
