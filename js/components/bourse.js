@@ -56,22 +56,25 @@ function saveTickerCache(cache) {
 
 // Multiple CORS proxies for resilience — ordered by reliability
 const CORS_PROXIES = [
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
 ];
 
 // Track which proxy index worked last to try it first next time
 let lastWorkingProxyIdx = 0;
 
-async function fetchWithProxy(url, timeoutMs = 6000) {
+async function fetchWithProxy(url, timeoutMs = 10000) {
   // Try direct fetch first (works in some environments / extensions)
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    const timer = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
-    if (res.ok) return await res.json();
+    if (res.ok) {
+      const text = await res.text();
+      return JSON.parse(text);
+    }
   } catch { /* direct fetch blocked by CORS, expected */ }
 
   // Try proxies, starting with the last one that worked
@@ -88,7 +91,9 @@ async function fetchWithProxy(url, timeoutMs = 6000) {
       const res = await fetch(proxyUrl, { signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      const text = await res.text();
+      if (text.startsWith('<')) throw new Error('HTML response (proxy error page)');
+      const json = JSON.parse(text);
       lastWorkingProxyIdx = idx; // remember which proxy worked
       return json;
     } catch (e) {
@@ -236,7 +241,7 @@ async function fetchQuoteWithHistory(isin) {
   const ticker = await resolveIsinToTicker(isin);
   if (!ticker) return null;
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=1mo&interval=1d`;
+  const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=1mo&interval=1d`;
   try {
     const data = await fetchWithProxy(url);
     const result = data.chart?.result?.[0];
