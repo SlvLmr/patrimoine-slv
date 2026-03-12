@@ -548,8 +548,14 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
   const ccTotal = (state.actifs?.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const liquiditesTotal = ctoTotal + epargneTotal + ccTotal;
 
-  // Construire la recommandation concrète cycle 1
-  function buildDonationPlan(montantTotal, label) {
+  // Liquidités disponibles au moment du cycle (hors immobilier, hors AV)
+  const startLiquidites = (startSnap.placements || 0) + (startSnap.epargne || 0);
+  // Montant réellement donnable au cycle 1 = min(abattement max, liquidités dispo)
+  const donnableCycle1 = Math.min(abattTotal, startLiquidites + ctoTotal);
+  const donnableParEnfantCycle1 = Math.round(donnableCycle1 / nbEnfants);
+
+  // Construire la recommandation concrète
+  function buildDonationPlan(montantTotal) {
     const lines = [];
     let reste = montantTotal;
 
@@ -564,33 +570,44 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     // 2) Donation CTO (purge des plus-values)
     if (reste > 0 && ctoTotal > 0) {
       const donCTO = Math.min(ctoTotal, reste);
-      lines.push(`Donation de ${formatCurrency(donCTO)} via le CTO (purge des plus-values à 0 % de droits)`);
+      lines.push(`Donation de ${formatCurrency(donCTO)} via le CTO (purge des plus-values, 0 € de droits)`);
       reste -= donCTO;
     }
 
     // 3) Reste en espèces (livrets, comptes courants)
     if (reste > 0) {
-      lines.push(`Virement de ${formatCurrency(reste)} en espèces (abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}/enfant)`);
-      reste = 0;
+      const especes = Math.min(epargneTotal + ccTotal, reste);
+      if (especes > 0) {
+        lines.push(`Virement de ${formatCurrency(especes)} en espèces (livrets/comptes)`);
+        reste -= especes;
+      }
     }
 
-    return lines.join(' + ');
+    // 4) Manque à combler
+    if (reste > 0) {
+      lines.push(`Il manque ${formatCurrency(reste)} pour utiliser tout l'abattement — constituez cette épargne avant de donner`);
+    }
+
+    return lines.join('. ');
   }
 
   // 1. Premier cycle de donations
-  const cycle1Plan = buildDonationPlan(abattTotal, '1er cycle');
+  const cycle1Plan = buildDonationPlan(donnableCycle1);
+  const partiel = donnableCycle1 < abattTotal;
   events.push({
     age: startAge,
     annee: startYear,
     icon: '🎯',
     color: 'accent-green',
     type: 'donation_cycle',
-    titre: `Donner ${formatCurrency(abattTotal)} à 0 € de droits`,
-    description: cycle1Plan,
+    titre: partiel
+      ? `Donner ${formatCurrency(donnableCycle1)} (sur ${formatCurrency(abattTotal)} possibles)`
+      : `Donner ${formatCurrency(abattTotal)} à 0 € de droits`,
+    description: cycle1Plan + (partiel ? `. Abattement max : ${formatCurrency(montantParEnfantCycle1)}/enfant (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA). Liquidités disponibles : ${formatCurrency(startLiquidites)}.` : ''),
     impactParEnfant: enfants.map(enf => ({
       prenom: enf.prenom,
       id: enf.id,
-      montantRecu: montantParEnfantCycle1,
+      montantRecu: donnableParEnfantCycle1,
       droitsAvant: avantCycle1.droits,
       droitsApres: apresCycle1.droits,
       economie: avantCycle1.droits - apresCycle1.droits,
@@ -670,22 +687,26 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     const cycle2Snap = snapshots[cycle2Idx] || startSnap;
     const liqCycle2 = (cycle2Snap.placements || 0) + (cycle2Snap.epargne || 0);
     const canTepa = age2 < AGE_MAX_DONATEUR_TEPA;
-    const montantCycle2 = canTepa ? montantParEnfantCycle1 : ABATTEMENT_PARENT_ENFANT;
-    const totalCycle2 = montantCycle2 * nbEnfants;
+    const maxCycle2 = (canTepa ? montantParEnfantCycle1 : ABATTEMENT_PARENT_ENFANT) * nbEnfants;
+    const donnableCycle2 = Math.min(maxCycle2, liqCycle2);
+    const donnableParEnfantC2 = Math.round(donnableCycle2 / nbEnfants);
+    const partielC2 = donnableCycle2 < maxCycle2;
     events.push({
       age: age2,
       annee: cycle2Year,
       icon: '🔄',
       color: 'accent-cyan',
       type: 'donation_cycle',
-      titre: `Re-donner ${formatCurrency(totalCycle2)} à 0 € de droits`,
-      description: `Abattements reconstitués (15 ans écoulés). Donnez ${formatCurrency(montantCycle2)}/enfant${canTepa ? ` (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} abattement + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA)` : ` (abattement seul, TEPA perdu après 80 ans)`}. Patrimoine projeté : ${formatCurrency(cycle2Snap.patrimoineNet || 0)}.`,
+      titre: partielC2
+        ? `Re-donner ${formatCurrency(donnableCycle2)} (sur ${formatCurrency(maxCycle2)} possibles)`
+        : `Re-donner ${formatCurrency(maxCycle2)} à 0 € de droits`,
+      description: `Abattements reconstitués (15 ans). ${formatCurrency(donnableParEnfantC2)}/enfant${canTepa ? ` (abattement + TEPA)` : ` (TEPA perdu après 80 ans)`}. Liquidités projetées : ${formatCurrency(liqCycle2)}. Patrimoine projeté : ${formatCurrency(cycle2Snap.patrimoineNet || 0)}.`,
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
-        montantRecu: montantCycle2,
-        droitsAvant: calculerDroitsDonation(montantCycle2),
+        montantRecu: donnableParEnfantC2,
+        droitsAvant: calculerDroitsDonation(donnableParEnfantC2),
         droitsApres: 0,
-        economie: calculerDroitsDonation(montantCycle2),
+        economie: calculerDroitsDonation(donnableParEnfantC2),
       }))
     });
   }
@@ -743,23 +764,30 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
   const age3 = startAge + 2 * RENOUVELLEMENT_ANNEES;
   if (age3 < 90) {
     const cycle3Year = startYear + 2 * RENOUVELLEMENT_ANNEES;
+    const cycle3Idx = Math.max(0, Math.min(snapshots.length - 1, cycle3Year - currentYear));
+    const cycle3Snap = snapshots[cycle3Idx] || startSnap;
+    const liqCycle3 = (cycle3Snap.placements || 0) + (cycle3Snap.epargne || 0);
     const canTepa3 = age3 < AGE_MAX_DONATEUR_TEPA;
-    const montantCycle3 = canTepa3 ? montantParEnfantCycle1 : ABATTEMENT_PARENT_ENFANT;
-    const totalCycle3 = montantCycle3 * nbEnfants;
+    const maxCycle3 = (canTepa3 ? montantParEnfantCycle1 : ABATTEMENT_PARENT_ENFANT) * nbEnfants;
+    const donnableCycle3 = Math.min(maxCycle3, liqCycle3);
+    const donnableParEnfantC3 = Math.round(donnableCycle3 / nbEnfants);
+    const partielC3 = donnableCycle3 < maxCycle3;
     events.push({
       age: age3,
       annee: cycle3Year,
       icon: '🔄',
       color: 'accent-cyan',
       type: 'donation_cycle',
-      titre: `Re-donner ${formatCurrency(totalCycle3)} à 0 € de droits`,
-      description: `Abattements reconstitués (30 ans depuis le 1er cycle). Donnez ${formatCurrency(montantCycle3)}/enfant${canTepa3 ? '' : ' (TEPA indisponible après 80 ans)'}.`,
+      titre: partielC3
+        ? `Re-donner ${formatCurrency(donnableCycle3)} (sur ${formatCurrency(maxCycle3)} possibles)`
+        : `Re-donner ${formatCurrency(maxCycle3)} à 0 € de droits`,
+      description: `Abattements reconstitués (30 ans). ${formatCurrency(donnableParEnfantC3)}/enfant${canTepa3 ? '' : ' (TEPA indisponible après 80 ans)'}. Liquidités projetées : ${formatCurrency(liqCycle3)}.`,
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
-        montantRecu: montantCycle3,
-        droitsAvant: calculerDroitsDonation(montantCycle3),
+        montantRecu: donnableParEnfantC3,
+        droitsAvant: calculerDroitsDonation(donnableParEnfantC3),
         droitsApres: 0,
-        economie: calculerDroitsDonation(montantCycle3),
+        economie: calculerDroitsDonation(donnableParEnfantC3),
       }))
     });
   }
@@ -895,7 +923,10 @@ function renderTimelineHTML(timeline, ageDonateur) {
             </div>
             <span class="text-[11px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.annee} <span class="text-gray-500">(${ev.age} ans)</span></span>
             <p class="text-xs font-medium text-gray-200 text-center mt-2 px-3 leading-snug">${ev.titre}</p>
-            <p class="text-[11px] text-gray-500 text-center mt-1 px-3 leading-snug">${ev.description}</p>
+            <details class="mt-1 px-2 text-center">
+              <summary class="text-[10px] text-${ev.color} cursor-pointer hover:underline font-medium">Conseil</summary>
+              <p class="text-[11px] text-gray-500 text-center mt-1 leading-snug">${ev.description}</p>
+            </details>
             <span class="text-[10px] text-${ev.color} mt-2 opacity-0 group-hover/ev:opacity-100 transition font-medium">Voir l'impact &rarr;</span>
           </div>`;
         }).join('')}
