@@ -315,6 +315,27 @@ function formatNum(v, decimals = 2) {
   return Number(v || 0).toLocaleString('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+// Background refresh: fetch quotes and cache them (no DOM needed)
+export async function backgroundRefresh() {
+  if (isCacheFresh()) return; // already up to date
+  const watchlist = loadWatchlist();
+  const results = await Promise.allSettled(
+    watchlist.map(item => fetchQuoteWithHistory(item.isin))
+  );
+  const quotesMap = {};
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value) {
+      quotesMap[watchlist[i].isin] = result.value;
+    }
+  });
+  if (Object.keys(quotesMap).length > 0) saveQuotesCache(quotesMap);
+}
+
+// Expose next slot time for scheduling
+export function getNextRefreshTime() {
+  return getNextSlotTime();
+}
+
 export function render(store) {
   const watchlist = loadWatchlist();
   const placements = store?.get?.('actifs.placements') || [];

@@ -146,6 +146,10 @@ export function render(store) {
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-100">Quotidien Live</h1>
         <div class="flex items-center gap-3">
+          <button id="btn-archive-month" class="px-4 py-2 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-sm rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            Clôturer le mois
+          </button>
           <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-green text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un revenu</button>
           <button id="btn-add-expense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une dépense</button>
         </div>
@@ -270,6 +274,85 @@ export function render(store) {
 }
 
 export function mount(store, navigate) {
+  // Archive month (clôture)
+  document.getElementById('btn-archive-month')?.addEventListener('click', () => {
+    const monthKey = getCurrentMonthKey();
+    const label = new Date(monthKey + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+    // Compute current final soldes
+    const items = store.get('suiviDepenses') || [];
+    const revenus = store.get('suiviRevenus') || [];
+    const depMensuelles = store.get('depensesMensuellesCIC') || [];
+    const cicCochees = store.get('cicMensuellesCochees') || {};
+    const cocheesThisMonth = cicCochees[monthKey] || [];
+    const comptesCourants = store.get('actifs')?.comptesCourants || [];
+    const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
+    const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
+    const soldePrecedent = store.get('soldeMoisPrecedent') || {};
+    const soldePrevCIC = Number(soldePrecedent.cic) || 0;
+    const soldePrevTR = Number(soldePrecedent.tr) || 0;
+    const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+    const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+    const finalSoldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
+    const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+    const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
+
+    // Build archive summary
+    const totalDepenses = items.reduce((s, i) => s + (Number(i.montant) || 0), 0) + totalCochees;
+    const totalRevenus = revenus.reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const categories = {};
+    items.forEach(i => {
+      const cat = i.categorie || 'Autre';
+      categories[cat] = (categories[cat] || 0) + (Number(i.montant) || 0);
+    });
+    if (totalCochees > 0) categories['Mensuelles fixes'] = totalCochees;
+
+    const body = `
+      <div class="space-y-3 text-sm">
+        <p class="text-gray-300">Archiver <span class="font-semibold text-gray-100 capitalize">${label}</span> et repartir sur un nouveau mois ?</p>
+        <div class="bg-dark-700/50 rounded-lg p-3 space-y-1">
+          <div class="flex justify-between"><span class="text-gray-400">Total revenus</span><span class="text-accent-green font-medium">${formatCurrencyCents(totalRevenus)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Total dépenses</span><span class="text-accent-red font-medium">${formatCurrencyCents(totalDepenses)}</span></div>
+          <div class="border-t border-dark-400/30 my-1"></div>
+          <div class="flex justify-between"><span class="text-gray-400">Solde final CIC</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeCIC)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Solde final TR</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeTR)}</span></div>
+        </div>
+        <p class="text-[11px] text-gray-500">Les soldes finaux deviendront les "soldes mois précédent" du mois suivant. Les opérations et coches seront remises à zéro.</p>
+      </div>
+    `;
+
+    openModal('Clôturer le mois', body, () => {
+      // Save archive
+      const archives = store.get('archiveDepenses') || [];
+      archives.push({
+        mois: monthKey,
+        total: totalDepenses,
+        totalRevenus,
+        count: items.length,
+        categories,
+        soldeFinalCIC: finalSoldeCIC,
+        soldeFinalTR: finalSoldeTR
+      });
+      store.set('archiveDepenses', archives);
+
+      // Set solde mois précédent to final computed soldes
+      store.set('soldeMoisPrecedent', { cic: finalSoldeCIC, tr: finalSoldeTR });
+
+      // Clear operations
+      store.set('suiviDepenses', []);
+      store.set('suiviRevenus', []);
+
+      // Clear checked monthly items for this month
+      const allCochees = store.get('cicMensuellesCochees') || {};
+      delete allCochees[monthKey];
+      store.set('cicMensuellesCochees', allCochees);
+
+      navigate('suivi-depenses');
+    });
+  });
+
   // Add revenu
   document.getElementById('btn-add-revenu')?.addEventListener('click', () => {
     const body = `

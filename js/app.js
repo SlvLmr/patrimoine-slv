@@ -2,7 +2,6 @@ import { Store } from './store.js';
 import { isConfigured, onAuth, getCurrentUser, logout as firebaseLogout } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
-import * as Dashboard from './components/dashboard.js';
 import * as Heritage from './components/heritage.js';
 import * as RevenusDepenses from './components/revenus-depenses.js';
 import * as Projection from './components/projection.js?v=5';
@@ -16,7 +15,6 @@ import { isGdriveConfigured, setClientId, saveToDrive, listDriveFiles, loadFromD
 const store = Store.init();
 
 const routes = {
-  dashboard: Dashboard,
   heritage: Heritage,
   'revenus-depenses': RevenusDepenses,
   'suivi-depenses': SuiviDepenses,
@@ -28,7 +26,6 @@ const routes = {
 };
 
 const navItems = [
-  { id: 'dashboard', label: 'Tableau de bord', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
   { id: '_title_quotidien', sectionTitle: 'Quotidien' },
   { id: 'revenus-depenses', label: 'Revenus et dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'suivi-depenses', label: 'Quotidien Live', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
@@ -55,10 +52,11 @@ function navigate(page) {
 function renderPage() {
   destroyAllCharts();
 
-  let hash = window.location.hash.slice(1) || 'dashboard';
-  // Redirect legacy routes to projection
+  let hash = window.location.hash.slice(1) || 'revenus-depenses';
+  // Redirect legacy routes
   if (hash === 'actifs' || hash === 'passifs' || hash === 'heritage') { hash = 'projection'; window.location.hash = 'projection'; return; }
-  const component = routes[hash] || routes.dashboard;
+  if (hash === 'dashboard') { hash = 'revenus-depenses'; window.location.hash = 'revenus-depenses'; return; }
+  const component = routes[hash] || routes['revenus-depenses'];
   const contentEl = document.getElementById('app-content');
 
   contentEl.innerHTML = component.render(store);
@@ -168,11 +166,16 @@ function initProfileSwitcher() {
     dropdown.innerHTML = `
       <div class="max-h-48 overflow-y-auto">
         ${profiles.map(p => `
-          <button data-switch-profile="${p.id}"
-            class="w-full text-left px-4 py-2.5 text-sm hover:bg-dark-600 transition flex items-center justify-between ${p.id === active.id ? 'text-accent-green' : 'text-gray-300'}">
-            <span>${p.name}</span>
-            ${p.id === active.id ? '<span class="w-2 h-2 rounded-full bg-accent-green"></span>' : ''}
-          </button>
+          <div class="flex items-center hover:bg-dark-600 transition group/prof">
+            <button data-switch-profile="${p.id}"
+              class="flex-1 text-left px-4 py-2.5 text-sm flex items-center justify-between ${p.id === active.id ? 'text-accent-green' : 'text-gray-300'}">
+              <span>${p.name}</span>
+              ${p.id === active.id ? '<span class="w-2 h-2 rounded-full bg-accent-green"></span>' : ''}
+            </button>
+            ${profiles.length > 1 ? `<button data-delete-profile="${p.id}" class="opacity-0 group-hover/prof:opacity-100 text-red-400/60 hover:text-red-400 px-3 py-2 transition" title="Supprimer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>` : ''}
+          </div>
         `).join('')}
       </div>
       <div class="border-t border-dark-400 space-y-0">
@@ -201,6 +204,21 @@ function initProfileSwitcher() {
         if (store.switchProfile(id)) {
           dropdown.remove();
           renderPage();
+        }
+      });
+    });
+
+    // Delete profile
+    dropdown.querySelectorAll('[data-delete-profile]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const id = btn.dataset.deleteProfile;
+        const profile = profiles.find(p => p.id === id);
+        if (confirm(`Êtes-vous sûr de vouloir supprimer le profil "${profile?.name}" ? Cette action est irréversible.`)) {
+          if (store.deleteProfile(id)) {
+            dropdown.remove();
+            renderPage();
+          }
         }
       });
     });
@@ -612,6 +630,18 @@ function showLoginScreen() {
   );
 }
 
+// Background Bourse refresh scheduler
+let bourseTimerId = null;
+function scheduleBourseRefresh() {
+  if (bourseTimerId) clearTimeout(bourseTimerId);
+  const next = Bourse.getNextRefreshTime();
+  const delay = Math.max(next.getTime() - Date.now(), 60000); // min 1 min
+  bourseTimerId = setTimeout(async () => {
+    try { await Bourse.backgroundRefresh(); } catch (e) { console.warn('Bourse background refresh failed:', e); }
+    scheduleBourseRefresh(); // schedule next
+  }, delay);
+}
+
 // Show the main app (after login or skip)
 function showApp() {
   document.getElementById('sidebar').style.display = '';
@@ -632,6 +662,10 @@ function showApp() {
     initSidebarCollapse();
     initDataManagement();
     appStarted = true;
+
+    // Start background Bourse refresh & do initial fetch
+    Bourse.backgroundRefresh().catch(() => {});
+    scheduleBourseRefresh();
   }
 
   renderPage();
