@@ -531,20 +531,62 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     return { droits: calculerDroitsDonation(taxable), partBrute: part };
   };
 
-  // 1. Premier cycle de donations (à l'année de départ du plan)
+  // Données patrimoniales détaillées pour conseils précis
   const abattTotal = (ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants;
   const montantParEnfantCycle1 = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
   const avantCycle1 = succSansDon(startPatrimoine.patrimoineNet - startPatrimoine.assuranceVie, startPatrimoine.assuranceVie);
   const residuelApresCycle1 = Math.max(0, (startPatrimoine.patrimoineNet - startPatrimoine.assuranceVie) - abattTotal);
   const apresCycle1 = succSansDon(residuelApresCycle1, startPatrimoine.assuranceVie);
+
+  // Calcul de la répartition concrète du 1er cycle par véhicule
+  const ctoPlacements = allPlacements.filter(p => {
+    const env = (p.enveloppe || p.type || '').toUpperCase();
+    return env.includes('CTO') || env.includes('COMPTE TITRE');
+  });
+  const ctoTotal = ctoPlacements.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const epargneTotal = (state.actifs?.epargne || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const ccTotal = (state.actifs?.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const liquiditesTotal = ctoTotal + epargneTotal + ccTotal;
+
+  // Construire la recommandation concrète cycle 1
+  function buildDonationPlan(montantTotal, label) {
+    const lines = [];
+    let reste = montantTotal;
+
+    // 1) TEPA en espèces (virement)
+    const tepaTotal = DON_FAMILIAL_TEPA * nbEnfants;
+    if (reste > 0 && tepaTotal > 0) {
+      const tepa = Math.min(tepaTotal, reste);
+      lines.push(`Virement de ${formatCurrency(tepa)} (don TEPA, ${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G)`);
+      reste -= tepa;
+    }
+
+    // 2) Donation CTO (purge des plus-values)
+    if (reste > 0 && ctoTotal > 0) {
+      const donCTO = Math.min(ctoTotal, reste);
+      lines.push(`Donation de ${formatCurrency(donCTO)} via le CTO (purge des plus-values à 0 % de droits)`);
+      reste -= donCTO;
+    }
+
+    // 3) Reste en espèces (livrets, comptes courants)
+    if (reste > 0) {
+      lines.push(`Virement de ${formatCurrency(reste)} en espèces (abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}/enfant)`);
+      reste = 0;
+    }
+
+    return lines.join(' + ');
+  }
+
+  // 1. Premier cycle de donations
+  const cycle1Plan = buildDonationPlan(abattTotal, '1er cycle');
   events.push({
     age: startAge,
     annee: startYear,
     icon: '🎯',
     color: 'accent-green',
     type: 'donation_cycle',
-    titre: `1er cycle de donations`,
-    description: `Donnez jusqu'à ${formatCurrency(montantParEnfantCycle1)} par enfant (${formatCurrency(abattTotal)} total) à 0 € de droits. Abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + TEPA ${formatCurrency(DON_FAMILIAL_TEPA)}.`,
+    titre: `Donner ${formatCurrency(abattTotal)} à 0 € de droits`,
+    description: cycle1Plan,
     impactParEnfant: enfants.map(enf => ({
       prenom: enf.prenom,
       id: enf.id,
@@ -555,30 +597,33 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     }))
   });
 
-  // 2. PEA plein
+  // 2. PEA plein → rediriger vers AV puis CTO
   if (dcaMensuelPEA > 0 && peaRestant > 0) {
     const moisPEA = Math.ceil(peaRestant / dcaMensuelPEA);
     const anneePEA = currentYear + Math.floor(moisPEA / 12);
     const agePEA = ageDonateur + Math.floor(moisPEA / 12);
     if (agePEA < ageDonateur + 30) {
+      const avParEnfant = startPatrimoine.assuranceVie / Math.max(1, nbEnfants);
+      const avManque = Math.max(0, AV_ABATTEMENT_PAR_BENEFICIAIRE - avParEnfant);
+      const redirectAV = avManque > 0 ? `Redirigez ${formatCurrency(dcaMensuelPEA)}/mois vers l'assurance-vie (${formatCurrency(avManque * nbEnfants)} à verser pour atteindre ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant exonérés au décès).` : `Redirigez ${formatCurrency(dcaMensuelPEA)}/mois vers le CTO.`;
       events.push({
         age: agePEA,
         annee: anneePEA,
         icon: '📊',
         color: 'accent-blue',
         type: 'pea_plein',
-        titre: `PEA plein (${formatCurrency(PLAFOND_PEA)})`,
-        description: `Basculez vos versements vers l'AV (abattement ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant) puis le CTO.`,
+        titre: `PEA plein — basculer sur ${avManque > 0 ? 'AV' : 'CTO'}`,
+        description: redirectAV,
         impactParEnfant: enfants.map(enf => ({
           prenom: enf.prenom, id: enf.id,
           montantRecu: 0,
-          detail: `Réorientez vers AV : ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} exonérés au décès`,
+          detail: avManque > 0 ? `Objectif AV : ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} exonérés au décès (art. 990 I)` : `CTO : donnable aux enfants (purge des PV)`,
         }))
       });
     }
   }
 
-  // 3. Nue-propriété — trouver l'âge optimal (basé sur le patrimoine à l'année de départ)
+  // 3. Nue-propriété immobilière — conseil direct
   if (startPatrimoine.immobilier > 0) {
     let bestAge = null;
     for (const t of BAREME_USUFRUIT) {
@@ -590,18 +635,22 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     }
     if (bestAge && bestAge >= ageDonateur) {
       const rate = getUsufruitRate(bestAge);
-      const npParEnfant = Math.round(startPatrimoine.immobilier * rate.nuePropriete / nbEnfants);
+      const npTotal = Math.round(startPatrimoine.immobilier * rate.nuePropriete);
+      const npParEnfant = Math.round(npTotal / nbEnfants);
       const taxableNP = Math.max(0, npParEnfant - ABATTEMENT_PARENT_ENFANT);
       const droitsNPParEnfant = calculerDroitsDonation(taxableNP);
       const droitsSuccImmoParEnfant = calculerDroitsDonation(Math.max(0, startPatrimoine.immobilier / nbEnfants - ABATTEMENT_PARENT_ENFANT));
+      const zeroDrops = taxableNP === 0;
       events.push({
         age: bestAge,
         annee: currentYear + (bestAge - ageDonateur),
         icon: '🏠',
         color: 'accent-amber',
         type: 'nue_propriete',
-        titre: `Donner la nue-propriété (NP ${(rate.nuePropriete * 100).toFixed(0)}%)`,
-        description: `À ${bestAge} ans, la NP par enfant (${formatCurrency(npParEnfant)}) passe dans l'abattement = 0 € de droits sur ${formatCurrency(startPatrimoine.immobilier)} d'immobilier.`,
+        titre: `Donation de ${formatCurrency(npTotal)} en nue-propriété`,
+        description: zeroDrops
+          ? `Donnez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}) à vos enfants. Valeur fiscale NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant → dans l'abattement = 0 € de droits. Vous gardez l'usufruit (habiter/louer).`
+          : `Donnez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}). NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant. Droits : ${formatCurrency(droitsNPParEnfant)}/enfant au lieu de ${formatCurrency(droitsSuccImmoParEnfant)} à la succession.`,
         impactParEnfant: enfants.map(enf => ({
           prenom: enf.prenom, id: enf.id,
           montantRecu: npParEnfant,
@@ -613,62 +662,73 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     }
   }
 
-  // 4. 2eme cycle (15 ans apres le 1er cycle)
+  // 4. 2ème cycle (15 ans après)
   const age2 = startAge + RENOUVELLEMENT_ANNEES;
   if (age2 < 85) {
+    const cycle2Year = startYear + RENOUVELLEMENT_ANNEES;
+    const cycle2Idx = Math.max(0, Math.min(snapshots.length - 1, cycle2Year - currentYear));
+    const cycle2Snap = snapshots[cycle2Idx] || startSnap;
+    const liqCycle2 = (cycle2Snap.placements || 0) + (cycle2Snap.epargne || 0);
+    const canTepa = age2 < AGE_MAX_DONATEUR_TEPA;
+    const montantCycle2 = canTepa ? montantParEnfantCycle1 : ABATTEMENT_PARENT_ENFANT;
+    const totalCycle2 = montantCycle2 * nbEnfants;
     events.push({
       age: age2,
-      annee: startYear + RENOUVELLEMENT_ANNEES,
+      annee: cycle2Year,
       icon: '🔄',
       color: 'accent-cyan',
       type: 'donation_cycle',
-      titre: `2e cycle de donations`,
-      description: `Les abattements sont reconstitués. Re-donnez jusqu'à ${formatCurrency(abattTotal)} exonérés.`,
+      titre: `Re-donner ${formatCurrency(totalCycle2)} à 0 € de droits`,
+      description: `Abattements reconstitués (15 ans écoulés). Donnez ${formatCurrency(montantCycle2)}/enfant${canTepa ? ` (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} abattement + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA)` : ` (abattement seul, TEPA perdu après 80 ans)`}. Patrimoine projeté : ${formatCurrency(cycle2Snap.patrimoineNet || 0)}.`,
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
-        montantRecu: montantParEnfantCycle1,
-        droitsAvant: calculerDroitsDonation(montantParEnfantCycle1),
+        montantRecu: montantCycle2,
+        droitsAvant: calculerDroitsDonation(montantCycle2),
         droitsApres: 0,
-        economie: calculerDroitsDonation(montantParEnfantCycle1),
+        economie: calculerDroitsDonation(montantCycle2),
       }))
     });
   }
 
-  // 5. Avant 70 ans : maximiser l'AV
+  // 5. Avant 70 ans : verser en assurance-vie
   if (ageDonateur < 70) {
     const avParEnfant = startPatrimoine.assuranceVie / Math.max(1, nbEnfants);
     const avManque = AV_ABATTEMENT_PAR_BENEFICIAIRE - avParEnfant;
     if (avManque > 10000) {
+      const totalAVerser = avManque * nbEnfants;
+      const annees = 69 - ageDonateur;
+      const mensuel = Math.ceil(totalAVerser / Math.max(1, annees) / 12);
       events.push({
         age: 69,
         annee: currentYear + (69 - ageDonateur),
         icon: '🛡️',
         color: 'accent-purple',
         type: 'av_deadline',
-        titre: `Deadline AV : avant 70 ans`,
-        description: `Versez ${formatCurrency(avManque * nbEnfants)} en AV avant 70 ans pour profiter de l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant (art. 990 I). Après 70 ans, abattement global limité à ${formatCurrency(AV_ABATTEMENT_APRES_70)}.`,
+        titre: `Verser ${formatCurrency(totalAVerser)} en assurance-vie`,
+        description: `Versez ${formatCurrency(mensuel)}/mois pendant ${annees} ans pour atteindre ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant avant vos 70 ans. Après 70 ans, l'abattement tombe à ${formatCurrency(AV_ABATTEMENT_APRES_70)} global (art. 757 B). Chaque enfant récupère ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} hors succession à 0 % de droits.`,
         impactParEnfant: enfants.map(enf => ({
           prenom: enf.prenom, id: enf.id,
           montantRecu: avManque,
           droitsAvant: Math.round(avManque * 0.20),
           droitsApres: 0,
           economie: Math.round(avManque * 0.20),
-          detail: `${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} exonérés (art. 990 I)`,
+          detail: `${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} transmis hors succession (art. 990 I)`,
         }))
       });
     }
   }
 
-  // 6. 80 ans : deadline TEPA
+  // 6. 80 ans : dernier don TEPA
   if (ageDonateur < AGE_MAX_DONATEUR_TEPA) {
+    const totalTepa = DON_FAMILIAL_TEPA * nbEnfants;
     events.push({
       age: 79,
       annee: currentYear + (79 - ageDonateur),
       icon: '⏰',
       color: 'accent-red',
       type: 'tepa_deadline',
-      titre: `Deadline TEPA : avant 80 ans`,
-      description: `Dernier moment pour utiliser le don familial TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G). Après 80 ans, cette exonération est perdue.`,
+      titre: `Dernier virement TEPA : ${formatCurrency(totalTepa)}`,
+      description: `Faites un virement de ${formatCurrency(DON_FAMILIAL_TEPA)} par enfant avant vos 80 ans (art. 790 G). C'est un simple virement bancaire, exonéré de droits. Après 80 ans, cette exonération disparaît définitivement.`,
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
         montantRecu: DON_FAMILIAL_TEPA,
@@ -682,20 +742,24 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
   // 7. 3ème cycle (30 ans après le 1er)
   const age3 = startAge + 2 * RENOUVELLEMENT_ANNEES;
   if (age3 < 90) {
+    const cycle3Year = startYear + 2 * RENOUVELLEMENT_ANNEES;
+    const canTepa3 = age3 < AGE_MAX_DONATEUR_TEPA;
+    const montantCycle3 = canTepa3 ? montantParEnfantCycle1 : ABATTEMENT_PARENT_ENFANT;
+    const totalCycle3 = montantCycle3 * nbEnfants;
     events.push({
       age: age3,
-      annee: startYear + 2 * RENOUVELLEMENT_ANNEES,
+      annee: cycle3Year,
       icon: '🔄',
       color: 'accent-cyan',
       type: 'donation_cycle',
-      titre: `3e cycle de donations`,
-      description: `Nouveau renouvellement des abattements. ${formatCurrency(abattTotal)} exonérés à nouveau (si < 80 ans pour le TEPA).`,
+      titre: `Re-donner ${formatCurrency(totalCycle3)} à 0 € de droits`,
+      description: `Abattements reconstitués (30 ans depuis le 1er cycle). Donnez ${formatCurrency(montantCycle3)}/enfant${canTepa3 ? '' : ' (TEPA indisponible après 80 ans)'}.`,
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
-        montantRecu: montantParEnfantCycle1,
-        droitsAvant: calculerDroitsDonation(montantParEnfantCycle1),
+        montantRecu: montantCycle3,
+        droitsAvant: calculerDroitsDonation(montantCycle3),
         droitsApres: 0,
-        economie: calculerDroitsDonation(montantParEnfantCycle1),
+        economie: calculerDroitsDonation(montantCycle3),
       }))
     });
   }
