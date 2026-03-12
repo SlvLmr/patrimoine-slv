@@ -64,11 +64,11 @@ const CORS_PROXIES = [
 // Track which proxy index worked last to try it first next time
 let lastWorkingProxyIdx = 0;
 
-async function fetchWithProxy(url, timeoutMs = 10000) {
+async function fetchWithProxy(url, timeoutMs = 6000) {
   // Try direct fetch first (works in some environments / extensions)
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    const timer = setTimeout(() => controller.abort(), 3000);
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
     if (res.ok) return await res.json();
@@ -264,84 +264,17 @@ async function fetchQuoteWithHistory(isin) {
   }
 }
 
-// Batch fetch: resolve all tickers, then use batch Yahoo endpoints
-async function fetchAllQuotesBatch(watchlist) {
-  // Step 1: Resolve all tickers in parallel (most are in KNOWN_TICKERS, instant)
-  const tickerResults = await Promise.allSettled(
-    watchlist.map(item => resolveIsinToTicker(item.isin))
+// Fetch all quotes in parallel (no batching, no delays)
+async function fetchAllQuotesParallel(watchlist) {
+  const results = await Promise.allSettled(
+    watchlist.map(item => fetchQuoteWithHistory(item.isin))
   );
-  const isinToTicker = {};
-  const tickerToIsin = {};
-  const tickers = [];
-  tickerResults.forEach((r, i) => {
-    if (r.status === 'fulfilled' && r.value) {
-      const isin = watchlist[i].isin;
-      isinToTicker[isin] = r.value;
-      tickerToIsin[r.value] = isin;
-      tickers.push(r.value);
+  const quotesMap = {};
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value) {
+      quotesMap[watchlist[i].isin] = result.value;
     }
   });
-  if (tickers.length === 0) return {};
-
-  const symbolsParam = tickers.join(',');
-  const quotesMap = {};
-
-  // Step 2: Fetch spark (chart data) and quote (prices) in parallel — 2 calls total
-  const sparkUrl = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(symbolsParam)}&range=1mo&interval=1d`;
-  const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbolsParam)}`;
-
-  const [sparkResult, quoteResult] = await Promise.allSettled([
-    fetchWithProxy(sparkUrl, 8000),
-    fetchWithProxy(quoteUrl, 8000)
-  ]);
-
-  // Parse quote data
-  const quoteData = {};
-  if (quoteResult.status === 'fulfilled' && quoteResult.value?.quoteResponse?.result) {
-    for (const q of quoteResult.value.quoteResponse.result) {
-      quoteData[q.symbol] = q;
-    }
-  }
-
-  // Parse spark data
-  const sparkData = {};
-  if (sparkResult.status === 'fulfilled' && sparkResult.value?.spark?.result) {
-    for (const item of sparkResult.value.spark.result) {
-      if (item.response?.[0]?.indicators?.quote?.[0]?.close) {
-        sparkData[item.symbol] = item.response[0];
-      }
-    }
-  }
-
-  // Step 3: Combine into quotesMap keyed by ISIN
-  for (const ticker of tickers) {
-    const isin = tickerToIsin[ticker];
-    const q = quoteData[ticker];
-    const s = sparkData[ticker];
-
-    if (!q && !s) continue;
-
-    const price = q?.regularMarketPrice || 0;
-    const previousClose = q?.regularMarketPreviousClose || q?.previousClose || price;
-    const change = q?.regularMarketChange ?? (price - previousClose);
-    const changePct = q?.regularMarketChangePercent ?? (previousClose ? (change / previousClose) * 100 : 0);
-    const currency = q?.currency || 'EUR';
-
-    let chartPoints = [];
-    if (s) {
-      const timestamps = s.timestamp || [];
-      const closes = s.indicators?.quote?.[0]?.close || [];
-      chartPoints = timestamps.map((ts, i) => ({
-        date: new Date(ts * 1000),
-        close: closes[i]
-      })).filter(d => d.close !== null);
-    }
-
-    if (price > 0 || chartPoints.length > 0) {
-      quotesMap[isin] = { ticker, price, previousClose, change, changePct, currency, chartPoints };
-    }
-  }
-
   return quotesMap;
 }
 
@@ -487,7 +420,7 @@ export async function backgroundRefresh() {
   const watchlist = loadWatchlist();
   let quotesMap = {};
   try {
-    quotesMap = await fetchAllQuotesBatch(watchlist);
+    quotesMap = await fetchAllQuotesParallel(watchlist);
   } catch (e) {
     console.warn('Batch background refresh failed, falling back to individual:', e);
     // Fallback to individual fetches
@@ -544,7 +477,7 @@ export function render(store) {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="quotes-grid">
         ${watchlist.map(item => `
         <div class="card-dark rounded-xl p-3 kpi-card relative group" id="quote-${sid(item.isin)}" draggable="true" data-isin="${item.isin}" style="cursor:grab">
-          <div class="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition z-10">
+          <div class="absolute top-1.5 right-1.5 flex items-center gap-0.5 z-10">
             <button class="btn-move-up w-5 h-5 rounded-full bg-dark-600/80 text-gray-500 hover:bg-accent-amber/20 hover:text-accent-amber transition flex items-center justify-center" data-isin="${item.isin}" title="Monter">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
@@ -762,27 +695,8 @@ async function loadAllQuotes(store, forceRefresh = false) {
 
   if (statusEl) statusEl.textContent = 'Chargement des cours...';
 
-  let quotesMap = {};
-
-  // Try batch fetch first (2 API calls for all tickers)
-  try {
-    quotesMap = await fetchAllQuotesBatch(watchlist);
-  } catch (e) {
-    console.warn('Batch fetch failed, falling back to individual:', e);
-  }
-
-  // Fallback: fetch individually for any missing tickers
-  const missing = watchlist.filter(item => !quotesMap[item.isin]);
-  if (missing.length > 0) {
-    const fallbackResults = await Promise.allSettled(
-      missing.map(item => fetchQuoteWithHistory(item.isin))
-    );
-    fallbackResults.forEach((result, j) => {
-      if (result.status === 'fulfilled' && result.value) {
-        quotesMap[missing[j].isin] = result.value;
-      }
-    });
-  }
+  // Fetch all tickers in parallel (no batching, no delays)
+  const quotesMap = await fetchAllQuotesParallel(watchlist);
 
   // Save to cache
   if (Object.keys(quotesMap).length > 0) {

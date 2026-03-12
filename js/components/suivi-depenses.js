@@ -145,9 +145,9 @@ export function render(store) {
     return `
       <div class="flex items-center justify-between px-3 py-px hover:bg-dark-600/30 transition group cursor-pointer" ${editAttr}>
         <div class="flex items-center gap-2 min-w-0">
-          <div class="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
-            <button ${moveUpAttr} ${moveAccount} class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
-            <button ${moveDownAttr} ${moveAccount} class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
+          <div class="flex flex-col gap-0.5 flex-shrink-0">
+            <button ${moveUpAttr} ${moveAccount} class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5" onclick="event.stopPropagation()">▲</button>
+            <button ${moveDownAttr} ${moveAccount} class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5" onclick="event.stopPropagation()">▼</button>
           </div>
           ${icon}
           <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
@@ -188,7 +188,7 @@ export function render(store) {
             </div>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-prev="cic">
             <span class="text-xs text-gray-500">Solde mois précédent</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
@@ -218,9 +218,9 @@ export function render(store) {
                 return `
               <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/mc">
                 <div class="flex items-center gap-2 min-w-0">
-                  <div class="flex flex-col gap-0.5 opacity-0 group-hover/mc:opacity-100 transition flex-shrink-0">
-                    <button data-mc-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▲</button>
-                    <button data-mc-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]">▼</button>
+                  <div class="flex flex-col gap-0.5 flex-shrink-0">
+                    <button data-mc-up="${d.id}" class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5">▲</button>
+                    <button data-mc-down="${d.id}" class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5">▼</button>
                   </div>
                   <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-700 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
                   <span class="text-[12px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
@@ -245,7 +245,7 @@ export function render(store) {
             </div>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-prev="tr">
             <span class="text-xs text-gray-500">Solde mois précédent</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
