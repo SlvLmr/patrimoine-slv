@@ -497,9 +497,12 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
 // TIMELINE DE VIE — Plan d'action recommandé
 // ============================================================================
 
-function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store) {
+function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store, planStartYear) {
   const nbEnfants = enfants.length;
   if (nbEnfants === 0 || snapshots.length === 0) return [];
+
+  const startYear = planStartYear || currentYear;
+  const startAge = ageDonateur + (startYear - currentYear);
 
   const events = [];
   const state = store.getAll();
@@ -510,11 +513,22 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
   const dcaMensuelPEA = peaPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
   const peaRestant = Math.max(0, PLAFOND_PEA - peaApports);
 
-  // 1. Maintenant : premier cycle de donations
+  // Patrimoine à l'année de départ (snapshot)
+  const startIdx = Math.max(0, Math.min(snapshots.length - 1, startYear - currentYear));
+  const startSnap = snapshots[startIdx] || snapshots[0];
+  const startPatrimoine = {
+    ...patrimoine,
+    immobilier: startSnap.immobilier || 0,
+    placements: startSnap.placements || 0,
+    assuranceVie: patrimoine.assuranceVie,
+    patrimoineNet: startSnap.patrimoineNet || 0,
+  };
+
+  // 1. Premier cycle de donations (à l'année de départ du plan)
   const abattTotal = (ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants;
   events.push({
-    age: ageDonateur,
-    annee: currentYear,
+    age: startAge,
+    annee: startYear,
     icon: '🎯',
     color: 'accent-green',
     titre: `1er cycle de donations`,
@@ -538,11 +552,11 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     }
   }
 
-  // 3. Nue-propriété — trouver l'âge optimal
-  if (patrimoine.immobilier > 0) {
+  // 3. Nue-propriété — trouver l'âge optimal (basé sur le patrimoine à l'année de départ)
+  if (startPatrimoine.immobilier > 0) {
     let bestAge = null;
     for (const t of BAREME_USUFRUIT) {
-      const npParEnfant = Math.round(patrimoine.immobilier * t.nuePropriete / nbEnfants);
+      const npParEnfant = Math.round(startPatrimoine.immobilier * t.nuePropriete / nbEnfants);
       if (npParEnfant <= ABATTEMENT_PARENT_ENFANT) {
         bestAge = t.ageMax === 20 ? 20 : (BAREME_USUFRUIT.indexOf(t) === 0 ? 20 : BAREME_USUFRUIT[BAREME_USUFRUIT.indexOf(t) - 1].ageMax + 1);
         break;
@@ -556,17 +570,17 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         icon: '🏠',
         color: 'accent-amber',
         titre: `Donner la nue-propriété (NP ${(rate.nuePropriete * 100).toFixed(0)}%)`,
-        description: `À ${bestAge} ans, la NP par enfant (${formatCurrency(Math.round(patrimoine.immobilier * rate.nuePropriete / nbEnfants))}) passe dans l'abattement = 0 € de droits sur ${formatCurrency(patrimoine.immobilier)} d'immobilier.`
+        description: `À ${bestAge} ans, la NP par enfant (${formatCurrency(Math.round(startPatrimoine.immobilier * rate.nuePropriete / nbEnfants))}) passe dans l'abattement = 0 € de droits sur ${formatCurrency(startPatrimoine.immobilier)} d'immobilier.`
       });
     }
   }
 
-  // 4. 2ème cycle (15 ans après)
-  const age2 = ageDonateur + RENOUVELLEMENT_ANNEES;
+  // 4. 2ème cycle (15 ans après le 1er cycle)
+  const age2 = startAge + RENOUVELLEMENT_ANNEES;
   if (age2 < 85) {
     events.push({
       age: age2,
-      annee: currentYear + RENOUVELLEMENT_ANNEES,
+      annee: startYear + RENOUVELLEMENT_ANNEES,
       icon: '🔄',
       color: 'accent-cyan',
       titre: `2e cycle de donations`,
@@ -576,7 +590,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
 
   // 5. Avant 70 ans : maximiser l'AV
   if (ageDonateur < 70) {
-    const avParEnfant = patrimoine.assuranceVie / Math.max(1, nbEnfants);
+    const avParEnfant = startPatrimoine.assuranceVie / Math.max(1, nbEnfants);
     const avManque = AV_ABATTEMENT_PAR_BENEFICIAIRE - avParEnfant;
     if (avManque > 10000) {
       events.push({
@@ -602,12 +616,12 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     });
   }
 
-  // 7. 3ème cycle (30 ans après)
-  const age3 = ageDonateur + 2 * RENOUVELLEMENT_ANNEES;
+  // 7. 3ème cycle (30 ans après le 1er)
+  const age3 = startAge + 2 * RENOUVELLEMENT_ANNEES;
   if (age3 < 90) {
     events.push({
       age: age3,
-      annee: currentYear + 2 * RENOUVELLEMENT_ANNEES,
+      annee: startYear + 2 * RENOUVELLEMENT_ANNEES,
       icon: '🔄',
       color: 'accent-cyan',
       titre: `3e cycle de donations`,
@@ -643,7 +657,7 @@ function renderConseilsHTML(conseils, enfants) {
     const borderColor = c.type === 'investissement' ? 'border-accent-blue' : 'border-accent-amber';
     const stepColor = c.type === 'investissement' ? 'bg-accent-blue text-dark-900' : 'bg-accent-amber text-dark-900';
     return `
-    <details class="group rounded-xl overflow-hidden border-l-4 ${borderColor} bg-dark-800/20 hover:bg-dark-800/40 transition" ${idx <= 2 ? 'open' : ''}>
+    <details class="group rounded-xl overflow-hidden border-l-4 ${borderColor} bg-dark-800/20 hover:bg-dark-800/40 transition">
       <summary class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
         <div class="w-7 h-7 rounded-lg ${stepColor} flex items-center justify-center text-xs font-black shrink-0">${stepNum}</div>
         <span class="text-base shrink-0">${c.icon}</span>
@@ -738,11 +752,7 @@ export function render(store) {
     ? genererConseils(patrimoine, snap, enfants, cfg.donations || [], ageDonateur, currentYear, store)
     : [];
 
-  // === TIMELINE DE VIE ===
-  const timeline = genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store);
-
   // === ANNÉE DE DÉPART DU PLAN ===
-  // Trouver la 1re année où les liquidités couvrent l'abattement total par enfant
   const abattTotalParEnfant = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
   const abattTotalFamille = abattTotalParEnfant * nbEnfants;
   let anneeDepart = null;
@@ -758,6 +768,10 @@ export function render(store) {
       }
     }
   }
+
+  // === TIMELINE DE VIE ===
+  const planStartYear = cfg.anneeDepartPlan || anneeDepart || currentYear;
+  const timeline = genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store, planStartYear);
 
   // === TYPES DE DONATION ===
   const typeDonOptions = [
@@ -788,7 +802,20 @@ export function render(store) {
           </div>
           <h2 class="text-sm font-bold text-gray-200">Famille</h2>
           <span class="text-xs text-gray-500">${ageDonateur} ans · Patrimoine net : ${formatCurrency(patrimoine.patrimoineNet)}</span>
-          <button id="btn-add-enfant" class="ml-auto px-2 py-1 bg-accent-purple text-dark-900 text-[11px] font-bold rounded-lg hover:opacity-90 transition">+ Enfant</button>
+          ${nbEnfants > 0 ? `
+          <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg ${anneeDepart ? 'bg-accent-green/10 border border-accent-green/20' : 'bg-accent-amber/10 border border-accent-amber/20'}">
+            <svg class="w-3.5 h-3.5 ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <div>
+              <p class="text-[10px] text-gray-400 leading-none">Début du plan</p>
+              <div class="flex items-center gap-1">
+                <input type="number" id="annee-depart-input" min="${currentYear}" max="${currentYear + (params.projectionYears || 30)}" value="${cfg.anneeDepartPlan || anneeDepart || currentYear}"
+                  class="w-16 text-sm font-bold ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'} bg-transparent border-none outline-none p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <span class="text-[10px] text-gray-400" id="annee-depart-age">(${ageDonateur + ((cfg.anneeDepartPlan || anneeDepart || currentYear) - currentYear)} ans)</span>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+          <button id="btn-add-enfant" class="px-2 py-1 bg-accent-purple text-dark-900 text-[11px] font-bold rounded-lg hover:opacity-90 transition ${anneeDepart || nbEnfants > 0 ? '' : 'ml-auto'}">+ Enfant</button>
         </div>
         ${enfants.length === 0 ? `
           <p class="text-sm text-gray-500 text-center py-3">Ajoutez vos enfants pour lancer la simulation</p>
@@ -848,52 +875,9 @@ export function render(store) {
           </div>
         </div>
 
-        <div class="bg-dark-800/30 rounded-lg p-3 text-xs text-gray-400">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-gray-300 font-medium">À ${snap?.age || ageDonateur} ans (fin ${snap?.calendarYear || currentYear})</span>
-            <span id="proj-age-label" class="text-gray-500">·</span>
-            <span id="proj-cap-epargne" class="text-gray-500">Capacité d'épargne : ${formatCurrency((snap?.capaciteEpargne || 0) * 12)}/an</span>
-          </div>
-          ${nbEnfants > 0 ? `
-          <div class="border-t border-dark-400/15 pt-2 mt-2">
-            <p class="text-gray-300 font-medium mb-1">Ce que vous pourriez donner à cette date :</p>
-            <div class="grid grid-cols-1 md:grid-cols-${Math.min(nbEnfants, 3)} gap-2" id="proj-donation-capacities">
-              ${enfants.map(enf => {
-                const partParEnfant = snap ? Math.round((snap.patrimoineNet - (snap.immobilier || 0)) / nbEnfants) : 0;
-                const abattMax = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
-                const donnableExonere = Math.min(partParEnfant, abattMax);
-                return `
-                <div class="bg-dark-800/40 rounded-lg px-3 py-2">
-                  <div class="flex items-center gap-2 mb-1">
-                    <div class="w-5 h-5 rounded-full bg-dark-600 flex items-center justify-center text-[10px] font-bold text-gray-300">${(enf.prenom || '?')[0].toUpperCase()}</div>
-                    <span class="text-sm text-gray-200">${enf.prenom}</span>
-                  </div>
-                  <div class="space-y-1">
-                    <div class="flex justify-between">
-                      <span>Liquidités disponibles /enfant</span>
-                      <span class="text-gray-200 font-medium proj-liq-enfant">${formatCurrency(partParEnfant)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span>Exonérable (abatt. + TEPA)</span>
-                      <span class="text-accent-green font-medium proj-exo-enfant">${formatCurrency(donnableExonere)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span>Droits si don du max liquide</span>
-                      <span class="text-accent-red font-medium proj-droits-enfant">${formatCurrency(calculerDroitsDonation(Math.max(0, partParEnfant - ABATTEMENT_PARENT_ENFANT)))}</span>
-                    </div>
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>
-            ${patrimoine.immobilier > 0 ? `
-            <div class="mt-2 pt-2 border-t border-dark-400/15">
-              <p class="text-gray-300 font-medium mb-1">Donation immobilière en nue-propriété :</p>
-              <div class="flex gap-4">
-                <span>Valeur NP (${(getUsufruitRate(snap?.age || ageDonateur).nuePropriete * 100).toFixed(0)}%) : <span class="text-amber-400 font-medium" id="proj-np-val">${formatCurrency(Math.round(patrimoine.immobilier * getUsufruitRate(snap?.age || ageDonateur).nuePropriete))}</span></span>
-                <span>Par enfant : <span class="text-amber-400 font-medium" id="proj-np-enfant">${formatCurrency(Math.round(patrimoine.immobilier * getUsufruitRate(snap?.age || ageDonateur).nuePropriete / Math.max(1, nbEnfants)))}</span></span>
-              </div>
-            </div>` : ''}
-          </div>` : '<p class="text-gray-500 text-center py-2">Ajoutez des enfants pour voir les capacités de donation</p>'}
+        <div class="flex items-center gap-4 text-xs text-gray-400">
+          <span class="text-gray-300 font-medium" id="proj-age-label">À ${snap?.age || ageDonateur} ans (fin ${snap?.calendarYear || currentYear})</span>
+          <span id="proj-cap-epargne">Capacité d'épargne : ${formatCurrency((snap?.capaciteEpargne || 0) * 12)}/an</span>
         </div>
       </div>
 
@@ -907,20 +891,7 @@ export function render(store) {
             </svg>
           </div>
           <h2 class="text-sm font-bold text-gray-200">Plan d'action recommandé</h2>
-          ${anneeDepart ? `
-          <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-green/10 border border-accent-green/20">
-            <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <div>
-              <p class="text-[10px] text-gray-400 leading-none">Début possible</p>
-              <p class="text-sm font-bold text-accent-green leading-tight">${anneeDepart} <span class="text-[10px] font-normal text-gray-400">(${ageDepart} ans)</span></p>
-            </div>
-          </div>
-          ` : nbEnfants > 0 ? `
-          <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent-amber/10 border border-accent-amber/20">
-            <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-[10px] text-accent-amber">Liquidités insuffisantes sur l'horizon</p>
-          </div>
-          ` : ''}
+          <span class="text-xs text-gray-500 ml-2">Faites défiler votre feuille de route</span>
         </div>
         <div class="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
           <div class="flex items-start gap-0 min-w-max relative" style="padding-top:4px">
@@ -966,52 +937,63 @@ export function render(store) {
       ` : ''}
 
       ${nbEnfants === 0 ? '' : `
-      <!-- ROW 2 : COMPARATIF KPI -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Sans donation -->
-        <div class="card-dark rounded-xl p-5 border border-accent-red/20">
-          <p class="text-xs text-gray-400 mb-1 uppercase tracking-wide">Sans donation (succession seule)</p>
-          <p class="text-2xl font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
-          <p class="text-xs text-gray-500 mt-1">de droits à payer par vos ${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''}</p>
-          <div class="mt-3 text-xs text-gray-400 space-y-1">
-            <div class="flex justify-between"><span>Part/enfant (hors AV)</span><span>${formatCurrency(succSansdon.partBrute)}</span></div>
-            <div class="flex justify-between"><span>Abattement</span><span class="text-accent-green">-${formatCurrency(succSansdon.abattement)}</span></div>
-            <div class="flex justify-between"><span>Taxable</span><span>${formatCurrency(succSansdon.taxable)}</span></div>
-            <div class="flex justify-between"><span>Droits succession/enfant</span><span class="text-accent-red">${formatCurrency(succSansdon.droits)}</span></div>
-            ${patrimoine.assuranceVie > 0 ? `
-            <div class="border-t border-dark-400/15 pt-1 flex justify-between"><span>AV/enfant</span><span>${formatCurrency(succSansdon.avParEnfant)}</span></div>
-            <div class="flex justify-between"><span>Droits AV/enfant</span><span class="text-accent-red">${formatCurrency(succSansdon.avDroits)}</span></div>
-            ` : ''}
+      <!-- IMPACT DES DONATIONS — comparatif simplifié -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-200">Impact de vos donations</h2>
+            <p class="text-[10px] text-gray-500">Ce que vos enfants paieront au fisc à votre décès, avec ou sans donations</p>
           </div>
         </div>
-
-        <!-- Avec donations -->
-        <div class="card-dark rounded-xl p-5 border border-accent-green/20">
-          <p class="text-xs text-gray-400 mb-1 uppercase tracking-wide">Avec vos donations planifiées</p>
-          <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
-          <p class="text-xs text-gray-500 mt-1">total (droits donations + succession résiduelle)</p>
-          <div class="mt-3 text-xs text-gray-400 space-y-1">
-            <div class="flex justify-between"><span>Droits sur donations</span><span>${formatCurrency(totalDroitsDonation)}</span></div>
-            <div class="flex justify-between"><span>Total donné</span><span>${formatCurrency(totalDonne)}</span></div>
-            <div class="flex justify-between"><span>Patrimoine résiduel (hors AV)</span><span>${formatCurrency(patrimoineResiduelHorsAV)}</span></div>
-            <div class="flex justify-between"><span>Droits succession résiduelle</span><span>${formatCurrency(totalDroitsSuccResiduelle)}</span></div>
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Si vous ne faites rien -->
+          <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-red/20 text-center">
+            <p class="text-[10px] text-gray-500 mb-2">Si vous ne faites rien</p>
+            <p class="text-2xl font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
+            <p class="text-[10px] text-gray-500 mt-1">de droits de succession</p>
+            <details class="mt-2 text-left">
+              <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
+              <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
+                <p>Chaque enfant hérite de ${formatCurrency(succSansdon.partBrute)}</p>
+                <p>Après abattement de ${formatCurrency(succSansdon.abattement)}, il reste ${formatCurrency(succSansdon.taxable)} taxable</p>
+                <p>= ${formatCurrency(succSansdon.droits)} de droits par enfant</p>
+                ${patrimoine.assuranceVie > 0 ? `<p>+ ${formatCurrency(succSansdon.avDroits)} de droits sur l'AV par enfant</p>` : ''}
+              </div>
+            </details>
           </div>
-        </div>
 
-        <!-- Économie -->
-        <div class="card-dark rounded-xl p-5 border ${economie > 0 ? 'border-accent-cyan/30' : 'border-dark-400/20'}">
-          <p class="text-xs text-gray-400 mb-1 uppercase tracking-wide">Économie réalisée</p>
-          <p class="text-2xl font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${economie > 0 ? '+' : ''}${formatCurrency(economie)}</p>
-          <p class="text-xs text-gray-500 mt-1">${economie > 0 ? 'en moins de droits grâce aux donations' : 'ajoutez des donations pour voir l\'impact'}</p>
-          ${totalDroitsSansdon > 0 ? `
-          <div class="mt-3">
-            <div class="flex items-center gap-2">
-              <div class="flex-1 h-2 bg-dark-600 rounded-full overflow-hidden">
+          <!-- Avec vos donations -->
+          <div class="rounded-xl p-4 bg-dark-800/40 border border-accent-green/20 text-center">
+            <p class="text-[10px] text-gray-500 mb-2">Avec vos donations</p>
+            <p class="text-2xl font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
+            <p class="text-[10px] text-gray-500 mt-1">total droits à payer</p>
+            <details class="mt-2 text-left">
+              <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-gray-400">Détail du calcul</summary>
+              <div class="mt-1 text-[10px] text-gray-500 space-y-0.5">
+                <p>Vous donnez ${formatCurrency(totalDonne)} de votre vivant</p>
+                <p>Droits sur ces donations : ${formatCurrency(totalDroitsDonation)}</p>
+                <p>Il reste ${formatCurrency(patrimoineResiduelHorsAV)} à la succession</p>
+                <p>Droits succession résiduelle : ${formatCurrency(totalDroitsSuccResiduelle)}</p>
+              </div>
+            </details>
+          </div>
+
+          <!-- Vous économisez -->
+          <div class="rounded-xl p-4 ${economie > 0 ? 'bg-gradient-to-br from-accent-cyan/10 to-accent-green/5 border border-accent-cyan/30' : 'bg-dark-800/40 border border-dark-400/20'} text-center">
+            <p class="text-[10px] text-gray-500 mb-2">Vos enfants économisent</p>
+            <p class="text-2xl font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${economie > 0 ? '' : ''}${formatCurrency(economie)}</p>
+            <p class="text-[10px] text-gray-500 mt-1">${economie > 0 ? 'en moins de droits' : 'ajoutez des donations ci-dessous'}</p>
+            ${totalDroitsSansdon > 0 ? `
+            <div class="mt-2 flex items-center gap-2">
+              <div class="flex-1 h-1.5 bg-dark-600 rounded-full overflow-hidden">
                 <div class="h-full bg-accent-cyan rounded-full transition-all" style="width: ${Math.min(100, Math.max(0, economie / totalDroitsSansdon * 100))}%"></div>
               </div>
-              <span class="text-xs font-medium ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${totalDroitsSansdon > 0 ? Math.round(economie / totalDroitsSansdon * 100) : 0}%</span>
-            </div>
-          </div>` : ''}
+              <span class="text-[10px] font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${Math.round(economie / totalDroitsSansdon * 100)}%</span>
+            </div>` : ''}
+          </div>
         </div>
       </div>
 
