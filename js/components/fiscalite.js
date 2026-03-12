@@ -802,20 +802,7 @@ export function render(store) {
           </div>
           <h2 class="text-sm font-bold text-gray-200">Famille</h2>
           <span class="text-xs text-gray-500">${ageDonateur} ans · Patrimoine net : ${formatCurrency(patrimoine.patrimoineNet)}</span>
-          ${nbEnfants > 0 ? `
-          <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg ${anneeDepart ? 'bg-accent-green/10 border border-accent-green/20' : 'bg-accent-amber/10 border border-accent-amber/20'}">
-            <svg class="w-3.5 h-3.5 ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <div>
-              <p class="text-[10px] text-gray-400 leading-none">Début du plan</p>
-              <div class="flex items-center gap-1">
-                <input type="number" id="annee-depart-input" min="${currentYear}" max="${currentYear + (params.projectionYears || 30)}" value="${cfg.anneeDepartPlan || anneeDepart || currentYear}"
-                  class="w-16 text-sm font-bold ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'} bg-transparent border-none outline-none p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                <span class="text-[10px] text-gray-400" id="annee-depart-age">(${ageDonateur + ((cfg.anneeDepartPlan || anneeDepart || currentYear) - currentYear)} ans)</span>
-              </div>
-            </div>
-          </div>
-          ` : ''}
-          <button id="btn-add-enfant" class="px-2 py-1 bg-accent-purple text-dark-900 text-[11px] font-bold rounded-lg hover:opacity-90 transition ${anneeDepart || nbEnfants > 0 ? '' : 'ml-auto'}">+ Enfant</button>
+          <button id="btn-add-enfant" class="ml-auto px-2 py-1 bg-accent-purple text-dark-900 text-[11px] font-bold rounded-lg hover:opacity-90 transition">+ Enfant</button>
         </div>
         ${enfants.length === 0 ? `
           <p class="text-sm text-gray-500 text-center py-3">Ajoutez vos enfants pour lancer la simulation</p>
@@ -892,6 +879,17 @@ export function render(store) {
           </div>
           <h2 class="text-sm font-bold text-gray-200">Plan d'action recommandé</h2>
           <span class="text-xs text-gray-500 ml-2">Faites défiler votre feuille de route</span>
+          <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg ${anneeDepart ? 'bg-accent-green/10 border border-accent-green/20' : 'bg-accent-amber/10 border border-accent-amber/20'}">
+            <svg class="w-3.5 h-3.5 ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <div>
+              <p class="text-[10px] text-gray-400 leading-none">Début du plan</p>
+              <div class="flex items-center gap-1">
+                <input type="number" id="annee-depart-input" min="${currentYear}" max="${currentYear + (params.projectionYears || 30)}" value="${cfg.anneeDepartPlan || anneeDepart || currentYear}"
+                  class="w-16 text-sm font-bold ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'} bg-transparent border-none outline-none p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <span class="text-[10px] text-gray-400" id="annee-depart-age">(${ageDonateur + ((cfg.anneeDepartPlan || anneeDepart || currentYear) - currentYear)} ans)</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
           <div class="flex items-start gap-0 min-w-max relative" style="padding-top:4px">
@@ -1226,6 +1224,20 @@ export function mount(store, navigate) {
       const c = getConfig(store);
       c.selectedProjectionYear = parseInt(slider.value);
       saveConfig(store, c);
+    });
+  }
+
+  // --- Début du plan (année de départ) ---
+  const anneeDepartInput = document.getElementById('annee-depart-input');
+  if (anneeDepartInput) {
+    anneeDepartInput.addEventListener('change', () => {
+      const val = parseInt(anneeDepartInput.value);
+      if (!isNaN(val)) {
+        const c = getConfig(store);
+        c.anneeDepartPlan = val;
+        saveConfig(store, c);
+        navigate('fiscalite'); // re-render with updated timeline
+      }
     });
   }
 
