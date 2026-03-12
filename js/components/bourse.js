@@ -9,26 +9,90 @@ const REFRESH_SLOTS = [
   { h: 20, m: 30 }
 ];
 
-// Multiple CORS proxies for resilience
+// Well-known ISIN → Yahoo Finance ticker mappings (avoids unreliable search API)
+const KNOWN_TICKERS = {
+  // French stocks
+  'FR0000120073': 'AI.PA',     // Air Liquide
+  'FR0000121972': 'SU.PA',     // Schneider Electric
+  'FR0010307819': 'LR.PA',     // Legrand
+  'FR0000131104': 'BNP.PA',    // BNP Paribas
+  'FR0000120271': 'TTE.PA',    // TotalEnergies
+  'FR0000121014': 'MC.PA',     // LVMH
+  'FR0000120321': 'OR.PA',     // L'Oréal
+  'FR0000125007': 'SGO.PA',    // Saint-Gobain
+  'FR0000125338': 'CAP.PA',    // Capgemini
+  'FR0000130809': 'SAN.PA',    // Sanofi
+  'FR0000127771': 'VIV.PA',    // Vivendi
+  'FR0000120578': 'SAF.PA',    // Safran
+  'FR0000073272': 'SAF.PA',    // Safran (alternate)
+  'FR0000051807': 'TEP.PA',    // Teleperformance
+  'FR0010220475': 'CW8.PA',    // Amundi MSCI World
+  // PEA ETFs (Euronext Paris)
+  'FR0011550185': 'EWLD.PA',   // Lyxor PEA MSCI World
+  'FR0011550193': 'PSP5.PA',   // Lyxor PEA S&P 500
+  'FR0013412020': 'PAEEM.PA',  // Amundi PEA Emerging Markets
+  'FR0011869353': 'PUST.PA',   // Lyxor PEA Nasdaq-100
+  'FR0013412038': 'PCEU.PA',   // Amundi PEA MSCI Europe
+  'FR0011550177': 'PTPXE.PA',  // Lyxor PEA Japan Topix
+  'LU1681043599': 'CW8.PA',    // Amundi MSCI World (alt)
+  'LU0392494562': 'MWRD.DE',   // ComStage MSCI World
+  // International ETFs
+  'IE00BK5BQT80': 'VWRA.L',   // Vanguard FTSE All-World
+  'IE00B4L5Y983': 'IWDA.AS',   // iShares Core MSCI World
+  'IE00B3RBWM25': 'VWRL.AS',   // Vanguard FTSE All-World (Dist)
+  'IE00BJ0KDQ92': 'VUSA.L',    // Vanguard S&P 500
+  'IE00B5BMR087': 'CSPX.L',    // iShares Core S&P 500
+  'IE00B4L5YC18': 'EMIM.AS',   // iShares Core EM
+};
+
+// Persistent ticker cache in localStorage (survives page reloads)
+const TICKER_CACHE_KEY = 'patrimoine-slv-ticker-cache';
+function loadTickerCache() {
+  try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY) || '{}'); } catch { return {}; }
+}
+function saveTickerCache(cache) {
+  localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(cache));
+}
+
+// Multiple CORS proxies for resilience — ordered by reliability
 const CORS_PROXIES = [
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
 ];
 
-async function fetchWithProxy(url, timeoutMs = 8000) {
-  for (const makeProxy of CORS_PROXIES) {
-    const proxyUrl = makeProxy(url);
+// Track which proxy index worked last to try it first next time
+let lastWorkingProxyIdx = 0;
+
+async function fetchWithProxy(url, timeoutMs = 10000) {
+  // Try direct fetch first (works in some environments / extensions)
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (res.ok) return await res.json();
+  } catch { /* direct fetch blocked by CORS, expected */ }
+
+  // Try proxies, starting with the last one that worked
+  const order = [];
+  for (let j = 0; j < CORS_PROXIES.length; j++) {
+    order.push((lastWorkingProxyIdx + j) % CORS_PROXIES.length);
+  }
+
+  for (const idx of order) {
+    const proxyUrl = CORS_PROXIES[idx](url);
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       const res = await fetch(proxyUrl, { signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      const json = await res.json();
+      lastWorkingProxyIdx = idx; // remember which proxy worked
+      return json;
     } catch (e) {
-      console.warn(`Proxy failed for ${url}:`, e.message);
-      // Try next proxy
+      console.warn(`Proxy ${idx} failed for ${url}:`, e.message);
     }
   }
   throw new Error('All proxies failed');
@@ -122,23 +186,44 @@ function isIsin(str) {
   return /^[A-Z]{2}[A-Z0-9]{10}$/i.test(str);
 }
 
-// Resolve ISIN or ticker to Yahoo Finance ticker via search API
-const tickerCache = {};
+// Resolve ISIN or ticker to Yahoo Finance ticker
+// Priority: hardcoded map → persistent cache → Yahoo search API (last resort)
+const tickerCacheMem = {};
 async function resolveIsinToTicker(identifier) {
-  if (tickerCache[identifier]) return tickerCache[identifier];
+  const upper = identifier.toUpperCase();
 
-  // If it's not an ISIN, treat it as a direct Yahoo ticker
-  if (!isIsin(identifier)) {
-    tickerCache[identifier] = identifier.toUpperCase();
-    return identifier.toUpperCase();
+  // Memory cache
+  if (tickerCacheMem[upper]) return tickerCacheMem[upper];
+
+  // Not an ISIN → direct ticker
+  if (!isIsin(upper)) {
+    tickerCacheMem[upper] = upper;
+    return upper;
   }
 
+  // Hardcoded well-known mapping
+  if (KNOWN_TICKERS[upper]) {
+    tickerCacheMem[upper] = KNOWN_TICKERS[upper];
+    return KNOWN_TICKERS[upper];
+  }
+
+  // Persistent localStorage cache (from previous successful lookups)
+  const persisted = loadTickerCache();
+  if (persisted[upper]) {
+    tickerCacheMem[upper] = persisted[upper];
+    return persisted[upper];
+  }
+
+  // Last resort: Yahoo Finance search API
   try {
     const searchUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(identifier)}&quotesCount=1&newsCount=0`;
     const data = await fetchWithProxy(searchUrl);
     const quote = data.quotes?.[0];
     if (quote?.symbol) {
-      tickerCache[identifier] = quote.symbol;
+      tickerCacheMem[upper] = quote.symbol;
+      // Persist for future use
+      persisted[upper] = quote.symbol;
+      saveTickerCache(persisted);
       return quote.symbol;
     }
   } catch (e) {
@@ -319,15 +404,22 @@ function formatNum(v, decimals = 2) {
 export async function backgroundRefresh() {
   if (isCacheFresh()) return; // already up to date
   const watchlist = loadWatchlist();
-  const results = await Promise.allSettled(
-    watchlist.map(item => fetchQuoteWithHistory(item.isin))
-  );
+  const BATCH_SIZE = 3;
   const quotesMap = {};
-  results.forEach((result, i) => {
-    if (result.status === 'fulfilled' && result.value) {
-      quotesMap[watchlist[i].isin] = result.value;
+  for (let i = 0; i < watchlist.length; i += BATCH_SIZE) {
+    const batch = watchlist.slice(i, i + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map(item => fetchQuoteWithHistory(item.isin))
+    );
+    results.forEach((result, j) => {
+      if (result.status === 'fulfilled' && result.value) {
+        quotesMap[batch[j].isin] = result.value;
+      }
+    });
+    if (i + BATCH_SIZE < watchlist.length) {
+      await new Promise(r => setTimeout(r, 300));
     }
-  });
+  }
   if (Object.keys(quotesMap).length > 0) saveQuotesCache(quotesMap);
 }
 
@@ -578,18 +670,24 @@ async function loadAllQuotes(store, forceRefresh = false) {
 
   if (statusEl) statusEl.textContent = 'Chargement des cours...';
 
-  const results = await Promise.allSettled(
-    watchlist.map(item => fetchQuoteWithHistory(item.isin))
-  );
-
-  // Build cache map
+  // Fetch in small batches to avoid overwhelming CORS proxies
+  const BATCH_SIZE = 3;
   const quotesMap = {};
-  results.forEach((result, i) => {
-    const item = watchlist[i];
-    if (result.status === 'fulfilled' && result.value) {
-      quotesMap[item.isin] = result.value;
+  for (let i = 0; i < watchlist.length; i += BATCH_SIZE) {
+    const batch = watchlist.slice(i, i + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map(item => fetchQuoteWithHistory(item.isin))
+    );
+    results.forEach((result, j) => {
+      if (result.status === 'fulfilled' && result.value) {
+        quotesMap[batch[j].isin] = result.value;
+      }
+    });
+    // Small delay between batches to avoid rate limiting
+    if (i + BATCH_SIZE < watchlist.length) {
+      await new Promise(r => setTimeout(r, 300));
     }
-  });
+  }
 
   // Save to cache
   if (Object.keys(quotesMap).length > 0) {
