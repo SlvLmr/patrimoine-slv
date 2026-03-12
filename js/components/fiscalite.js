@@ -1086,6 +1086,24 @@ export function render(store) {
       </div>
       ` : ''}
 
+      ${nbEnfants === 0 ? '' : `
+      <!-- IMPACT DES DONATIONS — comparatif simplifié -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-200">Impact de vos donations</h2>
+            <p class="text-[10px] text-gray-500" id="impact-subtitle">Basé sur votre patrimoine en ${snap?.calendarYear || currentYear} (${snap?.age || ageDonateur} ans)</p>
+          </div>
+        </div>
+        <div id="impact-container">
+          ${renderImpactHTML(totalDroitsSansdon, succSansdon, totalFiscaliteAvecdon, totalDonne, totalDroitsDonation, patrimoineResiduelHorsAV, totalDroitsSuccResiduelle, economie, patrimoine)}
+        </div>
+      </div>
+      `}
+
       <!-- CONSEILLER FISCAL (mis à jour dynamiquement par le slider) -->
       ${conseils.length > 0 ? `
       <div class="card-dark rounded-xl p-5">
@@ -1105,23 +1123,6 @@ export function render(store) {
         </div>
       </div>
       ` : ''}
-
-      ${nbEnfants === 0 ? '' : `
-      <!-- IMPACT DES DONATIONS — comparatif simplifié -->
-      <div class="card-dark rounded-xl p-5">
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-gray-200">Impact de vos donations</h2>
-            <p class="text-[10px] text-gray-500" id="impact-subtitle">Basé sur votre patrimoine en ${snap?.calendarYear || currentYear} (${snap?.age || ageDonateur} ans)</p>
-          </div>
-        </div>
-        <div id="impact-container">
-          ${renderImpactHTML(totalDroitsSansdon, succSansdon, totalFiscaliteAvecdon, totalDonne, totalDroitsDonation, patrimoineResiduelHorsAV, totalDroitsSuccResiduelle, economie, patrimoine)}
-        </div>
-      </div>
 
       <!-- ROW 3 : PLAN DE DONATION PAR ENFANT -->
       <div class="card-dark rounded-xl p-5">
