@@ -118,16 +118,16 @@ export function render(store) {
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
-  // Merge revenus + depenses into unified operations per bank
+  // Merge revenus + depenses into unified operations per bank (no sort — manual order via arrows)
   const opsCIC = [
     ...items.filter(i => i.compte === 'CIC').map(i => ({ ...i, type: 'depense' })),
     ...revenus.filter(r => r.compte === 'CIC').map(r => ({ ...r, type: 'revenu' }))
-  ].sort((a, b) => b.date.localeCompare(a.date) || (b.id || '').localeCompare(a.id || ''));
+  ];
 
   const opsTR = [
     ...items.filter(i => i.compte === 'Trade Republic').map(i => ({ ...i, type: 'depense' })),
     ...revenus.filter(r => r.compte === 'Trade Republic').map(r => ({ ...r, type: 'revenu' }))
-  ].sort((a, b) => b.date.localeCompare(a.date) || (b.id || '').localeCompare(a.id || ''));
+  ];
 
   const renderOp = (op) => {
     const isRevenu = op.type === 'revenu';
