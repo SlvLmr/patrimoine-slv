@@ -821,22 +821,21 @@ const CHILD_COLORS = ['accent-purple', 'accent-cyan', 'accent-green', 'accent-am
 function renderTimelineHTML(timeline, ageDonateur) {
   if (!timeline || timeline.length === 0) return '<p class="text-sm text-gray-500 text-center py-4">Ajoutez des enfants pour voir le plan</p>';
   return `
-    <div class="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
-      <div class="flex items-start gap-0 min-w-max relative" style="padding-top:4px">
+    <div class="pb-2">
+      <div class="grid relative" style="padding-top:4px;grid-template-columns:repeat(${timeline.length}, 1fr)">
         <div class="absolute top-[19px] left-[20px] right-[20px] h-[2px] bg-dark-400/30 rounded-full"></div>
         ${timeline.map((ev, i) => {
           const isPast = ev.age < ageDonateur;
           const isCurrent = ev.age >= ageDonateur && ev.age <= ageDonateur + 2;
-          const shortDesc = ev.description.length > 100 ? ev.description.substring(0, 100) + '...' : ev.description;
           return `
-          <div class="timeline-event flex flex-col items-center shrink-0 relative cursor-pointer group/ev ${isPast ? 'opacity-40' : ''}" style="width:160px" data-event-idx="${i}">
-            <div class="w-8 h-8 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20 ring-4 ring-${ev.color}/10` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-sm z-10 relative group-hover/ev:scale-110 transition-transform">
+          <div class="timeline-event flex flex-col items-center relative cursor-pointer group/ev ${isPast ? 'opacity-40' : ''}" data-event-idx="${i}">
+            <div class="w-9 h-9 rounded-full border-2 ${isCurrent ? `border-${ev.color} bg-${ev.color}/20 ring-4 ring-${ev.color}/10` : `border-dark-400/50 bg-dark-700`} flex items-center justify-center text-base z-10 relative group-hover/ev:scale-110 transition-transform">
               ${ev.icon}
             </div>
-            <span class="text-[10px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.annee} <span class="text-gray-500">(${ev.age} ans)</span></span>
-            <p class="text-[11px] font-medium text-gray-200 text-center mt-1.5 px-2 leading-tight">${ev.titre}</p>
-            <p class="text-[10px] text-gray-500 text-center mt-1 px-2 leading-tight">${shortDesc}</p>
-            <span class="text-[9px] text-${ev.color} mt-1 opacity-0 group-hover/ev:opacity-100 transition">Cliquer pour voir l'impact</span>
+            <span class="text-[11px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.annee} <span class="text-gray-500">(${ev.age} ans)</span></span>
+            <p class="text-xs font-medium text-gray-200 text-center mt-2 px-3 leading-snug">${ev.titre}</p>
+            <p class="text-[11px] text-gray-500 text-center mt-1 px-3 leading-snug">${ev.description}</p>
+            <span class="text-[10px] text-${ev.color} mt-2 opacity-0 group-hover/ev:opacity-100 transition font-medium">Voir l'impact &rarr;</span>
           </div>`;
         }).join('')}
       </div>
