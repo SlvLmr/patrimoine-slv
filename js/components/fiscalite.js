@@ -41,9 +41,23 @@ const AV_SEUIL_1 = 700000;
 const AV_TAUX_2 = 0.3125;
 const AV_ABATTEMENT_APRES_70 = 30500;
 
+// Épargne de sécurité : on ne touche JAMAIS à ce matelas
+// Règle : 6 mois de dépenses mensuelles, minimum 15 000 €
+const EPARGNE_SECURITE_MOIS = 6;
+const EPARGNE_SECURITE_PLANCHER = 15000;
+
 // ============================================================================
 // FONCTIONS DE CALCUL
 // ============================================================================
+
+function calculerEpargneSecurite(store) {
+  const state = store.getAll();
+  const depensesMensuelles = (state.depenses || []).reduce((s, i) => {
+    const montant = Number(i.montantMensuel) || 0;
+    return s + (i.frequence === 'Annuel' ? montant / 12 : montant);
+  }, 0);
+  return Math.max(EPARGNE_SECURITE_PLANCHER, Math.round(depensesMensuelles * EPARGNE_SECURITE_MOIS));
+}
 
 function getUsufruitRate(age) {
   for (const t of BAREME_USUFRUIT) {
@@ -243,6 +257,9 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
   const yearSnap = snap?.calendarYear || currentYear;
   const liquidites = (snap?.placements || 0) + (snap?.epargne || 0);
   const state = store.getAll();
+  const epargneSecurite = calculerEpargneSecurite(store);
+  // Cash disponible pour les donations = cash total - épargne de sécurité
+  const cashDonnable = Math.max(0, patrimoine.epargne + patrimoine.comptesCourants - epargneSecurite);
 
   // Analyser les donations déjà planifiées par enfant
   const donParEnfant = {};
@@ -255,60 +272,12 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
     donParEnfant[enf.id] = { totalDonne, hasTepa, hasNP, hasCTO, count: dons.length };
   }
 
-  // --- CONSEIL 1 : Don manuel + TEPA pour utiliser l'abattement ---
-  const enfantsSansAbatt = enfants.filter(e => (donParEnfant[e.id]?.totalDonne || 0) < ABATTEMENT_PARENT_ENFANT);
-  if (enfantsSansAbatt.length > 0 && liquidites > 50000) {
-    const montantParEnfant = Math.min(ABATTEMENT_PARENT_ENFANT, Math.floor(liquidites / nbEnfants));
-    const totalExonere = montantParEnfant * enfantsSansAbatt.length;
-    const droitsSiSuccession = enfantsSansAbatt.length * calculerDroitsDonation(Math.max(0, montantParEnfant));
-    // Pas de droits si dans l'abattement → l'économie c'est les droits qu'ils auraient payés sur cette tranche en succession
-    const economie = enfantsSansAbatt.length * calculerDroitsDonation(montantParEnfant);
+  // =====================================================================
+  // PHASE 1 — Donations sans cash (nue-propriété, CTO)
+  // Ces donations ne nécessitent AUCUNE liquidité. C'est le point de départ.
+  // =====================================================================
 
-    if (economie > 0) {
-      conseils.push({
-        priorite: 1,
-        icon: '💰',
-        titre: `Don manuel de ${formatCurrency(montantParEnfant)} par enfant`,
-        description: `Donnez ${formatCurrency(montantParEnfant)} à ${enfantsSansAbatt.map(e => e.prenom).join(', ')} en utilisant l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}. Chaque enfant recevra cette somme sans payer aucun droit.`,
-        economie,
-        action: `${formatCurrency(totalExonere)} transmis à 0 € de droits`,
-        detail: `Abattement art. 779 CGI : ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} par parent par enfant, renouvelable tous les ${RENOUVELLEMENT_ANNEES} ans.`,
-        suggestions: enfantsSansAbatt.map(e => ({
-          enfantId: e.id,
-          type: 'don_manuel',
-          montant: montantParEnfant,
-          annee: yearSnap
-        }))
-      });
-    }
-  }
-
-  // --- CONSEIL 2 : Don TEPA (Sarkozy) ---
-  if (ageSnap < AGE_MAX_DONATEUR_TEPA) {
-    const enfantsSansTepa = enfants.filter(e => !donParEnfant[e.id]?.hasTepa);
-    if (enfantsSansTepa.length > 0) {
-      const totalTepa = DON_FAMILIAL_TEPA * enfantsSansTepa.length;
-      const anneeLimit = currentYear + (AGE_MAX_DONATEUR_TEPA - ageDonateur);
-
-      conseils.push({
-        priorite: 2,
-        icon: '🎁',
-        titre: `Don familial TEPA : ${formatCurrency(DON_FAMILIAL_TEPA)} par enfant`,
-        description: `En plus de l'abattement classique, vous pouvez donner ${formatCurrency(DON_FAMILIAL_TEPA)} supplémentaires à chaque enfant en espèces, totalement exonérés. Vous avez jusqu'à vos 80 ans (${anneeLimit}).`,
-        economie: enfantsSansTepa.length * calculerDroitsDonation(DON_FAMILIAL_TEPA),
-        action: `${formatCurrency(totalTepa)} supplémentaires exonérés`,
-        detail: `Art. 790 G CGI (loi TEPA 2007). Conditions : donateur < 80 ans, donataire majeur, somme d'argent. Cumulable avec l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}.`,
-        suggestions: enfantsSansTepa.map(e => ({
-          enfantId: e.id,
-          type: 'don_tepa',
-          montant: DON_FAMILIAL_TEPA,
-          annee: yearSnap
-        }))
-      });
-    }
-  }
-
-  // --- CONSEIL 3 : Donation nue-propriété immobilière ---
+  // --- CONSEIL 1 : Donation nue-propriété immobilière (PRIORITÉ ABSOLUE) ---
   if (patrimoine.immobilier > 0) {
     const enfantsSansNP = enfants.filter(e => !donParEnfant[e.id]?.hasNP);
     if (enfantsSansNP.length > 0) {
@@ -317,12 +286,10 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
       const valeurNPParEnfant = Math.round(valeurNP / nbEnfants);
       const taxableParEnfant = Math.max(0, valeurNPParEnfant - ABATTEMENT_PARENT_ENFANT);
       const droitsNP = calculerDroitsDonation(taxableParEnfant) * nbEnfants;
-      // Si on attend le décès, les enfants paient sur la pleine propriété
       const droitsSucc = calculerDroitsDonation(Math.max(0, patrimoine.immobilier / nbEnfants - ABATTEMENT_PARENT_ENFANT)) * nbEnfants;
       const economie = droitsSucc - droitsNP;
 
       if (economie > 0) {
-        // Trouver l'âge optimal (quand NP par enfant = abattement)
         let ageOptimal = null;
         for (const tranche of BAREME_USUFRUIT) {
           const npTest = Math.round(patrimoine.immobilier * tranche.nuePropriete / nbEnfants);
@@ -332,11 +299,12 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
         conseils.push({
           priorite: 1,
           icon: '🏠',
+          phase: 1,
           titre: `Donation en nue-propriété (${(rate.nuePropriete * 100).toFixed(0)}% à ${ageSnap} ans)`,
-          description: `Donnez la nue-propriété de votre immobilier (${formatCurrency(patrimoine.immobilier)}) tout en conservant l'usufruit (vous continuez à habiter/percevoir les loyers). La base taxable n'est que de ${formatCurrency(valeurNP)} au lieu de ${formatCurrency(patrimoine.immobilier)}.${ageOptimal && ageSnap <= ageOptimal ? ` À ${ageOptimal} ans ou avant, la NP par enfant (${formatCurrency(valeurNPParEnfant)}) passe dans l'abattement = 0 € de droits.` : ''}`,
+          description: `C'est la première chose à faire : donnez la nue-propriété de votre immobilier (${formatCurrency(patrimoine.immobilier)}) tout en conservant l'usufruit. Vous continuez à habiter et percevoir les loyers. Ça ne vous coûte rien en cash, juste les frais de notaire (~1,5%). La base taxable n'est que de ${formatCurrency(valeurNP)} au lieu de ${formatCurrency(patrimoine.immobilier)}.${ageOptimal && ageSnap <= ageOptimal ? ` À ${ageOptimal} ans ou avant, la NP par enfant (${formatCurrency(valeurNPParEnfant)}) passe dans l'abattement = 0 € de droits.` : ''}`,
           economie,
-          action: `${formatCurrency(patrimoine.immobilier)} transmis, base taxable réduite à ${formatCurrency(valeurNP)}`,
-          detail: `Art. 669 CGI. À votre décès, l'usufruit s'éteint automatiquement et vos enfants deviennent pleins propriétaires sans droits supplémentaires. Plus vous donnez jeune, plus la nue-propriété est faible.`,
+          action: `${formatCurrency(patrimoine.immobilier)} transmis sans sortir un euro de cash`,
+          detail: `Art. 669 CGI. À votre décès, l'usufruit s'éteint automatiquement et vos enfants deviennent pleins propriétaires sans droits supplémentaires. Plus vous donnez jeune, plus la nue-propriété est faible. Aucune liquidité nécessaire.`,
           suggestions: enfantsSansNP.map(e => ({
             enfantId: e.id,
             type: 'donation_nue_propriete',
@@ -348,31 +316,103 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
     }
   }
 
-  // --- CONSEIL 4 : Donation CTO (purge PV) ---
+  // --- CONSEIL 2 : Donation CTO (transfert de titres, pas de vente) ---
   if (patrimoine.cto > 0) {
     const enfantsSansCTO = enfants.filter(e => !donParEnfant[e.id]?.hasCTO);
     if (enfantsSansCTO.length > 0) {
       const ctoParEnfant = Math.round(patrimoine.cto / nbEnfants);
       const taxableParEnfant = Math.max(0, ctoParEnfant - ABATTEMENT_PARENT_ENFANT);
-      const droitsDonation = calculerDroitsDonation(taxableParEnfant) * nbEnfants;
-      // Hypothèse : 30% de PV latente, flat tax 30%
       const pvEstimee = patrimoine.cto * 0.30;
       const flatTaxEvitee = Math.round(pvEstimee * 0.30);
 
       conseils.push({
-        priorite: 2,
+        priorite: 1,
         icon: '📈',
+        phase: 1,
         titre: `Donation CTO : purger ${formatCurrency(pvEstimee)} de plus-values`,
-        description: `En donnant vos titres CTO (${formatCurrency(patrimoine.cto)}), les plus-values latentes sont purgées. Vos enfants repartent avec un nouveau prix de revient = valeur au jour de la donation. Économie estimée de flat tax : ${formatCurrency(flatTaxEvitee)}.`,
+        description: `Comme la nue-propriété, la donation de titres CTO ne nécessite aucun cash. Vous transférez directement les titres (${formatCurrency(patrimoine.cto)}) à vos enfants. Les plus-values latentes sont purgées, vos enfants repartent à zéro de PV.`,
         economie: flatTaxEvitee,
-        action: `PV purgées + base dans l'abattement si ≤ ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}/enfant`,
-        detail: `La donation de titres purge les plus-values latentes (le donataire reçoit les titres avec un nouveau PRU au cours du jour). Si le CTO par enfant est ≤ ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}, aucun droit de donation non plus.`,
+        action: `Transfert de titres sans vente — PV purgées + ${formatCurrency(flatTaxEvitee)} de flat tax évitée`,
+        detail: `La donation de titres purge les plus-values latentes (le donataire reçoit les titres avec un nouveau PRU au cours du jour). Si le CTO par enfant est ≤ ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}, aucun droit de donation non plus. Aucune liquidité nécessaire.`,
         suggestions: enfantsSansCTO.map(e => ({
           enfantId: e.id,
           type: 'donation_cto',
           montant: ctoParEnfant,
           annee: yearSnap
         }))
+      });
+    }
+  }
+
+  // =====================================================================
+  // PHASE 2 — Donations en cash (quand le capital le permet)
+  // On ne donne du cash QUE si on a constitué assez de patrimoine
+  // et on préserve TOUJOURS l'épargne de sécurité (${EPARGNE_SECURITE_MOIS} mois de dépenses).
+  // =====================================================================
+
+  // --- CONSEIL 3 : Don TEPA (Sarkozy) — uniquement si cash disponible ---
+  if (ageSnap < AGE_MAX_DONATEUR_TEPA) {
+    const enfantsSansTepa = enfants.filter(e => !donParEnfant[e.id]?.hasTepa);
+    if (enfantsSansTepa.length > 0) {
+      const totalTepa = DON_FAMILIAL_TEPA * enfantsSansTepa.length;
+      const anneeLimit = currentYear + (AGE_MAX_DONATEUR_TEPA - ageDonateur);
+      const cashSuffisant = cashDonnable >= totalTepa;
+
+      conseils.push({
+        priorite: 2,
+        icon: '🎁',
+        phase: 2,
+        titre: `Don familial TEPA : ${formatCurrency(DON_FAMILIAL_TEPA)} par enfant`,
+        description: cashSuffisant
+          ? `Vous avez assez de liquidités (après épargne de sécurité de ${formatCurrency(epargneSecurite)}). Donnez ${formatCurrency(DON_FAMILIAL_TEPA)} supplémentaires à chaque enfant en espèces, totalement exonérés. Vous avez jusqu'à vos 80 ans (${anneeLimit}).`
+          : `Il vous manque des liquidités pour le moment. Vous avez ${formatCurrency(cashDonnable)} de disponible après votre épargne de sécurité (${formatCurrency(epargneSecurite)}), contre ${formatCurrency(totalTepa)} nécessaires. Constituez d'abord votre capital. Vous avez jusqu'à vos 80 ans (${anneeLimit}).`,
+        economie: enfantsSansTepa.length * calculerDroitsDonation(DON_FAMILIAL_TEPA),
+        action: cashSuffisant
+          ? `${formatCurrency(totalTepa)} exonérés — cash disponible`
+          : `À planifier quand votre épargne le permettra`,
+        detail: `Art. 790 G CGI (loi TEPA 2007). Conditions : donateur < 80 ans, donataire majeur, somme d'argent. Cumulable avec l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}. Votre épargne de sécurité (${formatCurrency(epargneSecurite)}) est préservée.`,
+        suggestions: cashSuffisant ? enfantsSansTepa.map(e => ({
+          enfantId: e.id,
+          type: 'don_tepa',
+          montant: DON_FAMILIAL_TEPA,
+          annee: yearSnap
+        })) : []
+      });
+    }
+  }
+
+  // --- CONSEIL 4 : Don manuel dans l'abattement — uniquement si cash suffisant ---
+  const enfantsSansAbatt = enfants.filter(e => (donParEnfant[e.id]?.totalDonne || 0) < ABATTEMENT_PARENT_ENFANT);
+  if (enfantsSansAbatt.length > 0) {
+    const tepaDejaPrevu = enfants.some(e => donParEnfant[e.id]?.hasTepa) ? 0 : DON_FAMILIAL_TEPA * enfantsSansAbatt.length;
+    const cashApresTEPA = Math.max(0, cashDonnable - tepaDejaPrevu);
+    const montantParEnfant = Math.min(ABATTEMENT_PARENT_ENFANT, Math.floor(cashApresTEPA / Math.max(1, enfantsSansAbatt.length)));
+    const totalExonere = montantParEnfant * enfantsSansAbatt.length;
+    const economie = enfantsSansAbatt.length * calculerDroitsDonation(montantParEnfant);
+    const cashSuffisant = montantParEnfant >= 10000;
+
+    if (economie > 0 || !cashSuffisant) {
+      conseils.push({
+        priorite: cashSuffisant ? 2 : 3,
+        icon: '💰',
+        phase: 2,
+        titre: cashSuffisant
+          ? `Don manuel de ${formatCurrency(montantParEnfant)} par enfant`
+          : `Don manuel : constituez d'abord votre capital`,
+        description: cashSuffisant
+          ? `Après épargne de sécurité (${formatCurrency(epargneSecurite)}) et CTO + nue-propriété, vous pouvez donner ${formatCurrency(montantParEnfant)} à ${enfantsSansAbatt.map(e => e.prenom).join(', ')} dans l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}.`
+          : `Votre cash disponible après épargne de sécurité (${formatCurrency(epargneSecurite)}) ne permet pas encore un don manuel significatif. Concentrez-vous d'abord sur les donations sans cash (nue-propriété, CTO) et constituez votre capital. L'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} par enfant sera là quand vous serez prêt.`,
+        economie: cashSuffisant ? economie : 0,
+        action: cashSuffisant
+          ? `${formatCurrency(totalExonere)} transmis à 0 € de droits (épargne de sécurité préservée)`
+          : `Priorité : nue-propriété et CTO d'abord, cash quand le capital sera constitué`,
+        detail: `Abattement art. 779 CGI : ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} par parent par enfant, renouvelable tous les ${RENOUVELLEMENT_ANNEES} ans. On ne touche jamais à l'épargne de sécurité (${formatCurrency(epargneSecurite)}).`,
+        suggestions: cashSuffisant ? enfantsSansAbatt.map(e => ({
+          enfantId: e.id,
+          type: 'don_manuel',
+          montant: montantParEnfant,
+          annee: yearSnap
+        })) : []
       });
     }
   }
@@ -414,7 +454,9 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
     });
   }
 
-  // --- CONSEIL 7 : Stratégie d'investissement PEA → CTO vs AV ---
+  // --- CONSEIL 7 : Stratégie d'investissement PEA → AV → CTO ---
+  // NOTE : Le PEA est une enveloppe d'épargne à long terme. On ne retire JAMAIS
+  // du PEA pour faire des donations. Le PEA sert à faire croître le patrimoine.
   const allPlacements = state.actifs?.placements || [];
   const peaPlacements = allPlacements.filter(p => (p.enveloppe || '').toUpperCase().startsWith('PEA') && (p.enveloppe || '').toUpperCase() !== 'PEE');
   const peaApports = peaPlacements.reduce((s, p) => s + (Number(p.pru || 0) * Number(p.quantite || 0)), 0);
@@ -423,44 +465,39 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
   const dcaMensuelTotal = allPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
 
   if (peaRestant < 20000 && dcaMensuelTotal > 0) {
-    // PEA quasi plein ou plein → conseiller sur la réorientation
     const avParEnfant = patrimoine.assuranceVie / Math.max(1, nbEnfants);
     const avManqueParEnfant = Math.max(0, AV_ABATTEMENT_PAR_BENEFICIAIRE - avParEnfant);
     const avManqueTotal = avManqueParEnfant * nbEnfants;
     const peePlein = peaRestant <= 0;
 
     if (avManqueTotal > 10000 && ageSnap < 70) {
-      // Recommander AV en priorité pour l'avantage successoral
       const mensuelRecommande = Math.min(dcaMensuelTotal, Math.ceil(avManqueTotal / ((70 - ageDonateur) * 12)));
       conseils.push({
-        priorite: 2,
+        priorite: 3,
         icon: '🔄',
         type: 'investissement',
         titre: `${peePlein ? 'PEA plein' : 'PEA bientôt plein'} : basculez ${formatCurrency(mensuelRecommande)}/mois vers l'AV`,
-        description: `Votre PEA ${peePlein ? 'a atteint' : 'approche de'} son plafond de ${formatCurrency(PLAFOND_PEA)}${peePlein ? '' : ` (reste ${formatCurrency(peaRestant)})`}. Il manque ${formatCurrency(avManqueParEnfant)} d'AV par enfant pour atteindre l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}. En plaçant ${formatCurrency(mensuelRecommande)}/mois en AV, vous maximisez l'avantage fiscal à la transmission.`,
+        description: `Votre PEA ${peePlein ? 'a atteint' : 'approche de'} son plafond de ${formatCurrency(PLAFOND_PEA)}${peePlein ? '' : ` (reste ${formatCurrency(peaRestant)})`}. Gardez-le tel quel (ne retirez jamais du PEA pour donner). Redirigez vos versements vers l'AV : il manque ${formatCurrency(avManqueParEnfant)} par enfant pour atteindre l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}.`,
         economie: Math.round(avManqueTotal * 0.20),
-        action: `AV avant CTO : ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant exonéré vs 0 € sur CTO`,
-        detail: `Ordre de priorité recommandé : 1) PEA (17.2% après 5 ans, plafond ${formatCurrency(PLAFOND_PEA)}) → 2) AV (abattement ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/bénéficiaire au décès, fiscalité réduite après 8 ans) → 3) CTO (flat tax 30%, mais donation possible pour purger les PV). L'AV est préférable au CTO tant que l'abattement successoral n'est pas maximisé.`,
+        action: `AV avant CTO : ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant exonéré au décès`,
+        detail: `Ordre de priorité pour les VERSEMENTS : 1) PEA (17.2% après 5 ans, plafond ${formatCurrency(PLAFOND_PEA)}) → 2) AV (abattement ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/bénéficiaire au décès) → 3) CTO (flat tax 30%, mais donnable). Le PEA est intouchable : il sert à faire croître votre patrimoine, pas à financer des donations.`,
         suggestions: []
       });
     } else if (peePlein) {
-      // AV déjà maximisée ou donateur > 70 → CTO avec stratégie de donation
       conseils.push({
         priorite: 3,
         icon: '🔄',
         type: 'investissement',
         titre: `PEA plein${avManqueTotal <= 10000 ? ', AV optimisée' : ''} : orientez vers le CTO`,
-        description: `${avManqueTotal <= 10000 ? 'Votre AV couvre déjà l\'abattement de vos bénéficiaires. ' : ''}Continuez sur le CTO : pas de plafond, et vous pourrez donner les titres à vos enfants pour purger les plus-values (économie de flat tax 30%). Planifiez une donation CTO tous les 15 ans dans la limite de l'abattement.`,
+        description: `${avManqueTotal <= 10000 ? 'Votre AV couvre déjà l\'abattement de vos bénéficiaires. ' : ''}Continuez sur le CTO : pas de plafond, et vous pourrez donner les titres à vos enfants pour purger les PV tous les 15 ans. Gardez votre PEA intact.`,
         economie: 0,
-        action: `CTO + donation périodique = croissance + optimisation fiscale`,
-        detail: `Le CTO a une fiscalité moins avantageuse (flat tax 30%) mais offre une flexibilité totale. La stratégie : accumuler sur CTO, puis donner les titres aux enfants dans la limite de l'abattement → purge des PV + transmission exonérée.`,
+        action: `CTO + donation périodique de titres = croissance + optimisation fiscale`,
+        detail: `Le CTO a une fiscalité moins avantageuse (flat tax 30%) mais offre une flexibilité totale. La stratégie : accumuler sur CTO, puis donner les titres aux enfants dans la limite de l'abattement → purge des PV + transmission exonérée. Ne touchez jamais à votre PEA.`,
         suggestions: []
       });
     }
   } else if (peaRestant > 0 && dcaMensuelTotal > 0) {
-    // PEA pas encore plein → rappeler de prioriser le PEA
     const moisRestants = Math.ceil(peaRestant / dcaMensuelTotal);
-    const avParEnfant = patrimoine.assuranceVie / Math.max(1, nbEnfants);
     conseils.push({
       priorite: 3,
       icon: '📊',
@@ -468,20 +505,28 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
       titre: `Continuez de remplir le PEA (encore ${formatCurrency(peaRestant)})`,
       description: `Le PEA reste l'enveloppe la plus avantageuse (17.2% après 5 ans vs 30% flat tax). Au rythme actuel (${formatCurrency(dcaMensuelTotal)}/mois), plafond atteint dans ~${moisRestants} mois. Ensuite, privilégiez l'AV pour l'abattement successoral (${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant).`,
       economie: 0,
-      action: `PEA → AV → CTO : l'ordre optimal`,
-      detail: `1) PEA : gains exonérés d'IR après 5 ans (PS 17.2% seulement). 2) AV : ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} exonérés par bénéficiaire au décès + fiscalité réduite après 8 ans. 3) CTO : aucun plafond, flat tax 30%, mais donation aux enfants purge les PV.`,
+      action: `PEA → AV → CTO : l'ordre optimal pour les versements`,
+      detail: `1) PEA : gains exonérés d'IR après 5 ans (PS 17.2% seulement). 2) AV : ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} exonérés par bénéficiaire au décès + fiscalité réduite après 8 ans. 3) CTO : aucun plafond, flat tax 30%, mais donation aux enfants purge les PV. Le PEA n'est PAS une source pour les donations.`,
       suggestions: []
     });
   }
 
-  // --- CONSEIL GLOBAL : résumé du plan optimal ---
+  // --- CONSEIL GLOBAL : résumé du plan en 2 phases ---
   const totalEcoConseils = conseils.reduce((s, c) => s + c.economie, 0);
+  const conseilsPhase1 = conseils.filter(c => c.phase === 1);
+  const conseilsPhase2 = conseils.filter(c => c.phase === 2);
   if (conseils.length > 1) {
+    const phase1Txt = conseilsPhase1.length > 0
+      ? `Phase 1 (immédiat, 0 € de cash) : ${conseilsPhase1.map(c => c.titre.split(':')[0].trim()).join(' + ')}.`
+      : '';
+    const phase2Txt = conseilsPhase2.length > 0
+      ? `Phase 2 (quand le capital sera constitué) : donations en espèces dans l'abattement.`
+      : '';
     conseils.unshift({
       priorite: 0,
       icon: '🎯',
-      titre: `Plan optimal : économisez jusqu'à ${formatCurrency(totalEcoConseils)}`,
-      description: `En combinant toutes ces stratégies, vous pourriez réduire la facture fiscale de vos enfants de ${formatCurrency(totalEcoConseils)} par rapport à une succession sans préparation. Voici le détail ci-dessous.`,
+      titre: `Plan en 2 phases : jusqu'à ${formatCurrency(totalEcoConseils)} d'économie`,
+      description: `${phase1Txt}${phase1Txt && phase2Txt ? ' ' : ''}${phase2Txt} Votre épargne de sécurité (${formatCurrency(epargneSecurite)}) est toujours préservée. On ne touche jamais au PEA.`,
       economie: totalEcoConseils,
       action: null,
       detail: null,
@@ -549,57 +594,55 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
   const ccTotal = (state.actifs?.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
 
   // Sources claires :
-  // - Cash immédiat (CC + livrets) : donnable par virement
+  // - Cash (CC + livrets) APRÈS épargne de sécurité : donnable par virement
   // - CTO : donnable par transfert de titres (pas de vente, purge PV)
-  // - PEA : NON donnable directement → retrait nécessaire (PS 17.2% si > 5 ans)
+  // - PEA : ON N'Y TOUCHE JAMAIS — c'est une enveloppe d'épargne, pas une source de donation
   // - AV : régime propre, pas pour les donations
-  // - Immobilier : uniquement via nue-propriété
-  const cashImmediat = epargneTotal + ccTotal;
-  const peaPVEstimee = Math.max(0, peaValeur - peaApports);
-  const peaFraisRetrait = Math.round(peaPVEstimee * 0.172); // PS 17.2% sur PV si PEA > 5 ans
-  const peaNetApresRetrait = peaValeur - peaFraisRetrait;
+  // - Immobilier : uniquement via nue-propriété (pas de cash nécessaire)
+  const epargneSecurite = calculerEpargneSecurite(store);
+  const cashImmediat = Math.max(0, epargneTotal + ccTotal - epargneSecurite);
 
-  // Donnable sans toucher au PEA
-  const donnableSansPEA = cashImmediat + ctoTotal;
-  // Donnable total (avec retrait PEA si nécessaire)
-  const donnableAvecPEA = donnableSansPEA + peaNetApresRetrait;
+  // Donnable = cash après sécurité + CTO (transfert de titres)
+  // PEA exclu : un fiscaliste ne recommanderait jamais de retirer du PEA pour donner
+  const donnableTotal = cashImmediat + ctoTotal;
 
-  const donnableCycle1 = Math.min(abattTotal, donnableAvecPEA);
+  const donnableCycle1 = Math.min(abattTotal, donnableTotal);
   const donnableParEnfantCycle1 = Math.round(donnableCycle1 / nbEnfants);
 
   // Construire le plan d'actions concret avec sources détaillées
+  // RÈGLES : 1) PEA = intouchable  2) Épargne de sécurité = intouchable
   function buildDonationPlan(montantTotal) {
     const steps = [];
     let reste = montantTotal;
 
-    // 1) Don TEPA en espèces (virement bancaire, si cash disponible)
-    const tepaTotal = DON_FAMILIAL_TEPA * nbEnfants;
-    const tepaPossible = Math.min(tepaTotal, reste, cashImmediat);
-    if (tepaPossible > 0) {
-      steps.push({
-        action: `Virez ${formatCurrency(tepaPossible)} depuis vos comptes courants/livrets`,
-        source: `Cash disponible : ${formatCurrency(cashImmediat)}`,
-        detail: `Don familial TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G). Simple virement bancaire + déclaration Cerfa 2735 dans le mois.`,
-        type: 'cash',
-        montant: tepaPossible,
-      });
-      reste -= tepaPossible;
-    }
-
-    // 2) Donation de titres CTO (transfert direct, pas de vente)
+    // 1) Donation de titres CTO (transfert direct, pas de vente, 0 cash)
     if (reste > 0 && ctoTotal > 0) {
       const donCTO = Math.min(ctoTotal, reste);
       const pvEstCTO = Math.round(donCTO * 0.30);
       const flatTaxEvitee = Math.round(pvEstCTO * 0.30);
       steps.push({
         action: `Transférez ${formatCurrency(donCTO)} de titres depuis le CTO`,
-        source: `CTO actuel : ${formatCurrency(ctoTotal)}`,
-        detail: `Transfert de titres (pas de vente nécessaire). Les plus-values latentes (~${formatCurrency(pvEstCTO)}) sont purgées = ${formatCurrency(flatTaxEvitee)} de flat tax en moins.`,
+        source: `CTO actuel : ${formatCurrency(ctoTotal)} — aucun cash nécessaire`,
+        detail: `Transfert de titres (pas de vente). Les PV latentes (~${formatCurrency(pvEstCTO)}) sont purgées = ${formatCurrency(flatTaxEvitee)} de flat tax évitée. C'est la donation la plus efficiente.`,
         type: 'cto',
         montant: donCTO,
         bonus: flatTaxEvitee,
       });
       reste -= donCTO;
+    }
+
+    // 2) Don TEPA en espèces (si cash disponible après sécurité)
+    const tepaTotal = DON_FAMILIAL_TEPA * nbEnfants;
+    const tepaPossible = Math.min(tepaTotal, reste, cashImmediat);
+    if (tepaPossible > 0) {
+      steps.push({
+        action: `Virez ${formatCurrency(tepaPossible)} depuis vos comptes courants/livrets`,
+        source: `Cash disponible (après épargne de sécurité de ${formatCurrency(epargneSecurite)}) : ${formatCurrency(cashImmediat)}`,
+        detail: `Don familial TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G). Simple virement bancaire + déclaration Cerfa 2735 dans le mois.`,
+        type: 'cash',
+        montant: tepaPossible,
+      });
+      reste -= tepaPossible;
     }
 
     // 3) Reste en cash (livrets/CC) au-delà du TEPA
@@ -608,7 +651,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       const cashDon = Math.min(cashRestant, reste);
       steps.push({
         action: `Virez ${formatCurrency(cashDon)} supplémentaires (livrets/comptes)`,
-        source: `Cash restant après TEPA : ${formatCurrency(cashRestant)}`,
+        source: `Cash restant après TEPA : ${formatCurrency(cashRestant)} (sécurité préservée)`,
         detail: `Don manuel classique dans l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}/enfant (art. 779 CGI). 0 € de droits.`,
         type: 'cash',
         montant: cashDon,
@@ -616,33 +659,12 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       reste -= cashDon;
     }
 
-    // 4) PEA : retrait nécessaire (signaler le coût)
-    if (reste > 0 && peaValeur > 0) {
-      // On retire juste ce qu'il faut du PEA
-      // reste = ce qu'on veut donner, peaNetApresRetrait = max qu'on peut tirer du PEA
-      const netNecessaire = Math.min(reste, peaNetApresRetrait);
-      // Calcul du brut à retirer pour obtenir netNecessaire
-      const ratio = peaValeur > 0 ? peaNetApresRetrait / peaValeur : 1;
-      const brutRetrait = ratio > 0 ? Math.round(netNecessaire / ratio) : netNecessaire;
-      const fraisRetrait = brutRetrait - netNecessaire;
-      steps.push({
-        action: `Retirez ${formatCurrency(brutRetrait)} du PEA → ${formatCurrency(netNecessaire)} net après PS`,
-        source: `PEA actuel : ${formatCurrency(peaValeur)} (PV estimée : ${formatCurrency(peaPVEstimee)})`,
-        detail: `Le PEA n'est pas donnable directement. Vous devez retirer les fonds (retrait partiel si PEA > 5 ans, sinon clôture). Prélèvements sociaux : ${formatCurrency(fraisRetrait)} (17,2% sur les plus-values). Vous récupérez ${formatCurrency(netNecessaire)} net à donner.`,
-        type: 'pea',
-        montant: netNecessaire,
-        brut: brutRetrait,
-        frais: fraisRetrait,
-      });
-      reste -= netNecessaire;
-    }
-
-    // 5) Manque
+    // 4) Manque — pas de retrait PEA, on attend de constituer le capital
     if (reste > 0) {
       steps.push({
-        action: `Il manque ${formatCurrency(reste)} — épargnez avant de donner`,
-        source: 'À constituer',
-        detail: `Abattement max non atteint. Constituez cette épargne puis donnez dans la limite de l'abattement.`,
+        action: `Il manque ${formatCurrency(reste)} — constituez votre capital d'abord`,
+        source: `À constituer via votre épargne mensuelle`,
+        detail: `Pas de panique : continuez à épargner (PEA, AV, CTO). Quand vos liquidités hors sécurité le permettront, vous pourrez compléter. On ne touche ni au PEA ni à l'épargne de sécurité pour les donations.`,
         type: 'manque',
         montant: reste,
       });
@@ -654,7 +676,6 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
   // 1. Premier cycle de donations
   const cycle1Steps = buildDonationPlan(donnableCycle1);
   const partiel = donnableCycle1 < abattTotal;
-  const needsPEA = donnableSansPEA < donnableCycle1;
   events.push({
     age: startAge,
     annee: startYear,
@@ -664,18 +685,20 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     titre: partiel
       ? `Donner ${formatCurrency(donnableCycle1)} (sur ${formatCurrency(abattTotal)} possibles)`
       : `Donner ${formatCurrency(donnableCycle1)} à 0 € de droits`,
-    description: `Abattement disponible : ${formatCurrency(montantParEnfantCycle1)}/enfant (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} classique + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA).`,
+    description: `Abattement disponible : ${formatCurrency(montantParEnfantCycle1)}/enfant (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} classique + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA). Épargne de sécurité préservée : ${formatCurrency(epargneSecurite)}. PEA non touché.`,
     actionSteps: cycle1Steps,
     sourcesSummary: {
       cash: cashImmediat,
       cto: ctoTotal,
-      pea: peaValeur,
-      peaNet: peaNetApresRetrait,
-      peaFrais: peaFraisRetrait,
-      total: donnableAvecPEA,
-      needsPEA,
+      epargneSecurite,
+      total: donnableTotal,
     },
     conseilExpert: [
+      {
+        titre: 'Commencez par la nue-propriété : 0 € de cash',
+        detail: `La donation de nue-propriété immobilière est le premier levier à actionner. Vous ne sortez aucune liquidité, vous conservez l'usufruit (habitation ou loyers), et la base taxable est réduite grâce au barème de l'art. 669 CGI. C'est la stratégie la plus efficace quand on n'a pas encore constitué un capital suffisant pour les donations en espèces.`,
+        tag: 'Priorité n°1'
+      },
       {
         titre: 'Privilégiez la donation-partage au don manuel',
         detail: `La donation-partage (acte notarié) fige la valeur des biens au jour de la donation. Au contraire, un don manuel sera "rapporté" à la valeur au jour du décès lors de la succession, ce qui peut créer des inégalités entre enfants et augmenter la base taxable. Coût notaire : ~1,5% du montant donné, mais l'économie à long terme est bien supérieure.`,
@@ -683,27 +706,22 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       },
       {
         titre: 'Les deux parents doivent donner chacun',
-        detail: `Chaque parent dispose de son propre abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA par enfant. Si votre conjoint(e) donne aussi, vous doublez la capacité : ${formatCurrency((ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * 2)}/enfant au lieu de ${formatCurrency(ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA)}. Pensez à rééquilibrer les patrimoines entre conjoints avant de donner (donation entre époux exonérée à ${formatCurrency(80724)}).`,
+        detail: `Chaque parent dispose de son propre abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA par enfant. Si votre conjoint(e) donne aussi, vous doublez la capacité : ${formatCurrency((ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * 2)}/enfant au lieu de ${formatCurrency(ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA)}.`,
         tag: 'Levier x2'
       },
       {
-        titre: 'Fractionnez : don TEPA + don manuel séparés',
-        detail: `Le don TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}, art. 790 G) se déclare avec le formulaire Cerfa 2735 dans le mois suivant. Le don manuel classique utilise l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} (art. 779). En les déclarant séparément, vous cumulez les deux exonérations. Le TEPA a son propre compteur de 15 ans, indépendant de l'abattement classique.`,
-        tag: 'Optimisation'
+        titre: 'Ne touchez jamais à votre PEA pour donner',
+        detail: `Le PEA est une enveloppe d'épargne à long terme avec un avantage fiscal majeur (17,2% après 5 ans vs 30% flat tax). Un fiscaliste ne vous recommanderait jamais de retirer du PEA pour financer des donations. Laissez-le croître. Les donations se font avec le cash excédentaire (après sécurité) et les transferts de titres CTO.`,
+        tag: 'Règle d\'or'
       },
       {
-        titre: 'Présents d\'usage : des cadeaux en plus, non taxés',
-        detail: `Les présents d'usage (Noël, anniversaire, mariage, diplôme) ne sont pas rapportables et n'entament pas l'abattement, à condition d'être proportionnés à vos revenus (jurisprudence : ~2% du patrimoine ou 2,5% des revenus). Mariage d'un enfant ? Offrez jusqu'à plusieurs milliers d'euros en cadeau sans aucune déclaration.`,
-        tag: 'Bonus'
+        titre: `Épargne de sécurité : ${formatCurrency(epargneSecurite)} intouchables`,
+        detail: `Votre matelas de sécurité (${EPARGNE_SECURITE_MOIS} mois de dépenses, min. ${formatCurrency(EPARGNE_SECURITE_PLANCHER)}) ne doit jamais servir aux donations. Les donations se font uniquement avec l'excédent de trésorerie. Si vous n'avez pas assez de cash après sécurité, priorisez les donations sans cash (nue-propriété, transfert CTO) et attendez de constituer le capital.`,
+        tag: 'Protection'
       },
-      ...(needsPEA ? [{
-        titre: `Retrait PEA : ${formatCurrency(peaFraisRetrait)} de frais, mais ${formatCurrency(donnableCycle1 - donnableSansPEA)} de donation supplémentaire`,
-        detail: `Sans toucher au PEA, vous ne pouvez donner que ${formatCurrency(donnableSansPEA)} (cash + CTO). Pour atteindre ${formatCurrency(donnableCycle1)}, un retrait PEA est nécessaire. Coût : 17,2% de PS sur les plus-values uniquement (pas sur le capital investi). Si votre PEA a plus de 5 ans, le retrait partiel est possible sans clôture.`,
-        tag: 'Attention PEA'
-      }] : []),
       ...(partiel ? [{
-        titre: `Il manque ${formatCurrency(abattTotal - donnableCycle1)} pour utiliser tout l'abattement`,
-        detail: `Même en retirant du PEA, vos liquidités totales (${formatCurrency(donnableAvecPEA)}) ne couvrent pas l'abattement complet (${formatCurrency(abattTotal)}). Accélérez votre épargne ou attendez une année où vos placements auront grossi. Utilisez le curseur ci-dessus pour trouver la bonne année.`,
+        titre: `Il manque ${formatCurrency(abattTotal - donnableCycle1)} — patience, pas de PEA`,
+        detail: `Vos liquidités disponibles après épargne de sécurité (${formatCurrency(donnableTotal)}) ne couvrent pas l'abattement complet (${formatCurrency(abattTotal)}). C'est normal. Continuez à épargner et utilisez le curseur ci-dessus pour trouver la bonne année. En attendant, faites les donations sans cash (nue-propriété, CTO).`,
         tag: 'Préparation'
       }] : [])
     ],
@@ -765,8 +783,9 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     }
   }
 
-  // 3. Nue-propriété immobilière — conseil direct
+  // 3. Nue-propriété immobilière — PRIORITÉ : c'est le 1er levier, 0 cash
   if (startPatrimoine.immobilier > 0) {
+    // Trouver l'âge optimal (quand NP par enfant rentre dans l'abattement)
     let bestAge = null;
     for (const t of BAREME_USUFRUIT) {
       const npParEnfant = Math.round(startPatrimoine.immobilier * t.nuePropriete / nbEnfants);
@@ -775,24 +794,28 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         break;
       }
     }
-    if (bestAge && bestAge >= ageDonateur) {
-      const rate = getUsufruitRate(bestAge);
-      const npTotal = Math.round(startPatrimoine.immobilier * rate.nuePropriete);
-      const npParEnfant = Math.round(npTotal / nbEnfants);
-      const taxableNP = Math.max(0, npParEnfant - ABATTEMENT_PARENT_ENFANT);
-      const droitsNPParEnfant = calculerDroitsDonation(taxableNP);
-      const droitsSuccImmoParEnfant = calculerDroitsDonation(Math.max(0, startPatrimoine.immobilier / nbEnfants - ABATTEMENT_PARENT_ENFANT));
-      const zeroDrops = taxableNP === 0;
+    // On propose de le faire DÈS MAINTENANT (ou à l'âge optimal si trop tôt = NP trop haute)
+    const npAge = bestAge && bestAge > ageDonateur ? Math.min(bestAge, startAge) : startAge;
+    const useCurrentAge = npAge <= startAge;
+    const rate = getUsufruitRate(useCurrentAge ? startAge : bestAge);
+    const npTotal = Math.round(startPatrimoine.immobilier * rate.nuePropriete);
+    const npParEnfant = Math.round(npTotal / nbEnfants);
+    const taxableNP = Math.max(0, npParEnfant - ABATTEMENT_PARENT_ENFANT);
+    const droitsNPParEnfant = calculerDroitsDonation(taxableNP);
+    const droitsSuccImmoParEnfant = calculerDroitsDonation(Math.max(0, startPatrimoine.immobilier / nbEnfants - ABATTEMENT_PARENT_ENFANT));
+    const zeroDrops = taxableNP === 0;
+    const displayAge = useCurrentAge ? startAge : bestAge;
+    if (droitsSuccImmoParEnfant > 0 || zeroDrops) {
       events.push({
-        age: bestAge,
-        annee: currentYear + (bestAge - ageDonateur),
+        age: displayAge,
+        annee: currentYear + (displayAge - ageDonateur),
         icon: '🏠',
         color: 'accent-amber',
         type: 'nue_propriete',
-        titre: `Donation de ${formatCurrency(npTotal)} en nue-propriété`,
+        titre: `Nue-propriété : ${formatCurrency(npTotal)} transmis sans cash`,
         description: zeroDrops
-          ? `Pas besoin de cash : vous transférez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}) chez le notaire. La valeur fiscale n'est que de ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant → dans l'abattement = 0 € de droits. Vous gardez l'usufruit (vous continuez à habiter ou percevoir les loyers).`
-          : `Pas besoin de cash : vous transférez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}) chez le notaire. NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant. Droits : ${formatCurrency(droitsNPParEnfant)}/enfant au lieu de ${formatCurrency(droitsSuccImmoParEnfant)} à la succession. Vous gardez l'usufruit.`,
+          ? `C'est le premier réflexe : pas besoin de cash, juste un rendez-vous chez le notaire. Vous transférez la nue-propriété de vos biens (${formatCurrency(startPatrimoine.immobilier)}). La valeur fiscale n'est que de ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant → dans l'abattement = 0 € de droits. Vous gardez l'usufruit (habitation, loyers).${bestAge && bestAge > startAge ? ` Âge optimal pour 0 € de droits : ${bestAge} ans.` : ''}`
+          : `C'est le premier réflexe : pas besoin de cash, juste un rendez-vous chez le notaire. Vous transférez la nue-propriété de vos biens (${formatCurrency(startPatrimoine.immobilier)}). NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant. Droits : ${formatCurrency(droitsNPParEnfant)}/enfant au lieu de ${formatCurrency(droitsSuccImmoParEnfant)} à la succession. Vous gardez l'usufruit.${bestAge && bestAge > startAge ? ` Si vous attendez ${bestAge} ans, la NP sera dans l'abattement = 0 € de droits.` : ''}`,
         conseilExpert: [
           {
             titre: 'Le double avantage du démembrement : décote + extinction gratuite',
@@ -831,7 +854,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
           enfantId: enf.id,
           type: 'donation_nue_propriete',
           montant: Math.round(startPatrimoine.immobilier / nbEnfants),
-          annee: currentYear + (bestAge - ageDonateur)
+          annee: currentYear + (displayAge - ageDonateur)
         }))
       });
     }
@@ -858,7 +881,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       titre: partielC2
         ? `Re-donner ${formatCurrency(donnableCycle2)} (sur ${formatCurrency(maxCycle2)} possibles)`
         : `Re-donner ${formatCurrency(maxCycle2)} à 0 € de droits`,
-      description: `Abattements reconstitués après 15 ans. Vous pourrez re-donner ${formatCurrency(donnableParEnfantC2)}/enfant${canTepa ? ` (abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + TEPA ${formatCurrency(DON_FAMILIAL_TEPA)})` : ` (TEPA indisponible après 80 ans, abattement seul)`}. Placements projetés à cette date : ${formatCurrency(liqCycle2)} (patrimoine total : ${formatCurrency(cycle2Snap.patrimoineNet || 0)}). La source exacte (CTO, cash, PEA) dépendra de votre allocation à ce moment.`,
+      description: `Abattements reconstitués après 15 ans. Vous pourrez re-donner ${formatCurrency(donnableParEnfantC2)}/enfant${canTepa ? ` (abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + TEPA ${formatCurrency(DON_FAMILIAL_TEPA)})` : ` (TEPA indisponible après 80 ans, abattement seul)`}. Placements projetés à cette date : ${formatCurrency(liqCycle2)}. La source (CTO titres, cash excédentaire) dépendra de votre allocation à ce moment.`,
       conseilExpert: [
         {
           titre: 'Le rappel fiscal est glissant : calculez au jour près',
@@ -935,7 +958,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
           },
           {
             titre: 'Versez massivement juste avant 70 ans si besoin',
-            detail: `Rien n'interdit un versement unique important à 69 ans. Si vous n'avez pas pu verser régulièrement, un versement massif juste avant la limite fonctionne aussi bien fiscalement. Vous pouvez même arbitrer depuis un PEA de plus de 5 ans (retrait à 17,2% de PS) pour reverser en AV.`,
+            detail: `Rien n'interdit un versement unique important à 69 ans. Si vous n'avez pas pu verser régulièrement, un versement massif juste avant la limite fonctionne aussi bien fiscalement. Utilisez vos liquidités excédentaires (après épargne de sécurité) pour maximiser l'AV avant la deadline.`,
             tag: 'Dernière chance'
           },
           {
@@ -1085,15 +1108,24 @@ function renderConseilsHTML(conseils, enfants) {
       </div>`;
     }
     stepNum++;
-    const borderColor = c.type === 'investissement' ? 'border-accent-blue' : 'border-accent-amber';
-    const stepColor = c.type === 'investissement' ? 'bg-accent-blue text-dark-900' : 'bg-accent-amber text-dark-900';
+    const isPhase1 = c.phase === 1;
+    const isPhase2 = c.phase === 2;
+    const isInvest = c.type === 'investissement';
+    const borderColor = isPhase1 ? 'border-accent-green' : isInvest ? 'border-accent-blue' : 'border-accent-amber';
+    const stepColor = isPhase1 ? 'bg-accent-green text-dark-900' : isInvest ? 'bg-accent-blue text-dark-900' : 'bg-accent-amber text-dark-900';
+    const phaseLabel = isPhase1 ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-accent-green/15 text-accent-green">Sans cash</span>'
+      : isPhase2 ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-accent-amber/15 text-accent-amber">Quand capital prêt</span>'
+      : '';
     return `
     <details class="group rounded-xl overflow-hidden border-l-4 ${borderColor} bg-dark-800/20 hover:bg-dark-800/40 transition">
       <summary class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
         <div class="w-7 h-7 rounded-lg ${stepColor} flex items-center justify-center text-xs font-black shrink-0">${stepNum}</div>
         <span class="text-base shrink-0">${c.icon}</span>
         <div class="flex-1 min-w-0">
-          <h3 class="text-sm font-bold text-gray-100">${c.titre}</h3>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-gray-100">${c.titre}</h3>
+            ${phaseLabel}
+          </div>
         </div>
         ${c.economie > 0 ? `<div class="text-right shrink-0 mr-2">
           <p class="text-sm font-bold text-accent-green">-${formatCurrency(c.economie)}</p>
@@ -1218,9 +1250,9 @@ function renderPlanUnifieHTML(timeline, enfants) {
           ${ev.sourcesSummary ? `
           <div class="mt-2 px-3 py-2 rounded-lg bg-dark-900/40 border border-dark-400/15">
             <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px]">
-              <span class="text-gray-500">Cash dispo : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.cash)}</span></span>
-              ${ev.sourcesSummary.cto > 0 ? `<span class="text-gray-500">CTO : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.cto)}</span></span>` : ''}
-              ${ev.sourcesSummary.pea > 0 ? `<span class="text-gray-500">PEA : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.pea)}</span> brut → <span class="${ev.sourcesSummary.needsPEA ? 'text-accent-amber' : 'text-gray-300'} font-medium">${formatCurrency(ev.sourcesSummary.peaNet)}</span> net${ev.sourcesSummary.peaFrais > 0 ? ` <span class="text-accent-red">(−${formatCurrency(ev.sourcesSummary.peaFrais)} PS)</span>` : ''}</span>` : ''}
+              <span class="text-gray-500">Cash dispo (après sécurité) : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.cash)}</span></span>
+              ${ev.sourcesSummary.cto > 0 ? `<span class="text-gray-500">CTO (transfert titres) : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.cto)}</span></span>` : ''}
+              ${ev.sourcesSummary.epargneSecurite ? `<span class="text-gray-500">Sécurité préservée : <span class="text-accent-green font-medium">${formatCurrency(ev.sourcesSummary.epargneSecurite)}</span></span>` : ''}
               <span class="text-gray-500 ml-auto">Total mobilisable : <span class="text-accent-cyan font-bold">${formatCurrency(ev.sourcesSummary.total)}</span></span>
             </div>
           </div>` : ''}
@@ -1546,14 +1578,21 @@ export function render(store) {
   const economie = totalDroitsSansdon - totalFiscaliteAvecdon;
 
   // === ANNÉE DE DÉPART DU PLAN ===
+  // Le plan peut commencer immédiatement avec la nue-propriété (pas besoin de cash).
+  // L'année de départ pour les donations cash = quand les liquidités (hors sécurité, hors PEA)
+  // permettent de couvrir l'abattement.
   const abattTotalParEnfant = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
   const abattTotalFamille = abattTotalParEnfant * nbEnfants;
+  const epargneSecuriteCalc = calculerEpargneSecurite(store);
   let anneeDepart = null;
   let ageDepart = null;
   if (nbEnfants > 0) {
+    // Le plan commence maintenant (nue-propriété ne requiert pas de cash)
+    // mais on cherche quand les donations cash seront possibles
     for (let i = 0; i < snapshots.length; i++) {
       const s = snapshots[i];
-      const liq = (s.patrimoineNet || 0) - (s.immobilier || 0);
+      // Liquidités hors immobilier, hors PEA, après épargne de sécurité
+      const liq = Math.max(0, (s.patrimoineNet || 0) - (s.immobilier || 0) - epargneSecuriteCalc);
       if (liq >= abattTotalFamille) {
         anneeDepart = s.calendarYear;
         ageDepart = s.age;
@@ -1580,8 +1619,8 @@ export function render(store) {
       <!-- TITRE -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-bold text-gray-100">Simulateur de donations</h1>
-          <p class="text-sm text-gray-400 mt-1">Planifiez vos donations pour optimiser la transmission à vos enfants</p>
+          <h1 class="text-xl font-bold text-gray-100">Stratégie de transmission</h1>
+          <p class="text-sm text-gray-400 mt-1">Phase 1 : nue-propriété (sans cash) · Phase 2 : donations quand le capital le permet</p>
         </div>
       </div>
 
@@ -1668,12 +1707,12 @@ export function render(store) {
           </div>
           <div>
             <h2 class="text-sm font-bold text-gray-200">Votre stratégie patrimoniale</h2>
-            <p class="text-[10px] text-gray-500" id="plan-subtitle">${timeline.length} étapes personnalisées · Début en ${cfg.anneeDepartPlan || anneeDepart || currentYear}</p>
+            <p class="text-[10px] text-gray-500" id="plan-subtitle">${timeline.length} étapes · Nue-propriété dès maintenant · Donations cash ${anneeDepart ? `dès ${anneeDepart}` : 'quand le capital le permettra'}</p>
           </div>
           <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg ${anneeDepart ? 'bg-accent-green/10 border border-accent-green/20' : 'bg-accent-amber/10 border border-accent-amber/20'}">
             <svg class="w-3.5 h-3.5 ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <div>
-              <p class="text-[10px] text-gray-400 leading-none">Début du plan</p>
+              <p class="text-[10px] text-gray-400 leading-none">Donations cash dès</p>
               <div class="flex items-center gap-1">
                 <input type="number" id="annee-depart-input" min="${currentYear}" max="${currentYear + (params.projectionYears || 30)}" value="${cfg.anneeDepartPlan || anneeDepart || currentYear}"
                   class="w-16 text-sm font-bold ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'} bg-transparent border-none outline-none p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
@@ -1682,6 +1721,25 @@ export function render(store) {
             </div>
           </div>
         </div>
+        <!-- Principes -->
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <div class="rounded-lg px-3 py-2 bg-accent-green/5 border border-accent-green/15 text-center">
+            <p class="text-[10px] font-bold text-accent-green uppercase">Phase 1 — immédiat</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">Nue-propriété + CTO</p>
+            <p class="text-[10px] text-gray-500">0 € de cash</p>
+          </div>
+          <div class="rounded-lg px-3 py-2 bg-accent-amber/5 border border-accent-amber/15 text-center">
+            <p class="text-[10px] font-bold text-accent-amber uppercase">Phase 2 — quand prêt</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">Donations en espèces</p>
+            <p class="text-[10px] text-gray-500">Cash excédentaire uniquement</p>
+          </div>
+          <div class="rounded-lg px-3 py-2 bg-accent-red/5 border border-accent-red/15 text-center">
+            <p class="text-[10px] font-bold text-accent-red uppercase">On ne touche jamais</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">PEA · Épargne de sécurité</p>
+            <p class="text-[10px] text-gray-500">${formatCurrency(epargneSecuriteCalc)} protégés</p>
+          </div>
+        </div>
+
         <div id="plan-container">
           ${renderPlanUnifieHTML(timeline, enfants)}
         </div>
