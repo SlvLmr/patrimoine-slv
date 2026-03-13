@@ -6,21 +6,7 @@ function renderLoginScreen() {
       <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-8">
-          <div class="inline-flex items-center gap-3 mb-3">
-            <svg viewBox="0 0 28 28" class="w-8 h-8" fill="none">
-              <defs>
-                <linearGradient id="auth-logo" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#c9a76c"/>
-                  <stop offset="100%" stop-color="#dbb88a"/>
-                </linearGradient>
-              </defs>
-              <path d="M3 20 Q7 20 10 14 T17 8 Q20 6 25 4" stroke="url(#auth-logo)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-              <circle cx="25" cy="4" r="2" fill="#dbb88a"/>
-            </svg>
-            <h1 style="font-family:'Playfair Display',Georgia,serif;letter-spacing:-0.5px" class="text-3xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent">
-              Horizon
-            </h1>
-          </div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent mb-3" style="letter-spacing:-0.5px"><span style="font-family:'Playfair Display',Georgia,serif">H</span>orizon</h1>
           <p class="text-gray-500 text-sm">Simulateur patrimonial</p>
         </div>
 

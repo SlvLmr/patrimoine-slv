@@ -356,7 +356,7 @@ function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <h1 style="font-family:'Playfair Display',Georgia,serif;letter-spacing:-0.5px;cursor:pointer" class="logo-text text-4xl font-bold text-center bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
+      <h1 style="letter-spacing:-0.5px;cursor:pointer" class="logo-text text-4xl font-bold text-center bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat"><span style="font-family:'Playfair Display',Georgia,serif">H</span>orizon</h1>
       <span style="font-family:'Playfair Display',Georgia,serif;cursor:pointer" class="logo-icon hidden text-2xl font-bold bg-gradient-to-r from-accent-green to-accent-amber bg-clip-text text-transparent">H</span>
     `;
     logoContainer.style.cursor = 'pointer';
@@ -366,7 +366,7 @@ function initLogo() {
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
-      <span style="font-family:'Playfair Display',Georgia,serif;letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</span>
+      <span style="letter-spacing:-0.5px" class="text-lg font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat"><span style="font-family:'Playfair Display',Georgia,serif">H</span>orizon</span>
     `;
   }
 }
