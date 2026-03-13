@@ -212,17 +212,19 @@ function initProfileSwitcher() {
           </svg>
           Importer
         </button>
-        <button id="dd-reset" class="w-full text-left px-4 py-2.5 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-          Réinitialiser
-        </button>
         <button id="dd-logout" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
           </svg>
           Déconnexion
+        </button>
+      </div>
+      <div class="border-t border-dark-400">
+        <button id="dd-reset" class="w-full text-left px-4 py-2.5 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Réinitialiser
         </button>
       </div>
     `;
@@ -246,13 +248,16 @@ function initProfileSwitcher() {
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
         const id = btn.dataset.deleteProfile;
-        const profile = profiles.find(p => p.id === id);
-        if (confirm(`Êtes-vous sûr de vouloir supprimer le profil "${profile?.name}" ? Cette action est irréversible.`)) {
-          if (store.deleteProfile(id)) {
-            dropdown.remove();
-            renderPage();
-          }
-        }
+        const prof = profiles.find(p => p.id === id);
+        dropdown.remove();
+        showConfirmModal({
+          title: 'Supprimer le profil',
+          message: `Le profil « ${prof?.name} » et toutes ses données seront supprimés définitivement.`,
+          icon: 'danger',
+          confirmLabel: 'Supprimer',
+          confirmClass: 'bg-red-500 hover:bg-red-600',
+          onConfirm: () => { if (store.deleteProfile(id)) renderPage(); }
+        });
       });
     });
 
@@ -297,20 +302,29 @@ function initProfileSwitcher() {
     dropdown.querySelector('#dd-reset')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
       const profile = store.getActiveProfile();
-      if (confirm(`Réinitialiser le profil "${profile.name}" ? Cette action est irréversible.`)) {
-        store.reset();
-        dropdown.remove();
-        renderPage();
-      }
+      dropdown.remove();
+      showConfirmModal({
+        title: 'Réinitialiser le profil',
+        message: `Toutes les données du profil « ${profile.name} » seront supprimées. Cette action est irréversible.`,
+        icon: 'danger',
+        confirmLabel: 'Réinitialiser',
+        confirmClass: 'bg-red-500 hover:bg-red-600',
+        onConfirm: () => { store.reset(); renderPage(); }
+      });
     });
 
     // Logout
-    dropdown.querySelector('#dd-logout')?.addEventListener('click', async (ev) => {
+    dropdown.querySelector('#dd-logout')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      if (confirm('Se déconnecter ? Tes données locales seront conservées.')) {
-        await firebaseLogout();
-        window.location.reload();
-      }
+      dropdown.remove();
+      showConfirmModal({
+        title: 'Se déconnecter',
+        message: 'Tes données locales seront conservées.',
+        icon: 'info',
+        confirmLabel: 'Déconnexion',
+        confirmClass: 'bg-dark-500 hover:bg-dark-400',
+        onConfirm: async () => { await firebaseLogout(); window.location.reload(); }
+      });
     });
 
     // Close on outside click
@@ -414,6 +428,30 @@ function createChoiceModal(html) {
 
 function closeChoiceModal() {
   document.getElementById('choice-modal')?.remove();
+}
+
+function showConfirmModal({ title, message, icon, confirmLabel = 'Confirmer', confirmClass = 'bg-red-500 hover:bg-red-600', onConfirm }) {
+  const modal = createChoiceModal(`
+    <div class="p-6 text-center">
+      <div class="mx-auto w-14 h-14 rounded-full ${icon === 'danger' ? 'bg-red-500/15' : 'bg-accent-green/15'} flex items-center justify-center mb-4">
+        ${icon === 'danger' ? `<svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>`
+        : `<svg class="w-7 h-7 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>`}
+      </div>
+      <h3 class="text-lg font-semibold text-gray-100 mb-2">${title}</h3>
+      <p class="text-sm text-gray-400 mb-6">${message}</p>
+      <div class="flex gap-3">
+        <button id="confirm-cancel" class="flex-1 px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 bg-dark-600 hover:bg-dark-500 rounded-xl transition font-medium">Annuler</button>
+        <button id="confirm-ok" class="flex-1 px-4 py-2.5 text-sm text-white ${confirmClass} rounded-xl transition font-medium">${confirmLabel}</button>
+      </div>
+    </div>
+  `);
+  modal.querySelector('#confirm-cancel')?.addEventListener('click', closeChoiceModal);
+  modal.querySelector('#confirm-ok')?.addEventListener('click', () => {
+    closeChoiceModal();
+    onConfirm();
+  });
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeChoiceModal(); });
 }
 
 function exportLocal() {
