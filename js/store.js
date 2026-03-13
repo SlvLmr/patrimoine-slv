@@ -9,84 +9,15 @@ const defaultState = {
     immobilier: [],
     placements: [],
     epargne: [],
-    comptesCourants: [
-      { id: 'cc-cic', nom: 'Live CIC', solde: 0 },
-      { id: 'cc-trade', nom: 'Live Trade Republic', solde: 0 }
-    ]
+    comptesCourants: []
   },
   passifs: {
     emprunts: []
   },
   heritage: [],
-  revenus: [
-    { id: 'rev1', nom: 'Salaire net', type: 'Salaire', frequence: 'Mensuel', montantMensuel: 2758.17 },
-    { id: 'rev2', nom: '13ème mois', type: '13ème mois', frequence: 'Annuel', montantMensuel: 3000 },
-    { id: 'rev3', nom: 'Participation', type: 'Participation', frequence: 'Annuel', montantMensuel: 2000, informatif: true },
-    { id: 'rev4', nom: 'Intéressement', type: 'Intéressement', frequence: 'Annuel', montantMensuel: 500, informatif: true },
-    { id: 'rev5', nom: 'Prime 1 nette', type: 'Prime', frequence: 'Annuel', montantMensuel: 750 },
-    { id: 'rev6', nom: 'Prime 2 nette', type: 'Prime', frequence: 'Annuel', montantMensuel: 750 },
-    { id: 'rev7', nom: 'NDF Internet', type: 'Autre', frequence: 'Annuel', montantMensuel: 439.89 },
-    { id: 'rev8', nom: 'Tickets Restaurants', type: 'Autre', frequence: 'Annuel', montantMensuel: 1650, informatif: true },
-  ],
-  depenses: [
-    // Fixes
-    { id: 'dep01', nom: 'Crédit maison', typeDepense: 'Fixe', categorie: 'Logement', frequence: 'Mensuel', montantMensuel: 652.55 },
-    { id: 'dep02', nom: 'Assurance habitat', typeDepense: 'Fixe', categorie: 'Assurances', frequence: 'Mensuel', montantMensuel: 51.88 },
-    { id: 'dep03', nom: 'Comptes', typeDepense: 'Fixe', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 14.61 },
-    { id: 'dep04', nom: 'Electricité', typeDepense: 'Fixe', categorie: 'Logement', frequence: 'Mensuel', montantMensuel: 64.21 },
-    { id: 'dep05', nom: 'Gaz', typeDepense: 'Fixe', categorie: 'Logement', frequence: 'Mensuel', montantMensuel: 116.95 },
-    { id: 'dep06', nom: 'Eau', typeDepense: 'Fixe', categorie: 'Logement', frequence: 'Mensuel', montantMensuel: 32.32 },
-    { id: 'dep07', nom: 'Taxe foncière', typeDepense: 'Fixe', categorie: 'Logement', frequence: 'Mensuel', montantMensuel: 179 },
-    // Variables
-    { id: 'dep10', nom: 'Courses', typeDepense: 'Variable', categorie: 'Alimentation', frequence: 'Mensuel', montantMensuel: 400 },
-    { id: 'dep11', nom: 'Santé', typeDepense: 'Variable', categorie: 'Santé', frequence: 'Mensuel', montantMensuel: 15 },
-    { id: 'dep12', nom: 'Vêtements', typeDepense: 'Variable', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 50 },
-    { id: 'dep13', nom: 'Clubs - Cantine', typeDepense: 'Variable', categorie: 'Éducation', frequence: 'Mensuel', montantMensuel: 70 },
-    { id: 'dep14', nom: 'Loisirs - Plaisirs', typeDepense: 'Variable', categorie: 'Loisirs', frequence: 'Mensuel', montantMensuel: 80 },
-    { id: 'dep15', nom: 'Vacances - WE', typeDepense: 'Variable', categorie: 'Loisirs', frequence: 'Mensuel', montantMensuel: 200 },
-    { id: 'dep16', nom: 'Petits travaux', typeDepense: 'Variable', categorie: 'Logement', frequence: 'Mensuel', montantMensuel: 50 },
-    { id: 'dep17', nom: 'Achats divers', typeDepense: 'Variable', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 80 },
-    { id: 'dep18', nom: 'Anniv - Noël', typeDepense: 'Variable', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 80 },
-    // Abonnements
-    { id: 'dep20', nom: 'Freebox Internet', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 39.99 },
-    { id: 'dep21', nom: 'Tél Sylvain', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 15.99 },
-    { id: 'dep22', nom: 'Tel Gaspard', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 15.99 },
-    { id: 'dep23', nom: 'Tel Agathe', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 15.99 },
-    { id: 'dep24', nom: 'Youtube Premium', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 12.99 },
-    { id: 'dep25', nom: 'Canal +', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 19.99 },
-    { id: 'dep26', nom: 'Gemini Pro', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 0 },
-    { id: 'dep27', nom: 'Netflix (Incl. Free)', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 0 },
-    { id: 'dep28', nom: 'Prime (Incl. Free)', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 0 },
-    { id: 'dep29', nom: 'Disney + (Incl. Free)', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 0 },
-    { id: 'dep30', nom: 'Zwift', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 0 },
-    { id: 'dep31', nom: 'Playstation', typeDepense: 'Abonnement', categorie: 'Abonnements', frequence: 'Mensuel', montantMensuel: 6 },
-    // Investissements
-    { id: 'dep40', nom: 'PEA SLV /TRR', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 300 },
-    { id: 'dep41', nom: 'BTC SLV /TRR', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 50 },
-    { id: 'dep42', nom: 'VIE SLV /LXA', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 0 },
-    { id: 'dep43', nom: 'PER SLV /LXA', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 0 },
-    { id: 'dep44', nom: 'PEE GSP /TRR', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 50 },
-    { id: 'dep45', nom: 'PEE AGT /TRR', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 50 },
-    { id: 'dep46', nom: 'PEL GSP /CIC', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 50 },
-    { id: 'dep47', nom: 'PEL AGT /CIC', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: 50 },
-    { id: 'dep48', nom: 'Hélène part. PEL', typeDepense: 'Investissement', categorie: 'Autre', frequence: 'Mensuel', montantMensuel: -50 },
-  ],
-  suiviDepenses: [
-    { id: 'sd-01', date: '2026-03-02', description: 'La Poste LRAR', categorie: 'Achats divers', montant: 15.12, compte: 'Trade Republic' },
-    { id: 'sd-02', date: '2026-03-02', description: 'Action Agathe Ski', categorie: 'Achats divers', montant: 5.78, compte: 'Trade Republic' },
-    { id: 'sd-03', date: '2026-03-02', description: 'Gifi Agathe Ski', categorie: 'Achats divers', montant: 2.99, compte: 'Trade Republic' },
-    { id: 'sd-04', date: '2026-03-02', description: 'La Poste', categorie: 'Achats divers', montant: 1.60, compte: 'Trade Republic' },
-    { id: 'sd-05', date: '2026-03-02', description: 'La Poste', categorie: 'Achats divers', montant: 1.60, compte: 'Trade Republic' },
-    { id: 'sd-06', date: '2026-03-02', description: 'La Poste', categorie: 'Achats divers', montant: 2.10, compte: 'Trade Republic' },
-    { id: 'sd-07', date: '2026-03-10', description: 'Leclerc', categorie: 'Alimentation', montant: 388.17, compte: 'Trade Republic' },
-    { id: 'sd-08', date: '2026-03-10', description: 'McDo', categorie: 'Alimentation', montant: 5.95, compte: 'Trade Republic' },
-    { id: 'sd-09', date: '2026-03-10', description: 'Boulangerie', categorie: 'Alimentation', montant: 8.30, compte: 'Trade Republic' },
-    { id: 'sd-10', date: '2026-03-10', description: 'Carrefour', categorie: 'Alimentation', montant: 0.89, compte: 'Trade Republic' },
-    { id: 'sd-11', date: '2026-03-10', description: 'Boulangerie', categorie: 'Alimentation', montant: 4.30, compte: 'Trade Republic' },
-    { id: 'sd-12', date: '2026-03-10', description: 'McDo', categorie: 'Alimentation', montant: 8.19, compte: 'Trade Republic' },
-    { id: 'sd-13', date: '2026-03-10', description: 'Action', categorie: 'Achats divers', montant: 8.04, compte: 'Trade Republic' },
-    { id: 'sd-14', date: '2026-03-10', description: 'Karting', categorie: 'Loisirs - Plaisirs', montant: 30.00, compte: 'Trade Republic' },
-  ],
+  revenus: [],
+  depenses: [],
+  suiviDepenses: [],
   archiveDepenses: [],
   userInfo: {
     prenom: '',
@@ -104,13 +35,13 @@ const defaultState = {
     rendementPlacements: 0.05,
     rendementGroupes: {},
     rendementEpargne: 0.02,
-    ageFinAnnee: 43,
+    ageFinAnnee: 30,
     ageRetraite: 64,
     ageRetraiteTauxPlein: 65,
-    pensionTauxPlein: 2642,
+    pensionTauxPlein: 0,
     ageRetraiteTauxLegal: 64,
-    pensionTauxLegal: 2442,
-    ageRetraiteSouhaitee: 60
+    pensionTauxLegal: 0,
+    ageRetraiteSouhaitee: 62
   }
 };
 
