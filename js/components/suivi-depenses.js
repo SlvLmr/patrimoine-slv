@@ -74,7 +74,7 @@ export function render(store) {
   const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
   const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
 
-  // Solde mois précédent
+  // Solde début de mois
   const soldePrecedent = store.get('soldeMoisPrecedent') || {};
   const soldePrevCIC = Number(soldePrecedent.cic) || 0;
   const soldePrevTR = Number(soldePrecedent.tr) || 0;
@@ -104,7 +104,7 @@ export function render(store) {
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
-  // Reste à dépenser = 700 - (dépenses rouges + virements sortants TR)
+  // Enveloppe restante pour quotidien = 700 - (dépenses rouges + virements sortants TR)
   const depensesRougesTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = 700 - depensesRougesTR;
 
@@ -204,7 +204,7 @@ export function render(store) {
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
-            <span class="text-xs text-gray-500">Solde mois précédent</span>
+            <span class="text-xs text-gray-500">Solde début de mois</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="cic">
@@ -265,7 +265,7 @@ export function render(store) {
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
-            <span class="text-xs text-gray-500">Solde mois précédent</span>
+            <span class="text-xs text-gray-500">Solde début de mois</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-oblig="tr">
@@ -277,7 +277,7 @@ export function render(store) {
             <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4">
-            <span class="text-xs text-gray-500">Reste à dépenser</span>
+            <span class="text-xs text-gray-500">Enveloppe restante pour quotidien</span>
             <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
@@ -480,8 +480,8 @@ export function mount(store, navigate) {
       const label = key === 'cic' ? 'CIC' : 'Trade Republic';
       const prev = store.get('soldeMoisPrecedent') || {};
       const current = Number(prev[key]) || 0;
-      const body = inputField('solde', `Solde mois précédent ${label} (€)`, current, 'number', 'step="0.01"');
-      openModal(`Solde mois précédent — ${label}`, body, () => {
+      const body = inputField('solde', `Solde début de mois ${label} (€)`, current, 'number', 'step="0.01"');
+      openModal(`Solde début de mois — ${label}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         prev[key] = Number(data.solde) || 0;
         store.set('soldeMoisPrecedent', prev);
