@@ -604,6 +604,33 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       ? `Donner ${formatCurrency(donnableCycle1)} (sur ${formatCurrency(abattTotal)} possibles)`
       : `Donner ${formatCurrency(abattTotal)} à 0 € de droits`,
     description: cycle1Plan + (partiel ? `. Abattement max : ${formatCurrency(montantParEnfantCycle1)}/enfant (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA). Liquidités disponibles : ${formatCurrency(startLiquidites)}.` : ''),
+    conseilExpert: [
+      {
+        titre: 'Privilégiez la donation-partage au don manuel',
+        detail: `La donation-partage (acte notarié) fige la valeur des biens au jour de la donation. Au contraire, un don manuel sera "rapporté" à la valeur au jour du décès lors de la succession, ce qui peut créer des inégalités entre enfants et augmenter la base taxable. Coût notaire : ~1,5% du montant donné, mais l'économie à long terme est bien supérieure.`,
+        tag: 'Sécurisation'
+      },
+      {
+        titre: 'Les deux parents doivent donner chacun',
+        detail: `Chaque parent dispose de son propre abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA par enfant. Si votre conjoint(e) donne aussi, vous doublez la capacité : ${formatCurrency((ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * 2)}/enfant au lieu de ${formatCurrency(ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA)}. Pensez à rééquilibrer les patrimoines entre conjoints avant de donner (donation entre époux exonérée à ${formatCurrency(80724)}).`,
+        tag: 'Levier x2'
+      },
+      {
+        titre: 'Fractionnez : don TEPA + don manuel séparés',
+        detail: `Le don TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}, art. 790 G) se déclare avec le formulaire Cerfa 2735 dans le mois suivant. Le don manuel classique utilise l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} (art. 779). En les déclarant séparément, vous cumulez les deux exonérations. Le TEPA a son propre compteur de 15 ans, indépendant de l'abattement classique.`,
+        tag: 'Optimisation'
+      },
+      {
+        titre: 'Présents d\'usage : des cadeaux en plus, non taxés',
+        detail: `Les présents d'usage (Noël, anniversaire, mariage, diplôme) ne sont pas rapportables et n'entament pas l'abattement, à condition d'être proportionnés à vos revenus (jurisprudence : ~2% du patrimoine ou 2,5% des revenus). Mariage d'un enfant ? Offrez jusqu'à plusieurs milliers d'euros en cadeau sans aucune déclaration.`,
+        tag: 'Bonus'
+      },
+      ...(partiel ? [{
+        titre: 'Constituez la trésorerie manquante avant de donner',
+        detail: `Il vous manque ${formatCurrency(abattTotal - donnableCycle1)} pour utiliser la totalité de l'abattement. Stratégie : accélérez votre épargne, arbitrez des placements peu performants, ou envisagez un rachat partiel d'assurance-vie (attention : fiscalité du rachat à calculer). Chaque euro donné dans l'abattement = ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} exonérés = 20% d'économie de droits.`,
+        tag: 'Préparation'
+      }] : [])
+    ],
     impactParEnfant: enfants.map(enf => ({
       prenom: enf.prenom,
       id: enf.id,
@@ -631,6 +658,22 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         type: 'pea_plein',
         titre: `PEA plein — basculer sur ${avManque > 0 ? 'AV' : 'CTO'}`,
         description: redirectAV,
+        conseilExpert: [
+          ...(avManque > 0 ? [{
+            titre: 'AV : choisissez un contrat multi-support en gestion libre',
+            detail: `Privilégiez un contrat avec des ETF (frais ~0,5%/an) plutôt qu'un contrat bancaire classique (2-3% de frais). Mettez vos enfants comme bénéficiaires de la clause (rédigez-la sur-mesure, pas la clause type). Pour maximiser la transmission : un contrat par enfant bénéficiaire permet plus de flexibilité. Versez avant vos 70 ans pour profiter de l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/bénéficiaire (art. 990 I).`,
+            tag: 'AV optimale'
+          }] : [{
+            titre: 'CTO : accumulez puis donnez tous les 15 ans',
+            detail: `Investissez sur CTO en ETF capitalisants (pas de dividendes = pas de flat tax annuelle). Tous les 15 ans, donnez les titres à vos enfants dans la limite de l'abattement : vous purgez les plus-values ET transmettez à 0 € de droits. C'est la stratégie "accumulation-donation" la plus efficace pour un patrimoine en croissance.`,
+            tag: 'Stratégie CTO'
+          }]),
+          {
+            titre: 'Ne fermez jamais votre PEA : il date et se bonifie',
+            detail: `Même plein, votre PEA conserve son avantage fiscal (17,2% après 5 ans vs 30% flat tax). Vous pouvez continuer à arbitrer à l'intérieur sans fiscalité. En revanche, un retrait partiel avant 5 ans entraîne la clôture. Après 5 ans, les retraits partiels sont possibles sans clôture.`,
+            tag: 'Rappel'
+          }
+        ],
         impactParEnfant: enfants.map(enf => ({
           prenom: enf.prenom, id: enf.id,
           montantRecu: 0,
@@ -668,6 +711,33 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         description: zeroDrops
           ? `Donnez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}) à vos enfants. Valeur fiscale NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant → dans l'abattement = 0 € de droits. Vous gardez l'usufruit (habiter/louer).`
           : `Donnez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}). NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant. Droits : ${formatCurrency(droitsNPParEnfant)}/enfant au lieu de ${formatCurrency(droitsSuccImmoParEnfant)} à la succession.`,
+        conseilExpert: [
+          {
+            titre: 'Le double avantage du démembrement : décote + extinction gratuite',
+            detail: `1) Vous ne payez de droits que sur la nue-propriété (${(rate.nuePropriete * 100).toFixed(0)}% de la valeur). 2) À votre décès, l'usufruit s'éteint automatiquement et vos enfants deviennent pleins propriétaires SANS aucun droit supplémentaire. C'est le mécanisme le plus puissant pour transmettre l'immobilier : la plus-value entre la donation et le décès échappe totalement aux droits de succession.`,
+            tag: 'Mécanisme clé'
+          },
+          {
+            titre: 'Passez par une SCI familiale pour plus de souplesse',
+            detail: `Au lieu de donner l'immeuble directement, logez-le dans une SCI et donnez les parts en nue-propriété. Avantages : donation progressive (10% des parts, puis 20%, etc.), décote de 15-20% pour illiquidité des parts, gestion facilitée (vous gardez la gérance via l'usufruit), et pas de frais notariés à chaque donation de parts. Vous pouvez aussi insérer des clauses d'agrément pour garder le contrôle.`,
+            tag: 'Stratégie avancée'
+          },
+          {
+            titre: 'Attention : ne donnez pas trop tôt si le bien prend de la valeur',
+            detail: `Le barème du démembrement est fixé par l'art. 669 CGI par tranches de 10 ans. Si votre bien va fortement s'apprécier, il peut être optimal de donner plus tard (NP plus élevée mais sur un bien qui a pris de la valeur dans les mains de vos enfants, sans droits). Inversement, si vous visez 0 € de droits, donnez au moment où NP/enfant ≤ ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}.`,
+            tag: 'Timing'
+          },
+          {
+            titre: 'Clause de retour conventionnel : protégez-vous',
+            detail: `Insérez systématiquement une clause de retour conventionnel dans l'acte de donation. Si votre enfant décède avant vous, le bien vous revient automatiquement sans droits de succession. Sans cette clause, le bien tomberait dans la succession de votre enfant (et serait taxé à nouveau).`,
+            tag: 'Protection'
+          },
+          {
+            titre: 'Réserve d\'usufruit : vous gardez tous vos droits',
+            detail: `En vous réservant l'usufruit, vous conservez le droit d'habiter le bien ou de percevoir les loyers. Vos enfants ne peuvent ni vendre ni louer sans votre accord. Vous pouvez même prévoir une clause de quasi-usufruit sur le prix de vente en cas de cession du bien.`,
+            tag: 'Sécurité'
+          }
+        ],
         impactParEnfant: enfants.map(enf => ({
           prenom: enf.prenom, id: enf.id,
           montantRecu: npParEnfant,
@@ -701,6 +771,32 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         ? `Re-donner ${formatCurrency(donnableCycle2)} (sur ${formatCurrency(maxCycle2)} possibles)`
         : `Re-donner ${formatCurrency(maxCycle2)} à 0 € de droits`,
       description: `Abattements reconstitués (15 ans). ${formatCurrency(donnableParEnfantC2)}/enfant${canTepa ? ` (abattement + TEPA)` : ` (TEPA perdu après 80 ans)`}. Liquidités projetées : ${formatCurrency(liqCycle2)}. Patrimoine projeté : ${formatCurrency(cycle2Snap.patrimoineNet || 0)}.`,
+      conseilExpert: [
+        {
+          titre: 'Le rappel fiscal est glissant : calculez au jour près',
+          detail: `Le délai de 15 ans se calcule à compter de la date de déclaration (pas au 1er janvier). Si vous avez donné le 15 mars ${startYear}, l'abattement se reconstitue le 16 mars ${cycle2Year}. Donnez le jour même du renouvellement pour ne pas perdre un seul jour. Anticipez les rendez-vous notariés (prévoir 2-3 mois avant la date cible).`,
+          tag: 'Précision'
+        },
+        {
+          titre: 'Donnez les titres CTO accumulés sur 15 ans',
+          detail: `Si vous avez accumulé sur un CTO entre les deux cycles, c'est le moment idéal pour donner ces titres. Les plus-values latentes (potentiellement significatives sur 15 ans de capitalisation) seront intégralement purgées. Vos enfants repartent à 0 de plus-value, et la donation est exonérée dans l'abattement. Double gain : pas de droits + pas de flat tax.`,
+          tag: 'Purge PV'
+        },
+        ...(canTepa ? [{
+          titre: `TEPA encore disponible : ${formatCurrency(DON_FAMILIAL_TEPA)}/enfant en plus`,
+          detail: `Vous aurez ${age2} ans au 2e cycle : le don TEPA (art. 790 G) reste accessible jusqu'à 80 ans. N'oubliez pas de le cumuler à nouveau. Déclarez-le séparément (Cerfa 2735) pour bien distinguer les deux abattements.`,
+          tag: 'Rappel TEPA'
+        }] : [{
+          titre: 'TEPA perdu : compensez par d\'autres stratégies',
+          detail: `À ${age2} ans, le don TEPA n'est plus accessible (limite à 80 ans). Pour compenser, maximisez les donations de titres CTO (purge des PV), les présents d'usage, et assurez-vous que l'assurance-vie est bien calibrée (${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/bénéficiaire).`,
+          tag: 'Compensation'
+        }]),
+        {
+          titre: 'Pensez aux petits-enfants si patrimoine important',
+          detail: `Chaque grand-parent bénéficie d'un abattement de ${formatCurrency(31865)} par petit-enfant (art. 790 B CGI), renouvelable aussi tous les 15 ans. Si votre patrimoine dépasse la capacité d'abattement de vos enfants, incluez les petits-enfants dans votre stratégie de transmission.`,
+          tag: 'Génération suivante'
+        }
+      ],
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
         montantRecu: donnableParEnfantC2,
@@ -727,6 +823,33 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         type: 'av_deadline',
         titre: `Verser ${formatCurrency(totalAVerser)} en assurance-vie`,
         description: `Versez ${formatCurrency(mensuel)}/mois pendant ${annees} ans pour atteindre ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant avant vos 70 ans. Après 70 ans, l'abattement tombe à ${formatCurrency(AV_ABATTEMENT_APRES_70)} global (art. 757 B). Chaque enfant récupère ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} hors succession à 0 % de droits.`,
+        conseilExpert: [
+          {
+            titre: 'Avant 70 ans vs après 70 ans : un gouffre fiscal',
+            detail: `Avant 70 ans (art. 990 I) : abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)} PAR bénéficiaire, puis 20% jusqu'à 700k€, puis 31,25%. Après 70 ans (art. 757 B) : abattement de seulement ${formatCurrency(AV_ABATTEMENT_APRES_70)} GLOBAL (tous bénéficiaires confondus), puis barème classique des droits de succession. La différence est colossale : avec ${nbEnfants} enfants, c'est ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE * nbEnfants)} d'abattement avant 70 ans vs ${formatCurrency(AV_ABATTEMENT_APRES_70)} après.`,
+            tag: 'Urgence'
+          },
+          {
+            titre: 'Rédigez une clause bénéficiaire sur-mesure',
+            detail: `Ne gardez jamais la clause type "mon conjoint, à défaut mes enfants". Rédigez une clause démembrée : "l'usufruit à mon conjoint, la nue-propriété à mes enfants par parts égales". Ainsi, le conjoint touche les revenus (rachats partiels) et les enfants récupèrent le capital au second décès, le tout en franchise de droits grâce à l'abattement de ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}/enfant.`,
+            tag: 'Clause clé'
+          },
+          {
+            titre: 'Ouvrez un contrat par bénéficiaire',
+            detail: `Un contrat séparé par enfant offre plus de souplesse : vous pouvez ajuster les montants individuellement, modifier la clause d'un seul contrat sans toucher les autres, et vos enfants pourront gérer leur contrat indépendamment au dénouement. C'est aussi plus simple pour le traitement successoral.`,
+            tag: 'Organisation'
+          },
+          {
+            titre: 'Versez massivement juste avant 70 ans si besoin',
+            detail: `Rien n'interdit un versement unique important à 69 ans. Si vous n'avez pas pu verser régulièrement, un versement massif juste avant la limite fonctionne aussi bien fiscalement. Vous pouvez même arbitrer depuis un PEA de plus de 5 ans (retrait à 17,2% de PS) pour reverser en AV.`,
+            tag: 'Dernière chance'
+          },
+          {
+            titre: 'Après 70 ans : l\'AV reste intéressante pour les intérêts',
+            detail: `Même après 70 ans, les intérêts et plus-values générés sur les primes versées sont TOTALEMENT exonérés de droits de succession. Seules les primes versées sont taxées (après l'abattement de ${formatCurrency(AV_ABATTEMENT_APRES_70)}). Sur un contrat dynamique, les intérêts peuvent représenter 50-100% des primes sur 15-20 ans. Continuez donc à verser, mais en sachant que le régime est moins favorable.`,
+            tag: 'Après 70 ans'
+          }
+        ],
         impactParEnfant: enfants.map(enf => ({
           prenom: enf.prenom, id: enf.id,
           montantRecu: avManque,
@@ -750,6 +873,28 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       type: 'tepa_deadline',
       titre: `Dernier virement TEPA : ${formatCurrency(totalTepa)}`,
       description: `Faites un virement de ${formatCurrency(DON_FAMILIAL_TEPA)} par enfant avant vos 80 ans (art. 790 G). C'est un simple virement bancaire, exonéré de droits. Après 80 ans, cette exonération disparaît définitivement.`,
+      conseilExpert: [
+        {
+          titre: 'Date d\'anniversaire = deadline absolue',
+          detail: `Le don TEPA doit être fait AVANT le jour de votre 80e anniversaire (pas le jour même). Programmez le virement au moins 1 semaine avant pour éviter les délais bancaires. Déclarez-le dans le mois suivant avec le Cerfa 2735 (gratuit, pas besoin de notaire). Gardez une preuve du virement et une copie du cerfa.`,
+          tag: 'Deadline'
+        },
+        {
+          titre: 'TEPA : cumulable avec TOUS les autres abattements',
+          detail: `Le don TEPA de ${formatCurrency(DON_FAMILIAL_TEPA)} a son propre compteur, indépendant de l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}. Il est aussi cumulable avec l'abattement petit-enfant (${formatCurrency(31865)}), l'abattement arrière-petit-enfant (${formatCurrency(5310)}), et même avec les présents d'usage. C'est un bonus pur, ne le gaspillez pas.`,
+          tag: 'Cumul'
+        },
+        {
+          titre: 'Les deux parents peuvent faire un TEPA chacun',
+          detail: `Votre conjoint(e) peut aussi donner ${formatCurrency(DON_FAMILIAL_TEPA)} par enfant avant ses 80 ans. C'est donc ${formatCurrency(DON_FAMILIAL_TEPA * 2)} par enfant au total pour le couple. Si votre conjoint n'a pas assez de trésorerie, faites-lui d'abord une donation entre époux (exonérée à ${formatCurrency(80724)}) pour qu'il/elle puisse ensuite donner aux enfants.`,
+          tag: 'Levier couple'
+        },
+        {
+          titre: 'Dernière occasion de transmettre des liquidités exonérées',
+          detail: `Après 80 ans, il n'existe plus aucun dispositif spécifique pour transmettre des espèces en franchise de droits (hors abattement classique s'il est reconstitué). Le TEPA est littéralement votre dernière cartouche. Si vous hésitez, rappelez-vous qu'un euro donné maintenant vaut plus qu'un euro hérité taxé à 20-45%.`,
+          tag: 'Urgence'
+        }
+      ],
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
         montantRecu: DON_FAMILIAL_TEPA,
@@ -782,6 +927,23 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         ? `Re-donner ${formatCurrency(donnableCycle3)} (sur ${formatCurrency(maxCycle3)} possibles)`
         : `Re-donner ${formatCurrency(maxCycle3)} à 0 € de droits`,
       description: `Abattements reconstitués (30 ans). ${formatCurrency(donnableParEnfantC3)}/enfant${canTepa3 ? '' : ' (TEPA indisponible après 80 ans)'}. Liquidités projetées : ${formatCurrency(liqCycle3)}.`,
+      conseilExpert: [
+        {
+          titre: 'Bilan patrimonial à cet âge : adaptez la stratégie',
+          detail: `À ${age3} ans, votre situation aura évolué. Réévaluez : vos besoins en revenus (dépendance éventuelle), la valeur réelle de votre patrimoine, et la situation fiscale de vos enfants. Un conseil patrimonial à ce stade peut révéler des opportunités nouvelles (donation de parts de SCPI, rachat partiel d'AV pour re-donner, etc.).`,
+          tag: 'Réévaluation'
+        },
+        {
+          titre: 'Donnez les titres CTO accumulés sur 30 ans',
+          detail: `Sur 30 ans de capitalisation, les plus-values latentes sur un CTO peuvent représenter 200-400% du capital investi. Les donner plutôt que les vendre permet d'éviter la flat tax de 30% sur ces gains considérables, tout en utilisant l'abattement reconstitué. C'est le moment où la stratégie "accumulation-donation" montre toute sa puissance.`,
+          tag: 'Purge PV massive'
+        },
+        {
+          titre: 'Incluez les petits-enfants dans ce cycle',
+          detail: `Si vos petits-enfants sont majeurs, vous pouvez leur donner ${formatCurrency(31865)}/petit-enfant (art. 790 B) en plus des donations aux enfants. Avec le don TEPA grand-parent (${formatCurrency(31865)}, art. 790 G si < 80 ans), c'est un levier supplémentaire puissant pour réduire la masse successorale.`,
+          tag: 'Multi-générationnel'
+        }
+      ],
       impactParEnfant: enfants.map(enf => ({
         prenom: enf.prenom, id: enf.id,
         montantRecu: donnableParEnfantC3,
@@ -924,8 +1086,20 @@ function renderTimelineHTML(timeline, ageDonateur) {
             <span class="text-[11px] font-bold text-${ev.color} mt-2 px-1.5 py-0.5 rounded bg-${ev.color}/10">${ev.annee} <span class="text-gray-500">(${ev.age} ans)</span></span>
             <p class="text-xs font-medium text-gray-200 text-center mt-2 px-3 leading-snug">${ev.titre}</p>
             <details class="mt-1 px-2 text-center">
-              <summary class="text-[10px] text-${ev.color} cursor-pointer hover:underline font-medium">Conseil</summary>
-              <p class="text-[11px] text-gray-500 text-center mt-1 leading-snug">${ev.description}</p>
+              <summary class="text-[10px] text-${ev.color} cursor-pointer hover:underline font-medium inline-flex items-center gap-1 mx-auto">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                Conseil${ev.conseilExpert && ev.conseilExpert.length > 0 ? ` (${ev.conseilExpert.length} tips)` : ''}
+              </summary>
+              <div class="mt-1 text-left">
+                <p class="text-[11px] text-gray-500 text-center leading-snug">${ev.description}</p>
+                ${ev.conseilExpert && ev.conseilExpert.length > 0 ? `
+                <div class="mt-2 space-y-1">
+                  ${ev.conseilExpert.slice(0, 2).map(tip => `
+                    <p class="text-[10px] text-accent-amber/80 leading-snug">→ ${tip.titre}</p>
+                  `).join('')}
+                  ${ev.conseilExpert.length > 2 ? `<p class="text-[10px] text-gray-600">+ ${ev.conseilExpert.length - 2} autres conseils (cliquez pour voir l'impact)</p>` : ''}
+                </div>` : ''}
+              </div>
             </details>
             <span class="text-[10px] text-${ev.color} mt-2 opacity-0 group-hover/ev:opacity-100 transition font-medium">Voir l'impact &rarr;</span>
           </div>`;
@@ -940,6 +1114,39 @@ function renderImpactPanel(ev) {
   if (!ev || !ev.impactParEnfant || ev.impactParEnfant.length === 0) return '';
   const nbEnfants = ev.impactParEnfant.length;
   const totalEconomie = ev.impactParEnfant.reduce((s, e) => s + (e.economie || 0), 0);
+
+  const hasConseilExpert = ev.conseilExpert && ev.conseilExpert.length > 0;
+  const TAG_COLORS = {
+    'Sécurisation': 'accent-blue',
+    'Levier x2': 'accent-green',
+    'Levier couple': 'accent-green',
+    'Optimisation': 'accent-cyan',
+    'Bonus': 'accent-purple',
+    'Préparation': 'accent-amber',
+    'Mécanisme clé': 'accent-cyan',
+    'Stratégie avancée': 'accent-purple',
+    'Timing': 'accent-amber',
+    'Protection': 'accent-red',
+    'Sécurité': 'accent-red',
+    'Précision': 'accent-cyan',
+    'Purge PV': 'accent-green',
+    'Purge PV massive': 'accent-green',
+    'Rappel TEPA': 'accent-amber',
+    'Compensation': 'accent-amber',
+    'Génération suivante': 'accent-purple',
+    'Multi-générationnel': 'accent-purple',
+    'Réévaluation': 'accent-blue',
+    'AV optimale': 'accent-purple',
+    'Stratégie CTO': 'accent-green',
+    'Rappel': 'accent-amber',
+    'Urgence': 'accent-red',
+    'Clause clé': 'accent-purple',
+    'Organisation': 'accent-blue',
+    'Dernière chance': 'accent-red',
+    'Après 70 ans': 'accent-amber',
+    'Deadline': 'accent-red',
+    'Cumul': 'accent-cyan',
+  };
 
   return `
     <div class="rounded-xl border border-${ev.color}/20 bg-dark-800/30 p-4 animate-fadeIn">
@@ -995,6 +1202,34 @@ function renderImpactPanel(ev) {
           </div>`;
         }).join('')}
       </div>
+
+      ${hasConseilExpert ? `
+      <div class="mt-4 pt-4 border-t border-${ev.color}/10">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-6 h-6 rounded-lg bg-accent-amber/20 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <h4 class="text-xs font-bold text-accent-amber">Conseils d'expert fiscaliste</h4>
+        </div>
+        <div class="space-y-2">
+          ${ev.conseilExpert.map(tip => {
+            const tagColor = TAG_COLORS[tip.tag] || 'accent-cyan';
+            return `
+            <details class="group/tip rounded-lg overflow-hidden bg-dark-900/30 border border-dark-400/10 hover:border-${tagColor}/20 transition">
+              <summary class="flex items-center gap-2 px-3 py-2 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-${tagColor}/15 text-${tagColor} shrink-0">${tip.tag}</span>
+                <span class="text-[11px] font-medium text-gray-300 flex-1">${tip.titre}</span>
+                <svg class="w-3 h-3 text-gray-500 shrink-0 transition-transform group-open/tip:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </summary>
+              <div class="px-3 pb-3 pt-1 border-t border-dark-400/5">
+                <p class="text-[11px] text-gray-400 leading-relaxed">${tip.detail}</p>
+              </div>
+            </details>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
     </div>
   `;
 }
