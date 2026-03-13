@@ -31,6 +31,7 @@ const navItems = [
   { id: '_title_quotidien', sectionTitle: 'Quotidien' },
   { id: 'revenus-depenses', label: 'Revenus et dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'suivi-depenses', label: 'Vie quotidienne', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
+  { id: '_title_investissements', sectionTitle: 'Investissements' },
   { id: 'portefeuille-live', label: 'Portefeuille actuel', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
   { id: 'bourse', label: 'Wall Street', icon: 'M3 3v18h18M9 17V9m4 8V5m4 12v-4' },
   { id: '_title_demain', sectionTitle: 'Demain' },
