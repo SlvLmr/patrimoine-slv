@@ -325,9 +325,19 @@ export function render(store) {
   // Row 3: Emprunts + Héritage
   const row3 = [fixedSections.emprunts, fixedSections.heritage];
 
+  // DCA placements for quick update
+  const dcaPlacements = placements.filter(p => Number(p.dcaMensuel) > 0);
+  const hasDca = dcaPlacements.length > 0;
+
   const addPlacBtn = envelopeSections.length === 0
     ? `<div class="flex justify-center"><button id="btn-add-plac" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un placement</button></div>`
-    : `<div class="flex justify-end"><button id="btn-add-plac" class="px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">+ Nouveau placement</button></div>`;
+    : `<div class="flex items-center justify-between">
+        ${hasDca ? `<button id="btn-actu-rapide" class="flex items-center gap-1.5 px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Actualisation rapide
+        </button>` : '<span></span>'}
+        <button id="btn-add-plac" class="px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">+ Nouveau placement</button>
+      </div>`;
 
   return `
     <div class="space-y-4">
@@ -422,6 +432,60 @@ export function mount(store, navigate) {
         store.removeItem('actifs.placements', btn.dataset.delPlac);
         navigate('actifs');
       }
+    });
+  });
+
+  // --- Actualisation rapide DCA ---
+  document.getElementById('btn-actu-rapide')?.addEventListener('click', () => {
+    const placements = store.get('actifs.placements') || [];
+    const dcaItems = placements.filter(p => Number(p.dcaMensuel) > 0);
+    if (dcaItems.length === 0) return;
+
+    const now = new Date();
+    const moisLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+    const rows = dcaItems.map(p => {
+      const currentVal = Number(p.valeur) || Number(p.apport) || 0;
+      const dca = Number(p.dcaMensuel) || 0;
+      const estimated = currentVal + dca;
+      const env = p.enveloppe || p.type || '';
+      const envColor = ENVELOPE_COLORS[env] || 'gray-400';
+      return `
+        <div class="flex items-center gap-3 py-2.5 border-b border-dark-400/30 last:border-0" data-actu-id="${p.id}">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm font-medium text-gray-200">${p.nom}</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-${envColor}/15 text-${envColor}">${env}</span>
+            </div>
+            <div class="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+              <span>DCA ${formatCurrency(dca)}/m</span>
+              <span>·</span>
+              <span>Estimé ${formatCurrency(estimated)}</span>
+            </div>
+          </div>
+          <div class="w-32">
+            <input type="number" class="actu-val w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-right focus:border-accent-blue/50 focus:outline-none" value="${estimated}" step="0.01">
+          </div>
+        </div>`;
+    }).join('');
+
+    const body = `
+      <p class="text-xs text-gray-400 mb-3">Mettez à jour la valeur réelle de vos placements DCA après exécution chez votre courtier.</p>
+      <div class="bg-dark-800/30 rounded-lg px-3 py-1">
+        ${rows}
+      </div>
+    `;
+
+    openModal(`Actualisation — ${moisLabel}`, body, () => {
+      const modalBody = document.getElementById('modal-body');
+      modalBody.querySelectorAll('[data-actu-id]').forEach(row => {
+        const id = row.dataset.actuId;
+        const val = parseFloat(row.querySelector('.actu-val').value);
+        if (!isNaN(val)) {
+          store.updateItem('actifs.placements', id, { valeur: val });
+        }
+      });
+      navigate('actifs');
     });
   });
 
