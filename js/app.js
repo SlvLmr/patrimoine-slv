@@ -10,7 +10,7 @@ import * as Enfants from './components/enfants.js';
 import * as SuiviDepenses from './components/suivi-depenses.js';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Bourse from './components/bourse.js';
-
+import * as Compte from './components/compte.js';
 
 const store = Store.init();
 
@@ -23,7 +23,8 @@ const routes = {
 
   bourse: Bourse,
   fiscalite: Fiscalite,
-  enfants: Enfants
+  enfants: Enfants,
+  compte: Compte
 };
 
 const navItems = [
@@ -124,6 +125,8 @@ function updateUserBar() {
   const user = getCurrentUser();
   if (user) {
     container.innerHTML = renderUserBar(user);
+    container.style.cursor = 'pointer';
+    container.addEventListener('click', () => navigate('compte'));
     // Show last sync time
     updateSyncStatus();
   } else {

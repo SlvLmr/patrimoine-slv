@@ -88,6 +88,13 @@ const defaultState = {
     { id: 'sd-14', date: '2026-03-10', description: 'Karting', categorie: 'Loisirs - Plaisirs', montant: 30.00, compte: 'Trade Republic' },
   ],
   archiveDepenses: [],
+  userInfo: {
+    prenom: '',
+    nom: '',
+    telephone: '',
+    dateNaissance: '',
+    photo: ''
+  },
   parametres: {
     inflationRate: 0.02,
     projectionYears: 30,
