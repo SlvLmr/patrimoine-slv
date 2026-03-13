@@ -74,10 +74,12 @@ export function render(store) {
   const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
   const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
 
-  // Custom labels
+  // Custom labels (per bank)
   const labels = store.get('customLabels') || {};
-  const lblSoldeDebut = labels.soldeDebutMois || 'Solde début de mois';
-  const lblSoldeOblig = labels.soldeObligatoire || 'Solde obligatoire';
+  const lblSoldeDebutCIC = labels.soldeDebutMois_cic || 'Solde début de mois';
+  const lblSoldeDebutTR = labels.soldeDebutMois_tr || 'Solde début de mois';
+  const lblSoldeObligCIC = labels.soldeObligatoire_cic || 'Solde obligatoire';
+  const lblSoldeObligTR = labels.soldeObligatoire_tr || 'Solde obligatoire';
   const lblNDF = labels.aRecupererNDF || 'A récupérer NDF';
   const lblEnveloppe = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
 
@@ -203,11 +205,11 @@ export function render(store) {
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
-            <span class="text-xs text-gray-500">${lblSoldeDebut}</span>
+            <span class="text-xs text-gray-500">${lblSoldeDebutCIC}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="cic">
-            <span class="text-xs text-gray-500">${lblSoldeOblig}</span>
+            <span class="text-xs text-gray-500">${lblSoldeObligCIC}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
           </div>
           ${opsCIC.length > 0 ? `
@@ -264,11 +266,11 @@ export function render(store) {
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
-            <span class="text-xs text-gray-500">${lblSoldeDebut}</span>
+            <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-oblig="tr">
-            <span class="text-xs text-gray-500">${lblSoldeOblig}</span>
+            <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
@@ -479,7 +481,8 @@ export function mount(store, navigate) {
       const bankLabel = key === 'cic' ? 'CIC' : 'Trade Republic';
       const prev = store.get('soldeMoisPrecedent') || {};
       const labels = store.get('customLabels') || {};
-      const currentLabel = labels.soldeDebutMois || 'Solde début de mois';
+      const lblKey = `soldeDebutMois_${key}`;
+      const currentLabel = labels[lblKey] || 'Solde début de mois';
       const current = Number(prev[key]) || 0;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant ${bankLabel} (€)`, current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankLabel}`, body, () => {
@@ -487,7 +490,7 @@ export function mount(store, navigate) {
         prev[key] = Number(data.solde) || 0;
         store.set('soldeMoisPrecedent', prev);
         if (data.libelle && data.libelle !== currentLabel) {
-          labels.soldeDebutMois = data.libelle;
+          labels[lblKey] = data.libelle;
           store.set('customLabels', labels);
         }
         navigate('suivi-depenses');
@@ -502,7 +505,8 @@ export function mount(store, navigate) {
       const bankLabel = key === 'cic' ? 'CIC' : 'Trade Republic';
       const oblig = store.get('soldeObligatoire') || {};
       const labels = store.get('customLabels') || {};
-      const currentLabel = labels.soldeObligatoire || 'Solde obligatoire';
+      const lblKey = `soldeObligatoire_${key}`;
+      const currentLabel = labels[lblKey] || 'Solde obligatoire';
       const current = Number(oblig[key]) || 0;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant ${bankLabel} (€)`, current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankLabel}`, body, () => {
@@ -510,7 +514,7 @@ export function mount(store, navigate) {
         oblig[key] = Number(data.solde) || 0;
         store.set('soldeObligatoire', oblig);
         if (data.libelle && data.libelle !== currentLabel) {
-          labels.soldeObligatoire = data.libelle;
+          labels[lblKey] = data.libelle;
           store.set('customLabels', labels);
         }
         navigate('suivi-depenses');
