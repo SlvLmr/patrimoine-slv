@@ -84,9 +84,10 @@ export function render(store) {
   const soldeObligCIC = Number(soldeObligatoire.cic) || 0;
   const soldeObligTR = Number(soldeObligatoire.tr) || 0;
 
-  // A récupérer NDF = 750 - somme NDF + 39.99
+  // A récupérer NDF = budget NDF - somme NDF
+  const budgetNDF = Number(store.get('budgetNDF')) || 789.99;
   const ndfTR = items.filter(i => i.compte === 'Trade Republic' && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const aRecupererNDF = 750 - ndfTR + 39.99;
+  const aRecupererNDF = budgetNDF - ndfTR;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -104,9 +105,10 @@ export function render(store) {
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
-  // Enveloppe restante pour quotidien = 700 - (dépenses rouges + virements sortants TR)
+  // Enveloppe restante pour quotidien = budget quotidien - (dépenses rouges + virements sortants TR)
+  const budgetQuotidien = Number(store.get('budgetQuotidien')) || 700;
   const depensesRougesTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const resteADepenser = 700 - depensesRougesTR;
+  const resteADepenser = budgetQuotidien - depensesRougesTR;
 
   // Trade Republic features
   // Intérêts : 2% annuel sur le solde courant, proratisé au mois
@@ -272,11 +274,11 @@ export function render(store) {
             <span class="text-xs text-gray-500">Solde obligatoire</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
             <span class="text-xs text-gray-500">A récupérer NDF</span>
             <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
             <span class="text-xs text-gray-500">Enveloppe restante pour quotidien</span>
             <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
           </div>
@@ -502,6 +504,32 @@ export function mount(store, navigate) {
         const data = getFormData(document.getElementById('modal-body'));
         oblig[key] = Number(data.solde) || 0;
         store.set('soldeObligatoire', oblig);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit budget NDF
+  document.querySelectorAll('[data-edit-budget-ndf]').forEach(el => {
+    el.addEventListener('click', () => {
+      const current = Number(store.get('budgetNDF')) || 789.99;
+      const body = inputField('budget', 'Budget NDF (€)', current, 'number', 'step="0.01"');
+      openModal('Budget NDF — Trade Republic', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        store.set('budgetNDF', Number(data.budget) || 0);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit budget quotidien
+  document.querySelectorAll('[data-edit-budget-quotidien]').forEach(el => {
+    el.addEventListener('click', () => {
+      const current = Number(store.get('budgetQuotidien')) || 700;
+      const body = inputField('budget', 'Budget quotidien (€)', current, 'number', 'step="0.01"');
+      openModal('Enveloppe quotidien — Trade Republic', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        store.set('budgetQuotidien', Number(data.budget) || 0);
         navigate('suivi-depenses');
       });
     });
