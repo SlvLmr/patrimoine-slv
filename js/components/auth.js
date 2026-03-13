@@ -6,7 +6,11 @@ function renderLoginScreen() {
       <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent mb-3 logo-text-halo logo-heartbeat" style="letter-spacing:-0.5px"><span style="font-family:'Bodoni Moda',Georgia,serif">H</span>orizon</h1>
+          <div class="logo-with-bars logo-with-bars-lg justify-center mb-3">
+            <span class="logo-bar logo-bar-left"></span>
+            <h1 class="text-3xl font-bold logo-gradient-text logo-text-halo logo-heartbeat" style="letter-spacing:-0.5px"><span style="font-family:'Bodoni Moda',Georgia,serif">H</span>orizon</h1>
+            <span class="logo-bar logo-bar-right"></span>
+          </div>
           <p class="text-gray-500 text-sm">Simulateur patrimonial</p>
         </div>
 

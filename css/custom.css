@@ -235,6 +235,55 @@ input[type="number"] {
   }
 }
 
+/* Logo gradient gold → lilac */
+.logo-gradient-text {
+  background: linear-gradient(90deg, #c9a76c, #d4b483, #c4a0d4, #b48ec9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Logo with decorative bars */
+.logo-with-bars {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.logo-with-bars-sm {
+  gap: 8px;
+}
+
+.logo-with-bars-lg {
+  gap: 16px;
+}
+
+.logo-bar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 1.5px;
+  border-radius: 1px;
+}
+
+.logo-with-bars-sm .logo-bar {
+  width: 24px;
+  height: 1px;
+}
+
+.logo-with-bars-lg .logo-bar {
+  width: 50px;
+  height: 1.5px;
+}
+
+.logo-bar-left {
+  background: linear-gradient(90deg, transparent, #c9a76c, #c4a0d4);
+}
+
+.logo-bar-right {
+  background: linear-gradient(90deg, #c4a0d4, #c9a76c, transparent);
+}
+
 /* Logo halo effect */
 .logo-halo {
   box-shadow:
@@ -245,7 +294,7 @@ input[type="number"] {
 }
 
 .logo-text-halo {
-  text-shadow: 0 0 20px rgba(201, 167, 108, 0.3);
+  text-shadow: 0 0 20px rgba(201, 167, 108, 0.3), 0 0 30px rgba(180, 142, 201, 0.15);
   filter: drop-shadow(0 0 8px rgba(201, 167, 108, 0.15));
 }
 
