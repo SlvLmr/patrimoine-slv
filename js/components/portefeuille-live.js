@@ -94,13 +94,13 @@ export function render(store) {
   const totalPeaETF = peaETF.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
   const totalPeaOther = peaOther.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
 
-  // Level 2 envelopes (only show if total > 0)
+  // Level 2 envelopes (PEA, CTO, Crypto always visible; Autres only if > 0)
   const l2Envelopes = [
     { id: 'pea', label: 'PEA', total: totalPEA },
     { id: 'cto', label: 'CTO', total: totalCTO },
     { id: 'crypto', label: 'Crypto', total: totalCrypto },
     { id: 'otherplac', label: 'Autres', total: totalOtherPlac },
-  ].filter(e => e.total > 0);
+  ].filter(e => ['pea', 'cto', 'crypto'].includes(e.id) || e.total > 0);
 
   // Level 3 under PEA (only show if total > 0)
   const l3PEA = [
@@ -150,7 +150,7 @@ export function render(store) {
       </div>
 
       <!-- LEVEL 2 — Liquidités + Investissements + Immobilier -->
-      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-[5fr_5fr_2fr] gap-3">
+      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-[4fr_6fr_2fr] gap-3">
 
         <!-- Liquidités -->
         <div id="ptf-card-liq" class="card-dark rounded-2xl p-3">
@@ -200,7 +200,7 @@ export function render(store) {
       </div>
 
       <!-- SVG Level 2 → 3 -->
-      <div class="grid grid-cols-1 lg:grid-cols-[5fr_5fr_2fr] gap-3">
+      <div class="grid grid-cols-1 lg:grid-cols-[4fr_6fr_2fr] gap-3">
 
         <!-- Left branch: Liquidités → Comptes Courants + Épargne → détails -->
         <div>
