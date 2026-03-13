@@ -26,6 +26,10 @@ const defaultState = {
     dateNaissance: '',
     photo: ''
   },
+  bankNames: {
+    primary: 'CIC',
+    secondary: 'Trade Republic'
+  },
   parametres: {
     inflationRate: 0.02,
     projectionYears: 30,
@@ -512,6 +516,22 @@ const Store = {
 
   reset() {
     this._state = JSON.parse(JSON.stringify(defaultState));
+    saveState(this._profileId, this._state);
+  },
+
+  getBankNames() {
+    return this._state.bankNames || { primary: 'CIC', secondary: 'Trade Republic' };
+  },
+
+  renameBank(key, newName) {
+    const names = this.getBankNames();
+    const oldName = names[key];
+    if (!oldName || oldName === newName) return;
+    names[key] = newName;
+    this.set('bankNames', names);
+    // Migrate all suiviDepenses/suiviRevenus entries
+    (this._state.suiviDepenses || []).forEach(i => { if (i.compte === oldName) i.compte = newName; });
+    (this._state.suiviRevenus || []).forEach(i => { if (i.compte === oldName) i.compte = newName; });
     saveState(this._profileId, this._state);
   },
 

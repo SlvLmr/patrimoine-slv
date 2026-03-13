@@ -10,16 +10,13 @@ const CATEGORIES_REVENUS = [
   'Remboursement', 'Vente', 'Autre'
 ];
 
-const COMPTES = ['CIC', 'Trade Republic'];
-
-const BANK_ICONS = {
-  CIC: `<svg class="w-8 h-8 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+const BANK_ICON_PRIMARY = `<svg class="w-8 h-8 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/>
-  </svg>`,
-  'Trade Republic': `<svg class="w-8 h-8 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+  </svg>`;
+const BANK_ICON_SECONDARY = `<svg class="w-8 h-8 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
-  </svg>`
-};
+  </svg>`;
+const PENCIL_ICON = `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
 
 function getToday() {
   return new Date().toISOString().slice(0, 10);
@@ -58,9 +55,11 @@ const DEPENSES_MENSUELLES_CIC = [
 
 
 export function render(store) {
+  const bankNames = store.getBankNames();
+  const COMPTES = [bankNames.primary, bankNames.secondary];
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
   if (!store.get('suiviRevenus')) store.set('suiviRevenus', []);
-  // Init depenses mensuelles CIC from defaults if not present
+  // Init depenses mensuelles from defaults if not present
   if (!store.get('depensesMensuellesCIC')) {
     store.set('depensesMensuellesCIC', JSON.parse(JSON.stringify(DEPENSES_MENSUELLES_CIC)));
   }
@@ -68,8 +67,8 @@ export function render(store) {
   const items = store.get('suiviDepenses') || [];
   const revenus = store.get('suiviRevenus') || [];
   const comptesCourants = store.get('actifs')?.comptesCourants || [
-    { id: 'cc-cic', nom: 'Live CIC', solde: 0 },
-    { id: 'cc-trade', nom: 'Live Trade Republic', solde: 0 }
+    { id: 'cc-cic', nom: bankNames.primary, solde: 0 },
+    { id: 'cc-trade', nom: bankNames.secondary, solde: 0 }
   ];
   const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
   const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
@@ -95,7 +94,7 @@ export function render(store) {
 
   // A récupérer NDF = budget NDF - somme NDF
   const budgetNDF = Number(store.get('budgetNDF')) || 789.99;
-  const ndfTR = items.filter(i => i.compte === 'Trade Republic' && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const ndfTR = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const aRecupererNDF = budgetNDF - ndfTR;
 
   // Monthly checklist state
@@ -107,16 +106,16 @@ export function render(store) {
     .reduce((s, d) => s + d.montant, 0);
 
   // Compute live solde = base + revenus - depenses - checked monthly
-  const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
-  const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const soldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
 
-  const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
-  const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   // Enveloppe restante pour quotidien = budget quotidien - (dépenses rouges + virements sortants TR)
   const budgetQuotidien = Number(store.get('budgetQuotidien')) || 700;
-  const depensesRougesTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
   // Trade Republic features (editable values)
@@ -134,13 +133,13 @@ export function render(store) {
 
   // Merge revenus + depenses into unified operations per bank (no sort — manual order via arrows)
   const opsCIC = [
-    ...items.filter(i => i.compte === 'CIC').map(i => ({ ...i, type: 'depense' })),
-    ...revenus.filter(r => r.compte === 'CIC').map(r => ({ ...r, type: 'revenu' }))
+    ...items.filter(i => i.compte === bankNames.primary).map(i => ({ ...i, type: 'depense' })),
+    ...revenus.filter(r => r.compte === bankNames.primary).map(r => ({ ...r, type: 'revenu' }))
   ];
 
   const opsTR = [
-    ...items.filter(i => i.compte === 'Trade Republic').map(i => ({ ...i, type: 'depense' })),
-    ...revenus.filter(r => r.compte === 'Trade Republic').map(r => ({ ...r, type: 'revenu' }))
+    ...items.filter(i => i.compte === bankNames.secondary).map(i => ({ ...i, type: 'depense' })),
+    ...revenus.filter(r => r.compte === bankNames.secondary).map(r => ({ ...r, type: 'revenu' }))
   ];
 
   const renderOp = (op) => {
@@ -194,12 +193,15 @@ export function render(store) {
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <!-- CIC -->
+        <!-- Primary bank -->
         <div class="card-dark rounded-xl overflow-hidden">
           <div class="px-4 py-3 flex items-center gap-3 border-b border-dark-400/30">
-            ${BANK_ICONS['CIC']}
+            ${BANK_ICON_PRIMARY}
             <div class="flex-1">
-              <p class="text-sm text-gray-400">Compte courant CIC</p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-sm text-gray-400">Compte courant ${bankNames.primary}</p>
+                <button data-rename-bank="primary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50" title="Renommer">${PENCIL_ICON}</button>
+              </div>
               <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(soldeCIC)}</p>
             </div>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
@@ -255,12 +257,15 @@ export function render(store) {
           </div>
         </div>
 
-        <!-- Trade Republic -->
+        <!-- Secondary bank -->
         <div class="card-dark rounded-xl overflow-hidden">
           <div class="px-4 py-3 flex items-center gap-3 border-b border-dark-400/30">
-            ${BANK_ICONS['Trade Republic']}
+            ${BANK_ICON_SECONDARY}
             <div class="flex-1">
-              <p class="text-sm text-gray-400">Compte courant Trade Republic</p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-sm text-gray-400">Compte courant ${bankNames.secondary}</p>
+                <button data-rename-bank="secondary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50" title="Renommer">${PENCIL_ICON}</button>
+              </div>
               <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(soldeTR)}</p>
             </div>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
@@ -340,6 +345,25 @@ export function render(store) {
 }
 
 export function mount(store, navigate) {
+  const bankNames = store.getBankNames();
+  const COMPTES = [bankNames.primary, bankNames.secondary];
+
+  // Rename bank
+  document.querySelectorAll('[data-rename-bank]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.renameBank; // 'primary' or 'secondary'
+      const currentName = bankNames[key];
+      const body = inputField('nom', 'Nom de la banque', currentName);
+      openModal('Renommer la banque', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        const newName = (data.nom || '').trim();
+        if (!newName || newName === currentName) return;
+        store.renameBank(key, newName);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
   // Archive month (clôture)
   document.getElementById('btn-archive-month')?.addEventListener('click', () => {
     const monthKey = getCurrentMonthKey();
@@ -358,11 +382,11 @@ export function mount(store, navigate) {
     const soldePrevCIC = Number(soldePrecedent.cic) || 0;
     const soldePrevTR = Number(soldePrecedent.tr) || 0;
     const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
-    const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
-    const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+    const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
     const finalSoldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
-    const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
-    const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+    const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
     const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
 
     // Build archive summary
@@ -382,8 +406,8 @@ export function mount(store, navigate) {
           <div class="flex justify-between"><span class="text-gray-400">Total revenus</span><span class="text-accent-green font-medium">${formatCurrencyCents(totalRevenus)}</span></div>
           <div class="flex justify-between"><span class="text-gray-400">Total dépenses</span><span class="text-accent-red font-medium">${formatCurrencyCents(totalDepenses)}</span></div>
           <div class="border-t border-dark-400/30 my-1"></div>
-          <div class="flex justify-between"><span class="text-gray-400">Solde final CIC</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeCIC)}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Solde final TR</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeTR)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Solde final ${bankNames.primary}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeCIC)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Solde final ${bankNames.secondary}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeTR)}</span></div>
         </div>
         <p class="text-[11px] text-gray-500">Les soldes finaux deviendront les "soldes mois précédent" du mois suivant. Les opérations et coches seront remises à zéro.</p>
       </div>
@@ -440,7 +464,7 @@ export function mount(store, navigate) {
     `;
     openModal('Ajouter un revenu', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
-      data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.primary;
       const revenus = store.get('suiviRevenus') || [];
       revenus.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviRevenus', revenus);
@@ -457,7 +481,7 @@ export function mount(store, navigate) {
       const ccs = actifs.comptesCourants || [];
       const cc = ccs.find(c => c.id === ccId);
       const currentSolde = cc ? Number(cc.solde) || 0 : 0;
-      const label = ccId === 'cc-cic' ? 'CIC' : 'Trade Republic';
+      const label = ccId === 'cc-cic' ? bankNames.primary : bankNames.secondary;
       const body = inputField('solde', `Solde ${label} (€)`, currentSolde, 'number', 'step="0.01"');
       openModal(`Modifier le solde ${label}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -465,7 +489,7 @@ export function mount(store, navigate) {
         if (cc) {
           cc.solde = newSolde;
         } else {
-          ccs.push({ id: ccId, nom: `Live ${label}`, solde: newSolde });
+          ccs.push({ id: ccId, nom: label, solde: newSolde });
         }
         actifs.comptesCourants = ccs;
         store.set('actifs', actifs);
@@ -478,7 +502,7 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-prev]').forEach(el => {
     el.addEventListener('click', () => {
       const key = el.dataset.editPrev; // 'cic' or 'tr'
-      const bankLabel = key === 'cic' ? 'CIC' : 'Trade Republic';
+      const bankLabel = key === 'cic' ? bankNames.primary : bankNames.secondary;
       const prev = store.get('soldeMoisPrecedent') || {};
       const labels = store.get('customLabels') || {};
       const lblKey = `soldeDebutMois_${key}`;
@@ -502,7 +526,7 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-oblig]').forEach(el => {
     el.addEventListener('click', () => {
       const key = el.dataset.editOblig; // 'cic' or 'tr'
-      const bankLabel = key === 'cic' ? 'CIC' : 'Trade Republic';
+      const bankLabel = key === 'cic' ? bankNames.primary : bankNames.secondary;
       const oblig = store.get('soldeObligatoire') || {};
       const labels = store.get('customLabels') || {};
       const lblKey = `soldeObligatoire_${key}`;
@@ -529,7 +553,7 @@ export function mount(store, navigate) {
       const currentLabel = labels.aRecupererNDF || 'A récupérer NDF';
       const current = Number(store.get('budgetNDF')) || 789.99;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget NDF (€)', current, 'number', 'step="0.01"');
-      openModal(`${currentLabel} — Trade Republic`, body, () => {
+      openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         store.set('budgetNDF', Number(data.budget) || 0);
         if (data.libelle && data.libelle !== currentLabel) {
@@ -548,7 +572,7 @@ export function mount(store, navigate) {
       const currentLabel = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
       const current = Number(store.get('budgetQuotidien')) || 700;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget quotidien (€)', current, 'number', 'step="0.01"');
-      openModal(`${currentLabel} — Trade Republic`, body, () => {
+      openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         store.set('budgetQuotidien', Number(data.budget) || 0);
         if (data.libelle && data.libelle !== currentLabel) {
@@ -605,7 +629,7 @@ export function mount(store, navigate) {
     `;
     openModal('Ajouter une dépense', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
-      data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.primary;
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
@@ -870,14 +894,14 @@ export function mount(store, navigate) {
   document.getElementById('btn-add-virement')?.addEventListener('click', () => {
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
-      ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Virement vers CIC"')}
+      ${inputField('description', 'Description', '', 'text', `placeholder="Ex: Virement vers ${bankNames.primary}"`)}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 500"')}
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
         <div class="flex gap-3">
           ${COMPTES.map(c => `
             <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-amber-400/40 transition has-[:checked]:border-amber-400 has-[:checked]:bg-amber-400/10">
-              <input type="radio" name="compte" value="${c}" ${c === 'Trade Republic' ? 'checked' : ''} class="w-4 h-4 text-amber-400 bg-dark-800 border-dark-400 focus:ring-amber-400/40">
+              <input type="radio" name="compte" value="${c}" ${c === bankNames.secondary ? 'checked' : ''} class="w-4 h-4 text-amber-400 bg-dark-800 border-dark-400 focus:ring-amber-400/40">
               <span class="text-sm text-gray-200">${c}</span>
             </label>
           `).join('')}
@@ -886,7 +910,7 @@ export function mount(store, navigate) {
     `;
     openModal('Ajouter un virement', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
-      data.compte = document.querySelector('input[name="compte"]:checked')?.value || 'Trade Republic';
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'Virement';
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
@@ -906,7 +930,7 @@ export function mount(store, navigate) {
         <div class="flex gap-3">
           ${COMPTES.map(c => `
             <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-purple-400/40 transition has-[:checked]:border-purple-400 has-[:checked]:bg-purple-400/10">
-              <input type="radio" name="compte" value="${c}" ${c === 'Trade Republic' ? 'checked' : ''} class="w-4 h-4 text-purple-400 bg-dark-800 border-dark-400 focus:ring-purple-400/40">
+              <input type="radio" name="compte" value="${c}" ${c === bankNames.secondary ? 'checked' : ''} class="w-4 h-4 text-purple-400 bg-dark-800 border-dark-400 focus:ring-purple-400/40">
               <span class="text-sm text-gray-200">${c}</span>
             </label>
           `).join('')}
@@ -915,7 +939,7 @@ export function mount(store, navigate) {
     `;
     openModal('Ajouter une NDF', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
-      data.compte = document.querySelector('input[name="compte"]:checked')?.value || 'Trade Republic';
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'NDF';
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });

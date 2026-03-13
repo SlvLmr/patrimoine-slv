@@ -9,6 +9,7 @@ function getCurrentMonthKey() {
 
 function computeLiveSoldes(store) {
   const comptes = store.get('actifs')?.comptesCourants || [];
+  const bankNames = store.getBankNames();
   const baseCIC = Number(comptes.find(c => c.id === 'cc-cic')?.solde) || 0;
   const baseTR = Number(comptes.find(c => c.id === 'cc-trade')?.solde) || 0;
 
@@ -19,8 +20,8 @@ function computeLiveSoldes(store) {
   const items = store.get('suiviDepenses') || [];
   const revenus = store.get('suiviRevenus') || [];
 
-  const revCIC = revenus.filter(r => r.compte === 'CIC').reduce((s, r) => s + (Number(r.montant) || 0), 0);
-  const depCIC = items.filter(i => i.compte === 'CIC').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   const monthKey = getCurrentMonthKey();
   const depMensuelles = store.get('depensesMensuellesCIC') || [];
@@ -28,8 +29,8 @@ function computeLiveSoldes(store) {
   const cocheesThisMonth = cicCochees[monthKey] || [];
   const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
 
-  const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
-  const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   const trFeatures = store.get('trFeatures') || {};
   const trInterets = Number(trFeatures.interets) || 0;
@@ -42,6 +43,7 @@ function computeLiveSoldes(store) {
 }
 
 export function render(store) {
+  const bankNames = store.getBankNames();
   const comptes = store.get('actifs.comptesCourants') || [];
   const epargne = store.get('actifs.epargne') || [];
   const placements = store.get('actifs.placements') || [];
@@ -245,11 +247,11 @@ export function render(store) {
             <!-- Sous Comptes Courants -->
             <div class="grid grid-cols-2 gap-1.5">
               <div id="ptf-card-cic" class="card-dark rounded-xl p-2.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold">CIC</p>
+                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold">${bankNames.primary}</p>
                 <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalCIC)}</p>
               </div>
               <div id="ptf-card-tr" class="card-dark rounded-xl p-2.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold">Trade Republic</p>
+                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold">${bankNames.secondary}</p>
                 <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalTR)}</p>
               </div>
             </div>
