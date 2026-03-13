@@ -9,7 +9,7 @@ export function render(store) {
   const state = store.getAll();
 
   const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
-  const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+  const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || Number(i.apport) || 0), 0);
   const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
 
@@ -163,7 +163,7 @@ export function render(store) {
                 <span class="text-gray-400 text-sm">${i.nom}</span>
                 ${i.type ? `<span class="ml-2 text-xs px-1.5 py-0.5 rounded bg-dark-500 text-gray-500">${i.type}</span>` : ''}
               </div>
-              <span class="font-medium text-sm text-gray-200">${formatCurrency(i.valeur)}</span>
+              <span class="font-medium text-sm text-gray-200">${formatCurrency(Number(i.valeur) || Number(i.apport) || 0)}</span>
             </div>
           `).join('') : '<p class="text-gray-600 text-sm">Aucun placement</p>'}
         </div>
@@ -213,7 +213,7 @@ export function render(store) {
 export function mount(store) {
   const state = store.getAll();
   const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
-  const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+  const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || Number(i.apport) || 0), 0);
   const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const totalActifs = store.totalActifs();

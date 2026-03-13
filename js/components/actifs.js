@@ -51,7 +51,7 @@ export function render(store) {
 
   // Totals for column headers
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
-  const totalPlac = placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+  const totalPlac = placements.reduce((s, i) => s + (Number(i.valeur) || Number(i.apport) || 0), 0);
   const totalEpar = epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const totalHeritage = heritageItems.reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
@@ -98,7 +98,7 @@ export function render(store) {
   // Dynamic envelope sections from placements
   const envelopeSections = Object.entries(envelopeGroups).map(([env, items]) => {
     const envMeta = ENVELOPPES.find(e => e.value === env);
-    const envTotal = items.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
+    const envTotal = items.reduce((s, i) => s + (Number(i.valeur) || Number(i.apport) || 0), 0);
     return {
       key: `plac-${env}`,
       envKey: env,
@@ -154,7 +154,7 @@ export function render(store) {
         <div class="mb-1">
           ${showCatHeaders ? `<div class="px-1 py-0.5 mb-0.5"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">${catLabel}</span></div>` : ''}
           ${catItems.map(i => {
-            const pv = i.quantite && i.pru ? (Number(i.valeur) - Number(i.pru) * Number(i.quantite)) : 0;
+            const pv = i.quantite && i.pru ? ((Number(i.valeur) || Number(i.apport) || 0) - Number(i.pru) * Number(i.quantite)) : 0;
             const dcaLabel = i.dcaMensuel ? `${formatCurrency(i.dcaMensuel)}/m` : '';
             return `
             <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition mb-0.5">
@@ -164,7 +164,7 @@ export function render(store) {
                   ${i.isAirLiquide ? '<span class="text-[9px] bg-accent-green/15 text-accent-green px-1 rounded">AI</span>' : ''}
                   ${!showCatHeaders && i.categorie ? `<span class="text-[9px] text-gray-500">${i.categorie}</span>` : ''}
                 </div>
-                <span class="font-medium text-gray-200 text-xs">${formatCurrency(i.valeur)}</span>
+                <span class="font-medium text-gray-200 text-xs">${formatCurrency(Number(i.valeur) || Number(i.apport) || 0)}</span>
               </div>
               <div class="flex items-center justify-between text-[10px]">
                 ${dcaLabel ? `<span class="text-gray-500">DCA ${dcaLabel}</span>` : '<span></span>'}

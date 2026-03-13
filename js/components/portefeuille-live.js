@@ -67,7 +67,7 @@ export function render(store) {
 
   const totalCC = comptesLive.reduce((s, c) => s + c.solde, 0);
   const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
-  const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const totalDette = emprunts.reduce((s, e) => s + (Number(e.capitalRestant) || 0), 0);
   const totalLiquidites = totalCC + totalEpargne;
@@ -86,13 +86,13 @@ export function render(store) {
   const peaETF = peaPlac.filter(p => (p.categorie || '').includes('ETF'));
   const peaOther = peaPlac.filter(p => !peaActions.includes(p) && !peaETF.includes(p));
 
-  const totalPEA = peaPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalCTO = ctoPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalCrypto = cryptoPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalOtherPlac = otherPlac.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalPeaActions = peaActions.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalPeaETF = peaETF.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
-  const totalPeaOther = peaOther.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const totalPEA = peaPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalCTO = ctoPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalCrypto = cryptoPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalOtherPlac = otherPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalPeaActions = peaActions.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalPeaETF = peaETF.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalPeaOther = peaOther.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
 
   // Level 2 envelopes (PEA, CTO, Crypto always visible; Autres only if > 0)
   const l2Envelopes = [
@@ -117,7 +117,7 @@ export function render(store) {
           <div class="w-1 h-1 rounded-full ${color} flex-shrink-0"></div>
           <span class="text-[10px] text-gray-400 truncate">${p.nom}</span>
         </div>
-        <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(p.valeur) || 0)}</span>
+        <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(p.valeur) || Number(p.apport) || 0)}</span>
       </div>`).join('');
   }
 
