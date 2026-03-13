@@ -191,7 +191,7 @@ function initProfileSwitcher() {
 
     const dropdown = document.createElement('div');
     dropdown.id = 'profile-dropdown';
-    dropdown.className = 'absolute left-0 right-0 top-full mt-1 bg-dark-700 border border-dark-400 rounded-xl shadow-2xl z-50 overflow-hidden';
+    dropdown.className = 'absolute left-0 right-0 bottom-full mb-1 bg-dark-700 border border-dark-400 rounded-xl shadow-2xl z-50 overflow-hidden';
     dropdown.innerHTML = `
       <div class="max-h-48 overflow-y-auto">
         ${profiles.map(p => `
