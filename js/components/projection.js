@@ -347,9 +347,13 @@ export function render(store) {
                 };
                 const totalGain = s.cashApresImpot - s.totalApports;
                 return `
-              <tr class="hover:bg-dark-600/30 transition ${rowClass} text-[11px]">
+              <tr class="hover:bg-dark-600/30 transition ${rowClass} text-[11px] group/row">
                 <td class="px-1 py-1 text-center font-medium text-gray-200 truncate ${bt}">
-                  ${s.label}${isRetirement ? ' <span class="text-[9px] text-accent-amber font-semibold">R</span>' : ''}
+                  <span class="inline-flex items-center gap-0.5">
+                    ${s.label}${isRetirement ? ' <span class="text-[9px] text-accent-amber font-semibold">R</span>' : ''}
+                    ${s.isActualise ? '<span class="text-[8px] text-accent-green" title="Actualisé">&#10003;</span>' : ''}
+                    <button class="btn-actualiser text-[9px] text-gray-600 hover:text-accent-cyan transition opacity-0 group-hover/row:opacity-100 ml-0.5" data-year="${s.calendarYear}" title="Actualiser avec les valeurs réelles">&#9998;</button>
+                  </span>
                 </td>
                 <td class="px-0 py-1 text-center text-gray-500 ${bt}">${s.annee + 1}</td>
                 <td class="px-0 py-1 text-center border-r-2 border-dark-300/40 ${bt} ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
@@ -561,6 +565,121 @@ export function render(store) {
       </details>
     </div>
   `;
+}
+
+function openActualisationModal(store, navigate, calendarYear, snapshots) {
+  const placements = store.get('actifs.placements') || [];
+  const params = store.get('parametres') || {};
+  const actualisations = params.actualisations || {};
+  const existing = actualisations[String(calendarYear)] || {};
+  const existingPlac = existing.placements || {};
+
+  // Find the snapshot for this year to show projected values
+  const snapshot = snapshots.find(s => s.calendarYear === calendarYear);
+  if (!snapshot) return;
+
+  const placementRows = placements.map(p => {
+    const projValue = snapshot.placementById?.[p.id] || 0;
+    const realValue = existingPlac[p.id] !== undefined ? existingPlac[p.id] : '';
+    const env = p.enveloppe || '';
+    const cat = p.categorie || '';
+    const label = p.nom || `${env} ${cat}`.trim();
+    return `
+      <div class="flex items-center gap-2 py-2 border-b border-dark-400/20">
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-gray-200 truncate">${label}</div>
+          <div class="text-[10px] text-gray-500">${getPlacementGroupKey(p)} · Projeté : ${formatCurrency(projValue)}</div>
+        </div>
+        <input type="number" name="plac-${p.id}" value="${realValue}"
+          placeholder="${formatCurrency(projValue).replace(/[^\d\s]/g, '').trim()}"
+          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
+          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          step="1">
+      </div>
+    `;
+  }).join('');
+
+  const body = `
+    <p class="text-xs text-gray-500 mb-4">Saisissez les valeurs réelles de fin ${calendarYear} pour chaque placement. Les champs vides conservent la valeur projetée.</p>
+
+    <div class="mb-4">
+      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Placements</h4>
+      <div class="max-h-[40vh] overflow-y-auto pr-1">
+        ${placementRows}
+      </div>
+    </div>
+
+    <div class="border-t border-dark-400/30 pt-4 space-y-3">
+      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Autres actifs</h4>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-300 flex-1">Épargne</label>
+        <input type="number" name="actu-epargne" value="${existing.epargne !== undefined ? existing.epargne : ''}"
+          placeholder="${formatCurrency(snapshot.epargne).replace(/[^\d\s]/g, '').trim()}"
+          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
+          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          step="1">
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-300 flex-1">Immobilier</label>
+        <input type="number" name="actu-immobilier" value="${existing.immobilier !== undefined ? existing.immobilier : ''}"
+          placeholder="${formatCurrency(snapshot.immobilier).replace(/[^\d\s]/g, '').trim()}"
+          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
+          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          step="1">
+      </div>
+    </div>
+
+    ${Object.keys(existingPlac).length > 0 || existing.epargne !== undefined || existing.immobilier !== undefined
+      ? '<div class="mt-4 pt-3 border-t border-dark-400/30"><button id="actu-clear" class="text-xs text-red-400 hover:text-red-300 transition">Supprimer cette actualisation</button></div>'
+      : ''}
+  `;
+
+  const modal = openModal(`Actualiser fin ${calendarYear}`, body, () => {
+    const modalBody = document.getElementById('modal-body');
+    const actu = { placements: {} };
+    let hasAny = false;
+
+    // Collect placement values
+    placements.forEach(p => {
+      const input = modalBody.querySelector(`[name="plac-${p.id}"]`);
+      if (input && input.value !== '') {
+        actu.placements[p.id] = Number(input.value);
+        hasAny = true;
+      }
+    });
+
+    // Collect épargne/immobilier
+    const eparInput = modalBody.querySelector('[name="actu-epargne"]');
+    if (eparInput && eparInput.value !== '') {
+      actu.epargne = Number(eparInput.value);
+      hasAny = true;
+    }
+    const immoInput = modalBody.querySelector('[name="actu-immobilier"]');
+    if (immoInput && immoInput.value !== '') {
+      actu.immobilier = Number(immoInput.value);
+      hasAny = true;
+    }
+
+    // Save
+    const allActu = { ...actualisations };
+    if (hasAny) {
+      if (Object.keys(actu.placements).length === 0) delete actu.placements;
+      allActu[String(calendarYear)] = actu;
+    } else {
+      delete allActu[String(calendarYear)];
+    }
+    store.set('parametres.actualisations', allActu);
+    navigate('projection');
+  });
+
+  // Clear button
+  modal.querySelector('#actu-clear')?.addEventListener('click', () => {
+    const allActu = { ...actualisations };
+    delete allActu[String(calendarYear)];
+    store.set('parametres.actualisations', allActu);
+    modal.remove();
+    navigate('projection');
+  });
 }
 
 function openTransferModal(store, navigate, editItem = null) {
@@ -1035,6 +1154,15 @@ export function mount(store, navigate) {
         store.removeItem('actifs.placements', btn.dataset.id);
         navigate('projection');
       }
+    });
+  });
+
+  // Actualisation buttons (enter real values for past years)
+  document.querySelectorAll('.btn-actualiser').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const year = parseInt(btn.dataset.year);
+      openActualisationModal(store, navigate, year, snapshots);
     });
   });
 

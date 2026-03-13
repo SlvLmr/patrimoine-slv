@@ -156,6 +156,9 @@ export function computeProjection(store) {
   });
   const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : (params.rendementEpargne || 0.02);
 
+  // Actualisations: real values entered by user for past years
+  const actualisations = params.actualisations || {};
+
   // Capital transfers (épargne/héritage → placement)
   const capitalTransfers = params.capitalTransfers || [];
 
@@ -274,6 +277,7 @@ export function computeProjection(store) {
     }
   });
 
+  const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const snapshots = [];
   let immo = totalImmo;
   let epar = totalEpar;
@@ -607,24 +611,70 @@ export function computeProjection(store) {
       groupGains[ps.groupKey] += Math.max(0, ps.totalGains);
     });
 
-    const totalPlacements = groupKeys.reduce((s, k) => s + groupValues[k], 0);
-
-    // Cash après impôt = total placement value - taxes on gains
-    const cashApresImpot = Math.round(totalPlacements - totalTaxes);
-
-    // Total liquidités nettes = placements after tax + épargne + heritage + comptes courants
-    const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
-    const totalLiquiditesNettes = Math.round(cashApresImpot + epar + heritage + ccTotal);
-
     const detail = {};
     const detailApports = {};
     const detailGains = {};
     const detailTaxes = {};
     const detailTaxRates = {};
+
+    // Check if user has entered real values for this calendar year
+    const calYearStr = String(currentCalendarYear + year);
+    const actu = actualisations[calYearStr];
+    const hasActu = actu && (actu.placements || actu.epargne !== undefined || actu.immobilier !== undefined);
+
+    // If actualisation exists, override simulation state with real values
+    // so future years project from actual performance
+    if (hasActu) {
+      if (actu.placements) {
+        placSims.forEach(ps => {
+          if (ps.id === '__cto_overflow__') return;
+          if (actu.placements[ps.id] !== undefined) {
+            const realValue = Number(actu.placements[ps.id]);
+            // Adjust gains: new gains = real value - apports
+            ps.totalGains = realValue - ps.totalApports;
+            ps.value = realValue;
+            if (ps.isAirLiquide && ps.prixAction > 0) {
+              ps.quantite = realValue / ps.prixAction;
+            }
+          }
+        });
+        // Recompute group values after actualisation
+        groupKeys.forEach(k => { groupValues[k] = 0; groupApports[k] = 0; groupGains[k] = 0; });
+        placSims.forEach(ps => {
+          groupValues[ps.groupKey] = (groupValues[ps.groupKey] || 0) + ps.value;
+          groupApports[ps.groupKey] = (groupApports[ps.groupKey] || 0) + ps.totalApports;
+          groupGains[ps.groupKey] = (groupGains[ps.groupKey] || 0) + Math.max(0, ps.totalGains);
+        });
+        // Recompute taxes from scratch
+        totalTaxes = 0;
+        totalApports = 0;
+        groupKeys.forEach(k => { groupTaxes[k] = 0; });
+        placSims.forEach(ps => {
+          const gains = Math.max(0, ps.totalGains);
+          const taxRate = getPlacementTaxRate(ps, year);
+          const tax = gains * taxRate;
+          totalTaxes += tax;
+          totalApports += ps.totalApports;
+          groupTaxes[ps.groupKey] = (groupTaxes[ps.groupKey] || 0) + tax;
+        });
+      }
+      if (actu.epargne !== undefined) {
+        epar = Number(actu.epargne);
+      }
+      if (actu.immobilier !== undefined) {
+        immo = Number(actu.immobilier);
+      }
+    }
+
+    // Compute final totals (after potential actualisation override)
+    const finalTotalPlacements = groupKeys.reduce((s, k) => s + (groupValues[k] || 0), 0);
+    const finalCashApresImpot = Math.round(finalTotalPlacements - totalTaxes);
+    const finalTotalLiquiditesNettes = Math.round(finalCashApresImpot + epar + heritage + ccTotal);
+
     groupKeys.forEach(k => {
-      detail[k] = Math.round(groupValues[k]);
-      detailApports[k] = Math.round(groupApports[k]);
-      detailGains[k] = Math.round(groupGains[k]);
+      detail[k] = Math.round(groupValues[k] || 0);
+      detailApports[k] = Math.round(groupApports[k] || 0);
+      detailGains[k] = Math.round(groupGains[k] || 0);
       detailTaxes[k] = Math.round(groupTaxes[k] || 0);
       detailTaxRates[k] = groupTaxRates[k] || 0;
     });
@@ -635,23 +685,25 @@ export function computeProjection(store) {
       label: `Fin ${currentCalendarYear + year}`,
       age: ageFinAnnee + year,
       isRetraite: (ageFinAnnee + year) === ageRetraite,
+      isActualise: !!hasActu,
+      placementById: Object.fromEntries(placSims.filter(ps => ps.id !== '__cto_overflow__').map(ps => [ps.id, Math.round(ps.value)])),
       immobilier: Math.round(immo),
       placementDetail: detail,
       placementApports: detailApports,
       placementGains: detailGains,
       placementTaxes: detailTaxes,
       placementTaxRates: detailTaxRates,
-      placements: Math.round(totalPlacements),
+      placements: Math.round(finalTotalPlacements),
       epargne: Math.round(epar),
       heritage: Math.round(heritage),
       interetsAnnuels: Math.round(Math.max(0, interetsAnnuels)),
       interetsCumules: Math.round(cumulInterets),
       totalApports: Math.round(totalApports),
-      totalTaxes: Math.round(totalTaxes),
-      cashApresImpot,
-      totalLiquiditesNettes,
+      totalTaxes: Math.round(Math.max(0, totalTaxes)),
+      cashApresImpot: finalCashApresImpot,
+      totalLiquiditesNettes: finalTotalLiquiditesNettes,
       totalDette: Math.round(totalDette),
-      patrimoineNet: Math.round(immo + totalPlacements + epar + heritage - totalDette),
+      patrimoineNet: Math.round(immo + finalTotalPlacements + epar + heritage - totalDette),
       revenusMensuels: Math.round(revenus),
       depensesMensuelles: Math.round(depenses),
       mensualites: Math.round(mensualitesTotales),
