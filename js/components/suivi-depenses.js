@@ -126,7 +126,7 @@ export function render(store) {
   const trRoundup = Number(trFeatures.roundup) || 0;
   const lblRoundup = trFeatures.lblRoundup || 'Round-up → CTO';
 
-  const soldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
+  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup;
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
