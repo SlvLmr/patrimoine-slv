@@ -117,24 +117,14 @@ export function render(store) {
   const depensesRougesTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
-  // Trade Republic features
-  // Intérêts : 2% annuel sur le solde courant, proratisé au mois
-  const trInterestRate = 0.02;
-  const trSoldeBase = baseSoldeTR + soldePrevTR;
-  const trInterets = Math.round(trSoldeBase * trInterestRate / 12 * 100) / 100;
-
-  // Saveback : 1% des paiements CB Trade Republic → portefeuille Bitcoin (cadeau TR, ne se déduit pas du solde)
-  // Les virements ne sont pas des paiements CB, donc exclus du saveback et du round-up
-  const trDepenseItems = items.filter(i => i.compte === 'Trade Republic');
-  const trCBItems = trDepenseItems.filter(i => (i.categorie || '') !== 'Virement');
-  const trSaveback = Math.round(trCBItems.reduce((s, i) => s + (Number(i.montant) || 0), 0) * 0.01 * 100) / 100;
-
-  // Round-up : arrondi à l'euro supérieur de chaque paiement CB → CTO (se déduit du solde)
-  const trRoundup = Math.round(trCBItems.reduce((s, i) => {
-    const montant = Number(i.montant) || 0;
-    const cents = montant % 1;
-    return s + (cents > 0.001 ? (1 - cents) : 0);
-  }, 0) * 100) / 100;
+  // Trade Republic features (editable values)
+  const trFeatures = store.get('trFeatures') || {};
+  const trInterets = Number(trFeatures.interets) || 0;
+  const lblInterets = trFeatures.lblInterets || 'Intérêts (2%/an)';
+  const trSaveback = Number(trFeatures.saveback) || 0;
+  const lblSaveback = trFeatures.lblSaveback || 'Saveback 1% → Bitcoin';
+  const trRoundup = Number(trFeatures.roundup) || 0;
+  const lblRoundup = trFeatures.lblRoundup || 'Round-up → CTO';
 
   const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup;
   // Archive data
@@ -289,16 +279,16 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblEnveloppe}</span>
             <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
-            <span class="text-[11px] text-gray-500">Intérêts (2%/an)</span>
+          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="interets">
+            <span class="text-[11px] text-gray-500">${lblInterets}</span>
             <span class="text-[11px] font-medium text-accent-green">+${formatCurrencyCents(trInterets)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
-            <span class="text-[11px] text-gray-500">Saveback 1% → Bitcoin</span>
+          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="saveback">
+            <span class="text-[11px] text-gray-500">${lblSaveback}</span>
             <span class="text-[11px] font-medium text-accent-amber">${formatCurrencyCents(trSaveback)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
-            <span class="text-[11px] text-gray-500">Round-up → CTO</span>
+          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="roundup">
+            <span class="text-[11px] text-gray-500">${lblRoundup}</span>
             <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
           </div>
           ${opsTR.length > 0 ? `
@@ -561,6 +551,30 @@ export function mount(store, navigate) {
           labels.enveloppeQuotidien = data.libelle;
           store.set('customLabels', labels);
         }
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit TR features (Intérêts, Saveback, Round-up)
+  const trFeatureMeta = {
+    interets: { valueKey: 'interets', lblKey: 'lblInterets', defaultLbl: 'Intérêts (2%/an)' },
+    saveback: { valueKey: 'saveback', lblKey: 'lblSaveback', defaultLbl: 'Saveback 1% → Bitcoin' },
+    roundup: { valueKey: 'roundup', lblKey: 'lblRoundup', defaultLbl: 'Round-up → CTO' },
+  };
+  document.querySelectorAll('[data-edit-tr-feature]').forEach(el => {
+    el.addEventListener('click', () => {
+      const feat = el.dataset.editTrFeature;
+      const meta = trFeatureMeta[feat];
+      const trFeatures = store.get('trFeatures') || {};
+      const currentLabel = trFeatures[meta.lblKey] || meta.defaultLbl;
+      const currentValue = Number(trFeatures[meta.valueKey]) || 0;
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue, 'number', 'step="0.01"');
+      openModal(currentLabel, body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        trFeatures[meta.valueKey] = Number(data.montant) || 0;
+        if (data.libelle) trFeatures[meta.lblKey] = data.libelle;
+        store.set('trFeatures', trFeatures);
         navigate('suivi-depenses');
       });
     });
