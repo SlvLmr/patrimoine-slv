@@ -79,6 +79,10 @@ export function render(store) {
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Placements</span>
               <button id="proj-add-plac-global" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-xl font-bold shadow-sm shadow-accent-green/20" title="Ajouter un placement">+</button>
+              <button id="btn-actu-rapide" class="ml-1 flex items-center gap-1 px-2.5 py-1.5 bg-dark-700/60 text-gray-400 text-[11px] rounded hover:bg-dark-600 hover:text-gray-300 transition font-medium" title="Actualisation rapide DCA">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Actu. rapide
+              </button>
             </div>
             ${(() => {
                 const groupIcons = {
@@ -1089,6 +1093,62 @@ export function mount(store, navigate) {
   // Global add button
   document.getElementById('proj-add-plac-global')?.addEventListener('click', () => {
     openAddPlacementModal(store, navigate, 'projection', null);
+  });
+
+  // --- Actualisation rapide DCA ---
+  document.getElementById('btn-actu-rapide')?.addEventListener('click', () => {
+    const placements = store.get('actifs.placements') || [];
+    const dcaItems = placements.filter(p => Number(p.dcaMensuel) > 0);
+    if (dcaItems.length === 0) {
+      alert('Aucun placement avec DCA actif. Éditez un placement et renseignez un montant DCA mensuel.');
+      return;
+    }
+
+    const now = new Date();
+    const moisLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+    const rows = dcaItems.map(p => {
+      const currentVal = Number(p.valeur) || Number(p.apport) || 0;
+      const dca = Number(p.dcaMensuel) || 0;
+      const estimated = currentVal + dca;
+      const gk = getPlacementGroupKey(p);
+      return `
+        <div class="flex items-center gap-3 py-2.5 border-b border-dark-400/30 last:border-0" data-actu-id="${p.id}">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm font-medium text-gray-200">${p.nom}</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-dark-600 text-gray-400">${gk}</span>
+            </div>
+            <div class="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+              <span>DCA ${formatCurrency(dca)}/m</span>
+              <span>·</span>
+              <span>Estimé ${formatCurrency(estimated)}</span>
+            </div>
+          </div>
+          <div class="w-32">
+            <input type="number" class="actu-val w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-right focus:border-accent-blue/50 focus:outline-none" value="${estimated}" step="0.01">
+          </div>
+        </div>`;
+    }).join('');
+
+    const body = `
+      <p class="text-xs text-gray-400 mb-3">Mettez à jour la valeur réelle de vos placements DCA après exécution chez votre courtier.</p>
+      <div class="bg-dark-800/30 rounded-lg px-3 py-1">
+        ${rows}
+      </div>
+    `;
+
+    openModal(`Actualisation — ${moisLabel}`, body, () => {
+      const modalBody = document.getElementById('modal-body');
+      modalBody.querySelectorAll('[data-actu-id]').forEach(row => {
+        const id = row.dataset.actuId;
+        const val = parseFloat(row.querySelector('.actu-val').value);
+        if (!isNaN(val)) {
+          store.updateItem('actifs.placements', id, { valeur: val });
+        }
+      });
+      navigate('projection');
+    });
   });
 
   // Click on placement card to edit
