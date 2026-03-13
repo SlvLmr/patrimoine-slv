@@ -203,13 +203,9 @@ export function render(store) {
             <span class="text-xs text-gray-500">Solde mois précédent</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-oblig="cic">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="cic">
             <span class="text-xs text-gray-500">Solde obligatoire</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldeObligCIC)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4">
-            <span class="text-xs text-gray-500">A récupérer NDF</span>
-            <span class="text-xs font-medium text-accent-green">${formatCurrencyCents(aRecupererNDF)}</span>
           </div>
           ${opsCIC.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-cic">
@@ -268,9 +264,13 @@ export function render(store) {
             <span class="text-xs text-gray-500">Solde mois précédent</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="tr">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-oblig="tr">
             <span class="text-xs text-gray-500">Solde obligatoire</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldeObligTR)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4">
+            <span class="text-xs text-gray-500">A récupérer NDF</span>
+            <span class="text-xs font-medium text-accent-green">${formatCurrencyCents(aRecupererNDF)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
             <span class="text-[11px] text-gray-500">Intérêts (2%/an)</span>
