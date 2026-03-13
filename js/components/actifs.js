@@ -325,17 +325,13 @@ export function render(store) {
   // Row 3: Emprunts + Héritage
   const row3 = [fixedSections.emprunts, fixedSections.heritage];
 
-  // DCA placements for quick update
-  const dcaPlacements = placements.filter(p => Number(p.dcaMensuel) > 0);
-  const hasDca = dcaPlacements.length > 0;
-
   const addPlacBtn = envelopeSections.length === 0
     ? `<div class="flex justify-center"><button id="btn-add-plac" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un placement</button></div>`
     : `<div class="flex items-center justify-between">
-        ${hasDca ? `<button id="btn-actu-rapide" class="flex items-center gap-1.5 px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">
+        <button id="btn-actu-rapide" class="flex items-center gap-1.5 px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           Actualisation rapide
-        </button>` : '<span></span>'}
+        </button>
         <button id="btn-add-plac" class="px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">+ Nouveau placement</button>
       </div>`;
 
@@ -439,7 +435,10 @@ export function mount(store, navigate) {
   document.getElementById('btn-actu-rapide')?.addEventListener('click', () => {
     const placements = store.get('actifs.placements') || [];
     const dcaItems = placements.filter(p => Number(p.dcaMensuel) > 0);
-    if (dcaItems.length === 0) return;
+    if (dcaItems.length === 0) {
+      alert('Aucun placement avec DCA actif. Éditez un placement et renseignez un montant DCA mensuel.');
+      return;
+    }
 
     const now = new Date();
     const moisLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
