@@ -199,6 +199,32 @@ function initProfileSwitcher() {
           Nouveau profil
         </button>
       </div>
+      <div class="border-t border-dark-400 space-y-0">
+        <button id="dd-export" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Exporter
+        </button>
+        <button id="dd-import" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Importer
+        </button>
+        <button id="dd-reset" class="w-full text-left px-4 py-2.5 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Réinitialiser
+        </button>
+        <button id="dd-logout" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Déconnexion
+        </button>
+      </div>
     `;
 
     container.appendChild(dropdown);
@@ -250,6 +276,40 @@ function initProfileSwitcher() {
         store.switchProfile(id);
         dropdown.remove();
         renderPage();
+      }
+    });
+
+    // Export
+    dropdown.querySelector('#dd-export')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      dropdown.remove();
+      exportLocal();
+    });
+
+    // Import
+    dropdown.querySelector('#dd-import')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      dropdown.remove();
+      importLocal();
+    });
+
+    // Reset
+    dropdown.querySelector('#dd-reset')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const profile = store.getActiveProfile();
+      if (confirm(`Réinitialiser le profil "${profile.name}" ? Cette action est irréversible.`)) {
+        store.reset();
+        dropdown.remove();
+        renderPage();
+      }
+    });
+
+    // Logout
+    dropdown.querySelector('#dd-logout')?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      if (confirm('Se déconnecter ? Tes données locales seront conservées.')) {
+        await firebaseLogout();
+        window.location.reload();
       }
     });
 
@@ -389,44 +449,6 @@ function importLocal() {
 }
 
 
-// Data management
-function initDataManagement() {
-  // Toggle advanced options
-  document.getElementById('btn-toggle-advanced')?.addEventListener('click', () => {
-    const panel = document.getElementById('advanced-actions');
-    const arrow = document.getElementById('advanced-arrow');
-    if (panel) {
-      panel.classList.toggle('hidden');
-      if (arrow) arrow.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
-    }
-  });
-
-  // --- Export (direct JSON) ---
-  document.getElementById('btn-export')?.addEventListener('click', () => {
-    exportLocal();
-  });
-
-  // --- Import (direct JSON) ---
-  document.getElementById('btn-import')?.addEventListener('click', () => {
-    importLocal();
-  });
-
-  document.getElementById('btn-reset')?.addEventListener('click', () => {
-    const profile = store.getActiveProfile();
-    if (confirm(`Réinitialiser le profil "${profile.name}" ? Cette action est irréversible.`)) {
-      store.reset();
-      renderPage();
-    }
-  });
-
-  document.getElementById('btn-logout-advanced')?.addEventListener('click', async () => {
-    if (confirm('Se déconnecter ? Tes données locales seront conservées.')) {
-      await firebaseLogout();
-      window.location.reload();
-    }
-  });
-
-}
 
 // Show login screen (replaces the whole page)
 function showLoginScreen() {
@@ -502,7 +524,6 @@ function showApp() {
     initProfileSwitcher();
     initMobileMenu();
     initSidebarCollapse();
-    initDataManagement();
     appStarted = true;
 
     // Start background Bourse refresh & do initial fetch

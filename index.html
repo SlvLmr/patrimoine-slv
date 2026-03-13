@@ -12,7 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
   <link rel="stylesheet" href="css/custom.css">
-  <script type="module" src="js/app.js?v=7"></script>
+  <script type="module" src="js/app.js?v=8"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -97,7 +97,7 @@
     </button>
 
     <!-- Profile switcher -->
-    <div id="profile-switcher" class="relative px-4 py-2 border-b border-dark-400/20 cursor-pointer hover:bg-dark-700 transition">
+    <div id="profile-switcher" class="relative mx-4 mt-2 mb-1 py-2 px-4 border-b border-dark-400/20 cursor-pointer hover:bg-dark-700 rounded-xl transition">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
@@ -121,41 +121,6 @@
       <!-- Populated by JS -->
     </div>
 
-    <!-- Bottom actions -->
-    <div class="p-4 border-t border-dark-400/20 space-y-1">
-      <button id="btn-toggle-advanced" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-500 hover:text-gray-300 rounded-lg transition">
-        <svg id="advanced-arrow" class="w-4 h-4 flex-shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-        </svg>
-        <span class="text-xs">Outils avancés</span>
-      </button>
-      <div id="advanced-actions" class="hidden space-y-1">
-        <button id="btn-export" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-accent-green hover:bg-dark-600 rounded-lg transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <span class="bottom-label">Exporter</span>
-        </button>
-        <button id="btn-import" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-accent-green hover:bg-dark-600 rounded-lg transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-          </svg>
-          <span class="bottom-label">Importer</span>
-        </button>
-        <button id="btn-reset" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-          <span class="bottom-label">Réinitialiser</span>
-        </button>
-        <button id="btn-logout-advanced" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-gray-300 hover:bg-dark-600 rounded-lg transition">
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-          </svg>
-          <span class="bottom-label">Déconnexion</span>
-        </button>
-      </div>
-    </div>
   </aside>
 
   <!-- Main content -->
