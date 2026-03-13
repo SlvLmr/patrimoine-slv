@@ -121,7 +121,7 @@ export function render(store) {
 
   return `
     <div class="space-y-0">
-      <h1 class="text-2xl font-bold text-gray-100 mb-4">Portefeuille Live</h1>
+      <h1 class="text-2xl font-bold text-gray-100 mb-4">Portefeuille actuel</h1>
 
       <!-- LEVEL 1 — Patrimoine net -->
       <div class="flex justify-center">

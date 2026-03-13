@@ -453,7 +453,7 @@ export function render(store) {
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between flex-wrap gap-3">
-        <h1 class="text-2xl font-bold text-gray-100">Bourse Live</h1>
+        <h1 class="text-2xl font-bold text-gray-100">Wall Street</h1>
         <div class="flex items-center gap-2">
           <button id="btn-add-ticker" class="px-4 py-2 bg-dark-600 border border-dark-400 text-gray-300 text-sm rounded-lg hover:bg-dark-500 transition font-medium flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

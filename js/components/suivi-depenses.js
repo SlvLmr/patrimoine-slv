@@ -180,7 +180,7 @@ export function render(store) {
   return `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-100">Quotidien Live</h1>
+        <h1 class="text-2xl font-bold text-gray-100">Vie quotidienne</h1>
         <div class="flex items-center gap-3">
           <button id="btn-archive-month" class="px-4 py-2 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-sm rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
