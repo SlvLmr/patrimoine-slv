@@ -189,12 +189,9 @@ export function render(store) {
           <p class="text-lg font-bold text-amber-500 mb-1 text-center">${fmt(totalImmo)}</p>
           <div class="space-y-1 mt-1 border-t border-dark-400/20 pt-1">
             ${immobilier.length > 0 ? immobilier.map(i => `
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1.5 min-w-0">
+            <div class="flex items-center justify-center gap-1.5">
                 <div class="w-1 h-1 rounded-full bg-amber-500/50 flex-shrink-0"></div>
-                <span class="text-[9px] text-gray-400 truncate">${i.nom}</span>
-              </div>
-              <span class="text-[9px] text-gray-300 font-medium flex-shrink-0 ml-1">${fmt(Number(i.valeurActuelle) || 0)}</span>
+                <span class="text-[9px] text-gray-400">${i.nom}</span>
             </div>`).join('') : '<p class="text-[9px] text-gray-600">Aucun bien</p>'}
           </div>
         </div>
