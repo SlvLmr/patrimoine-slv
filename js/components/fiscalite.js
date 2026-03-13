@@ -638,6 +638,12 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       droitsAvant: avantCycle1.droits,
       droitsApres: apresCycle1.droits,
       economie: avantCycle1.droits - apresCycle1.droits,
+    })),
+    suggestions: enfants.map(enf => ({
+      enfantId: enf.id,
+      type: 'don_manuel',
+      montant: donnableParEnfantCycle1,
+      annee: startYear
     }))
   });
 
@@ -744,6 +750,12 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
           droitsAvant: droitsSuccImmoParEnfant,
           droitsApres: droitsNPParEnfant,
           economie: droitsSuccImmoParEnfant - droitsNPParEnfant,
+        })),
+        suggestions: enfants.map(enf => ({
+          enfantId: enf.id,
+          type: 'donation_nue_propriete',
+          montant: Math.round(startPatrimoine.immobilier / nbEnfants),
+          annee: currentYear + (bestAge - ageDonateur)
         }))
       });
     }
@@ -803,6 +815,12 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         droitsAvant: calculerDroitsDonation(donnableParEnfantC2),
         droitsApres: 0,
         economie: calculerDroitsDonation(donnableParEnfantC2),
+      })),
+      suggestions: enfants.map(enf => ({
+        enfantId: enf.id,
+        type: 'don_manuel',
+        montant: donnableParEnfantC2,
+        annee: cycle2Year
       }))
     });
   }
@@ -901,6 +919,12 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         droitsAvant: calculerDroitsDonation(DON_FAMILIAL_TEPA),
         droitsApres: 0,
         economie: calculerDroitsDonation(DON_FAMILIAL_TEPA),
+      })),
+      suggestions: enfants.map(enf => ({
+        enfantId: enf.id,
+        type: 'don_tepa',
+        montant: DON_FAMILIAL_TEPA,
+        annee: currentYear + (79 - ageDonateur)
       }))
     });
   }
@@ -950,6 +974,12 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         droitsAvant: calculerDroitsDonation(donnableParEnfantC3),
         droitsApres: 0,
         economie: calculerDroitsDonation(donnableParEnfantC3),
+      })),
+      suggestions: enfants.map(enf => ({
+        enfantId: enf.id,
+        type: 'don_manuel',
+        montant: donnableParEnfantC3,
+        annee: cycle3Year
       }))
     });
   }
@@ -1020,6 +1050,126 @@ function renderConseilsHTML(conseils, enfants) {
       </div>
     </details>`;
   }).join('');
+}
+
+// Unified plan rendering — merges timeline + conseils into a single vertical flow
+function renderPlanUnifieHTML(timeline, enfants) {
+  if (!timeline || timeline.length === 0) return '<p class="text-sm text-gray-500 text-center py-4">Ajoutez des enfants pour voir votre plan</p>';
+
+  const totalEconomie = timeline.reduce((s, ev) =>
+    s + (ev.impactParEnfant || []).reduce((s2, c) => s2 + (c.economie || 0), 0), 0);
+
+  const TAG_COLORS = {
+    'Sécurisation': 'accent-blue', 'Levier x2': 'accent-green', 'Levier couple': 'accent-green',
+    'Optimisation': 'accent-cyan', 'Bonus': 'accent-purple', 'Préparation': 'accent-amber',
+    'Mécanisme clé': 'accent-cyan', 'Stratégie avancée': 'accent-purple', 'Timing': 'accent-amber',
+    'Protection': 'accent-red', 'Sécurité': 'accent-red', 'Précision': 'accent-cyan',
+    'Purge PV': 'accent-green', 'Purge PV massive': 'accent-green', 'Rappel TEPA': 'accent-amber',
+    'Compensation': 'accent-amber', 'Génération suivante': 'accent-purple', 'Multi-générationnel': 'accent-purple',
+    'Réévaluation': 'accent-blue', 'AV optimale': 'accent-purple', 'Stratégie CTO': 'accent-green',
+    'Rappel': 'accent-amber', 'Urgence': 'accent-red', 'Clause clé': 'accent-purple',
+    'Organisation': 'accent-blue', 'Dernière chance': 'accent-red', 'Après 70 ans': 'accent-amber',
+    'Deadline': 'accent-red', 'Cumul': 'accent-cyan',
+  };
+
+  const heroHTML = totalEconomie > 0 ? `
+    <div class="relative bg-gradient-to-r from-accent-green/10 via-accent-cyan/5 to-accent-blue/10 border border-accent-green/20 rounded-xl p-4 mb-4 overflow-hidden">
+      <div class="absolute top-0 right-0 w-32 h-32 bg-accent-green/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+      <div class="relative flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-accent-green/20 flex items-center justify-center text-xl shrink-0">🎯</div>
+        <div>
+          <h3 class="text-sm font-bold text-accent-green">Objectif : économiser ${formatCurrency(totalEconomie)} de droits</h3>
+          <p class="text-xs text-gray-300 mt-0.5">Suivez ces ${timeline.length} étapes adaptées à votre profil. Chaque montant tient compte de vos liquidités réelles.</p>
+        </div>
+      </div>
+    </div>` : '';
+
+  let stepNum = 0;
+  const stepsHTML = timeline.map((ev, idx) => {
+    stepNum++;
+    const stepEco = (ev.impactParEnfant || []).reduce((s, e) => s + (e.economie || 0), 0);
+    const isInvest = ev.type === 'pea_plein';
+    const borderColor = `border-${ev.color}`;
+    const stepBg = `bg-${ev.color}`;
+
+    return `
+    <details class="group plan-step rounded-xl overflow-hidden border-l-4 ${borderColor} bg-dark-800/20 hover:bg-dark-800/40 transition" data-event-idx="${idx}">
+      <summary class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
+        <div class="w-8 h-8 rounded-lg ${stepBg} text-dark-900 flex items-center justify-center text-xs font-black shrink-0">${stepNum}</div>
+        <span class="text-lg shrink-0">${ev.icon}</span>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-bold text-gray-100">${ev.titre}</h3>
+          <p class="text-[10px] text-gray-500 mt-0.5 flex items-center gap-2">
+            <span class="px-1.5 py-0.5 rounded bg-${ev.color}/10 text-${ev.color} font-bold">${ev.annee}</span>
+            <span>${ev.age} ans</span>
+          </p>
+        </div>
+        ${stepEco > 0 ? `<div class="text-right shrink-0 mr-2">
+          <p class="text-sm font-bold text-accent-green">-${formatCurrency(stepEco)}</p>
+          <p class="text-[9px] text-gray-500 uppercase tracking-wide">de droits</p>
+        </div>` : isInvest ? `<div class="text-right shrink-0 mr-2">
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-accent-blue/15 text-accent-blue">Stratégie</span>
+        </div>` : ''}
+        <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="px-4 pb-4 border-t border-dark-400/10 ml-11">
+        <p class="text-xs text-gray-400 leading-relaxed mt-3 mb-3">${ev.description}</p>
+
+        ${ev.impactParEnfant && ev.impactParEnfant.some(c => c.droitsAvant !== undefined && c.economie > 0) ? `
+        <div class="grid grid-cols-1 ${ev.impactParEnfant.length >= 2 ? 'md:grid-cols-' + Math.min(ev.impactParEnfant.length, 4) : ''} gap-2 mb-3">
+          ${ev.impactParEnfant.map((child, i) => {
+            const color = CHILD_COLORS[i % CHILD_COLORS.length];
+            return child.droitsAvant !== undefined ? `
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-900/40 border border-${color}/15">
+              <div class="w-6 h-6 rounded-full bg-${color}/20 border border-${color}/30 flex items-center justify-center text-[10px] font-bold text-${color}">${(child.prenom || '?')[0].toUpperCase()}</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-medium text-gray-300">${child.prenom}</p>
+                ${child.montantRecu ? `<p class="text-[10px] text-gray-500">Reçoit ${formatCurrency(child.montantRecu)}</p>` : ''}
+              </div>
+              ${child.economie > 0 ? `<span class="text-[11px] font-bold text-accent-green whitespace-nowrap">-${formatCurrency(child.economie)}</span>` : ''}
+            </div>` : '';
+          }).join('')}
+        </div>` : ''}
+
+        ${ev.suggestions && ev.suggestions.length > 0 ? `
+        <div class="flex gap-2 flex-wrap mb-3">
+          ${ev.suggestions.map(s => `
+            <button class="conseil-apply px-3 py-1.5 rounded-lg bg-accent-green/10 text-accent-green text-[11px] font-medium hover:bg-accent-green/20 border border-accent-green/20 transition"
+              data-enfant-id="${s.enfantId}" data-type="${s.type}" data-montant="${s.montant}" data-annee="${s.annee}">
+              + Appliquer pour ${enfants.find(e => e.id === s.enfantId)?.prenom || '?'}
+            </button>
+          `).join('')}
+        </div>` : ''}
+
+        ${ev.conseilExpert && ev.conseilExpert.length > 0 ? `
+        <details class="group/tips rounded-lg overflow-hidden bg-dark-900/20 border border-dark-400/10">
+          <summary class="flex items-center gap-2 px-3 py-2 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none text-[11px] text-accent-amber font-medium">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            ${ev.conseilExpert.length} conseil${ev.conseilExpert.length > 1 ? 's' : ''} d'expert
+            <svg class="w-3 h-3 ml-auto text-gray-500 transition-transform group-open/tips:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-3 pb-3 pt-1 border-t border-dark-400/5 space-y-1.5">
+            ${ev.conseilExpert.map(tip => {
+              const tagColor = TAG_COLORS[tip.tag] || 'accent-cyan';
+              return `
+              <details class="group/tip rounded-lg overflow-hidden bg-dark-900/30 border border-dark-400/10 hover:border-${tagColor}/20 transition">
+                <summary class="flex items-center gap-2 px-3 py-1.5 cursor-pointer select-none [&::-webkit-details-marker]:hidden list-none">
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-${tagColor}/15 text-${tagColor} shrink-0">${tip.tag}</span>
+                  <span class="text-[11px] font-medium text-gray-300 flex-1">${tip.titre}</span>
+                  <svg class="w-3 h-3 text-gray-500 shrink-0 transition-transform group-open/tip:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="px-3 pb-2 pt-1 border-t border-dark-400/5">
+                  <p class="text-[11px] text-gray-400 leading-relaxed">${tip.detail}</p>
+                </div>
+              </details>`;
+            }).join('')}
+          </div>
+        </details>` : ''}
+      </div>
+    </details>`;
+  }).join('');
+
+  return heroHTML + `<div class="space-y-2">${stepsHTML}</div>`;
 }
 
 function renderImpactHTML(totalDroitsSansdon, succSansdon, totalFiscaliteAvecdon, totalDonne, totalDroitsDonation, patrimoineResiduelHorsAV, totalDroitsSuccResiduelle, economie, patrimoine) {
@@ -1284,11 +1434,6 @@ export function render(store) {
   const totalFiscaliteAvecdon = totalDroitsDonation + totalDroitsSuccResiduelle;
   const economie = totalDroitsSansdon - totalFiscaliteAvecdon;
 
-  // === CONSEILS PERSONNALISÉS ===
-  const conseils = nbEnfants > 0
-    ? genererConseils(patrimoine, snap, enfants, cfg.donations || [], ageDonateur, currentYear, store)
-    : [];
-
   // === ANNÉE DE DÉPART DU PLAN ===
   const abattTotalParEnfant = ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA;
   const abattTotalFamille = abattTotalParEnfant * nbEnfants;
@@ -1401,17 +1546,19 @@ export function render(store) {
         `}
       </div>
 
-      <!-- PLAN D'ACTION RECOMMANDÉ (timeline) — above conseils -->
+      <!-- STRATÉGIE PATRIMONIALE UNIFIÉE -->
       ${timeline.length > 0 ? `
       <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-green/30 to-accent-cyan/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
           </div>
-          <h2 class="text-sm font-bold text-gray-200">Plan d'action recommandé</h2>
-          <span class="text-xs text-gray-500 ml-2">Cliquez sur une étape pour voir l'impact</span>
+          <div>
+            <h2 class="text-sm font-bold text-gray-200">Votre stratégie patrimoniale</h2>
+            <p class="text-[10px] text-gray-500" id="plan-subtitle">${timeline.length} étapes personnalisées · Début en ${cfg.anneeDepartPlan || anneeDepart || currentYear}</p>
+          </div>
           <div class="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg ${anneeDepart ? 'bg-accent-green/10 border border-accent-green/20' : 'bg-accent-amber/10 border border-accent-amber/20'}">
             <svg class="w-3.5 h-3.5 ${anneeDepart ? 'text-accent-green' : 'text-accent-amber'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <div>
@@ -1424,28 +1571,8 @@ export function render(store) {
             </div>
           </div>
         </div>
-        <div id="timeline-container">
-          ${renderTimelineHTML(timeline, ageDonateur)}
-        </div>
-      </div>
-      ` : ''}
-
-      <!-- CONSEILLER FISCAL (mis à jour dynamiquement par le slider) -->
-      ${conseils.length > 0 ? `
-      <div class="card-dark rounded-xl p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-amber/30 to-accent-amber/10 flex items-center justify-center">
-            <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-gray-200">Conseiller fiscal & investissement</h2>
-            <p class="text-[10px] text-gray-500" id="conseils-subtitle">Recommandations basées sur votre patrimoine en ${snap?.calendarYear || currentYear}</p>
-          </div>
-        </div>
-        <div class="space-y-2" id="conseils-container">
-          ${renderConseilsHTML(conseils, enfants)}
+        <div id="plan-container">
+          ${renderPlanUnifieHTML(timeline, enfants)}
         </div>
       </div>
       ` : ''}
@@ -1646,16 +1773,21 @@ export function mount(store, navigate) {
     });
   }
 
-  // Helper: rebuild timeline with current state
+  // Helper: rebuild unified plan with current state
   function rebuildTimeline(snapPatrimoine) {
     const c = getConfig(store);
     const anneeDepart = computeAnneeDepart();
     const planStartYear = c.anneeDepartPlan || anneeDepart || currentYear;
     const timeline = genererTimeline(snapshots, snapPatrimoine || patrimoine, enfants, ageDonateur, currentYear, store, planStartYear);
-    const container = document.getElementById('timeline-container');
+    currentTimeline = timeline;
+    const container = document.getElementById('plan-container');
+    const subtitle = document.getElementById('plan-subtitle');
     if (container) {
-      container.innerHTML = renderTimelineHTML(timeline, ageDonateur);
-      bindTimelineEvents(timeline);
+      container.innerHTML = renderPlanUnifieHTML(timeline, enfants);
+      bindConseilApply();
+    }
+    if (subtitle) {
+      subtitle.textContent = `${timeline.length} étapes personnalisées · Début en ${planStartYear}`;
     }
   }
 
@@ -1724,16 +1856,6 @@ export function mount(store, navigate) {
         patrimoineHorsAV: (s.patrimoineNet || 0) - patrimoine.assuranceVie,
       };
 
-      // Rebuild conseils
-      const conseilsContainer = document.getElementById('conseils-container');
-      const conseilsSubtitle = document.getElementById('conseils-subtitle');
-      if (conseilsContainer && nbEnfants > 0) {
-        const newConseils = genererConseils(snapPatrimoine, s, enfants, cfg.donations || [], ageDonateur, currentYear, store);
-        conseilsContainer.innerHTML = renderConseilsHTML(newConseils, enfants);
-        if (conseilsSubtitle) conseilsSubtitle.textContent = `Recommandations basées sur votre patrimoine en ${s.calendarYear}`;
-        bindConseilApply();
-      }
-
       // Rebuild impact section with patrimoine at selected year
       const impactContainer = document.getElementById('impact-container');
       const impactSubtitle = document.getElementById('impact-subtitle');
@@ -1796,12 +1918,12 @@ export function mount(store, navigate) {
     navigate('enfants');
   });
 
-  // --- Initial timeline binding ---
+  // --- Initial plan binding ---
   {
     const anneeDepart = computeAnneeDepart();
     const planStartYear = cfg.anneeDepartPlan || anneeDepart || currentYear;
     const timeline = genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYear, store, planStartYear);
-    bindTimelineEvents(timeline);
+    currentTimeline = timeline;
   }
 
   // --- Ajouter donation ---
