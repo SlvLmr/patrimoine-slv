@@ -15,14 +15,13 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, doc, setDoc, getDoc }
   from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-// ⬇️ REMPLACE CETTE CONFIG PAR LA TIENNE ⬇️
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyADxr-G7gcQDDPEcNkxiMCCCnfeuaJ48p0",
+  authDomain: "horizon-4389d.firebaseapp.com",
+  projectId: "horizon-4389d",
+  storageBucket: "horizon-4389d.firebasestorage.app",
+  messagingSenderId: "210773564839",
+  appId: "1:210773564839:web:0fceb43e58c913ff002a82"
 };
 
 let app = null;
