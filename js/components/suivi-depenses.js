@@ -74,6 +74,13 @@ export function render(store) {
   const baseSoldeCIC = Number(comptesCourants.find(c => c.id === 'cc-cic')?.solde) || 0;
   const baseSoldeTR = Number(comptesCourants.find(c => c.id === 'cc-trade')?.solde) || 0;
 
+  // Custom labels
+  const labels = store.get('customLabels') || {};
+  const lblSoldeDebut = labels.soldeDebutMois || 'Solde début de mois';
+  const lblSoldeOblig = labels.soldeObligatoire || 'Solde obligatoire';
+  const lblNDF = labels.aRecupererNDF || 'A récupérer NDF';
+  const lblEnveloppe = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
+
   // Solde début de mois
   const soldePrecedent = store.get('soldeMoisPrecedent') || {};
   const soldePrevCIC = Number(soldePrecedent.cic) || 0;
@@ -206,11 +213,11 @@ export function render(store) {
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
-            <span class="text-xs text-gray-500">Solde début de mois</span>
+            <span class="text-xs text-gray-500">${lblSoldeDebut}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="cic">
-            <span class="text-xs text-gray-500">Solde obligatoire</span>
+            <span class="text-xs text-gray-500">${lblSoldeOblig}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
           </div>
           ${opsCIC.length > 0 ? `
@@ -267,19 +274,19 @@ export function render(store) {
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
-            <span class="text-xs text-gray-500">Solde début de mois</span>
+            <span class="text-xs text-gray-500">${lblSoldeDebut}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-oblig="tr">
-            <span class="text-xs text-gray-500">Solde obligatoire</span>
+            <span class="text-xs text-gray-500">${lblSoldeOblig}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
-            <span class="text-xs text-gray-500">A récupérer NDF</span>
+            <span class="text-xs text-gray-500">${lblNDF}</span>
             <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
-            <span class="text-xs text-gray-500">Enveloppe restante pour quotidien</span>
+            <span class="text-xs text-gray-500">${lblEnveloppe}</span>
             <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
@@ -479,14 +486,20 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-prev]').forEach(el => {
     el.addEventListener('click', () => {
       const key = el.dataset.editPrev; // 'cic' or 'tr'
-      const label = key === 'cic' ? 'CIC' : 'Trade Republic';
+      const bankLabel = key === 'cic' ? 'CIC' : 'Trade Republic';
       const prev = store.get('soldeMoisPrecedent') || {};
+      const labels = store.get('customLabels') || {};
+      const currentLabel = labels.soldeDebutMois || 'Solde début de mois';
       const current = Number(prev[key]) || 0;
-      const body = inputField('solde', `Solde début de mois ${label} (€)`, current, 'number', 'step="0.01"');
-      openModal(`Solde début de mois — ${label}`, body, () => {
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant ${bankLabel} (€)`, current, 'number', 'step="0.01"');
+      openModal(`${currentLabel} — ${bankLabel}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         prev[key] = Number(data.solde) || 0;
         store.set('soldeMoisPrecedent', prev);
+        if (data.libelle && data.libelle !== currentLabel) {
+          labels.soldeDebutMois = data.libelle;
+          store.set('customLabels', labels);
+        }
         navigate('suivi-depenses');
       });
     });
@@ -496,14 +509,20 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-oblig]').forEach(el => {
     el.addEventListener('click', () => {
       const key = el.dataset.editOblig; // 'cic' or 'tr'
-      const label = key === 'cic' ? 'CIC' : 'Trade Republic';
+      const bankLabel = key === 'cic' ? 'CIC' : 'Trade Republic';
       const oblig = store.get('soldeObligatoire') || {};
+      const labels = store.get('customLabels') || {};
+      const currentLabel = labels.soldeObligatoire || 'Solde obligatoire';
       const current = Number(oblig[key]) || 0;
-      const body = inputField('solde', `Solde obligatoire ${label} (€)`, current, 'number', 'step="0.01"');
-      openModal(`Solde obligatoire — ${label}`, body, () => {
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant ${bankLabel} (€)`, current, 'number', 'step="0.01"');
+      openModal(`${currentLabel} — ${bankLabel}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         oblig[key] = Number(data.solde) || 0;
         store.set('soldeObligatoire', oblig);
+        if (data.libelle && data.libelle !== currentLabel) {
+          labels.soldeObligatoire = data.libelle;
+          store.set('customLabels', labels);
+        }
         navigate('suivi-depenses');
       });
     });
@@ -512,11 +531,17 @@ export function mount(store, navigate) {
   // Edit budget NDF
   document.querySelectorAll('[data-edit-budget-ndf]').forEach(el => {
     el.addEventListener('click', () => {
+      const labels = store.get('customLabels') || {};
+      const currentLabel = labels.aRecupererNDF || 'A récupérer NDF';
       const current = Number(store.get('budgetNDF')) || 789.99;
-      const body = inputField('budget', 'Budget NDF (€)', current, 'number', 'step="0.01"');
-      openModal('Budget NDF — Trade Republic', body, () => {
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget NDF (€)', current, 'number', 'step="0.01"');
+      openModal(`${currentLabel} — Trade Republic`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         store.set('budgetNDF', Number(data.budget) || 0);
+        if (data.libelle && data.libelle !== currentLabel) {
+          labels.aRecupererNDF = data.libelle;
+          store.set('customLabels', labels);
+        }
         navigate('suivi-depenses');
       });
     });
@@ -525,11 +550,17 @@ export function mount(store, navigate) {
   // Edit budget quotidien
   document.querySelectorAll('[data-edit-budget-quotidien]').forEach(el => {
     el.addEventListener('click', () => {
+      const labels = store.get('customLabels') || {};
+      const currentLabel = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
       const current = Number(store.get('budgetQuotidien')) || 700;
-      const body = inputField('budget', 'Budget quotidien (€)', current, 'number', 'step="0.01"');
-      openModal('Enveloppe quotidien — Trade Republic', body, () => {
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget quotidien (€)', current, 'number', 'step="0.01"');
+      openModal(`${currentLabel} — Trade Republic`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         store.set('budgetQuotidien', Number(data.budget) || 0);
+        if (data.libelle && data.libelle !== currentLabel) {
+          labels.enveloppeQuotidien = data.libelle;
+          store.set('customLabels', labels);
+        }
         navigate('suivi-depenses');
       });
     });
