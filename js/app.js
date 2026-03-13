@@ -789,8 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   } else {
-    // No Firebase configured — show login screen with setup option
-    showLoginScreen();
+    // No Firebase configured — go straight to app (local only)
+    showApp();
   }
 });
 

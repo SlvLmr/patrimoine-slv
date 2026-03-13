@@ -1,7 +1,6 @@
-import { isConfigured, login, register, logout, getCurrentUser, saveFirebaseConfig } from '../firebase-config.js';
+import { isConfigured, login, register, logout, getCurrentUser } from '../firebase-config.js';
 
 function renderLoginScreen() {
-  const configured = isConfigured();
   return `
     <div class="min-h-screen flex items-center justify-center p-4">
       <div class="w-full max-w-md">
@@ -25,7 +24,7 @@ function renderLoginScreen() {
           <p class="text-gray-500 text-sm">Simulateur patrimonial</p>
         </div>
 
-        ${configured ? renderAuthCard() : renderSetupCard()}
+        ${renderAuthCard()}
 
         <!-- Skip option -->
         <div class="text-center mt-6">
@@ -108,72 +107,10 @@ function renderAuthCard() {
   `;
 }
 
-function renderSetupCard() {
-  return `
-    <div class="card-dark rounded-2xl p-8">
-      <div class="text-center mb-6">
-        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-accent-amber/10 flex items-center justify-center">
-          <svg class="w-7 h-7 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
-          </svg>
-        </div>
-        <h2 class="text-lg font-semibold text-gray-100 mb-1">Synchronisation cloud</h2>
-        <p class="text-sm text-gray-500">Connecte Firebase pour accéder à tes données depuis n'importe quel appareil.</p>
-      </div>
-
-      <div id="auth-error" class="hidden mb-4 p-3 rounded-lg bg-accent-red/10 border border-accent-red/20 text-accent-red text-sm"></div>
-      <div id="auth-success" class="hidden mb-4 p-3 rounded-lg bg-accent-green/10 border border-accent-green/20 text-accent-green text-sm"></div>
-
-      <div id="setup-form" class="space-y-4">
-        <div>
-          <label class="block text-sm text-gray-400 mb-1.5">Configuration Firebase (JSON)</label>
-          <textarea id="firebase-config-input" rows="8"
-            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-xs text-gray-200 font-mono focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
-            placeholder='{
-  "apiKey": "AIza...",
-  "authDomain": "mon-projet.firebaseapp.com",
-  "projectId": "mon-projet",
-  "storageBucket": "mon-projet.appspot.com",
-  "messagingSenderId": "123456789",
-  "appId": "1:123456789:web:abc..."
-}'></textarea>
-        </div>
-        <div class="bg-dark-800/50 rounded-lg p-3 text-xs text-gray-500 space-y-1">
-          <p class="font-medium text-gray-400">Comment obtenir cette config :</p>
-          <ol class="list-decimal list-inside space-y-0.5">
-            <li>Va sur <span class="text-accent-amber">console.firebase.google.com</span></li>
-            <li>Crée un projet (ou utilise un existant)</li>
-            <li>Active <span class="text-gray-300">Authentication &gt; Email/Mot de passe</span></li>
-            <li>Crée une base <span class="text-gray-300">Firestore</span> (mode production)</li>
-            <li>Va dans <span class="text-gray-300">Paramètres &gt; Général</span> et copie la config</li>
-          </ol>
-        </div>
-        <button id="setup-save-btn"
-          class="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 hover:opacity-90 transition flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-          Configurer et continuer
-        </button>
-      </div>
-    </div>
-  `;
-}
-
 function mountLoginScreen(onSuccess, onSkip) {
-  const configured = isConfigured();
-
-  if (configured) {
-    mountAuthHandlers(onSuccess);
-  } else {
-    mountSetupHandler(onSuccess);
-  }
-
   // Skip
   document.getElementById('auth-skip')?.addEventListener('click', onSkip);
-}
 
-function mountAuthHandlers(onSuccess) {
   // Tab switching
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -237,40 +174,6 @@ function mountAuthHandlers(onSuccess) {
       showError(getFirebaseErrorMessage(err.code));
       btn.disabled = false;
       btn.innerHTML = 'Créer mon compte';
-    }
-  });
-}
-
-function mountSetupHandler(onSuccess) {
-  document.getElementById('setup-save-btn')?.addEventListener('click', () => {
-    const raw = document.getElementById('firebase-config-input')?.value?.trim();
-    hideMessages();
-
-    if (!raw) {
-      showError('Colle ta configuration Firebase (format JSON).');
-      return;
-    }
-
-    try {
-      const config = JSON.parse(raw);
-      if (!config.apiKey || !config.projectId) {
-        showError('La config doit contenir au moins apiKey et projectId.');
-        return;
-      }
-      // Save config to localStorage
-      saveFirebaseConfig(config);
-      // Reload the login screen with auth form
-      const container = document.querySelector('.min-h-screen');
-      if (container) {
-        container.closest('#app-content').innerHTML = renderLoginScreen();
-        mountLoginScreen(onSuccess, () => {
-          // Re-bind skip in case the screen is re-rendered
-          document.getElementById('auth-skip')?.click();
-        });
-        showSuccess('Firebase configuré ! Tu peux maintenant créer un compte ou te connecter.');
-      }
-    } catch (e) {
-      showError('Format JSON invalide. Copie la config exacte depuis Firebase Console.');
     }
   });
 }
