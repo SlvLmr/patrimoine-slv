@@ -126,12 +126,6 @@ function updateUserBar() {
     container.innerHTML = renderUserBar(user);
     // Show last sync time
     updateSyncStatus();
-    container.querySelector('#btn-logout')?.addEventListener('click', async () => {
-      if (confirm('Se déconnecter ? Tes données locales seront conservées.')) {
-        await firebaseLogout();
-        window.location.reload();
-      }
-    });
   } else {
     // Show login button (works whether Firebase is configured or not — setup flow handles unconfigured state)
     container.innerHTML = `
@@ -158,7 +152,7 @@ function updateSyncStatus(msg) {
   const lastSync = localStorage.getItem('patrimoine-slv-last-sync');
   if (lastSync) {
     const time = new Date(lastSync).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    el.innerHTML = `<span class="text-accent-green/60">Synchronisé</span> — ${time}`;
+    el.innerHTML = `<svg class="w-3 h-3 text-accent-green/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg><span class="text-accent-green/60">Synchronisé</span><span class="text-gray-600">— ${time}</span>`;
   }
 }
 
@@ -277,9 +271,11 @@ function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <h1 style="font-family:'Playfair Display',Georgia,serif;letter-spacing:-0.5px" class="logo-text text-4xl font-bold text-center bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
-      <span style="font-family:'Playfair Display',Georgia,serif" class="logo-icon hidden text-2xl font-bold bg-gradient-to-r from-accent-green to-accent-amber bg-clip-text text-transparent">H</span>
+      <h1 style="font-family:'Playfair Display',Georgia,serif;letter-spacing:-0.5px;cursor:pointer" class="logo-text text-4xl font-bold text-center bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent logo-text-halo logo-heartbeat">Horizon</h1>
+      <span style="font-family:'Playfair Display',Georgia,serif;cursor:pointer" class="logo-icon hidden text-2xl font-bold bg-gradient-to-r from-accent-green to-accent-amber bg-clip-text text-transparent">H</span>
     `;
+    logoContainer.style.cursor = 'pointer';
+    logoContainer.addEventListener('click', () => navigate('revenus-depenses'));
   }
   // Mobile
   const mobileLogo = document.getElementById('mobile-logo');
@@ -420,6 +416,13 @@ function initDataManagement() {
     if (confirm(`Réinitialiser le profil "${profile.name}" ? Cette action est irréversible.`)) {
       store.reset();
       renderPage();
+    }
+  });
+
+  document.getElementById('btn-logout-advanced')?.addEventListener('click', async () => {
+    if (confirm('Se déconnecter ? Tes données locales seront conservées.')) {
+      await firebaseLogout();
+      window.location.reload();
     }
   });
 

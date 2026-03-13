@@ -211,19 +211,17 @@ function getFirebaseErrorMessage(code) {
 function renderUserBar(user) {
   if (!user) return '';
   return `
-    <div class="flex items-center gap-2 px-4 py-2 text-xs text-gray-500">
-      <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-      </svg>
-      <span class="truncate">${user.email}</span>
+    <div class="px-4 py-3 space-y-1">
+      <div class="flex items-center gap-2 text-xs text-gray-400">
+        <div class="w-5 h-5 rounded-full bg-accent-green/20 flex items-center justify-center flex-shrink-0">
+          <svg class="w-3 h-3 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <span class="truncate flex-1">${user.email}</span>
+      </div>
+      <div id="cloud-sync-status" class="flex items-center gap-2 text-xs text-gray-600 pl-7"></div>
     </div>
-    <div id="cloud-sync-status" class="px-4 pb-1 text-xs text-gray-600"></div>
-    <button id="btn-logout" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-accent-red hover:bg-red-500/10 rounded-lg transition">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-      </svg>
-      Déconnexion
-    </button>
   `;
 }
 
