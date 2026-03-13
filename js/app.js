@@ -11,7 +11,7 @@ import * as SuiviDepenses from './components/suivi-depenses.js';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Bourse from './components/bourse.js';
 
-import { isGdriveConfigured, setClientId, saveToDrive, listDriveFiles, loadFromDrive } from './gdrive.js';
+import { isGdriveConfigured, setClientId, saveToDrive, listDriveFiles, loadFromDrive, isAutoSaveEnabled, setAutoSaveEnabled, onAutoSaveStatus } from './gdrive.js';
 
 const store = Store.init();
 
@@ -581,6 +581,76 @@ function showImportChoiceModal() {
   modal.querySelector('#import-gdrive')?.addEventListener('click', () => importFromDrive());
 }
 
+// --- Auto-save toggle & status ---
+function initAutoSaveToggle() {
+  const toggle = document.getElementById('btn-autosave-toggle');
+  const statusEl = document.getElementById('gdrive-autosave-status');
+  if (!toggle) return;
+
+  function updateToggleUI(enabled) {
+    const knob = toggle.querySelector('span');
+    if (enabled) {
+      toggle.classList.remove('bg-dark-500');
+      toggle.classList.add('bg-accent-green');
+      toggle.setAttribute('aria-checked', 'true');
+      knob.classList.remove('translate-x-0.5');
+      knob.classList.add('translate-x-5');
+    } else {
+      toggle.classList.remove('bg-accent-green');
+      toggle.classList.add('bg-dark-500');
+      toggle.setAttribute('aria-checked', 'false');
+      knob.classList.remove('translate-x-5');
+      knob.classList.add('translate-x-0.5');
+    }
+  }
+
+  // Init state
+  updateToggleUI(isAutoSaveEnabled());
+
+  toggle.addEventListener('click', () => {
+    const willEnable = !isAutoSaveEnabled();
+    if (willEnable && !isGdriveConfigured()) {
+      promptGdriveSetup(() => {
+        setAutoSaveEnabled(true);
+        updateToggleUI(true);
+      });
+      return;
+    }
+    setAutoSaveEnabled(willEnable);
+    updateToggleUI(willEnable);
+  });
+
+  // Listen for auto-save status changes
+  onAutoSaveStatus((status, detail) => {
+    if (!statusEl) return;
+    statusEl.classList.remove('hidden');
+    switch (status) {
+      case 'saving':
+        statusEl.textContent = 'Synchronisation Drive...';
+        statusEl.className = 'px-4 text-xs text-accent-amber';
+        break;
+      case 'saved':
+        statusEl.textContent = 'Drive OK — ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        statusEl.className = 'px-4 text-xs text-accent-green';
+        break;
+      case 'error':
+        statusEl.textContent = 'Erreur Drive';
+        statusEl.className = 'px-4 text-xs text-red-400';
+        break;
+      case 'enabled':
+        statusEl.textContent = 'Auto-sync activé';
+        statusEl.className = 'px-4 text-xs text-accent-green';
+        setTimeout(() => { statusEl.classList.add('hidden'); }, 2000);
+        break;
+      case 'disabled':
+        statusEl.textContent = 'Auto-sync désactivé';
+        statusEl.className = 'px-4 text-xs text-gray-500';
+        setTimeout(() => { statusEl.classList.add('hidden'); }, 2000);
+        break;
+    }
+  });
+}
+
 // Data management
 function initDataManagement() {
   // --- Export ---
@@ -600,6 +670,9 @@ function initDataManagement() {
       renderPage();
     }
   });
+
+  // Init auto-save toggle
+  initAutoSaveToggle();
 }
 
 // Show login screen (replaces the whole page)

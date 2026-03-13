@@ -4,11 +4,15 @@
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const APP_FOLDER = 'Patrimoine SLV';
+const AUTOSAVE_KEY = 'patrimoine-slv-gdrive-autosave';
+const AUTOSAVE_DEBOUNCE_MS = 5000; // 5 seconds debounce
 
 let gapiLoaded = false;
 let gisLoaded = false;
 let tokenClient = null;
 let gdriveClientId = null;
+let _autoSaveTimer = null;
+let _autoSaveListeners = [];
 
 // Load Google API scripts dynamically
 function loadScript(src) {
@@ -173,4 +177,49 @@ export async function loadFromDrive(fileId) {
     alt: 'media',
   });
   return typeof resp.body === 'string' ? resp.body : JSON.stringify(resp.result);
+}
+
+// --- Auto-save to Google Drive ---
+
+export function isAutoSaveEnabled() {
+  return localStorage.getItem(AUTOSAVE_KEY) === 'true';
+}
+
+export function setAutoSaveEnabled(enabled) {
+  localStorage.setItem(AUTOSAVE_KEY, enabled ? 'true' : 'false');
+  if (!enabled && _autoSaveTimer) {
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = null;
+  }
+  _notifyAutoSaveListeners(enabled ? 'enabled' : 'disabled');
+}
+
+export function onAutoSaveStatus(listener) {
+  _autoSaveListeners.push(listener);
+  return () => { _autoSaveListeners = _autoSaveListeners.filter(l => l !== listener); };
+}
+
+function _notifyAutoSaveListeners(status, detail) {
+  _autoSaveListeners.forEach(l => l(status, detail));
+}
+
+// Called by Store after each save — debounced
+export function scheduleAutoSave(profileName, exportDataFn) {
+  if (!isAutoSaveEnabled() || !isGdriveConfigured()) return;
+
+  if (_autoSaveTimer) clearTimeout(_autoSaveTimer);
+
+  _autoSaveTimer = setTimeout(async () => {
+    _autoSaveTimer = null;
+    _notifyAutoSaveListeners('saving');
+    try {
+      const filename = `patrimoine-${profileName.toLowerCase().replace(/\s+/g, '-')}.json`;
+      const data = exportDataFn();
+      await saveToDrive(data, filename);
+      _notifyAutoSaveListeners('saved', new Date());
+    } catch (err) {
+      console.error('Auto-save Drive error:', err);
+      _notifyAutoSaveListeners('error', err.message);
+    }
+  }, AUTOSAVE_DEBOUNCE_MS);
 }
