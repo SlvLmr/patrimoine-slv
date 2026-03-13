@@ -123,34 +123,32 @@
 
     <!-- Bottom actions -->
     <div class="p-4 border-t border-dark-400/20 space-y-1">
-      <button id="btn-export" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-accent-green hover:bg-dark-600 rounded-lg transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      <button id="btn-toggle-advanced" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-500 hover:text-gray-300 rounded-lg transition">
+        <svg id="advanced-arrow" class="w-4 h-4 flex-shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
         </svg>
-        <span class="bottom-label">Sauvegarder</span>
+        <span class="text-xs">Outils avancés</span>
       </button>
-      <button id="btn-import" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-accent-green hover:bg-dark-600 rounded-lg transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-        </svg>
-        <span class="bottom-label">Importer</span>
-      </button>
-      <div id="gdrive-autosave-row" class="flex items-center gap-3 px-4 py-2">
-        <svg class="w-5 h-5 flex-shrink-0 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M4.433 22l3.069-5.32h12.932l-3.069 5.32H4.433zm7.065-12.283L4.49 22.001 1.42 16.68 8.427 4.397l3.07 5.32zm1.07-1.846L15.636 2h6.14l-7.009 12.154-3.199-6.283z"/>
-        </svg>
-        <span class="bottom-label text-sm text-gray-300 flex-1">Auto-sync Drive</span>
-        <button id="btn-autosave-toggle" class="relative w-10 h-5 rounded-full transition-colors duration-200" role="switch" aria-checked="false">
-          <span class="block w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 translate-x-0.5"></span>
+      <div id="advanced-actions" class="hidden space-y-1">
+        <button id="btn-export" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-accent-green hover:bg-dark-600 rounded-lg transition">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span class="bottom-label">Exporter (JSON)</span>
+        </button>
+        <button id="btn-import" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-accent-green hover:bg-dark-600 rounded-lg transition">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span class="bottom-label">Importer (JSON)</span>
+        </button>
+        <button id="btn-reset" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          <span class="bottom-label">Réinitialiser</span>
         </button>
       </div>
-      <div id="gdrive-autosave-status" class="px-4 text-xs text-gray-500 hidden"></div>
-      <button id="btn-reset" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        <span class="bottom-label">Réinitialiser</span>
-      </button>
     </div>
   </aside>
 

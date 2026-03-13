@@ -1,5 +1,5 @@
 import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud } from './firebase-config.js';
-import { scheduleAutoSave } from './gdrive.js';
+
 
 const PROFILES_KEY = 'patrimoine-slv-profiles';
 const ACTIVE_PROFILE_KEY = 'patrimoine-slv-active-profile';
@@ -205,14 +205,6 @@ function saveState(profileId, state) {
     // Cloud sync (fire and forget)
     const user = getCurrentUser();
     if (user) saveToCloud(user.uid, profileId, state);
-    // Google Drive auto-save (debounced)
-    const profiles = getProfiles();
-    const profile = profiles.find(p => p.id === profileId);
-    if (profile) {
-      scheduleAutoSave(profile.name, () => {
-        return JSON.stringify({ profile, data: state }, null, 2);
-      });
-    }
   } catch (e) {
     console.error('Erreur de sauvegarde:', e);
     alert('Erreur: espace de stockage insuffisant.');

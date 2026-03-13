@@ -11,7 +11,6 @@ import * as SuiviDepenses from './components/suivi-depenses.js';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Bourse from './components/bourse.js';
 
-import { isGdriveConfigured, setClientId, saveToDrive, listDriveFiles, loadFromDrive, isAutoSaveEnabled, setAutoSaveEnabled, onAutoSaveStatus } from './gdrive.js';
 
 const store = Store.init();
 
@@ -393,286 +392,27 @@ function importLocal() {
   input.click();
 }
 
-async function exportToDrive() {
-  if (!isGdriveConfigured()) {
-    promptGdriveSetup(() => exportToDrive());
-    return;
-  }
-  const profile = store.getActiveProfile();
-  const filename = `patrimoine-${profile.name.toLowerCase().replace(/\s+/g, '-')}.json`;
-  const data = store.exportData();
-  const statusEl = document.getElementById('gdrive-status');
-  if (statusEl) { statusEl.textContent = 'Envoi en cours...'; statusEl.className = 'text-sm text-accent-amber mt-3 text-center'; }
-  try {
-    await saveToDrive(data, filename);
-    if (statusEl) { statusEl.textContent = 'Sauvegardé sur Google Drive !'; statusEl.className = 'text-sm text-accent-green mt-3 text-center'; }
-    setTimeout(closeChoiceModal, 1500);
-  } catch (err) {
-    console.error('Google Drive save error:', err);
-    if (statusEl) { statusEl.textContent = 'Erreur : ' + err.message; statusEl.className = 'text-sm text-red-400 mt-3 text-center'; }
-  }
-}
-
-async function importFromDrive() {
-  if (!isGdriveConfigured()) {
-    promptGdriveSetup(() => importFromDrive());
-    return;
-  }
-  const statusEl = document.getElementById('gdrive-status');
-  if (statusEl) { statusEl.textContent = 'Chargement...'; statusEl.className = 'text-sm text-accent-amber mt-3 text-center'; }
-  try {
-    const files = await listDriveFiles();
-    if (!files.length) {
-      if (statusEl) { statusEl.textContent = 'Aucun fichier trouvé sur Drive.'; statusEl.className = 'text-sm text-gray-400 mt-3 text-center'; }
-      return;
-    }
-    // Show file picker
-    closeChoiceModal();
-    showDriveFilePicker(files);
-  } catch (err) {
-    console.error('Google Drive list error:', err);
-    if (statusEl) { statusEl.textContent = 'Erreur : ' + err.message; statusEl.className = 'text-sm text-red-400 mt-3 text-center'; }
-  }
-}
-
-function showDriveFilePicker(files) {
-  const modal = createChoiceModal(`
-    <div class="p-6 border-b border-dark-400/50">
-      <h3 class="text-lg font-semibold text-gray-100">Importer depuis Google Drive</h3>
-      <p class="text-xs text-gray-500 mt-1">Dossier : Patrimoine SLV</p>
-    </div>
-    <div class="p-4 space-y-2 max-h-64 overflow-y-auto">
-      ${files.map(f => `
-        <button class="gdrive-pick-file w-full text-left px-4 py-3 rounded-lg hover:bg-dark-500 transition flex items-center justify-between" data-id="${f.id}">
-          <div>
-            <p class="text-sm font-medium text-gray-200">${f.name}</p>
-            <p class="text-xs text-gray-500">${new Date(f.modifiedTime).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-          </div>
-          <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-          </svg>
-        </button>
-      `).join('')}
-    </div>
-    <div class="p-4 border-t border-dark-400/50">
-      <button id="gdrive-picker-cancel" class="w-full px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
-    </div>
-  `);
-
-  modal.querySelector('#gdrive-picker-cancel')?.addEventListener('click', closeChoiceModal);
-  modal.querySelectorAll('.gdrive-pick-file').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const fileId = btn.dataset.id;
-      btn.innerHTML = '<span class="text-sm text-accent-amber">Chargement...</span>';
-      try {
-        const json = await loadFromDrive(fileId);
-        if (store.importData(json)) {
-          closeChoiceModal();
-          renderPage();
-        } else {
-          alert('Erreur: fichier invalide.');
-        }
-      } catch (err) {
-        alert('Erreur: ' + err.message);
-      }
-    });
-  });
-}
-
-function promptGdriveSetup(onDone) {
-  closeChoiceModal();
-  const modal = createChoiceModal(`
-    <div class="p-6 border-b border-dark-400/50">
-      <h3 class="text-lg font-semibold text-gray-100">Configurer Google Drive</h3>
-    </div>
-    <div class="p-6 space-y-4">
-      <p class="text-sm text-gray-400">Pour utiliser Google Drive, entre ton <strong class="text-gray-200">Client ID Google OAuth</strong>.</p>
-      <p class="text-xs text-gray-500">Crée un projet sur <span class="text-accent-amber">console.cloud.google.com</span>, active l'API Drive et crée un ID client OAuth (type Web).</p>
-      <input id="input-gdrive-clientid" type="text" placeholder="xxxxx.apps.googleusercontent.com" class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-4 py-2.5 text-gray-200 text-sm focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
-      <div id="gdrive-setup-error" class="text-sm text-red-400 hidden"></div>
-    </div>
-    <div class="p-4 border-t border-dark-400/50 flex gap-3">
-      <button id="gdrive-setup-cancel" class="flex-1 px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
-      <button id="gdrive-setup-save" class="flex-1 px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">Enregistrer</button>
-    </div>
-  `);
-
-  modal.querySelector('#gdrive-setup-cancel')?.addEventListener('click', closeChoiceModal);
-  modal.querySelector('#gdrive-setup-save')?.addEventListener('click', () => {
-    const val = modal.querySelector('#input-gdrive-clientid')?.value?.trim();
-    if (!val || !val.includes('.apps.googleusercontent.com')) {
-      const err = modal.querySelector('#gdrive-setup-error');
-      if (err) { err.textContent = 'Client ID invalide.'; err.classList.remove('hidden'); }
-      return;
-    }
-    setClientId(val);
-    closeChoiceModal();
-    if (onDone) onDone();
-  });
-}
-
-function showSaveChoiceModal() {
-  const modal = createChoiceModal(`
-    <div class="p-6 border-b border-dark-400/50">
-      <h3 class="text-lg font-semibold text-gray-100">Sauvegarder</h3>
-      <p class="text-xs text-gray-500 mt-1">Choisis où enregistrer tes données</p>
-    </div>
-    <div class="p-4 space-y-2">
-      <button id="save-local" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl hover:bg-dark-500 transition text-left">
-        <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-200">Fichier local (JSON)</p>
-          <p class="text-xs text-gray-500">Télécharge sur ton ordinateur</p>
-        </div>
-      </button>
-      <button id="save-gdrive" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl hover:bg-dark-500 transition text-left">
-        <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M4.433 22l3.069-5.32h12.932l-3.069 5.32H4.433zm7.065-12.283L4.49 22.001 1.42 16.68 8.427 4.397l3.07 5.32zm1.07-1.846L15.636 2h6.14l-7.009 12.154-3.199-6.283z"/>
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-200">Google Drive</p>
-          <p class="text-xs text-gray-500">${isGdriveConfigured() ? 'Dossier : Patrimoine SLV' : 'Configuration requise'}</p>
-        </div>
-      </button>
-      <div id="gdrive-status"></div>
-    </div>
-    <div class="p-4 border-t border-dark-400/50">
-      <button id="save-cancel" class="w-full px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
-    </div>
-  `);
-
-  modal.querySelector('#save-cancel')?.addEventListener('click', closeChoiceModal);
-  modal.querySelector('#save-local')?.addEventListener('click', () => { closeChoiceModal(); exportLocal(); });
-  modal.querySelector('#save-gdrive')?.addEventListener('click', () => exportToDrive());
-}
-
-function showImportChoiceModal() {
-  const modal = createChoiceModal(`
-    <div class="p-6 border-b border-dark-400/50">
-      <h3 class="text-lg font-semibold text-gray-100">Importer</h3>
-      <p class="text-xs text-gray-500 mt-1">Choisis d'où charger tes données</p>
-    </div>
-    <div class="p-4 space-y-2">
-      <button id="import-local" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl hover:bg-dark-500 transition text-left">
-        <div class="w-10 h-10 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-200">Fichier local (JSON)</p>
-          <p class="text-xs text-gray-500">Depuis ton ordinateur</p>
-        </div>
-      </button>
-      <button id="import-gdrive" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl hover:bg-dark-500 transition text-left">
-        <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M4.433 22l3.069-5.32h12.932l-3.069 5.32H4.433zm7.065-12.283L4.49 22.001 1.42 16.68 8.427 4.397l3.07 5.32zm1.07-1.846L15.636 2h6.14l-7.009 12.154-3.199-6.283z"/>
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-200">Google Drive</p>
-          <p class="text-xs text-gray-500">${isGdriveConfigured() ? 'Dossier : Patrimoine SLV' : 'Configuration requise'}</p>
-        </div>
-      </button>
-      <div id="gdrive-status"></div>
-    </div>
-    <div class="p-4 border-t border-dark-400/50">
-      <button id="import-cancel" class="w-full px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
-    </div>
-  `);
-
-  modal.querySelector('#import-cancel')?.addEventListener('click', closeChoiceModal);
-  modal.querySelector('#import-local')?.addEventListener('click', () => { closeChoiceModal(); importLocal(); });
-  modal.querySelector('#import-gdrive')?.addEventListener('click', () => importFromDrive());
-}
-
-// --- Auto-save toggle & status ---
-function initAutoSaveToggle() {
-  const toggle = document.getElementById('btn-autosave-toggle');
-  const statusEl = document.getElementById('gdrive-autosave-status');
-  if (!toggle) return;
-
-  function updateToggleUI(enabled) {
-    const knob = toggle.querySelector('span');
-    if (enabled) {
-      toggle.classList.remove('bg-dark-500');
-      toggle.classList.add('bg-accent-green');
-      toggle.setAttribute('aria-checked', 'true');
-      knob.classList.remove('translate-x-0.5');
-      knob.classList.add('translate-x-5');
-    } else {
-      toggle.classList.remove('bg-accent-green');
-      toggle.classList.add('bg-dark-500');
-      toggle.setAttribute('aria-checked', 'false');
-      knob.classList.remove('translate-x-5');
-      knob.classList.add('translate-x-0.5');
-    }
-  }
-
-  // Init state
-  updateToggleUI(isAutoSaveEnabled());
-
-  toggle.addEventListener('click', () => {
-    const willEnable = !isAutoSaveEnabled();
-    if (willEnable && !isGdriveConfigured()) {
-      promptGdriveSetup(() => {
-        setAutoSaveEnabled(true);
-        updateToggleUI(true);
-      });
-      return;
-    }
-    setAutoSaveEnabled(willEnable);
-    updateToggleUI(willEnable);
-  });
-
-  // Listen for auto-save status changes
-  onAutoSaveStatus((status, detail) => {
-    if (!statusEl) return;
-    statusEl.classList.remove('hidden');
-    switch (status) {
-      case 'saving':
-        statusEl.textContent = 'Synchronisation Drive...';
-        statusEl.className = 'px-4 text-xs text-accent-amber';
-        break;
-      case 'saved':
-        statusEl.textContent = 'Drive OK — ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        statusEl.className = 'px-4 text-xs text-accent-green';
-        break;
-      case 'error':
-        statusEl.textContent = 'Erreur Drive';
-        statusEl.className = 'px-4 text-xs text-red-400';
-        break;
-      case 'enabled':
-        statusEl.textContent = 'Auto-sync activé';
-        statusEl.className = 'px-4 text-xs text-accent-green';
-        setTimeout(() => { statusEl.classList.add('hidden'); }, 2000);
-        break;
-      case 'disabled':
-        statusEl.textContent = 'Auto-sync désactivé';
-        statusEl.className = 'px-4 text-xs text-gray-500';
-        setTimeout(() => { statusEl.classList.add('hidden'); }, 2000);
-        break;
-    }
-  });
-}
 
 // Data management
 function initDataManagement() {
-  // --- Export ---
-  document.getElementById('btn-export')?.addEventListener('click', () => {
-    showSaveChoiceModal();
+  // Toggle advanced options
+  document.getElementById('btn-toggle-advanced')?.addEventListener('click', () => {
+    const panel = document.getElementById('advanced-actions');
+    const arrow = document.getElementById('advanced-arrow');
+    if (panel) {
+      panel.classList.toggle('hidden');
+      if (arrow) arrow.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
+    }
   });
 
-  // --- Import ---
+  // --- Export (direct JSON) ---
+  document.getElementById('btn-export')?.addEventListener('click', () => {
+    exportLocal();
+  });
+
+  // --- Import (direct JSON) ---
   document.getElementById('btn-import')?.addEventListener('click', () => {
-    showImportChoiceModal();
+    importLocal();
   });
 
   document.getElementById('btn-reset')?.addEventListener('click', () => {
@@ -683,8 +423,6 @@ function initDataManagement() {
     }
   });
 
-  // Init auto-save toggle
-  initAutoSaveToggle();
 }
 
 // Show login screen (replaces the whole page)
