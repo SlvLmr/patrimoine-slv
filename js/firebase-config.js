@@ -15,8 +15,8 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, doc, setDoc, getDoc }
   from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-// ⬇️ REMPLACE CETTE CONFIG PAR LA TIENNE ⬇️
-const firebaseConfig = {
+// ⬇️ REMPLACE CETTE CONFIG PAR LA TIENNE (ou configure via l'interface) ⬇️
+const hardcodedConfig = {
   apiKey: "",
   authDomain: "",
   projectId: "",
@@ -25,13 +25,35 @@ const firebaseConfig = {
   appId: ""
 };
 
+const FIREBASE_CONFIG_KEY = 'patrimoine-slv-firebase-config';
+
 let app = null;
 let auth = null;
 let db = null;
 let initialized = false;
 
+function getConfig() {
+  // Priority: hardcoded > localStorage
+  if (hardcodedConfig.apiKey && hardcodedConfig.projectId) return hardcodedConfig;
+  try {
+    const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return hardcodedConfig;
+}
+
 function isConfigured() {
-  return firebaseConfig.apiKey !== "" && firebaseConfig.projectId !== "";
+  const config = getConfig();
+  return !!(config.apiKey && config.projectId);
+}
+
+function saveFirebaseConfig(config) {
+  localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(config));
+  // Reset so next call re-initializes with new config
+  initialized = false;
+  app = null;
+  auth = null;
+  db = null;
 }
 
 function initFirebase() {
@@ -39,7 +61,8 @@ function initFirebase() {
   if (!isConfigured()) return { auth: null, db: null };
 
   try {
-    app = initializeApp(firebaseConfig);
+    const config = getConfig();
+    app = initializeApp(config);
     auth = getAuth(app);
     db = getFirestore(app);
     initialized = true;
@@ -147,6 +170,7 @@ async function loadProfilesFromCloud(userId) {
 export {
   isConfigured,
   initFirebase,
+  saveFirebaseConfig,
   register,
   login,
   logout,

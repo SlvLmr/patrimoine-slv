@@ -125,6 +125,8 @@ function updateUserBar() {
   const user = getCurrentUser();
   if (user) {
     container.innerHTML = renderUserBar(user);
+    // Show last sync time
+    updateSyncStatus();
     container.querySelector('#btn-logout')?.addEventListener('click', async () => {
       if (confirm('Se déconnecter ? Tes données locales seront conservées.')) {
         await firebaseLogout();
@@ -132,22 +134,32 @@ function updateUserBar() {
       }
     });
   } else {
-    // Show login button if Firebase is configured but user not logged in
-    if (isConfigured()) {
-      container.innerHTML = `
-        <button id="btn-login-sidebar" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-accent-blue hover:bg-dark-600 rounded-lg transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-          </svg>
-          Se connecter
-        </button>
-      `;
-      container.querySelector('#btn-login-sidebar')?.addEventListener('click', () => {
-        showLoginScreen();
-      });
-    } else {
-      container.innerHTML = '';
-    }
+    // Show login button (works whether Firebase is configured or not — setup flow handles unconfigured state)
+    container.innerHTML = `
+      <button id="btn-login-sidebar" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-accent-blue hover:bg-dark-600 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+        </svg>
+        Se connecter
+      </button>
+    `;
+    container.querySelector('#btn-login-sidebar')?.addEventListener('click', () => {
+      showLoginScreen();
+    });
+  }
+}
+
+function updateSyncStatus(msg) {
+  const el = document.getElementById('cloud-sync-status');
+  if (!el) return;
+  if (msg) {
+    el.textContent = msg;
+    return;
+  }
+  const lastSync = localStorage.getItem('patrimoine-slv-last-sync');
+  if (lastSync) {
+    const time = new Date(lastSync).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    el.innerHTML = `<span class="text-accent-green/60">Synchronisé</span> — ${time}`;
   }
 }
 
@@ -692,8 +704,22 @@ function showLoginScreen() {
   mountLoginScreen(
     // onSuccess: user logged in
     async () => {
+      // Show loading state
+      const contentEl = document.getElementById('app-content');
+      contentEl.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center">
+          <div class="text-center space-y-4">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-green/10">
+              <svg class="w-8 h-8 text-accent-green animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+              </svg>
+            </div>
+            <p class="text-gray-400 text-sm">Synchronisation de tes données...</p>
+          </div>
+        </div>
+      `;
       // Sync from cloud
-      const synced = await store.syncFromCloud();
+      await store.syncFromCloud();
       // Re-init the app
       store.init();
       showApp();
@@ -754,6 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (user) {
         // Already logged in — sync and show app
         await store.syncFromCloud();
+        localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
         store.init();
         showApp();
       } else {
@@ -762,8 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   } else {
-    // No Firebase — go straight to app (local only)
-    showApp();
+    // No Firebase configured — show login screen with setup option
+    showLoginScreen();
   }
 });
 

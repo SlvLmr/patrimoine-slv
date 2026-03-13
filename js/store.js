@@ -408,6 +408,7 @@ const Store = {
         this._profileId = activeId;
         setActiveProfileId(activeId);
         this._state = loadState(activeId);
+        localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
         return true;
       }
 
@@ -433,6 +434,7 @@ const Store = {
         const data = loadState(p.id);
         await saveToCloud(user.uid, p.id, data);
       }
+      localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
       return true;
     } catch (e) {
       console.error('Sync to cloud error:', e);
