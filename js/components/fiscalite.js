@@ -1632,7 +1632,90 @@ export function render(store) {
         <p class="text-sm text-gray-400 mb-3">Ajoutez vos enfants dans l'onglet <strong class="text-accent-purple">Enfants</strong> pour lancer la simulation</p>
         <button id="btn-go-enfants" class="px-4 py-2 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition">Aller dans Enfants</button>
       </div>
-      ` : ''}
+      ` : `
+      <!-- DASHBOARD — Vue d'ensemble -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-accent-green/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-200">Vue d'ensemble</h2>
+            <p class="text-[10px] text-gray-500">${ageDonateur} ans · ${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} · Patrimoine net ${formatCurrency(patrimoine.patrimoineNet)}</p>
+          </div>
+          <button id="btn-add-donation-top" class="ml-auto px-3 py-1.5 bg-accent-green text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            Enregistrer une donation
+          </button>
+        </div>
+
+        <!-- Comparatif succession -->
+        <div class="grid grid-cols-3 gap-3 mb-5">
+          <div class="rounded-xl p-3 bg-accent-red/5 border border-accent-red/15 text-center">
+            <p class="text-[10px] text-gray-500 uppercase mb-1">Sans optimisation</p>
+            <p class="text-xl font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
+            <p class="text-[10px] text-gray-500">de droits de succession</p>
+          </div>
+          <div class="rounded-xl p-3 bg-accent-green/5 border border-accent-green/15 text-center">
+            <p class="text-[10px] text-gray-500 uppercase mb-1">Avec vos donations</p>
+            <p class="text-xl font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
+            <p class="text-[10px] text-gray-500">total droits à payer</p>
+          </div>
+          <div class="rounded-xl p-3 ${economie > 0 ? 'bg-gradient-to-br from-accent-cyan/10 to-accent-green/5 border border-accent-cyan/20' : 'bg-dark-800/40 border border-dark-400/15'} text-center">
+            <p class="text-[10px] text-gray-500 uppercase mb-1">Économie</p>
+            <p class="text-xl font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${formatCurrency(economie)}</p>
+            <p class="text-[10px] text-gray-500">${totalDroitsSansdon > 0 ? Math.round(economie / totalDroitsSansdon * 100) + '% économisé' : 'ajoutez des donations'}</p>
+          </div>
+        </div>
+
+        <!-- Jauges par enfant -->
+        <div class="grid grid-cols-1 ${nbEnfants >= 2 ? 'md:grid-cols-' + Math.min(nbEnfants, 3) : ''} gap-3">
+          ${enfants.map((enf, i) => {
+            const dons = donationsParEnfant[enf.id] || [];
+            const totalDonneEnf = totalDonneParEnfant[enf.id] || 0;
+            const lastDon = dons[dons.length - 1];
+            const abattRestant = lastDon ? lastDon.abattementRestant : ABATTEMENT_PARENT_ENFANT;
+            const tepaRestant = lastDon ? lastDon.tepaRestant : DON_FAMILIAL_TEPA;
+            const abattUsedPct = Math.min(100, Math.round((1 - abattRestant / ABATTEMENT_PARENT_ENFANT) * 100));
+            const tepaUsed = tepaRestant < DON_FAMILIAL_TEPA;
+            const color = CHILD_COLORS[i % CHILD_COLORS.length];
+            const droitsEnf = dons.reduce((s, r) => s + r.droits, 0);
+
+            return `
+            <div class="rounded-xl p-4 bg-dark-800/30 border border-dark-400/10 hover:border-${color}/20 transition">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-full bg-${color}/20 border border-${color}/30 flex items-center justify-center text-xs font-bold text-${color}">
+                  ${(enf.prenom || '?')[0].toUpperCase()}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-bold text-gray-200">${enf.prenom || 'Sans nom'}</p>
+                  <p class="text-[10px] text-gray-500">${dons.length > 0 ? `${dons.length} donation${dons.length > 1 ? 's' : ''} · ${formatCurrency(totalDonneEnf)} donné` : 'Aucune donation'}</p>
+                </div>
+                ${droitsEnf > 0 ? `<span class="text-[10px] text-accent-red font-medium">${formatCurrency(droitsEnf)} droits</span>` : dons.length > 0 ? `<span class="text-[10px] text-accent-green font-medium">0 € droits</span>` : ''}
+              </div>
+
+              <!-- Jauge abattement -->
+              <div class="mb-2">
+                <div class="flex justify-between text-[10px] mb-1">
+                  <span class="text-gray-500">Abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</span>
+                  <span class="${abattUsedPct > 0 ? 'text-' + color : 'text-gray-500'} font-medium">${abattUsedPct}% utilisé</span>
+                </div>
+                <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
+                  <div class="h-full bg-${color} rounded-full transition-all" style="width:${abattUsedPct}%"></div>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-0.5">Restant : ${formatCurrency(abattRestant)}</p>
+              </div>
+
+              <!-- TEPA -->
+              <div class="flex items-center justify-between text-[10px] px-2 py-1.5 rounded-lg ${tepaUsed ? 'bg-dark-600/30' : 'bg-accent-cyan/5 border border-accent-cyan/10'}">
+                <span class="text-gray-400">TEPA (${formatCurrency(DON_FAMILIAL_TEPA)})</span>
+                <span class="${tepaUsed ? 'text-gray-400' : 'text-accent-cyan'} font-medium">${tepaUsed ? `${formatCurrency(tepaRestant)} restant` : 'Disponible'}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      `}
 
       <!-- SIMULATEUR PROJECTION -->
       <div class="card-dark rounded-xl p-5">
@@ -2095,8 +2178,8 @@ export function mount(store, navigate) {
     currentTimeline = timeline;
   }
 
-  // --- Ajouter donation ---
-  document.getElementById('btn-add-donation')?.addEventListener('click', () => {
+  // --- Ajouter donation (shared handler) ---
+  function openAddDonationModal() {
     if (enfants.length === 0) return;
     const enfantOptions = enfants.map(e => ({ value: e.id, label: e.prenom || 'Sans nom' }));
     const typeOptions = [
@@ -2105,7 +2188,7 @@ export function mount(store, navigate) {
       { value: 'donation_nue_propriete', label: 'Nue-propriété (immobilier)' },
       { value: 'donation_cto', label: 'Donation CTO (titres)' },
     ];
-    openModal('Ajouter une donation', `
+    openModal('Enregistrer une donation', `
       ${selectField('enfantId', 'Enfant', enfantOptions)}
       ${selectField('type', 'Type de donation', typeOptions)}
       ${inputField('montant', 'Montant (€)', '', 'number')}
@@ -2125,7 +2208,9 @@ export function mount(store, navigate) {
       saveConfig(store, c);
       navigate('fiscalite');
     });
-  });
+  }
+  document.getElementById('btn-add-donation')?.addEventListener('click', openAddDonationModal);
+  document.getElementById('btn-add-donation-top')?.addEventListener('click', openAddDonationModal);
 
   // --- Supprimer donation ---
   document.querySelectorAll('.don-delete').forEach(btn => {
