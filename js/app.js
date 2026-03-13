@@ -180,12 +180,6 @@ function initProfileSwitcher() {
   const container = document.getElementById('profile-switcher');
   if (!container) return;
 
-  // Click on name → navigate to compte
-  document.getElementById('profile-name-link')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    navigate('compte');
-  });
-
   // Click on dropdown arrow → open dropdown
   document.getElementById('profile-dropdown-btn')?.addEventListener('click', (e) => {
     e.stopPropagation();

@@ -96,27 +96,19 @@
       <svg id="collapse-icon" class="w-3.5 h-3.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
     </button>
 
-    <!-- Profile switcher -->
-    <div id="profile-switcher" class="relative mx-4 mt-2 mb-1 py-2 px-4 border-b border-dark-400/20 rounded-xl">
-      <div class="flex items-center justify-between">
-        <div id="profile-name-link" class="flex items-center gap-3 cursor-pointer hover:text-accent-green transition flex-1 min-w-0">
-          <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
-          </svg>
-          <span id="profile-name" class="text-sm font-medium text-gray-200 truncate">Mon patrimoine</span>
-        </div>
-        <button id="profile-dropdown-btn" class="p-1.5 -mr-1.5 rounded-lg hover:bg-dark-600 transition cursor-pointer">
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
     <!-- Navigation -->
     <nav id="nav-links" class="flex-1 p-4 space-y-1 overflow-y-auto">
       <!-- Populated by JS -->
     </nav>
+
+    <!-- Dropdown arrow (profiles, export, import, etc.) -->
+    <div id="profile-switcher" class="relative border-t border-dark-400/20 px-4 py-2 flex items-center justify-center">
+      <button id="profile-dropdown-btn" class="p-1.5 rounded-lg hover:bg-dark-600 transition cursor-pointer" title="Options">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+        </svg>
+      </button>
+    </div>
 
     <!-- User bar (auth) -->
     <div id="user-bar" class="border-t border-dark-400/20">
