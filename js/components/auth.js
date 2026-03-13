@@ -17,7 +17,7 @@ function renderLoginScreen() {
               <path d="M3 20 Q7 20 10 14 T17 8 Q20 6 25 4" stroke="url(#auth-logo)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
               <circle cx="25" cy="4" r="2" fill="#dbb88a"/>
             </svg>
-            <h1 style="font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px" class="text-3xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent">
+            <h1 style="font-family:'Playfair Display',Georgia,serif;letter-spacing:-0.5px" class="text-3xl font-bold bg-gradient-to-r from-accent-green via-accent-cyan to-accent-amber bg-clip-text text-transparent">
               Horizon
             </h1>
           </div>
