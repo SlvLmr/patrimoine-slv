@@ -104,10 +104,9 @@ export function render(store) {
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
-  // Reste à dépenser = revenus TR (virement quotidien) - dépenses rouges - virements sortants
-  const depensesRougesTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') !== 'Virement' && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const virementsSortantsTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') === 'Virement').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const resteADepenser = revTR - depensesRougesTR - virementsSortantsTR;
+  // Reste à dépenser = 700 - (dépenses rouges + virements sortants TR)
+  const depensesRougesTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const resteADepenser = 700 - depensesRougesTR;
 
   // Trade Republic features
   // Intérêts : 2% annuel sur le solde courant, proratisé au mois
