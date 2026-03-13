@@ -85,8 +85,8 @@ export function render(store) {
   const soldeObligTR = Number(soldeObligatoire.tr) || 0;
 
   // A récupérer NDF = 750 - somme NDF + 39.99
-  const ndfCIC = items.filter(i => i.compte === 'CIC' && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const aRecupererNDF = 750 - ndfCIC + 39.99;
+  const ndfTR = items.filter(i => i.compte === 'Trade Republic' && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const aRecupererNDF = 750 - ndfTR + 39.99;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
