@@ -544,56 +544,117 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     return env.includes('CTO') || env.includes('COMPTE TITRE');
   });
   const ctoTotal = ctoPlacements.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
+  const peaValeur = peaPlacements.reduce((s, p) => s + (Number(p.valeur) || 0), 0);
   const epargneTotal = (state.actifs?.epargne || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
   const ccTotal = (state.actifs?.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
-  const liquiditesTotal = ctoTotal + epargneTotal + ccTotal;
 
-  // Liquidités disponibles au moment du cycle (hors immobilier, hors AV)
-  const startLiquidites = (startSnap.placements || 0) + (startSnap.epargne || 0);
-  // Montant réellement donnable au cycle 1 = min(abattement max, liquidités dispo)
-  const donnableCycle1 = Math.min(abattTotal, startLiquidites + ctoTotal);
+  // Sources claires :
+  // - Cash immédiat (CC + livrets) : donnable par virement
+  // - CTO : donnable par transfert de titres (pas de vente, purge PV)
+  // - PEA : NON donnable directement → retrait nécessaire (PS 17.2% si > 5 ans)
+  // - AV : régime propre, pas pour les donations
+  // - Immobilier : uniquement via nue-propriété
+  const cashImmediat = epargneTotal + ccTotal;
+  const peaPVEstimee = Math.max(0, peaValeur - peaApports);
+  const peaFraisRetrait = Math.round(peaPVEstimee * 0.172); // PS 17.2% sur PV si PEA > 5 ans
+  const peaNetApresRetrait = peaValeur - peaFraisRetrait;
+
+  // Donnable sans toucher au PEA
+  const donnableSansPEA = cashImmediat + ctoTotal;
+  // Donnable total (avec retrait PEA si nécessaire)
+  const donnableAvecPEA = donnableSansPEA + peaNetApresRetrait;
+
+  const donnableCycle1 = Math.min(abattTotal, donnableAvecPEA);
   const donnableParEnfantCycle1 = Math.round(donnableCycle1 / nbEnfants);
 
-  // Construire la recommandation concrète
+  // Construire le plan d'actions concret avec sources détaillées
   function buildDonationPlan(montantTotal) {
-    const lines = [];
+    const steps = [];
     let reste = montantTotal;
 
-    // 1) TEPA en espèces (virement)
+    // 1) Don TEPA en espèces (virement bancaire, si cash disponible)
     const tepaTotal = DON_FAMILIAL_TEPA * nbEnfants;
-    if (reste > 0 && tepaTotal > 0) {
-      const tepa = Math.min(tepaTotal, reste);
-      lines.push(`Virement de ${formatCurrency(tepa)} (don TEPA, ${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G)`);
-      reste -= tepa;
+    const tepaPossible = Math.min(tepaTotal, reste, cashImmediat);
+    if (tepaPossible > 0) {
+      steps.push({
+        action: `Virez ${formatCurrency(tepaPossible)} depuis vos comptes courants/livrets`,
+        source: `Cash disponible : ${formatCurrency(cashImmediat)}`,
+        detail: `Don familial TEPA (${formatCurrency(DON_FAMILIAL_TEPA)}/enfant, art. 790 G). Simple virement bancaire + déclaration Cerfa 2735 dans le mois.`,
+        type: 'cash',
+        montant: tepaPossible,
+      });
+      reste -= tepaPossible;
     }
 
-    // 2) Donation CTO (purge des plus-values)
+    // 2) Donation de titres CTO (transfert direct, pas de vente)
     if (reste > 0 && ctoTotal > 0) {
       const donCTO = Math.min(ctoTotal, reste);
-      lines.push(`Donation de ${formatCurrency(donCTO)} via le CTO (purge des plus-values, 0 € de droits)`);
+      const pvEstCTO = Math.round(donCTO * 0.30);
+      const flatTaxEvitee = Math.round(pvEstCTO * 0.30);
+      steps.push({
+        action: `Transférez ${formatCurrency(donCTO)} de titres depuis le CTO`,
+        source: `CTO actuel : ${formatCurrency(ctoTotal)}`,
+        detail: `Transfert de titres (pas de vente nécessaire). Les plus-values latentes (~${formatCurrency(pvEstCTO)}) sont purgées = ${formatCurrency(flatTaxEvitee)} de flat tax en moins.`,
+        type: 'cto',
+        montant: donCTO,
+        bonus: flatTaxEvitee,
+      });
       reste -= donCTO;
     }
 
-    // 3) Reste en espèces (livrets, comptes courants)
-    if (reste > 0) {
-      const especes = Math.min(epargneTotal + ccTotal, reste);
-      if (especes > 0) {
-        lines.push(`Virement de ${formatCurrency(especes)} en espèces (livrets/comptes)`);
-        reste -= especes;
-      }
+    // 3) Reste en cash (livrets/CC) au-delà du TEPA
+    const cashRestant = Math.max(0, cashImmediat - tepaPossible);
+    if (reste > 0 && cashRestant > 0) {
+      const cashDon = Math.min(cashRestant, reste);
+      steps.push({
+        action: `Virez ${formatCurrency(cashDon)} supplémentaires (livrets/comptes)`,
+        source: `Cash restant après TEPA : ${formatCurrency(cashRestant)}`,
+        detail: `Don manuel classique dans l'abattement de ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}/enfant (art. 779 CGI). 0 € de droits.`,
+        type: 'cash',
+        montant: cashDon,
+      });
+      reste -= cashDon;
     }
 
-    // 4) Manque à combler
-    if (reste > 0) {
-      lines.push(`Il manque ${formatCurrency(reste)} pour utiliser tout l'abattement — constituez cette épargne avant de donner`);
+    // 4) PEA : retrait nécessaire (signaler le coût)
+    if (reste > 0 && peaValeur > 0) {
+      // On retire juste ce qu'il faut du PEA
+      // reste = ce qu'on veut donner, peaNetApresRetrait = max qu'on peut tirer du PEA
+      const netNecessaire = Math.min(reste, peaNetApresRetrait);
+      // Calcul du brut à retirer pour obtenir netNecessaire
+      const ratio = peaValeur > 0 ? peaNetApresRetrait / peaValeur : 1;
+      const brutRetrait = ratio > 0 ? Math.round(netNecessaire / ratio) : netNecessaire;
+      const fraisRetrait = brutRetrait - netNecessaire;
+      steps.push({
+        action: `Retirez ${formatCurrency(brutRetrait)} du PEA → ${formatCurrency(netNecessaire)} net après PS`,
+        source: `PEA actuel : ${formatCurrency(peaValeur)} (PV estimée : ${formatCurrency(peaPVEstimee)})`,
+        detail: `Le PEA n'est pas donnable directement. Vous devez retirer les fonds (retrait partiel si PEA > 5 ans, sinon clôture). Prélèvements sociaux : ${formatCurrency(fraisRetrait)} (17,2% sur les plus-values). Vous récupérez ${formatCurrency(netNecessaire)} net à donner.`,
+        type: 'pea',
+        montant: netNecessaire,
+        brut: brutRetrait,
+        frais: fraisRetrait,
+      });
+      reste -= netNecessaire;
     }
 
-    return lines.join('. ');
+    // 5) Manque
+    if (reste > 0) {
+      steps.push({
+        action: `Il manque ${formatCurrency(reste)} — épargnez avant de donner`,
+        source: 'À constituer',
+        detail: `Abattement max non atteint. Constituez cette épargne puis donnez dans la limite de l'abattement.`,
+        type: 'manque',
+        montant: reste,
+      });
+    }
+
+    return steps;
   }
 
   // 1. Premier cycle de donations
-  const cycle1Plan = buildDonationPlan(donnableCycle1);
+  const cycle1Steps = buildDonationPlan(donnableCycle1);
   const partiel = donnableCycle1 < abattTotal;
+  const needsPEA = donnableSansPEA < donnableCycle1;
   events.push({
     age: startAge,
     annee: startYear,
@@ -602,8 +663,18 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
     type: 'donation_cycle',
     titre: partiel
       ? `Donner ${formatCurrency(donnableCycle1)} (sur ${formatCurrency(abattTotal)} possibles)`
-      : `Donner ${formatCurrency(abattTotal)} à 0 € de droits`,
-    description: cycle1Plan + (partiel ? `. Abattement max : ${formatCurrency(montantParEnfantCycle1)}/enfant (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA). Liquidités disponibles : ${formatCurrency(startLiquidites)}.` : ''),
+      : `Donner ${formatCurrency(donnableCycle1)} à 0 € de droits`,
+    description: `Abattement disponible : ${formatCurrency(montantParEnfantCycle1)}/enfant (${formatCurrency(ABATTEMENT_PARENT_ENFANT)} classique + ${formatCurrency(DON_FAMILIAL_TEPA)} TEPA).`,
+    actionSteps: cycle1Steps,
+    sourcesSummary: {
+      cash: cashImmediat,
+      cto: ctoTotal,
+      pea: peaValeur,
+      peaNet: peaNetApresRetrait,
+      peaFrais: peaFraisRetrait,
+      total: donnableAvecPEA,
+      needsPEA,
+    },
     conseilExpert: [
       {
         titre: 'Privilégiez la donation-partage au don manuel',
@@ -625,9 +696,14 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         detail: `Les présents d'usage (Noël, anniversaire, mariage, diplôme) ne sont pas rapportables et n'entament pas l'abattement, à condition d'être proportionnés à vos revenus (jurisprudence : ~2% du patrimoine ou 2,5% des revenus). Mariage d'un enfant ? Offrez jusqu'à plusieurs milliers d'euros en cadeau sans aucune déclaration.`,
         tag: 'Bonus'
       },
+      ...(needsPEA ? [{
+        titre: `Retrait PEA : ${formatCurrency(peaFraisRetrait)} de frais, mais ${formatCurrency(donnableCycle1 - donnableSansPEA)} de donation supplémentaire`,
+        detail: `Sans toucher au PEA, vous ne pouvez donner que ${formatCurrency(donnableSansPEA)} (cash + CTO). Pour atteindre ${formatCurrency(donnableCycle1)}, un retrait PEA est nécessaire. Coût : 17,2% de PS sur les plus-values uniquement (pas sur le capital investi). Si votre PEA a plus de 5 ans, le retrait partiel est possible sans clôture.`,
+        tag: 'Attention PEA'
+      }] : []),
       ...(partiel ? [{
-        titre: 'Constituez la trésorerie manquante avant de donner',
-        detail: `Il vous manque ${formatCurrency(abattTotal - donnableCycle1)} pour utiliser la totalité de l'abattement. Stratégie : accélérez votre épargne, arbitrez des placements peu performants, ou envisagez un rachat partiel d'assurance-vie (attention : fiscalité du rachat à calculer). Chaque euro donné dans l'abattement = ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} exonérés = 20% d'économie de droits.`,
+        titre: `Il manque ${formatCurrency(abattTotal - donnableCycle1)} pour utiliser tout l'abattement`,
+        detail: `Même en retirant du PEA, vos liquidités totales (${formatCurrency(donnableAvecPEA)}) ne couvrent pas l'abattement complet (${formatCurrency(abattTotal)}). Accélérez votre épargne ou attendez une année où vos placements auront grossi. Utilisez le curseur ci-dessus pour trouver la bonne année.`,
         tag: 'Préparation'
       }] : [])
     ],
@@ -715,8 +791,8 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
         type: 'nue_propriete',
         titre: `Donation de ${formatCurrency(npTotal)} en nue-propriété`,
         description: zeroDrops
-          ? `Donnez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}) à vos enfants. Valeur fiscale NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant → dans l'abattement = 0 € de droits. Vous gardez l'usufruit (habiter/louer).`
-          : `Donnez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}). NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant. Droits : ${formatCurrency(droitsNPParEnfant)}/enfant au lieu de ${formatCurrency(droitsSuccImmoParEnfant)} à la succession.`,
+          ? `Pas besoin de cash : vous transférez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}) chez le notaire. La valeur fiscale n'est que de ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant → dans l'abattement = 0 € de droits. Vous gardez l'usufruit (vous continuez à habiter ou percevoir les loyers).`
+          : `Pas besoin de cash : vous transférez la nue-propriété de vos biens immobiliers (${formatCurrency(startPatrimoine.immobilier)}) chez le notaire. NP = ${(rate.nuePropriete * 100).toFixed(0)}% = ${formatCurrency(npParEnfant)}/enfant. Droits : ${formatCurrency(droitsNPParEnfant)}/enfant au lieu de ${formatCurrency(droitsSuccImmoParEnfant)} à la succession. Vous gardez l'usufruit.`,
         conseilExpert: [
           {
             titre: 'Le double avantage du démembrement : décote + extinction gratuite',
@@ -782,7 +858,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       titre: partielC2
         ? `Re-donner ${formatCurrency(donnableCycle2)} (sur ${formatCurrency(maxCycle2)} possibles)`
         : `Re-donner ${formatCurrency(maxCycle2)} à 0 € de droits`,
-      description: `Abattements reconstitués (15 ans). ${formatCurrency(donnableParEnfantC2)}/enfant${canTepa ? ` (abattement + TEPA)` : ` (TEPA perdu après 80 ans)`}. Liquidités projetées : ${formatCurrency(liqCycle2)}. Patrimoine projeté : ${formatCurrency(cycle2Snap.patrimoineNet || 0)}.`,
+      description: `Abattements reconstitués après 15 ans. Vous pourrez re-donner ${formatCurrency(donnableParEnfantC2)}/enfant${canTepa ? ` (abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} + TEPA ${formatCurrency(DON_FAMILIAL_TEPA)})` : ` (TEPA indisponible après 80 ans, abattement seul)`}. Placements projetés à cette date : ${formatCurrency(liqCycle2)} (patrimoine total : ${formatCurrency(cycle2Snap.patrimoineNet || 0)}). La source exacte (CTO, cash, PEA) dépendra de votre allocation à ce moment.`,
       conseilExpert: [
         {
           titre: 'Le rappel fiscal est glissant : calculez au jour près',
@@ -950,7 +1026,7 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
       titre: partielC3
         ? `Re-donner ${formatCurrency(donnableCycle3)} (sur ${formatCurrency(maxCycle3)} possibles)`
         : `Re-donner ${formatCurrency(maxCycle3)} à 0 € de droits`,
-      description: `Abattements reconstitués (30 ans). ${formatCurrency(donnableParEnfantC3)}/enfant${canTepa3 ? '' : ' (TEPA indisponible après 80 ans)'}. Liquidités projetées : ${formatCurrency(liqCycle3)}.`,
+      description: `3e cycle : abattements reconstitués après 30 ans. Vous pourrez re-donner ${formatCurrency(donnableParEnfantC3)}/enfant${canTepa3 ? '' : ' (TEPA indisponible après 80 ans)'}. Placements projetés : ${formatCurrency(liqCycle3)}. La source exacte dépendra de votre portefeuille à ce moment.`,
       conseilExpert: [
         {
           titre: 'Bilan patrimonial à cet âge : adaptez la stratégie',
@@ -1069,7 +1145,7 @@ function renderPlanUnifieHTML(timeline, enfants) {
     'Réévaluation': 'accent-blue', 'AV optimale': 'accent-purple', 'Stratégie CTO': 'accent-green',
     'Rappel': 'accent-amber', 'Urgence': 'accent-red', 'Clause clé': 'accent-purple',
     'Organisation': 'accent-blue', 'Dernière chance': 'accent-red', 'Après 70 ans': 'accent-amber',
-    'Deadline': 'accent-red', 'Cumul': 'accent-cyan',
+    'Deadline': 'accent-red', 'Cumul': 'accent-cyan', 'Attention PEA': 'accent-amber',
   };
 
   const heroHTML = totalEconomie > 0 ? `
@@ -1114,6 +1190,41 @@ function renderPlanUnifieHTML(timeline, enfants) {
       </summary>
       <div class="px-4 pb-4 border-t border-dark-400/10 ml-11">
         <p class="text-xs text-gray-400 leading-relaxed mt-3 mb-3">${ev.description}</p>
+
+        ${ev.actionSteps && ev.actionSteps.length > 0 ? `
+        <div class="mb-3 space-y-1.5">
+          <p class="text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-2">Actions concrètes</p>
+          ${ev.actionSteps.map((step, si) => {
+            const typeColors = {
+              cash: { bg: 'bg-accent-green/8', border: 'border-accent-green/20', icon: '💶', label: 'text-accent-green' },
+              cto: { bg: 'bg-accent-purple/8', border: 'border-accent-purple/20', icon: '📈', label: 'text-accent-purple' },
+              pea: { bg: 'bg-accent-amber/8', border: 'border-accent-amber/20', icon: '⚠️', label: 'text-accent-amber' },
+              manque: { bg: 'bg-accent-red/8', border: 'border-accent-red/20', icon: '🔴', label: 'text-accent-red' },
+            };
+            const tc = typeColors[step.type] || typeColors.cash;
+            return `
+            <div class="rounded-lg ${tc.bg} border ${tc.border} px-3 py-2">
+              <div class="flex items-start gap-2">
+                <span class="text-sm shrink-0 mt-0.5">${tc.icon}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[11px] font-bold ${tc.label}">${step.action}</p>
+                  <p class="text-[10px] text-gray-500 mt-0.5">${step.source}</p>
+                  <p class="text-[10px] text-gray-400 mt-0.5">${step.detail}</p>
+                </div>
+                <span class="text-[11px] font-bold text-gray-300 whitespace-nowrap shrink-0">${formatCurrency(step.montant)}</span>
+              </div>
+            </div>`;
+          }).join('')}
+          ${ev.sourcesSummary ? `
+          <div class="mt-2 px-3 py-2 rounded-lg bg-dark-900/40 border border-dark-400/15">
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px]">
+              <span class="text-gray-500">Cash dispo : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.cash)}</span></span>
+              ${ev.sourcesSummary.cto > 0 ? `<span class="text-gray-500">CTO : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.cto)}</span></span>` : ''}
+              ${ev.sourcesSummary.pea > 0 ? `<span class="text-gray-500">PEA : <span class="text-gray-300 font-medium">${formatCurrency(ev.sourcesSummary.pea)}</span> brut → <span class="${ev.sourcesSummary.needsPEA ? 'text-accent-amber' : 'text-gray-300'} font-medium">${formatCurrency(ev.sourcesSummary.peaNet)}</span> net${ev.sourcesSummary.peaFrais > 0 ? ` <span class="text-accent-red">(−${formatCurrency(ev.sourcesSummary.peaFrais)} PS)</span>` : ''}</span>` : ''}
+              <span class="text-gray-500 ml-auto">Total mobilisable : <span class="text-accent-cyan font-bold">${formatCurrency(ev.sourcesSummary.total)}</span></span>
+            </div>
+          </div>` : ''}
+        </div>` : ''}
 
         ${ev.impactParEnfant && ev.impactParEnfant.some(c => c.droitsAvant !== undefined && c.economie > 0) ? `
         <div class="grid grid-cols-1 ${ev.impactParEnfant.length >= 2 ? 'md:grid-cols-' + Math.min(ev.impactParEnfant.length, 4) : ''} gap-2 mb-3">
