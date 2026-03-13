@@ -31,9 +31,13 @@ function computeLiveSoldes(store) {
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
+  const trFeatures = store.get('trFeatures') || {};
+  const trInterets = Number(trFeatures.interets) || 0;
+  const trRoundup = Number(trFeatures.roundup) || 0;
+
   return {
     cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
-    tr: baseTR + prevTR + revTR - depTR
+    tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup
   };
 }
 
