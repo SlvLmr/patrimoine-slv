@@ -104,6 +104,11 @@ export function render(store) {
   const revTR = revenus.filter(r => r.compte === 'Trade Republic').reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === 'Trade Republic').reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
+  // Reste à dépenser = revenus TR (virement quotidien) - dépenses rouges - virements sortants
+  const depensesRougesTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') !== 'Virement' && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const virementsSortantsTR = items.filter(i => i.compte === 'Trade Republic' && (i.categorie || '') === 'Virement').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const resteADepenser = revTR - depensesRougesTR - virementsSortantsTR;
+
   // Trade Republic features
   // Intérêts : 2% annuel sur le solde courant, proratisé au mois
   const trInterestRate = 0.02;
@@ -268,9 +273,13 @@ export function render(store) {
             <span class="text-xs text-gray-500">Solde obligatoire</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
             <span class="text-xs text-gray-500">A récupérer NDF</span>
             <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4">
+            <span class="text-xs text-gray-500">Reste à dépenser</span>
+            <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10">
             <span class="text-[11px] text-gray-500">Intérêts (2%/an)</span>
