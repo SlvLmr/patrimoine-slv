@@ -8,14 +8,69 @@ function getParametres(store) {
   return store.get('parametres') || {};
 }
 
+function getEnfants(store) {
+  const cfg = store.get('donationConfig') || { enfants: [] };
+  return cfg.enfants || [];
+}
+
+function saveEnfants(store, enfants) {
+  const cfg = store.get('donationConfig') || { enfants: [], donations: [] };
+  cfg.enfants = enfants;
+  store.set('donationConfig', cfg);
+}
+
 function computeAge(dateNaissance) {
   if (!dateNaissance) return null;
   return Math.floor((Date.now() - new Date(dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000));
 }
 
+function renderChildCard(child, index) {
+  const age = computeAge(child.dateNaissance);
+  const initials = (child.prenom?.[0] || '?').toUpperCase();
+
+  return `
+    <div class="flex items-center gap-4 p-4 bg-dark-800 rounded-xl border border-dark-400/20 group" data-child-idx="${index}">
+      <div class="relative">
+        <label for="child-photo-${index}" class="cursor-pointer block">
+          ${child.photo
+            ? `<img src="${child.photo}" alt="${child.prenom}" class="w-14 h-14 rounded-full object-cover border-2 border-dark-400 group-hover:border-accent-green transition"/>`
+            : `<div class="w-14 h-14 rounded-full bg-dark-600 border-2 border-dark-400 group-hover:border-accent-green transition flex items-center justify-center">
+                <span class="text-lg font-bold text-gray-400">${initials}</span>
+              </div>`
+          }
+          <div class="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+        </label>
+        <input type="file" id="child-photo-${index}" accept="image/*" class="hidden child-photo-input" data-idx="${index}"/>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input type="text" value="${child.prenom || ''}" placeholder="Prénom"
+            class="child-prenom bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition placeholder-gray-600" data-idx="${index}"/>
+          <div class="flex items-center gap-2">
+            <input type="date" value="${child.dateNaissance || ''}"
+              class="child-dob bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition flex-1" data-idx="${index}"/>
+            ${age !== null ? `<span class="text-xs text-gray-500 whitespace-nowrap">${age} ans</span>` : ''}
+          </div>
+        </div>
+      </div>
+      <button class="child-delete opacity-0 group-hover:opacity-100 text-red-400/60 hover:text-red-400 p-1.5 transition" data-idx="${index}" title="Supprimer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  `;
+}
+
 export function render(store) {
   const info = getUserInfo(store);
   const params = getParametres(store);
+  const enfants = getEnfants(store);
   const user = getCurrentUser();
   const email = user?.email || '';
   const age = computeAge(info.dateNaissance);
@@ -94,7 +149,26 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Situation -->
+      <!-- Famille / Enfants -->
+      <div class="bg-dark-700 rounded-2xl border border-dark-400/30 overflow-hidden">
+        <div class="px-6 py-4 border-b border-dark-400/20 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Famille</h2>
+          <button id="btn-add-child" class="text-xs text-accent-green hover:text-accent-amber transition flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/>
+            </svg>
+            Ajouter un enfant
+          </button>
+        </div>
+        <div class="p-6">
+          ${enfants.length === 0
+            ? `<p class="text-sm text-gray-600 text-center py-4">Aucun enfant ajouté</p>`
+            : `<div id="children-list" class="space-y-3">${enfants.map((c, i) => renderChildCard(c, i)).join('')}</div>`
+          }
+        </div>
+      </div>
+
+      <!-- Situation fiscale -->
       <div class="bg-dark-700 rounded-2xl border border-dark-400/30 overflow-hidden">
         <div class="px-6 py-4 border-b border-dark-400/20">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Situation fiscale</h2>
@@ -173,6 +247,14 @@ export function mount(store, navigate) {
     }
   }
 
+  function refresh() {
+    const contentEl = document.getElementById('app-content');
+    if (contentEl) {
+      contentEl.innerHTML = render(store);
+      mount(store, navigate);
+    }
+  }
+
   function saveUserInfo(field, value) {
     const info = getUserInfo(store);
     info[field] = value;
@@ -192,7 +274,6 @@ export function mount(store, navigate) {
   document.getElementById('info-nom')?.addEventListener('input', (e) => saveUserInfo('nom', e.target.value));
   document.getElementById('info-dob')?.addEventListener('change', (e) => {
     saveUserInfo('dateNaissance', e.target.value);
-    // Also update ageFinAnnee in params
     if (e.target.value) {
       const birthYear = new Date(e.target.value).getFullYear();
       const currentYear = new Date().getFullYear();
@@ -212,39 +293,109 @@ export function mount(store, navigate) {
   document.getElementById('info-pension-legal')?.addEventListener('input', (e) => saveParam('pensionTauxLegal', parseInt(e.target.value) || 0));
   document.getElementById('info-pension-plein')?.addEventListener('input', (e) => saveParam('pensionTauxPlein', parseInt(e.target.value) || 0));
 
-  // Photo upload
+  // Photo upload (main user)
   document.getElementById('photo-upload')?.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 500000) {
-      alert('Image trop lourde (max 500 Ko)');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      // Resize to max 200x200
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const size = 200;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        const scale = Math.max(size / img.width, size / img.height);
-        const x = (size - img.width * scale) / 2;
-        const y = (size - img.height * scale) / 2;
-        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        saveUserInfo('photo', dataUrl);
-        // Refresh the page to show the new photo
-        const contentEl = document.getElementById('app-content');
-        if (contentEl) {
-          contentEl.innerHTML = render(store);
-          mount(store, navigate);
-        }
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    resizeAndSavePhoto(file, (dataUrl) => {
+      saveUserInfo('photo', dataUrl);
+      refresh();
+    });
   });
+
+  // --- Children ---
+  // Add child
+  document.getElementById('btn-add-child')?.addEventListener('click', () => {
+    const enfants = getEnfants(store);
+    enfants.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      prenom: '',
+      dateNaissance: '',
+      photo: ''
+    });
+    saveEnfants(store, enfants);
+    refresh();
+  });
+
+  // Child prenom
+  document.querySelectorAll('.child-prenom').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      const enfants = getEnfants(store);
+      if (enfants[idx]) {
+        enfants[idx].prenom = e.target.value;
+        saveEnfants(store, enfants);
+        showSaved();
+      }
+    });
+  });
+
+  // Child date of birth
+  document.querySelectorAll('.child-dob').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      const enfants = getEnfants(store);
+      if (enfants[idx]) {
+        enfants[idx].dateNaissance = e.target.value;
+        saveEnfants(store, enfants);
+        refresh();
+      }
+    });
+  });
+
+  // Child delete
+  document.querySelectorAll('.child-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.currentTarget.dataset.idx);
+      const enfants = getEnfants(store);
+      const child = enfants[idx];
+      if (child && confirm(`Supprimer ${child.prenom || 'cet enfant'} ?`)) {
+        enfants.splice(idx, 1);
+        saveEnfants(store, enfants);
+        refresh();
+      }
+    });
+  });
+
+  // Child photo upload
+  document.querySelectorAll('.child-photo-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      const idx = parseInt(e.target.dataset.idx);
+      if (!file) return;
+      resizeAndSavePhoto(file, (dataUrl) => {
+        const enfants = getEnfants(store);
+        if (enfants[idx]) {
+          enfants[idx].photo = dataUrl;
+          saveEnfants(store, enfants);
+          refresh();
+        }
+      });
+    });
+  });
+}
+
+function resizeAndSavePhoto(file, callback) {
+  if (file.size > 2000000) {
+    alert('Image trop lourde (max 2 Mo)');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 200;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(size / img.width, size / img.height);
+      const x = (size - img.width * scale) / 2;
+      const y = (size - img.height * scale) / 2;
+      ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+      callback(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
 }

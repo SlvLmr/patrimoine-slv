@@ -211,7 +211,7 @@ function getFirebaseErrorMessage(code) {
 function renderUserBar(user) {
   if (!user) return '';
   return `
-    <div class="px-4 py-3 space-y-1">
+    <div class="px-4 py-3 space-y-1 hover:bg-dark-700 transition rounded-lg cursor-pointer">
       <div class="flex items-center gap-2 text-xs text-gray-400">
         <div class="w-5 h-5 rounded-full bg-accent-green/20 flex items-center justify-center flex-shrink-0">
           <svg class="w-3 h-3 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
