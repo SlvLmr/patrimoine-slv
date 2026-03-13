@@ -32,7 +32,7 @@
   width: 4rem;
 }
 
-#sidebar.sidebar-collapsed #sidebar-logo .logo-text,
+#sidebar.sidebar-collapsed #sidebar-logo .logo-with-bars,
 #sidebar.sidebar-collapsed #profile-switcher span,
 #sidebar.sidebar-collapsed #profile-switcher svg:last-child,
 #sidebar.sidebar-collapsed #nav-links .nav-label,
@@ -96,7 +96,7 @@
 
 #sidebar.sidebar-collapsed #sidebar-logo {
   justify-content: center;
-  padding: 0.75rem 0.5rem;
+  padding: 0.75rem 0.5rem !important;
 }
 
 #sidebar.sidebar-collapsed #collapse-icon {
