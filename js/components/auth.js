@@ -11,13 +11,6 @@ function renderLoginScreen() {
         </div>
 
         ${renderAuthCard()}
-
-        <!-- Skip option -->
-        <div class="text-center mt-6">
-          <button id="auth-skip" class="text-sm text-gray-500 hover:text-gray-300 transition underline underline-offset-4">
-            Continuer sans compte (données locales uniquement)
-          </button>
-        </div>
       </div>
     </div>
   `;
