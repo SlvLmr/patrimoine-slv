@@ -186,6 +186,72 @@ export function render(store) {
           </div>`;
           })()}
 
+          <!-- Row 2c: AV overflow redirection -->
+          ${(() => {
+            const avPlacements = placements.filter(p => {
+              const env = (p.enveloppe || p.type || '').toUpperCase();
+              return env === 'AV';
+            });
+            const avDCA = avPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+            if (avDCA <= 0) return '';
+
+            const avApports = avPlacements.reduce((s, p) => s + ((Number(p.pru) || 0) * (Number(p.quantite) || 0) || Number(p.apport) || Number(p.valeur) || 0), 0);
+            const avRestant = Math.max(0, 300000 - avApports);
+            const moisRestantAV = avDCA > 0 ? Math.ceil(avRestant / avDCA) : 0;
+
+            // Compute average CTO rendement from configured placements
+            const ctoPlacs = placements.filter(p => (p.enveloppe || '').toUpperCase() === 'CTO');
+            const avgCTORendAV = ctoPlacs.length > 0
+              ? ctoPlacs.reduce((s, p) => s + (rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05)), 0) / ctoPlacs.length
+              : 0.05;
+
+            // Category options for AV overflow targets
+            const avOverflowCategories = [
+              { value: 'cto', label: 'CTO' },
+              { value: 'bitcoin', label: 'Bitcoin' },
+              { value: 'epargne', label: 'Épargne' },
+            ];
+
+            const avOverflowTargets = params.avOverflowTargets || [];
+            const hasAVTargets = avOverflowTargets.length > 0;
+            const totalAVPct = avOverflowTargets.reduce((s, t) => s + (Number(t.pct) || 0), 0);
+
+            return `
+          <div class="mt-2 p-3 rounded-xl bg-dark-800/30 border border-dark-400/15">
+            <div class="flex items-center gap-2 mb-2">
+              <svg class="w-3.5 h-3.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+              <span class="text-sm font-semibold text-gray-300">Quand l'Assurance Vie est pleine</span>
+              <span class="text-[10px] text-gray-500 ml-1">→ rediriger ${formatCurrency(avDCA)}/mois vers :</span>
+              <span class="text-[10px] ${avRestant <= 0 ? 'text-accent-red' : 'text-gray-600'} ml-auto">${avRestant <= 0 ? 'AV déjà pleine' : `Pleine dans ~${moisRestantAV} mois`} (versé : ${formatCurrency(avApports)} / 300 000 €)</span>
+            </div>
+            <div class="space-y-1.5" id="av-overflow-targets">
+              ${hasAVTargets ? avOverflowTargets.map((t, idx) => {
+                const catLabel = avOverflowCategories.find(c => c.value === t.category)?.label || t.category;
+                return `
+              <div class="flex items-center gap-2 text-sm av-overflow-target-row" data-idx="${idx}">
+                <select class="av-overflow-target-select flex-1 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-cyan/30">
+                  ${avOverflowCategories.map(c => `<option value="${c.value}" ${c.value === t.category ? 'selected' : ''}>${c.label}</option>`).join('')}
+                </select>
+                <input type="number" class="av-overflow-target-pct w-16 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 text-center focus:ring-1 focus:ring-accent-cyan/30" value="${t.pct || 100}" min="1" max="100" step="1">
+                <span class="text-[10px] text-gray-500">%</span>
+                <span class="text-[10px] text-gray-600">${formatCurrency(avDCA * (t.pct || 100) / 100)}/m</span>
+                <button class="av-overflow-target-delete text-accent-red/40 hover:text-accent-red text-xs transition" data-idx="${idx}">✕</button>
+              </div>`;
+              }).join('') : `
+              <div class="flex items-center gap-2 text-sm text-gray-500">
+                <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Par défaut : tout bascule vers le CTO (${(avgCTORendAV * 100).toFixed(1)}%/an)</span>
+              </div>
+              `}
+              ${totalAVPct < 100 && hasAVTargets ? `<p class="text-[10px] text-accent-cyan">Attention : ${totalAVPct}% alloué — les ${100 - totalAVPct}% restants iront vers le CTO</p>` : ''}
+            </div>
+            <button id="btn-add-av-overflow-target" class="mt-2 text-[11px] text-accent-cyan hover:text-accent-cyan/80 transition flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              Ajouter une cible
+            </button>
+          </div>`;
+          })()}
+
           <!-- Row 3: Capital Transfers + Heritage side by side -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <!-- Capital Transfers -->
@@ -1375,6 +1441,53 @@ export function mount(store, navigate) {
       pct: remainingPct
     });
     store.set('parametres.peaOverflowTargets', targets);
+    navigate('projection');
+  });
+
+  // --- AV Overflow Targets ---
+  function saveAVOverflowTargets() {
+    const rows = document.querySelectorAll('.av-overflow-target-row');
+    const targets = [];
+    rows.forEach(row => {
+      const select = row.querySelector('.av-overflow-target-select');
+      const pctInput = row.querySelector('.av-overflow-target-pct');
+      if (select && pctInput) {
+        targets.push({
+          category: select.value,
+          pct: Math.max(1, Math.min(100, parseInt(pctInput.value) || 100))
+        });
+      }
+    });
+    store.set('parametres.avOverflowTargets', targets);
+    navigate('projection');
+  }
+
+  document.querySelectorAll('.av-overflow-target-select, .av-overflow-target-pct').forEach(el => {
+    el.addEventListener('change', saveAVOverflowTargets);
+  });
+
+  document.querySelectorAll('.av-overflow-target-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targets = (store.get('parametres')?.avOverflowTargets || []);
+      const idx = parseInt(btn.dataset.idx);
+      targets.splice(idx, 1);
+      store.set('parametres.avOverflowTargets', targets);
+      navigate('projection');
+    });
+  });
+
+  document.getElementById('btn-add-av-overflow-target')?.addEventListener('click', () => {
+    const targets = store.get('parametres')?.avOverflowTargets || [];
+    const categories = ['cto', 'bitcoin', 'epargne'];
+    const usedCats = new Set(targets.map(t => t.category));
+    const available = categories.find(c => !usedCats.has(c));
+    const remainingPct = Math.max(1, 100 - targets.reduce((s, t) => s + (t.pct || 0), 0));
+
+    targets.push({
+      category: available || 'cto',
+      pct: remainingPct
+    });
+    store.set('parametres.avOverflowTargets', targets);
     navigate('projection');
   });
 

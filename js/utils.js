@@ -243,6 +243,27 @@ export function computeProjection(store) {
     placSims.push(ctoOverflow);
   }
 
+  // AV overflow: when AV ceiling (300k) is reached, DCA is redirected to configured targets
+  const avOverflowTargets = params.avOverflowTargets || [];
+  const rendAVFallback = categoryRendements.cto;
+  const avOverflow = {
+    groupKey: 'CTO',
+    id: '__av_overflow__',
+    value: 0,
+    rendement: rendAVFallback,
+    dcaMensuel: 0,
+    dcaOverrides: [],
+    cashInjections: [],
+    isAirLiquide: false,
+    totalApports: 0,
+    totalGains: 0
+  };
+  const avOverflowTargetTotal = avOverflowTargets.reduce((s, t) => s + (Number(t.pct) || 0), 0);
+  const needsAVCTOFallback = avOverflowTargetTotal < 100;
+  if (needsAVCTOFallback || avOverflowTargets.length === 0) {
+    placSims.push(avOverflow);
+  }
+
   // Discover unique group keys from placements
   const groupKeysSet = new Set();
   placSims.forEach(ps => groupKeysSet.add(ps.groupKey));
@@ -309,13 +330,18 @@ export function computeProjection(store) {
 
   // Track cumulative apports and gains per placement for tax computation
   const PEA_PLAFOND = 150000;
+  const AV_PLAFOND = 300000;
   let peaApportsCumules = 0;
+  let avApportsCumules = 0;
   placSims.forEach(ps => {
     ps.totalApports = ps.value; // initial value counts as apport (for gains tracking)
     ps.totalGains = 0;
     if (ps.groupKey.startsWith('PEA')) {
       // Use real apport (not market value) for PEA ceiling tracking
       peaApportsCumules += ps.apportInitial;
+    }
+    if (ps.groupKey === 'Assurance Vie') {
+      avApportsCumules += ps.apportInitial;
     }
   });
   let cumulInterets = 0;
@@ -438,13 +464,14 @@ export function computeProjection(store) {
     }
 
     // Per-placement growth + DCA (skipped after cash out)
-    // Collect PEA overflow per month to redirect to CTO
+    // Collect PEA and AV overflow per month to redirect
     const ctoOverflowMonthly = new Array(monthsInPeriod).fill(0);
+    const avOverflowMonthly = new Array(monthsInPeriod).fill(0);
 
     let interetsAnnuels = 0;
     if (!cashedOut) {
     placSims.forEach(ps => {
-      if (ps.id === '__cto_overflow__') return; // handled separately after
+      if (ps.id === '__cto_overflow__' || ps.id === '__av_overflow__') return; // handled separately after
       // PEE: skip growth/DCA after souhaité retirement (liquidated at end of that year)
       if (ps.isPEE && currentAge > ageRetraitePEE) return;
       const prevValue = ps.value;
@@ -455,12 +482,13 @@ export function computeProjection(store) {
         const monthlyRate = ps.rendement / 12;
         const dca = getDcaForYear(ps, currentCalendarYear + year);
         const isPEA = ps.groupKey.startsWith('PEA');
+        const isAV = ps.groupKey === 'Assurance Vie';
         const monthlyDca = (dca > 0 && ps.prixAction > 0) ? dca : 0;
 
         // Month-by-month simulation for proper compound interest on DCA
         let dividendPaid = false;
         for (let m = 0; m < monthsInPeriod; m++) {
-          // Monthly DCA buys shares at current price (respect PEA ceiling)
+          // Monthly DCA buys shares at current price (respect PEA/AV ceiling)
           if (monthlyDca > 0) {
             let dcaThisMonth = monthlyDca;
             if (isPEA) {
@@ -469,10 +497,17 @@ export function computeProjection(store) {
               const overflow = monthlyDca - dcaThisMonth;
               if (overflow > 0) ctoOverflowMonthly[m] += overflow;
             }
+            if (isAV) {
+              const room = Math.max(0, AV_PLAFOND - avApportsCumules);
+              dcaThisMonth = Math.min(dcaThisMonth, room);
+              const overflow = monthlyDca - dcaThisMonth;
+              if (overflow > 0) avOverflowMonthly[m] += overflow;
+            }
             if (dcaThisMonth > 0) {
               ps.quantite += dcaThisMonth / ps.prixAction;
               ps.totalApports += dcaThisMonth;
               if (isPEA) peaApportsCumules += dcaThisMonth;
+              if (isAV) avApportsCumules += dcaThisMonth;
             }
           }
           // Monthly price growth
@@ -503,8 +538,9 @@ export function computeProjection(store) {
         const dca = getDcaForYear(ps, currentCalendarYear + year);
         const monthlyDca = dca > 0 ? dca : 0;
         const isPEA = ps.groupKey.startsWith('PEA');
+        const isAV = ps.groupKey === 'Assurance Vie';
         for (let m = 0; m < monthsInPeriod; m++) {
-          // Respect PEA ceiling on contributions
+          // Respect PEA/AV ceiling on contributions
           if (monthlyDca > 0) {
             let dcaThisMonth = monthlyDca;
             if (isPEA) {
@@ -513,23 +549,34 @@ export function computeProjection(store) {
               const overflow = monthlyDca - dcaThisMonth;
               if (overflow > 0) ctoOverflowMonthly[m] += overflow;
             }
+            if (isAV) {
+              const room = Math.max(0, AV_PLAFOND - avApportsCumules);
+              dcaThisMonth = Math.min(dcaThisMonth, room);
+              const overflow = monthlyDca - dcaThisMonth;
+              if (overflow > 0) avOverflowMonthly[m] += overflow;
+            }
             if (dcaThisMonth > 0) {
               ps.value += dcaThisMonth;
               ps.totalApports += dcaThisMonth;
               if (isPEA) peaApportsCumules += dcaThisMonth;
+              if (isAV) avApportsCumules += dcaThisMonth;
             }
           }
           ps.value *= (1 + monthlyRate);
         }
       }
 
-      // Cash injections (respect PEA ceiling)
+      // Cash injections (respect PEA/AV ceiling)
       const isPEAPlacement = ps.groupKey.startsWith('PEA');
+      const isAVPlacement = ps.groupKey === 'Assurance Vie';
       for (const inj of ps.cashInjections) {
         if (inj.year === currentCalendarYear + year) {
           let amount = Number(inj.montant) || 0;
           if (isPEAPlacement) {
             amount = Math.min(amount, Math.max(0, PEA_PLAFOND - peaApportsCumules));
+          }
+          if (isAVPlacement) {
+            amount = Math.min(amount, Math.max(0, AV_PLAFOND - avApportsCumules));
           }
           if (amount > 0) {
             if (ps.isAirLiquide && ps.prixAction > 0) {
@@ -540,6 +587,7 @@ export function computeProjection(store) {
             }
             ps.totalApports += amount;
             if (isPEAPlacement) peaApportsCumules += amount;
+            if (isAVPlacement) avApportsCumules += amount;
           }
         }
       }
@@ -613,6 +661,49 @@ export function computeProjection(store) {
         ctoOverflow.totalGains = ctoOverflow.value - ctoOverflow.totalApports;
         const apportsThisPeriod = ctoOverflow.totalApports - prevApports;
         interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
+      }
+    }
+
+    // AV overflow: distribute to configured category targets (or fallback CTO)
+    {
+      const categoryToGroupKey = { cto: 'CTO', av: 'Assurance Vie', bitcoin: 'Crypto' };
+
+      for (let m = 0; m < monthsInPeriod; m++) {
+        if (avOverflowMonthly[m] <= 0) continue;
+        let distributed = 0;
+        for (const target of avOverflowTargets) {
+          const share = avOverflowMonthly[m] * (target.pct || 0) / 100;
+          if (share <= 0) continue;
+
+          if (target.category === 'epargne') {
+            epar += share;
+            distributed += share;
+          } else {
+            const gk = categoryToGroupKey[target.category];
+            const targetSim = gk ? placSims.find(ps => ps.groupKey === gk && ps.id !== '__av_overflow__') : null;
+            if (targetSim) {
+              targetSim.value += share;
+              targetSim.totalApports += share;
+              distributed += share;
+            }
+          }
+        }
+        const remainder = avOverflowMonthly[m] - distributed;
+        if (remainder > 0 && needsAVCTOFallback) {
+          avOverflow.value += remainder;
+          avOverflow.totalApports += remainder;
+        }
+      }
+
+      if (needsAVCTOFallback) {
+        const prevValue = avOverflow.value;
+        const prevApports = avOverflow.totalApports;
+        const monthlyRate = avOverflow.rendement / 12;
+        const growthOnly = avOverflow.value * (Math.pow(1 + monthlyRate, monthsInPeriod) - 1);
+        avOverflow.value += growthOnly;
+        avOverflow.totalGains = avOverflow.value - avOverflow.totalApports;
+        const apportsThisPeriod = avOverflow.totalApports - prevApports;
+        interetsAnnuels += avOverflow.value - prevValue - apportsThisPeriod;
       }
     }
     } // end if (!cashedOut)

@@ -1665,25 +1665,6 @@ export function render(store) {
           </div>
         </div>
 
-        <!-- Comparatif succession -->
-        <div class="grid grid-cols-3 gap-3 mb-5">
-          <div class="rounded-xl p-3 bg-accent-red/5 border border-accent-red/15 text-center">
-            <p class="text-[10px] text-gray-500 uppercase mb-1">Sans optimisation</p>
-            <p class="text-xl font-bold text-accent-red">${formatCurrency(totalDroitsSansdon)}</p>
-            <p class="text-[10px] text-gray-500">de droits de succession</p>
-          </div>
-          <div class="rounded-xl p-3 bg-accent-green/5 border border-accent-green/15 text-center">
-            <p class="text-[10px] text-gray-500 uppercase mb-1">Avec vos donations</p>
-            <p class="text-xl font-bold text-accent-green">${formatCurrency(totalFiscaliteAvecdon)}</p>
-            <p class="text-[10px] text-gray-500">total droits à payer</p>
-          </div>
-          <div class="rounded-xl p-3 ${economie > 0 ? 'bg-gradient-to-br from-accent-cyan/10 to-accent-green/5 border border-accent-cyan/20' : 'bg-dark-800/40 border border-dark-400/15'} text-center">
-            <p class="text-[10px] text-gray-500 uppercase mb-1">Économie</p>
-            <p class="text-xl font-bold ${economie > 0 ? 'text-accent-cyan' : 'text-gray-500'}">${formatCurrency(economie)}</p>
-            <p class="text-[10px] text-gray-500">${totalDroitsSansdon > 0 ? Math.round(economie / totalDroitsSansdon * 100) + '% économisé' : 'ajoutez des donations'}</p>
-          </div>
-        </div>
-
         <!-- Enfants — cartes détaillées -->
         <div class="grid grid-cols-1 ${nbEnfants >= 2 ? 'md:grid-cols-' + Math.min(nbEnfants, 3) : ''} gap-3">
           ${enfants.map((enf, i) => {
