@@ -329,10 +329,9 @@ export function computeProjection(store) {
   let depenses = depensesMensuelles;
 
   // Track cumulative apports and gains per placement for tax computation
-  const PEA_PLAFOND = 150000;
-  const AV_PLAFOND = 300000;
+  const PEA_PLAFOND = 150000;  // Plafond sur les apports uniquement
+  const AV_PLAFOND = 300000;   // Plafond sur la valeur totale (apports + gains)
   let peaApportsCumules = 0;
-  let avApportsCumules = 0;
   placSims.forEach(ps => {
     ps.totalApports = ps.value; // initial value counts as apport (for gains tracking)
     ps.totalGains = 0;
@@ -340,10 +339,9 @@ export function computeProjection(store) {
       // Use real apport (not market value) for PEA ceiling tracking
       peaApportsCumules += ps.apportInitial;
     }
-    if (ps.groupKey === 'Assurance Vie') {
-      avApportsCumules += ps.apportInitial;
-    }
   });
+  // Helper: compute total current value of all AV placements (for value-based ceiling)
+  const getAvTotalValue = () => placSims.filter(p => p.groupKey === 'Assurance Vie').reduce((sum, p) => sum + p.value, 0);
   let cumulInterets = 0;
   const PFU_RATE = 0.314;  // Prélèvement Forfaitaire Unique: 14.2% IR + 17.2% PS
   const PS_RATE = 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
@@ -498,7 +496,7 @@ export function computeProjection(store) {
               if (overflow > 0) ctoOverflowMonthly[m] += overflow;
             }
             if (isAV) {
-              const room = Math.max(0, AV_PLAFOND - avApportsCumules);
+              const room = Math.max(0, AV_PLAFOND - getAvTotalValue());
               dcaThisMonth = Math.min(dcaThisMonth, room);
               const overflow = monthlyDca - dcaThisMonth;
               if (overflow > 0) avOverflowMonthly[m] += overflow;
@@ -507,7 +505,6 @@ export function computeProjection(store) {
               ps.quantite += dcaThisMonth / ps.prixAction;
               ps.totalApports += dcaThisMonth;
               if (isPEA) peaApportsCumules += dcaThisMonth;
-              if (isAV) avApportsCumules += dcaThisMonth;
             }
           }
           // Monthly price growth
@@ -550,7 +547,7 @@ export function computeProjection(store) {
               if (overflow > 0) ctoOverflowMonthly[m] += overflow;
             }
             if (isAV) {
-              const room = Math.max(0, AV_PLAFOND - avApportsCumules);
+              const room = Math.max(0, AV_PLAFOND - getAvTotalValue());
               dcaThisMonth = Math.min(dcaThisMonth, room);
               const overflow = monthlyDca - dcaThisMonth;
               if (overflow > 0) avOverflowMonthly[m] += overflow;
@@ -559,7 +556,6 @@ export function computeProjection(store) {
               ps.value += dcaThisMonth;
               ps.totalApports += dcaThisMonth;
               if (isPEA) peaApportsCumules += dcaThisMonth;
-              if (isAV) avApportsCumules += dcaThisMonth;
             }
           }
           ps.value *= (1 + monthlyRate);
@@ -576,7 +572,7 @@ export function computeProjection(store) {
             amount = Math.min(amount, Math.max(0, PEA_PLAFOND - peaApportsCumules));
           }
           if (isAVPlacement) {
-            amount = Math.min(amount, Math.max(0, AV_PLAFOND - avApportsCumules));
+            amount = Math.min(amount, Math.max(0, AV_PLAFOND - getAvTotalValue()));
           }
           if (amount > 0) {
             if (ps.isAirLiquide && ps.prixAction > 0) {
@@ -587,7 +583,6 @@ export function computeProjection(store) {
             }
             ps.totalApports += amount;
             if (isPEAPlacement) peaApportsCumules += amount;
-            if (isAVPlacement) avApportsCumules += amount;
           }
         }
       }
