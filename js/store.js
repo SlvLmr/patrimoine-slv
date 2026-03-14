@@ -15,6 +15,7 @@ const defaultState = {
     emprunts: []
   },
   heritage: [],
+  objectifs: [],
   revenus: [],
   depenses: [],
   suiviDepenses: [],
