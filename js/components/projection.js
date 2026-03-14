@@ -150,6 +150,7 @@ export function render(store) {
               { value: 'av', label: 'Assurance Vie' },
               { value: 'bitcoin', label: 'Bitcoin' },
               { value: 'epargne', label: 'Épargne' },
+              { value: 'epargne', label: 'Épargne' },
             ];
 
             // Current overflow targets from params
