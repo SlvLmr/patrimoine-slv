@@ -419,7 +419,7 @@ export function render(store) {
           </h3>
           <span class="text-xs text-gray-600">Donnees issues de ton portefeuille</span>
         </div>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
             <p class="text-xs text-gray-500 mb-1">Immobilier</p>
             <p class="text-lg font-bold text-amber-400">${formatCurrency(patrimoine.immobilier)}</p>
@@ -431,6 +431,10 @@ export function render(store) {
           <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
             <p class="text-xs text-gray-500 mb-1">Assurance Vie</p>
             <p class="text-lg font-bold text-purple-400">${formatCurrency(patrimoine.assuranceVie)}</p>
+          </div>
+          <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
+            <p class="text-xs text-gray-500 mb-1">Épargne</p>
+            <p class="text-lg font-bold text-emerald-400">${formatCurrency(patrimoine.epargne)}</p>
           </div>
           <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
             <p class="text-xs text-gray-500 mb-1">Patrimoine net</p>
