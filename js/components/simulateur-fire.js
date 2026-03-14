@@ -5,6 +5,8 @@ import { createChart, createVerticalGradient, COLORS } from '../charts/chart-con
 // Standalone tool — not connected to user patrimoine data.
 // Inspired by sinvestir.fr/simulateur-independance-financiere
 
+const STORAGE_KEY = 'sim-fire-saves';
+
 const DEFAULTS = {
   age: 30,
   capitalActuel: 50000,
@@ -19,6 +21,65 @@ const DEFAULTS = {
   ageRetraiteLegale: 64,
   pensionMensuelle: 0,
 };
+
+const FIELD_IDS = [
+  'fire-age', 'fire-capital', 'fire-revenus', 'fire-depenses', 'fire-epargne',
+  'fire-rendement', 'fire-inflation', 'fire-swr',
+  'fire-depenses-retraite', 'fire-revenus-passifs', 'fire-age-retraite-legale', 'fire-pension',
+];
+
+// ─── Save / Load helpers ─────────────────────────────────────────────────────
+
+function getSaves() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function writeSaves(saves) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+}
+
+function saveCurrentInputs(name) {
+  const inputs = getInputs();
+  const saves = getSaves();
+  saves.push({ name, date: new Date().toISOString(), inputs });
+  writeSaves(saves);
+}
+
+function deleteSave(index) {
+  const saves = getSaves();
+  saves.splice(index, 1);
+  writeSaves(saves);
+}
+
+function loadSave(index) {
+  const saves = getSaves();
+  const save = saves[index];
+  if (!save) return;
+  applyInputs(save.inputs);
+}
+
+function applyInputs(values) {
+  const map = {
+    'fire-age': values.age,
+    'fire-capital': values.capitalActuel,
+    'fire-revenus': values.revenusMensuelNets,
+    'fire-depenses': values.depensesMensuelles,
+    'fire-epargne': values.epargneMensuelle,
+    'fire-rendement': values.rendementAnnuel,
+    'fire-inflation': values.inflation,
+    'fire-swr': values.tauxRetrait,
+    'fire-depenses-retraite': values.depensesRetraite,
+    'fire-revenus-passifs': values.revenusPassifsRetraite,
+    'fire-age-retraite-legale': values.ageRetraiteLegale,
+    'fire-pension': values.pensionMensuelle,
+  };
+  for (const [id, val] of Object.entries(map)) {
+    const input = document.getElementById(id);
+    const range = document.getElementById(id + '-range');
+    if (input && val !== undefined) { input.value = val; if (range) range.value = val; }
+  }
+}
 
 function getInputs() {
   const v = (id) => parseNumberInput(document.getElementById(id)?.value);
@@ -164,6 +225,26 @@ export function render() {
       </div>
     </div>
 
+    <!-- Save bar -->
+    <div class="card-dark rounded-2xl overflow-hidden">
+      <button id="fire-save-toggle" class="w-full flex items-center justify-between px-4 py-3 hover:bg-dark-600/30 transition">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-400">Sauvegardes</span>
+          <span id="fire-save-count" class="text-xs text-gray-600"></span>
+        </div>
+        <svg id="fire-save-chevron" class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div id="fire-save-panel" class="hidden px-4 pb-4">
+        <div id="fire-save-content" class="flex items-center gap-2 flex-wrap">
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- LEFT: Inputs -->
       <div class="lg:col-span-5 space-y-4">
@@ -282,13 +363,7 @@ function fireInput(id, label, defaultVal, unit, min, max, step) {
 
 export function mount() {
   // Sync range <-> input for all fields
-  const ids = [
-    'fire-age', 'fire-capital', 'fire-revenus', 'fire-depenses', 'fire-epargne',
-    'fire-rendement', 'fire-inflation', 'fire-swr',
-    'fire-depenses-retraite', 'fire-revenus-passifs', 'fire-age-retraite-legale', 'fire-pension',
-  ];
-
-  ids.forEach(id => {
+  FIELD_IDS.forEach(id => {
     const input = document.getElementById(id);
     const range = document.getElementById(id + '-range');
     if (!input || !range) return;
@@ -304,8 +379,70 @@ export function mount() {
     });
   });
 
-  // Initial calculation
+  // Save panel toggle
+  document.getElementById('fire-save-toggle')?.addEventListener('click', () => {
+    const panel = document.getElementById('fire-save-panel');
+    const chevron = document.getElementById('fire-save-chevron');
+    panel.classList.toggle('hidden');
+    chevron.classList.toggle('rotate-180');
+  });
+
+  // Render save bar content & initial calculation
+  refreshSaveBar();
   recalculate();
+}
+
+function refreshSaveBar() {
+  const container = document.getElementById('fire-save-content');
+  const countEl = document.getElementById('fire-save-count');
+  if (!container) return;
+
+  const saves = getSaves();
+  if (countEl) countEl.textContent = saves.length > 0 ? `(${saves.length})` : '';
+
+  const options = saves.map((s, i) => {
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return `<option value="${i}">${s.name} — ${dateStr}</option>`;
+  }).join('');
+
+  container.innerHTML = `
+    <select id="fire-save-select" class="flex-1 min-w-0 px-2.5 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-sm text-gray-300 focus:ring-1 focus:ring-accent-blue/40 transition">
+      <option value="">Choisir un scénario…</option>
+      ${options}
+    </select>
+    <button id="fire-load-btn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-blue/15 text-accent-blue hover:bg-accent-blue/25 transition disabled:opacity-30" ${saves.length === 0 ? 'disabled' : ''}>Charger</button>
+    <button id="fire-delete-btn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition disabled:opacity-30" ${saves.length === 0 ? 'disabled' : ''}>Suppr.</button>
+    <span class="mx-1 h-5 w-px bg-dark-400/50 hidden sm:block"></span>
+    <button id="fire-save-btn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition">Sauvegarder</button>
+  `;
+
+  // Wire buttons
+  document.getElementById('fire-save-btn')?.addEventListener('click', () => {
+    const name = prompt('Nom du scénario :');
+    if (name && name.trim()) {
+      saveCurrentInputs(name.trim());
+      refreshSaveBar();
+    }
+  });
+
+  document.getElementById('fire-load-btn')?.addEventListener('click', () => {
+    const sel = document.getElementById('fire-save-select');
+    const idx = parseInt(sel?.value);
+    if (!isNaN(idx)) {
+      loadSave(idx);
+      recalculate();
+    }
+  });
+
+  document.getElementById('fire-delete-btn')?.addEventListener('click', () => {
+    const sel = document.getElementById('fire-save-select');
+    const idx = parseInt(sel?.value);
+    if (!isNaN(idx)) {
+      deleteSave(idx);
+      refreshSaveBar();
+    }
+  });
 }
 
 function recalculate() {

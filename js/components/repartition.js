@@ -86,7 +86,7 @@ export function render(store) {
 
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-4">
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-5 min-w-0 overflow-hidden">
           <div class="flex items-center gap-2 mb-3">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
             <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Allocation</h2>
@@ -95,10 +95,10 @@ export function render(store) {
           <div class="relative" style="height: 280px;">
             <canvas id="rep-chart-donut"></canvas>
           </div>
-          <div id="rep-donut-legend" class="mt-3 space-y-1"></div>
+          <div id="rep-donut-legend" class="mt-3 space-y-1 overflow-hidden"></div>
         </div>
 
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-5 min-w-0 overflow-hidden">
           <div class="flex items-center gap-2 mb-3">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
             <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Evolution</h2>
