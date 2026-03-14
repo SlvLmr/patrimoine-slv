@@ -588,10 +588,6 @@ export function computeProjection(store) {
         const apportsThisPeriod = ctoOverflow.totalApports - prevApports;
         interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
       }
-      // Note: target placements' growth is already handled in the main loop above,
-      // but the overflow amounts added this period will compound from next period.
-      const apportsThisPeriod = ctoOverflow.totalApports - prevApports;
-      interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
     }
     } // end if (!cashedOut)
 
