@@ -178,7 +178,7 @@ export function render() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17h.01M16 17h.01M2 9h20M5 17h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
           </svg>
         </div>
-        Simulateur Auto
+        Crédit voiture
       </h2>
       <p class="text-gray-500 text-sm mt-1">Compare Crédit classique, LOA et LLD pour faire le meilleur choix</p>
       <div class="mt-3 p-3 rounded-xl bg-violet-500/5 border border-violet-500/10">

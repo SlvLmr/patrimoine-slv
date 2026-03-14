@@ -222,7 +222,7 @@ export function render() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2"/>
           </svg>
         </div>
-        Simulateur Crédit Immobilier
+        Crédit immobilier
       </h2>
       <p class="text-gray-500 text-sm mt-1">Calcule ta mensualité, ton tableau d'amortissement et le coût total de ton emprunt</p>
       <div class="mt-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">

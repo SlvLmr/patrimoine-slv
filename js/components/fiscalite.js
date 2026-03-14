@@ -1631,8 +1631,15 @@ export function render(store) {
       <!-- TITRE -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-bold text-gray-100">Stratégie de transmission</h1>
-          <p class="text-sm text-gray-400 mt-1">Phase 1 : nue-propriété (sans cash) · Phase 2 : donations quand le capital le permet</p>
+          <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+              </svg>
+            </div>
+            Succession
+          </h2>
+          <p class="text-gray-500 text-sm mt-1">Phase 1 : nue-propriété (sans cash) · Phase 2 : donations quand le capital le permet</p>
         </div>
       </div>
 

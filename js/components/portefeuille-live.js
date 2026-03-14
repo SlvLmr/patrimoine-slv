@@ -123,7 +123,17 @@ export function render(store) {
 
   return `
     <div class="space-y-0">
-      <h1 class="text-2xl font-bold text-gray-100 mb-4">Portefeuille actuel</h1>
+      <div class="mb-4">
+        <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-blue-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
+          </div>
+          Portefeuille
+        </h2>
+        <p class="text-gray-500 text-sm mt-1">Vue détaillée de tous tes actifs et placements</p>
+      </div>
 
       <!-- LEVEL 1 — Patrimoine net -->
       <div class="flex justify-center">

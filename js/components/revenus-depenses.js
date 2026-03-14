@@ -209,7 +209,17 @@ export function render(store) {
 
   return `
     <div class="space-y-6">
-      <h1 class="text-2xl font-bold text-gray-100">Revenus & Dépenses</h1>
+      <div>
+        <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          Revenus & dépenses
+        </h2>
+        <p class="text-gray-500 text-sm mt-1">Gère tes revenus et dépenses mensuels</p>
+      </div>
 
       <!-- KPI -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

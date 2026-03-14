@@ -161,8 +161,15 @@ export function render(store) {
     <div class="max-w-6xl mx-auto space-y-6">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 class="text-xl font-bold text-gray-100">Bourse</h1>
-          <p class="text-sm text-gray-400 mt-0.5">Cours et graphiques en temps réel via TradingView</p>
+          <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500/20 to-green-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3v18h18M9 17V9m4 8V5m4 12v-4"/>
+              </svg>
+            </div>
+            Bourse
+          </h2>
+          <p class="text-gray-500 text-sm mt-1">Cours et graphiques en temps réel via TradingView</p>
         </div>
         <button id="btn-add-ticker" class="px-4 py-2 bg-dark-600 border border-dark-400 text-gray-300 text-sm rounded-lg hover:bg-dark-500 transition font-medium flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

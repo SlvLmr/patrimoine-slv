@@ -179,7 +179,17 @@ export function render(store) {
   return `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-100">Vie quotidienne</h1>
+        <div>
+          <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-sky-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+              </svg>
+            </div>
+            Vie quotidienne
+          </h2>
+          <p class="text-gray-500 text-sm mt-1">Suivi de tes opérations bancaires au quotidien</p>
+        </div>
         <div class="flex items-center gap-3">
           <button id="btn-archive-month" class="px-4 py-2 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-sm rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>

@@ -160,7 +160,7 @@ export function render() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
           </svg>
         </div>
-        Simulateur Intérêts Composés
+        Intérêts composés
       </h2>
       <p class="text-gray-500 text-sm mt-1">Visualise la puissance des intérêts composés sur ton épargne</p>
       <div class="mt-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">

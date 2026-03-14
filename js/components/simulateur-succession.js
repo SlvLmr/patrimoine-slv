@@ -433,7 +433,7 @@ export function render() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
           </svg>
         </div>
-        Simulateur Succession Pro
+        Succession Pro
       </h2>
       <p class="text-gray-500 text-sm mt-1">Optimise ta transmission — Compare l'impact de chaque levier fiscal</p>
       <div class="mt-3 p-3 rounded-xl bg-rose-500/5 border border-rose-500/10">
