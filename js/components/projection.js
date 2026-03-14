@@ -98,7 +98,10 @@ export function render(store) {
                   const gk = getPlacementGroupKey(p);
                   const currentRend = rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05);
                   const icon = groupIcons[gk] || defaultIcon;
-                  const dcaLabel = p.dcaMensuel ? `<span class="text-[9px] text-gray-600">${p.dcaMensuel}€/m</span>` : '';
+                  const dcaBase = Number(p.dcaMensuel) || 0;
+                  const dcaMaxOv = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+                  const dcaEff = Math.max(dcaBase, dcaMaxOv);
+                  const dcaLabel = dcaEff > 0 ? `<span class="text-[9px] text-gray-600">${dcaEff}€/m${dcaBase === 0 ? ' (prog.)' : ''}</span>` : '';
                   return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-pointer placement-row" draggable="true" data-placement-id="${p.id}">
                     ${icon}
                     <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
@@ -123,7 +126,12 @@ export function render(store) {
               const env = (p.enveloppe || p.type || '').toUpperCase();
               return env.startsWith('PEA') && env !== 'PEE';
             });
-            const peaDCA = peaPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+            // Consider both base dcaMensuel and dcaOverrides to detect future DCA
+            const peaDCA = peaPlacements.reduce((s, p) => {
+              const base = Number(p.dcaMensuel) || 0;
+              const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+              return s + Math.max(base, maxOverride);
+            }, 0);
             if (peaDCA <= 0) return '';
 
             const peaApports = peaPlacements.reduce((s, p) => s + ((Number(p.pru) || 0) * (Number(p.quantite) || 0) || Number(p.apport) || Number(p.valeur) || 0), 0);
@@ -192,7 +200,12 @@ export function render(store) {
               const env = (p.enveloppe || p.type || '').toUpperCase();
               return env === 'AV';
             });
-            const avDCA = avPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+            // Consider both base dcaMensuel and dcaOverrides to detect future DCA
+            const avDCA = avPlacements.reduce((s, p) => {
+              const base = Number(p.dcaMensuel) || 0;
+              const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+              return s + Math.max(base, maxOverride);
+            }, 0);
             if (avDCA <= 0) return '';
 
             const avApports = avPlacements.reduce((s, p) => s + ((Number(p.pru) || 0) * (Number(p.quantite) || 0) || Number(p.apport) || Number(p.valeur) || 0), 0);
@@ -530,7 +543,9 @@ export function render(store) {
         const dcaByGroup = {};
         allPlac.forEach(p => {
           const gk = getPlacementGroupKey(p);
-          const dca = Number(p.dcaMensuel) || 0;
+          const base = Number(p.dcaMensuel) || 0;
+          const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+          const dca = Math.max(base, maxOverride);
           if (dca > 0) dcaByGroup[gk] = (dcaByGroup[gk] || 0) + dca;
         });
 
@@ -1233,7 +1248,11 @@ export function mount(store, navigate) {
   // --- Actualisation rapide DCA ---
   document.getElementById('btn-actu-rapide')?.addEventListener('click', () => {
     const placements = store.get('actifs.placements') || [];
-    const dcaItems = placements.filter(p => Number(p.dcaMensuel) > 0);
+    const dcaItems = placements.filter(p => {
+      const base = Number(p.dcaMensuel) || 0;
+      const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+      return Math.max(base, maxOverride) > 0;
+    });
     if (dcaItems.length === 0) {
       alert('Aucun placement avec DCA actif. Éditez un placement et renseignez un montant DCA mensuel.');
       return;
@@ -1244,7 +1263,9 @@ export function mount(store, navigate) {
 
     const rows = dcaItems.map(p => {
       const currentVal = Number(p.valeur) || Number(p.apport) || 0;
-      const dca = Number(p.dcaMensuel) || 0;
+      const baseDca = Number(p.dcaMensuel) || 0;
+      const maxOverrideDca = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+      const dca = Math.max(baseDca, maxOverrideDca);
       const estimated = currentVal + dca;
       const gk = getPlacementGroupKey(p);
       return `

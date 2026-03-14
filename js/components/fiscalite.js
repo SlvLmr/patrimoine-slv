@@ -461,7 +461,11 @@ function genererConseils(patrimoine, snap, enfants, donations, ageDonateur, curr
   const peaApports = peaPlacements.reduce((s, p) => s + (Number(p.pru || 0) * Number(p.quantite || 0)), 0);
   const PLAFOND_PEA = 150000;
   const peaRestant = Math.max(0, PLAFOND_PEA - peaApports);
-  const dcaMensuelTotal = allPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+  const dcaMensuelTotal = allPlacements.reduce((s, p) => {
+    const base = Number(p.dcaMensuel) || 0;
+    const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+    return s + Math.max(base, maxOverride);
+  }, 0);
 
   if (peaRestant < 20000 && dcaMensuelTotal > 0) {
     const avParEnfant = patrimoine.assuranceVie / Math.max(1, nbEnfants);
@@ -554,7 +558,11 @@ function genererTimeline(snapshots, patrimoine, enfants, ageDonateur, currentYea
   const peaPlacements = allPlacements.filter(p => (p.enveloppe || '').toUpperCase().startsWith('PEA') && (p.enveloppe || '').toUpperCase() !== 'PEE');
   const peaApports = peaPlacements.reduce((s, p) => s + (Number(p.pru || 0) * Number(p.quantite || 0)), 0);
   const PLAFOND_PEA = 150000;
-  const dcaMensuelPEA = peaPlacements.reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+  const dcaMensuelPEA = peaPlacements.reduce((s, p) => {
+    const base = Number(p.dcaMensuel) || 0;
+    const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+    return s + Math.max(base, maxOverride);
+  }, 0);
   const peaRestant = Math.max(0, PLAFOND_PEA - peaApports);
 
   // Patrimoine à l'année de départ (snapshot)

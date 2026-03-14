@@ -155,7 +155,10 @@ export function render(store) {
           ${showCatHeaders ? `<div class="px-1 py-0.5 mb-0.5"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">${catLabel}</span></div>` : ''}
           ${catItems.map(i => {
             const pv = i.quantite && i.pru ? ((Number(i.valeur) || Number(i.apport) || 0) - Number(i.pru) * Number(i.quantite)) : 0;
-            const dcaLabel = i.dcaMensuel ? `${formatCurrency(i.dcaMensuel)}/m` : '';
+            const dcaBase = Number(i.dcaMensuel) || 0;
+            const dcaMax = (i.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+            const dcaEffective = Math.max(dcaBase, dcaMax);
+            const dcaLabel = dcaEffective > 0 ? `${formatCurrency(dcaEffective)}/m${dcaBase === 0 ? ' (programmé)' : ''}` : '';
             return `
             <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition mb-0.5">
               <div class="flex items-center justify-between">
@@ -434,7 +437,11 @@ export function mount(store, navigate) {
   // --- Actualisation rapide DCA ---
   document.getElementById('btn-actu-rapide')?.addEventListener('click', () => {
     const placements = store.get('actifs.placements') || [];
-    const dcaItems = placements.filter(p => Number(p.dcaMensuel) > 0);
+    const dcaItems = placements.filter(p => {
+      const base = Number(p.dcaMensuel) || 0;
+      const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+      return Math.max(base, maxOverride) > 0;
+    });
     if (dcaItems.length === 0) {
       alert('Aucun placement avec DCA actif. Éditez un placement et renseignez un montant DCA mensuel.');
       return;
@@ -445,7 +452,9 @@ export function mount(store, navigate) {
 
     const rows = dcaItems.map(p => {
       const currentVal = Number(p.valeur) || Number(p.apport) || 0;
-      const dca = Number(p.dcaMensuel) || 0;
+      const baseDca = Number(p.dcaMensuel) || 0;
+      const maxOverrideDca = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
+      const dca = Math.max(baseDca, maxOverrideDca);
       const estimated = currentVal + dca;
       const env = p.enveloppe || p.type || '';
       const envColor = ENVELOPE_COLORS[env] || 'gray-400';
