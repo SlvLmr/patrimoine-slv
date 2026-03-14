@@ -358,7 +358,7 @@ export function mount(store, navigate) {
     ` : '';
 
     flowEl.innerHTML = (totalDCA > 0 ? sourceHTML + connectorHTML : '') + `
-      <div id="rep-flow-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div id="rep-flow-cards" class="grid grid-cols-1 sm:grid-cols-2 ${sortedGroups.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2">
         ${destCardsHTML}
       </div>
       ${emptyGroupHTML}
