@@ -636,6 +636,9 @@ export function computeProjection(store) {
           if (target.category === 'epargne') {
             epar += share;
             distributed += share;
+          } else if (target.category === 'donation') {
+            donation += share;
+            distributed += share;
           } else {
             const gk = categoryToGroupKey[target.category];
             const targetSim = gk ? placSims.find(ps => ps.groupKey === gk && ps.id !== '__av_overflow__') : null;
@@ -670,6 +673,9 @@ export function computeProjection(store) {
           if (target.category === 'epargne') {
             // Épargne: add directly to savings pool
             epar += share;
+            distributed += share;
+          } else if (target.category === 'donation') {
+            donation += share;
             distributed += share;
           } else {
             // Find first placement matching the category group key
@@ -720,6 +726,9 @@ export function computeProjection(store) {
 
           if (target.category === 'epargne') {
             epar += share;
+            distributed += share;
+          } else if (target.category === 'donation') {
+            donation += share;
             distributed += share;
           } else {
             const gk = categoryToGroupKey[target.category];

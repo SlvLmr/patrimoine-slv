@@ -150,6 +150,7 @@ export function render(store) {
               { value: 'av', label: 'Assurance Vie' },
               { value: 'bitcoin', label: 'Bitcoin' },
               { value: 'epargne', label: 'Épargne' },
+              { value: 'donation', label: 'Donation' },
               { value: 'epargne', label: 'Épargne' },
             ];
 
@@ -224,6 +225,7 @@ export function render(store) {
               { value: 'cto', label: 'CTO' },
               { value: 'bitcoin', label: 'Bitcoin' },
               { value: 'epargne', label: 'Épargne' },
+              { value: 'donation', label: 'Donation' },
             ];
 
             const avOverflowTargets = params.avOverflowTargets || [];
