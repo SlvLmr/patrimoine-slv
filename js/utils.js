@@ -205,7 +205,10 @@ export function computeProjection(store) {
   };
   });
 
-  // CTO overflow placement: receives PEA DCA when ceiling is reached
+  // PEA overflow: when PEA ceiling is reached, DCA is redirected to configured targets
+  // Users can configure peaOverflowTargets: [{ placementId, pct }]
+  // If no targets configured, falls back to a virtual CTO placement
+  const peaOverflowTargets = params.peaOverflowTargets || [];
   const rendCTO = params.rendementCTO || 0.05;
   const ctoOverflow = {
     groupKey: 'CTO',
@@ -219,7 +222,12 @@ export function computeProjection(store) {
     totalApports: 0,
     totalGains: 0
   };
-  placSims.push(ctoOverflow);
+  // Only add CTO overflow as a real sim if needed (no targets configured, or targets don't cover 100%)
+  const overflowTargetTotal = peaOverflowTargets.reduce((s, t) => s + (Number(t.pct) || 0), 0);
+  const needsCTOFallback = overflowTargetTotal < 100;
+  if (needsCTOFallback || peaOverflowTargets.length === 0) {
+    placSims.push(ctoOverflow);
+  }
 
   // Discover unique group keys from placements
   const groupKeysSet = new Set();
@@ -541,19 +549,47 @@ export function computeProjection(store) {
       interetsAnnuels += ps.value - prevValue - apportsThisPeriod;
     });
 
-    // CTO overflow: simulate month-by-month with redirected PEA DCA
+    // PEA overflow: distribute to configured targets (or fallback CTO)
     {
-      const prevValue = ctoOverflow.value;
-      const prevApports = ctoOverflow.totalApports;
-      const monthlyRate = ctoOverflow.rendement / 12;
+      // Distribute overflow to user-configured target placements
       for (let m = 0; m < monthsInPeriod; m++) {
-        if (ctoOverflowMonthly[m] > 0) {
-          ctoOverflow.value += ctoOverflowMonthly[m];
-          ctoOverflow.totalApports += ctoOverflowMonthly[m];
+        if (ctoOverflowMonthly[m] <= 0) continue;
+        let distributed = 0;
+        for (const target of peaOverflowTargets) {
+          const targetSim = placSims.find(ps => ps.id === target.placementId);
+          if (!targetSim) continue;
+          const share = ctoOverflowMonthly[m] * (target.pct || 0) / 100;
+          if (share > 0) {
+            targetSim.value += share;
+            targetSim.totalApports += share;
+            distributed += share;
+          }
         }
-        ctoOverflow.value *= (1 + monthlyRate);
+        // Remainder goes to CTO fallback
+        const remainder = ctoOverflowMonthly[m] - distributed;
+        if (remainder > 0 && needsCTOFallback) {
+          ctoOverflow.value += remainder;
+          ctoOverflow.totalApports += remainder;
+        }
       }
-      ctoOverflow.totalGains = ctoOverflow.value - ctoOverflow.totalApports;
+
+      // Apply monthly growth to all target placements (already handled in main loop above)
+      // Only need to grow CTO fallback here since it's skipped in the main loop
+      if (needsCTOFallback) {
+        const prevValue = ctoOverflow.value;
+        const prevApports = ctoOverflow.totalApports;
+        const monthlyRate = ctoOverflow.rendement / 12;
+        // Re-simulate growth (the values were injected above, now compound)
+        // Note: growth is approximate since injections happen throughout the period
+        // For simplicity, apply period-end growth
+        const growthOnly = ctoOverflow.value * (Math.pow(1 + monthlyRate, monthsInPeriod) - 1);
+        ctoOverflow.value += growthOnly;
+        ctoOverflow.totalGains = ctoOverflow.value - ctoOverflow.totalApports;
+        const apportsThisPeriod = ctoOverflow.totalApports - prevApports;
+        interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
+      }
+      // Note: target placements' growth is already handled in the main loop above,
+      // but the overflow amounts added this period will compound from next period.
       const apportsThisPeriod = ctoOverflow.totalApports - prevApports;
       interetsAnnuels += ctoOverflow.value - prevValue - apportsThisPeriod;
     }

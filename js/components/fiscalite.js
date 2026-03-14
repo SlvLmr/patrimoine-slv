@@ -1,5 +1,4 @@
 import { formatCurrency, openModal, inputField, selectField, getFormData, computeProjection } from '../utils.js?v=5';
-import { createChart, COLORS, VIVID_PALETTE } from '../charts/chart-config.js';
 
 // ============================================================================
 // FISCALITÉ FRANÇAISE DES DONATIONS — Barèmes et constantes
@@ -1642,7 +1641,7 @@ export function render(store) {
         </button>
       </div>
       ` : `
-      <!-- FAMILLE — Gestion des enfants -->
+      <!-- FAMILLE — Vue d'ensemble -->
       <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 rounded-lg bg-accent-purple/20 flex items-center justify-center">
@@ -1652,78 +1651,18 @@ export function render(store) {
           </div>
           <div>
             <h2 class="text-sm font-bold text-gray-200">Famille</h2>
-            <p class="text-[10px] text-gray-500">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} · Capacité exonérée : ${formatCurrency((ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants)} par cycle de 15 ans</p>
+            <p class="text-[10px] text-gray-500">${ageDonateur} ans · ${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} · Patrimoine net ${formatCurrency(patrimoine.patrimoineNet)} · Capacité exonérée : ${formatCurrency((ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants)} par cycle de 15 ans</p>
           </div>
-          <button id="btn-add-enfant" class="ml-auto px-3 py-1.5 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            Ajouter un enfant
-          </button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-${Math.min(nbEnfants, 4)} gap-3">
-          ${enfants.map((enf, i) => {
-            const age = childAge(enf.dateNaissance);
-            const color = CHILD_COLORS[i % CHILD_COLORS.length];
-            const enfDons = (cfg.donations || []).filter(d => d.enfantId === enf.id);
-            const totalDonne = enfDons.reduce((s, d) => s + (Number(d.montant) || 0), 0);
-            const abattRestant = Math.max(0, ABATTEMENT_PARENT_ENFANT - totalDonne);
-            const abattPct = Math.min(100, Math.round((1 - abattRestant / ABATTEMENT_PARENT_ENFANT) * 100));
-            const tepaUsed = enfDons.some(d => d.type === 'don_tepa');
-
-            return `
-            <div class="bg-dark-800/40 rounded-xl p-3 border border-dark-400/10 hover:border-${color}/30 transition group relative">
-              <button class="enfant-delete absolute top-2 right-2 w-5 h-5 rounded-full bg-dark-600/60 text-gray-500 hover:bg-accent-red/20 hover:text-accent-red transition opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs" data-id="${enf.id}">&times;</button>
-              <div class="flex items-center gap-2.5 mb-2">
-                <div class="w-9 h-9 rounded-full bg-${color}/20 border-2 border-${color}/30 flex items-center justify-center text-sm font-bold text-${color}">
-                  ${(enf.prenom || '?')[0].toUpperCase()}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <h3 class="text-sm font-bold text-gray-100">${enf.prenom || 'Sans nom'}</h3>
-                    <button class="enfant-edit text-gray-600 hover:text-${color} transition opacity-0 group-hover:opacity-100" data-id="${enf.id}">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    </button>
-                  </div>
-                  <p class="text-[10px] text-gray-500">${age !== null ? `${age} ans` : ''}${enf.dateNaissance ? ` · ${new Date(enf.dateNaissance).toLocaleDateString('fr-FR')}` : ''}</p>
-                </div>
-              </div>
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-[10px]">
-                  <span class="text-gray-500">Donné</span>
-                  <span class="font-medium ${totalDonne > 0 ? 'text-accent-green' : 'text-gray-500'}">${totalDonne > 0 ? formatCurrency(totalDonne) : '—'}</span>
-                </div>
-                <div>
-                  <div class="flex justify-between text-[10px] mb-0.5">
-                    <span class="text-gray-500">Abattement</span>
-                    <span class="text-gray-500">${abattPct}%</span>
-                  </div>
-                  <div class="h-1 bg-dark-600 rounded-full overflow-hidden">
-                    <div class="h-full bg-${color} rounded-full transition-all" style="width:${abattPct}%"></div>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between text-[10px]">
-                  <span class="text-gray-500">TEPA</span>
-                  <span class="font-medium ${tepaUsed ? 'text-gray-400' : 'text-accent-cyan'}">${tepaUsed ? 'Utilisé' : 'Disponible'}</span>
-                </div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-
-      <!-- DASHBOARD — Vue d'ensemble -->
-      <div class="card-dark rounded-xl p-5">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 rounded-lg bg-accent-green/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <div class="ml-auto flex items-center gap-2">
+            <button id="btn-add-donation-top" class="px-3 py-1.5 bg-accent-green text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              Enregistrer une donation
+            </button>
+            <button id="btn-add-enfant" class="px-3 py-1.5 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              Ajouter un enfant
+            </button>
           </div>
-          <div>
-            <h2 class="text-sm font-bold text-gray-200">Vue d'ensemble</h2>
-            <p class="text-[10px] text-gray-500">${ageDonateur} ans · ${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} · Patrimoine net ${formatCurrency(patrimoine.patrimoineNet)}</p>
-          </div>
-          <button id="btn-add-donation-top" class="ml-auto px-3 py-1.5 bg-accent-green text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            Enregistrer une donation
-          </button>
         </div>
 
         <!-- Comparatif succession -->
@@ -1745,9 +1684,11 @@ export function render(store) {
           </div>
         </div>
 
-        <!-- Jauges par enfant -->
+        <!-- Enfants — cartes détaillées -->
         <div class="grid grid-cols-1 ${nbEnfants >= 2 ? 'md:grid-cols-' + Math.min(nbEnfants, 3) : ''} gap-3">
           ${enfants.map((enf, i) => {
+            const age = childAge(enf.dateNaissance);
+            const color = CHILD_COLORS[i % CHILD_COLORS.length];
             const dons = donationsParEnfant[enf.id] || [];
             const totalDonneEnf = totalDonneParEnfant[enf.id] || 0;
             const lastDon = dons[dons.length - 1];
@@ -1755,18 +1696,23 @@ export function render(store) {
             const tepaRestant = lastDon ? lastDon.tepaRestant : DON_FAMILIAL_TEPA;
             const abattUsedPct = Math.min(100, Math.round((1 - abattRestant / ABATTEMENT_PARENT_ENFANT) * 100));
             const tepaUsed = tepaRestant < DON_FAMILIAL_TEPA;
-            const color = CHILD_COLORS[i % CHILD_COLORS.length];
             const droitsEnf = dons.reduce((s, r) => s + r.droits, 0);
 
             return `
-            <div class="rounded-xl p-4 bg-dark-800/30 border border-dark-400/10 hover:border-${color}/20 transition">
+            <div class="rounded-xl p-4 bg-dark-800/30 border border-dark-400/10 hover:border-${color}/20 transition group relative">
+              <button class="enfant-delete absolute top-2 right-2 w-5 h-5 rounded-full bg-dark-600/60 text-gray-500 hover:bg-accent-red/20 hover:text-accent-red transition opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs" data-id="${enf.id}">&times;</button>
               <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-full bg-${color}/20 border border-${color}/30 flex items-center justify-center text-xs font-bold text-${color}">
+                <div class="w-9 h-9 rounded-full bg-${color}/20 border-2 border-${color}/30 flex items-center justify-center text-sm font-bold text-${color}">
                   ${(enf.prenom || '?')[0].toUpperCase()}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-bold text-gray-200">${enf.prenom || 'Sans nom'}</p>
-                  <p class="text-[10px] text-gray-500">${dons.length > 0 ? `${dons.length} donation${dons.length > 1 ? 's' : ''} · ${formatCurrency(totalDonneEnf)} donné` : 'Aucune donation'}</p>
+                  <div class="flex items-center gap-1.5">
+                    <p class="text-sm font-bold text-gray-200">${enf.prenom || 'Sans nom'}</p>
+                    <button class="enfant-edit text-gray-600 hover:text-${color} transition opacity-0 group-hover:opacity-100" data-id="${enf.id}">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                  </div>
+                  <p class="text-[10px] text-gray-500">${age !== null ? `${age} ans` : ''}${enf.dateNaissance ? ` · ${new Date(enf.dateNaissance).toLocaleDateString('fr-FR')}` : ''} · ${dons.length > 0 ? `${dons.length} donation${dons.length > 1 ? 's' : ''} · ${formatCurrency(totalDonneEnf)} donné` : 'Aucune donation'}</p>
                 </div>
                 ${droitsEnf > 0 ? `<span class="text-[10px] text-accent-red font-medium">${formatCurrency(droitsEnf)} droits</span>` : dons.length > 0 ? `<span class="text-[10px] text-accent-green font-medium">0 € droits</span>` : ''}
               </div>
@@ -1966,15 +1912,7 @@ export function render(store) {
         }).join('')}
       </div>
 
-      <!-- ROW 4 : GRAPHIQUE TIMELINE -->
-      <div class="card-dark rounded-xl p-5">
-        <h2 class="text-sm font-bold text-gray-200 mb-3">Timeline des donations</h2>
-        <div style="height: 300px">
-          <canvas id="chart-donations"></canvas>
-        </div>
-      </div>
-
-      <!-- ROW 5 : BARÈME USUFRUIT (référence) -->
+      <!-- BARÈME USUFRUIT (référence) -->
       <details class="card-dark rounded-xl group">
         <summary class="flex items-center gap-2 px-5 py-3 cursor-pointer select-none">
           <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -2357,54 +2295,4 @@ export function mount(store, navigate) {
   // --- Appliquer un conseil (bind initial + rebind dynamique via slider) ---
   bindConseilApply();
 
-  // --- Chart timeline ---
-  const canvas = document.getElementById('chart-donations');
-  if (canvas && enfants.length > 0) {
-    const allDonations = cfg.donations || [];
-    if (allDonations.length > 0) {
-      const years = [...new Set(allDonations.map(d => d.annee))].sort();
-      const minYear = Math.min(...years, currentYear);
-      const maxYear = Math.max(...years, currentYear + 5);
-      const labels = [];
-      for (let y = minYear; y <= maxYear; y++) labels.push(y.toString());
-
-      const palette = [VIVID_PALETTE[0], VIVID_PALETTE[1], VIVID_PALETTE[2], VIVID_PALETTE[3], VIVID_PALETTE[4]];
-      const datasets = enfants.map((enf, i) => {
-        const data = labels.map(yearStr => {
-          const y = parseInt(yearStr);
-          return allDonations.filter(d => d.enfantId === enf.id && d.annee === y).reduce((s, d) => s + d.montant, 0);
-        });
-        return {
-          label: enf.prenom || `Enfant ${i + 1}`,
-          data,
-          backgroundColor: palette[i % palette.length] + '80',
-          borderColor: palette[i % palette.length],
-          borderWidth: 1,
-        };
-      });
-
-      createChart(canvas, {
-        type: 'bar',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: '#9ca3af', font: { size: 11 } } },
-            tooltip: {
-              callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`
-              }
-            }
-          },
-          scales: {
-            x: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
-            y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', callback: v => formatCurrency(v) } }
-          }
-        }
-      });
-    } else {
-      canvas.parentElement.innerHTML = '<p class="text-center text-gray-500 text-sm py-12">Ajoutez des donations pour voir la timeline</p>';
-    }
-  }
 }
