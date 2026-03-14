@@ -174,7 +174,7 @@ function compute(inp) {
 
     levers.push({
       id: 'demembrement', label: 'Démembrement immobilier',
-      desc: `Donation de la nue-propriété (${Math.round(np * 100)} %) de l'immobilier. À votre décès, vos enfants récupèrent la pleine propriété sans droits supplémentaires.`,
+      desc: `Nue-propriété ${Math.round(np * 100)} % — ${formatCurrency(Math.round(valeurNP))} transmis`,
       color: 'amber',
       montantTransmis: valeurNP,
       exonere: exonereTotal,
@@ -202,7 +202,7 @@ function compute(inp) {
 
     levers.push({
       id: 'cto', label: 'Donation titres CTO',
-      desc: `Donation des titres du CTO (${formatCurrency(inp.cto)}). Purge les plus-values latentes et économise la flat tax de 30 %.`,
+      desc: `${formatCurrency(inp.cto)} — purge des plus-values latentes`,
       color: 'purple',
       montantTransmis: inp.cto,
       exonere: exonereParEnfant * nbEnfants,
@@ -225,7 +225,7 @@ function compute(inp) {
 
     levers.push({
       id: 'tepa', label: 'Don TEPA (Art. 790 G)',
-      desc: `${formatCurrency(DON_TEPA)} par donateur × ${nbDonateurs} donateur(s) × ${nbEnfants} enfant(s) = ${formatCurrency(tepaTotal)}. Exonéré si donateur < 80 ans. Cumulable avec l'abattement classique.`,
+      desc: `${formatCurrency(tepaTotal)} exonéré (< 80 ans)`,
       color: 'cyan',
       montantTransmis: tepaTotal,
       exonere: tepaTotal,
@@ -249,7 +249,7 @@ function compute(inp) {
 
       levers.push({
         id: 'cash', label: 'Donation cash (abattement)',
-        desc: `${formatCurrency(ABATTEMENT_ENFANT)} d'abattement × ${nbDonateurs} donateur(s) × ${nbEnfants} enfant(s). Renouvelable tous les 15 ans.`,
+        desc: `${formatCurrency(cashTotal)} dans l'abattement ${formatCurrency(ABATTEMENT_ENFANT)}/parent/enfant`,
         color: 'blue',
         montantTransmis: cashTotal,
         exonere: cashTotal,
@@ -270,7 +270,7 @@ function compute(inp) {
 
     levers.push({
       id: 'grandchildren', label: 'Donation petits-enfants',
-      desc: `${formatCurrency(ABATTEMENT_PETIT_ENFANT)} d'abattement par donateur × ${nbDonateurs} × ${nbPE} petit(s)-enfant(s) = ${formatCurrency(abattPE)}`,
+      desc: `${formatCurrency(abattPE)} exonéré via abattement petits-enfants`,
       color: 'green',
       montantTransmis: abattPE,
       exonere: abattPE,
@@ -292,7 +292,7 @@ function compute(inp) {
 
     levers.push({
       id: 'av', label: 'Assurance-vie (Art. 990 I)',
-      desc: `${formatCurrency(AV_ABATTEMENT)} exonéré par bénéficiaire × ${nbEnfants} enfant(s). Primes versées avant 70 ans. Au-delà : 20 % puis 31,25 %.`,
+      desc: `${formatCurrency(AV_ABATTEMENT)}/bénéficiaire exonéré (primes < 70 ans)`,
       color: 'teal',
       montantTransmis: inp.assuranceVie,
       exonere: avExonere,
@@ -311,7 +311,7 @@ function compute(inp) {
 
     levers.push({
       id: 'cycle2', label: `2e cycle (dans ${CYCLE_ANNEES} ans)`,
-      desc: `À ${ageRef + CYCLE_ANNEES} ans, les abattements se renouvellent. Nouveau potentiel : ${formatCurrency(cycle2Total)} exonéré.`,
+      desc: `Renouvellement à ${ageRef + CYCLE_ANNEES} ans — ${formatCurrency(cycle2Total)} exonéré`,
       color: 'indigo',
       montantTransmis: cycle2Total,
       exonere: cycle2Total,
@@ -531,6 +531,15 @@ export function render() {
           </div>
         </div>
 
+        <!-- Conseils d'expert -->
+        <div class="card-dark rounded-2xl p-5">
+          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            Conseils d'expert
+          </h3>
+          <div id="succ-tips" class="space-y-2"></div>
+        </div>
+
         <!-- Reserve héréditaire -->
         <div class="card-dark rounded-2xl p-5" id="succ-reserve-card">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Réserve héréditaire</h3>
@@ -649,6 +658,7 @@ function recalculate() {
   renderHero(r);
   renderLevers(r);
   renderWaterfall(r);
+  renderTips(r, inputs);
   renderReserve(r);
 }
 
@@ -696,26 +706,17 @@ function renderLevers(r) {
   list.innerHTML = r.levers.map(l => {
     const pct = r.totalDroitsBrut > 0 ? (l.economie / r.totalDroitsBrut * 100) : 0;
     return `
-      <div class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/40 border border-dark-400/20">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background: ${leverColor(l.color)}20">
-          <div class="w-2.5 h-2.5 rounded-full" style="background: ${leverColor(l.color)}"></div>
-        </div>
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-dark-800/40 border border-dark-400/20">
+        <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: ${leverColor(l.color)}"></div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between gap-2">
-            <h4 class="text-sm font-semibold text-gray-200">${l.label}</h4>
+            <h4 class="text-sm font-medium text-gray-300">${l.label}</h4>
             <span class="text-sm font-bold text-accent-green flex-shrink-0">-${formatCurrency(Math.round(l.economie))}</span>
           </div>
-          <p class="text-xs text-gray-500 mt-0.5">${l.desc}</p>
-          <div class="flex items-center gap-4 mt-2 text-xs">
-            <span class="text-gray-500">Transmis : <span class="text-gray-300">${formatCurrency(Math.round(l.montantTransmis))}</span></span>
-            <span class="text-gray-500">Exonéré : <span class="text-accent-green">${formatCurrency(Math.round(l.exonere))}</span></span>
-            ${l.droitsDonation > 0 ? `<span class="text-gray-500">Droits : <span class="text-red-400">${formatCurrency(Math.round(l.droitsDonation))}</span></span>` : ''}
-          </div>
-          <!-- Impact bar -->
-          <div class="mt-2 h-1.5 bg-dark-600 rounded-full overflow-hidden">
+          <p class="text-[11px] text-gray-600 mt-0.5">${l.desc}</p>
+          <div class="mt-1.5 h-1 bg-dark-600 rounded-full overflow-hidden">
             <div class="h-full rounded-full transition-all" style="width: ${Math.min(pct, 100).toFixed(1)}%; background: ${leverColor(l.color)}"></div>
           </div>
-          <p class="text-[10px] text-gray-600 mt-0.5">${pct.toFixed(1)} % des droits bruts économisés</p>
         </div>
       </div>
     `;
@@ -816,6 +817,84 @@ function renderWaterfall(r) {
   });
 }
 
+// ─── Conseils d'expert ───────────────────────────────────────────────────────
+
+function renderTips(r, inp) {
+  const el = document.getElementById('succ-tips');
+  if (!el) return;
+
+  const tips = [];
+  const age = inp.ageDonateur1;
+  const np = getNuePropriete(age);
+
+  // Tip: TEPA timing
+  if (age < AGE_MAX_TEPA && age >= 70) {
+    tips.push({ icon: '⏳', text: `Vous avez ${AGE_MAX_TEPA - age} ans pour profiter du don TEPA (exonéré avant 80 ans). Agissez rapidement.`, priority: 'high' });
+  } else if (age >= AGE_MAX_TEPA && inp.leverTEPA) {
+    tips.push({ icon: '⛔', text: `Le don TEPA n'est plus possible après 80 ans. Ce levier est désactivé pour vous.`, priority: 'warn' });
+  }
+
+  // Tip: Démembrement age-optimal
+  if (inp.immobilier > 0) {
+    if (age <= 50) {
+      tips.push({ icon: '🏠', text: `Nue-propriété à ${Math.round(np * 100)} % : le démembrement est très avantageux à votre âge. Plus vous attendez, moins la décote est forte.` });
+    } else if (age <= 60) {
+      tips.push({ icon: '🏠', text: `Nue-propriété à ${Math.round(np * 100)} % : bon moment pour démembrer. La décote baisse de 10 points tous les 10 ans.` });
+    } else if (age > 70) {
+      tips.push({ icon: '🏠', text: `À ${age} ans, la nue-propriété ne vaut que ${Math.round(np * 100)} % — la décote est faible. Le démembrement reste utile mais l'avantage diminue.` });
+    }
+  }
+
+  // Tip: AV
+  if (inp.assuranceVie > 0 && inp.assuranceVie < AV_ABATTEMENT * r.nbEnfants) {
+    const cible = AV_ABATTEMENT * r.nbEnfants;
+    tips.push({ icon: '🛡️', text: `Votre AV est sous le plafond d'exonération (${formatCurrency(cible)} pour ${r.nbEnfants} enfant(s)). Verser davantage avant 70 ans pour maximiser l'avantage.` });
+  } else if (inp.assuranceVie > AV_ABATTEMENT * r.nbEnfants && age < 70) {
+    tips.push({ icon: '🛡️', text: `L'excédent AV au-delà de ${formatCurrency(AV_ABATTEMENT)} par bénéficiaire sera taxé à 20 % puis 31,25 %. Diversifiez les bénéficiaires si possible.` });
+  }
+
+  // Tip: 2e cycle
+  if (!inp.lever2eCycle && age + CYCLE_ANNEES < 85) {
+    tips.push({ icon: '🔄', text: `Dans ${CYCLE_ANNEES} ans (à ${age + CYCLE_ANNEES} ans), vos abattements se renouvellent. Anticipez un 2e cycle de donations.` });
+  }
+
+  // Tip: Couple
+  if (inp.couple && !inp.leverCouple) {
+    tips.push({ icon: '💑', text: `Activer le mode couple double tous les abattements. Chaque parent donne séparément à chaque enfant.` });
+  }
+
+  // Tip: Petits-enfants
+  if (r.nbPE === 0 && r.nbEnfants > 0) {
+    tips.push({ icon: '👶', text: `Penser aux petits-enfants : ${formatCurrency(ABATTEMENT_PETIT_ENFANT)} d'abattement par donateur, cumulable avec les abattements enfants.` });
+  }
+
+  // Tip: Global effectiveness
+  if (r.economieGlobale > 0 && r.totalDroitsBrut > 0) {
+    const pct = (r.economieGlobale / r.totalDroitsBrut * 100).toFixed(0);
+    if (parseInt(pct) >= 80) {
+      tips.push({ icon: '✅', text: `Stratégie très efficace : ${pct} % d'économie. Votre transmission est déjà bien optimisée.` });
+    }
+  }
+
+  // Tip: high patrimoine, no action
+  if (r.levers.length === 0 && r.patrimoineNet > 200000) {
+    tips.push({ icon: '⚠️', text: `Avec ${formatCurrency(r.patrimoineNet)} de patrimoine net, activez au moins les abattements classiques pour réduire la facture fiscale.`, priority: 'high' });
+  }
+
+  if (tips.length === 0) {
+    tips.push({ icon: '💡', text: `Activez des leviers à gauche pour voir les conseils personnalisés apparaître ici.` });
+  }
+
+  el.innerHTML = tips.map(t => {
+    const borderClass = t.priority === 'high' ? 'border-amber-500/20 bg-amber-500/5' :
+      t.priority === 'warn' ? 'border-red-500/20 bg-red-500/5' : 'border-dark-400/20 bg-dark-800/30';
+    return `<div class="flex items-start gap-2.5 p-2.5 rounded-xl ${borderClass}">
+      <span class="text-sm flex-shrink-0 mt-px">${t.icon}</span>
+      <p class="text-xs text-gray-400 leading-relaxed">${t.text}</p>
+    </div>`;
+  }).join('');
+}
+
 // ─── Réserve Héréditaire ─────────────────────────────────────────────────────
 
 function renderReserve(r) {
@@ -827,25 +906,19 @@ function renderReserve(r) {
   const pctDispo = qd * 100;
 
   el.innerHTML = `
-    <div class="grid grid-cols-2 gap-4 mb-4">
-      <div class="text-center p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
-        <p class="text-xs text-gray-500 uppercase">Réserve héréditaire</p>
-        <p class="text-lg font-bold text-blue-400">${pctReserve.toFixed(0)} %</p>
-        <p class="text-sm text-gray-400">${formatCurrency(Math.round(r.reserveHereditaire))}</p>
-        <p class="text-xs text-gray-600">${formatCurrency(Math.round(r.partReserveParEnfant))} / enfant</p>
+    <div class="flex items-center gap-4 mb-3">
+      <div class="flex-1 text-center">
+        <p class="text-xs text-gray-500">Réserve</p>
+        <p class="text-sm font-bold text-blue-400">${pctReserve.toFixed(0)} % · ${formatCurrency(Math.round(r.reserveHereditaire))}</p>
       </div>
-      <div class="text-center p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-        <p class="text-xs text-gray-500 uppercase">Quotité disponible</p>
-        <p class="text-lg font-bold text-amber-400">${pctDispo.toFixed(0)} %</p>
-        <p class="text-sm text-gray-400">${formatCurrency(Math.round(r.patrimoineNet * qd))}</p>
-        <p class="text-xs text-gray-600">Part libre de disposition</p>
+      <div class="flex-1 text-center">
+        <p class="text-xs text-gray-500">Quotité disponible</p>
+        <p class="text-sm font-bold text-amber-400">${pctDispo.toFixed(0)} % · ${formatCurrency(Math.round(r.patrimoineNet * qd))}</p>
       </div>
     </div>
-    <!-- Visual bar -->
-    <div class="h-6 rounded-full overflow-hidden flex bg-dark-600">
-      <div class="h-full flex items-center justify-center text-[10px] font-semibold text-blue-100" style="width: ${pctReserve}%; background: rgba(59,130,246,0.4)">Réserve ${pctReserve.toFixed(0)}%</div>
-      <div class="h-full flex items-center justify-center text-[10px] font-semibold text-amber-100" style="width: ${pctDispo}%; background: rgba(245,158,11,0.4)">Disponible ${pctDispo.toFixed(0)}%</div>
+    <div class="h-5 rounded-full overflow-hidden flex bg-dark-600">
+      <div class="h-full flex items-center justify-center text-[10px] font-semibold text-blue-100" style="width: ${pctReserve}%; background: rgba(59,130,246,0.4)">Réserve</div>
+      <div class="h-full flex items-center justify-center text-[10px] font-semibold text-amber-100" style="width: ${pctDispo}%; background: rgba(245,158,11,0.4)">Libre</div>
     </div>
-    <p class="text-xs text-gray-600 mt-2">Avec ${r.nbEnfants} enfant(s), vous devez obligatoirement leur transmettre ${pctReserve.toFixed(0)} % de votre patrimoine. Les ${pctDispo.toFixed(0)} % restants sont librement transmissibles (conjoint, association, etc.).</p>
   `;
 }
