@@ -904,7 +904,7 @@ export function computeProjection(store) {
       cashApresImpot: finalCashApresImpot,
       totalLiquiditesNettes: finalTotalLiquiditesNettes,
       totalDette: Math.round(totalDette),
-      patrimoineNet: Math.round(immo + finalTotalPlacements + epar + heritage - totalDette),
+      patrimoineNet: Math.round(immo + finalTotalLiquiditesNettes),
       revenusMensuels: Math.round(revenus),
       depensesMensuelles: Math.round(depenses),
       mensualites: Math.round(mensualitesTotales),
