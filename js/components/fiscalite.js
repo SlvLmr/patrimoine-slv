@@ -444,6 +444,83 @@ export function render(store) {
       </div>
 
       <!-- ============================================================ -->
+      <!-- SECTION 2b : PROJECTION SLIDER -->
+      <!-- ============================================================ -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-200 flex items-center gap-2">
+            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+            </svg>
+            Projection dans le temps
+          </h3>
+          <div class="flex items-center gap-2">
+            <span id="fisc-slider-label" class="text-sm font-medium text-sky-400">Aujourd'hui</span>
+            <span id="fisc-slider-age" class="text-xs text-gray-500">${ageDonateur} ans</span>
+          </div>
+        </div>
+        <input type="range" id="fisc-year-slider" min="0" max="${params.projectionYears || 30}" value="0" step="1"
+          class="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-sky-500
+          [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+          [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-sky-500 [&::-webkit-slider-thumb]:shadow-lg
+          [&::-webkit-slider-thumb]:shadow-sky-500/30 [&::-webkit-slider-thumb]:cursor-grab
+          [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full
+          [&::-moz-range-thumb]:bg-sky-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-grab">
+        <div class="flex justify-between mt-1 text-xs text-gray-600">
+          <span>${currentYear}</span>
+          <span>+10 ans</span>
+          <span>+20 ans</span>
+          <span>+${params.projectionYears || 30} ans</span>
+        </div>
+        <!-- Projected KPIs (updated by slider) -->
+        <div id="fisc-projected-kpis" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4" style="display:none">
+          <div class="card-dark rounded-xl p-3 text-center border border-sky-500/20">
+            <p class="text-xs text-gray-500 mb-1">Immobilier</p>
+            <p id="fisc-proj-immo" class="text-lg font-bold text-amber-400">-</p>
+            <p id="fisc-proj-immo-delta" class="text-[10px] text-gray-600"></p>
+          </div>
+          <div class="card-dark rounded-xl p-3 text-center border border-sky-500/20">
+            <p class="text-xs text-gray-500 mb-1">Placements (hors AV)</p>
+            <p id="fisc-proj-plac" class="text-lg font-bold text-blue-400">-</p>
+            <p id="fisc-proj-plac-delta" class="text-[10px] text-gray-600"></p>
+          </div>
+          <div class="card-dark rounded-xl p-3 text-center border border-sky-500/20">
+            <p class="text-xs text-gray-500 mb-1">Assurance Vie</p>
+            <p id="fisc-proj-av" class="text-lg font-bold text-purple-400">-</p>
+            <p id="fisc-proj-av-delta" class="text-[10px] text-gray-600"></p>
+          </div>
+          <div class="card-dark rounded-xl p-3 text-center border border-sky-500/20">
+            <p class="text-xs text-gray-500 mb-1">Épargne</p>
+            <p id="fisc-proj-epar" class="text-lg font-bold text-emerald-400">-</p>
+            <p id="fisc-proj-epar-delta" class="text-[10px] text-gray-600"></p>
+          </div>
+          <div class="card-dark rounded-xl p-3 text-center border border-sky-500/20">
+            <p class="text-xs text-gray-500 mb-1">Patrimoine net</p>
+            <p id="fisc-proj-net" class="text-lg font-bold gradient-text">-</p>
+            <p id="fisc-proj-net-delta" class="text-[10px] text-gray-600"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- SECTION 2c : TIMELINE CONSEILS FINANCIERS -->
+      <!-- ============================================================ -->
+      <div class="card-dark rounded-xl p-5">
+        <h3 class="text-lg font-semibold text-gray-200 flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          Conseils financiers personnalises
+        </h3>
+        <div id="fisc-timeline" class="relative pl-6">
+          <div class="absolute left-2 top-0 bottom-0 w-px bg-gradient-to-b from-purple-500/40 via-sky-500/30 to-transparent"></div>
+          <p class="text-gray-500 text-sm">Chargement de l'analyse...</p>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
       <!-- SECTION 3 : IMPACT COMPARISON -->
       <!-- ============================================================ -->
       ${nbEnfants > 0 ? `
@@ -812,9 +889,255 @@ export function mount(store, navigate) {
     });
   });
 
-  // --- Waterfall chart ---
+  // --- Projection slider + Timeline ---
   const patrimoine = getPatrimoineFromStore(store);
   const nbEnfants = enfants.length;
+
+  let snapshots = [];
+  try {
+    snapshots = computeProjection(store);
+  } catch (e) {
+    console.error('Projection error:', e);
+  }
+
+  const projGroupKeys = snapshots.groupKeys || [];
+  const currentYear = new Date().getFullYear();
+
+  // Slider update
+  const slider = document.getElementById('fisc-year-slider');
+  const sliderLabel = document.getElementById('fisc-slider-label');
+  const sliderAge = document.getElementById('fisc-slider-age');
+  const projKpis = document.getElementById('fisc-projected-kpis');
+
+  if (slider && snapshots.length > 0) {
+    slider.max = snapshots.length - 1;
+
+    const updateSlider = (yearIdx) => {
+      const s = snapshots[yearIdx];
+      if (!s) return;
+
+      if (yearIdx === 0) {
+        sliderLabel.textContent = "Aujourd'hui";
+        if (projKpis) projKpis.style.display = 'none';
+      } else {
+        sliderLabel.textContent = `Fin ${s.calendarYear} (+${yearIdx} an${yearIdx > 1 ? 's' : ''})`;
+        if (projKpis) projKpis.style.display = '';
+      }
+      sliderAge.textContent = `${s.age} ans`;
+
+      if (yearIdx === 0) return;
+
+      const first = snapshots[0];
+      // Compute AV and hors-AV from projection groups
+      const avValue = projGroupKeys.filter(k => k === 'Assurance Vie').reduce((sum, k) => sum + (s.placementDetail[k] || 0), 0);
+      const placHorsAV = s.placements - avValue;
+      const firstAV = projGroupKeys.filter(k => k === 'Assurance Vie').reduce((sum, k) => sum + (first.placementDetail[k] || 0), 0);
+      const firstPlacHorsAV = first.placements - firstAV;
+
+      const updateKpi = (id, value, deltaId, baseValue) => {
+        const el = document.getElementById(id);
+        const deltaEl = document.getElementById(deltaId);
+        if (el) el.textContent = formatCurrency(value);
+        if (deltaEl) {
+          const delta = value - baseValue;
+          const sign = delta >= 0 ? '+' : '';
+          deltaEl.textContent = `${sign}${formatCurrency(delta)}`;
+          deltaEl.className = `text-[10px] ${delta >= 0 ? 'text-emerald-500' : 'text-red-400'}`;
+        }
+      };
+
+      updateKpi('fisc-proj-immo', s.immobilier, 'fisc-proj-immo-delta', first.immobilier);
+      updateKpi('fisc-proj-plac', placHorsAV, 'fisc-proj-plac-delta', firstPlacHorsAV);
+      updateKpi('fisc-proj-av', avValue, 'fisc-proj-av-delta', firstAV);
+      updateKpi('fisc-proj-epar', s.epargne, 'fisc-proj-epar-delta', first.epargne);
+      updateKpi('fisc-proj-net', s.patrimoineNet, 'fisc-proj-net-delta', first.patrimoineNet);
+    };
+
+    slider.addEventListener('input', (e) => updateSlider(parseInt(e.target.value)));
+  }
+
+  // --- Timeline generation ---
+  const timelineContainer = document.getElementById('fisc-timeline');
+  if (timelineContainer && snapshots.length > 0) {
+    const events = [];
+    let avDonationTriggered = false;
+    let peaCeilingTriggered = false;
+    let millionTriggered = false;
+    let halfMillionTriggered = false;
+    let twoMillionTriggered = false;
+    let debtFreeTriggered = false;
+    let fireTriggered = false;
+
+    // PEA 5-year milestone
+    const peaPlacements = (store.getAll().actifs.placements || []).filter(p => (p.enveloppe || '').startsWith('PEA'));
+    const peaDates = peaPlacements.map(p => p.dateOuverture).filter(Boolean).map(d => new Date(d));
+    const earliestPEA = peaDates.length > 0 ? new Date(Math.min(...peaDates)) : null;
+    if (earliestPEA) {
+      const pea5Year = earliestPEA.getFullYear() + 5;
+      const projMax = currentYear + (params.projectionYears || 30);
+      if (pea5Year >= currentYear && pea5Year <= projMax) {
+        events.push({ year: pea5Year, age: ageDonateur + (pea5Year - currentYear), type: 'fiscal', icon: 'shield', color: 'emerald',
+          title: 'PEA : fiscalite avantageuse',
+          desc: `Ton PEA aura 5 ans. Les retraits seront soumis uniquement aux prelevements sociaux (17.2% au lieu de 31.4%). Conserve-le absolument, ne le casse pas.`
+        });
+      }
+    }
+
+    // AV 8-year milestone
+    const avPlacements = (store.getAll().actifs.placements || []).filter(p => (p.enveloppe || '') === 'AV');
+    const avDates = avPlacements.map(p => p.dateOuverture).filter(Boolean).map(d => new Date(d));
+    const earliestAV = avDates.length > 0 ? new Date(Math.min(...avDates)) : null;
+    if (earliestAV) {
+      const av8Year = earliestAV.getFullYear() + 8;
+      const projMax = currentYear + (params.projectionYears || 30);
+      if (av8Year >= currentYear && av8Year <= projMax) {
+        events.push({ year: av8Year, age: ageDonateur + (av8Year - currentYear), type: 'fiscal', icon: 'clock', color: 'amber',
+          title: 'Assurance Vie : maturite fiscale',
+          desc: `Ton AV aura 8 ans. Tu beneficies d'un abattement annuel de 4 600 EUR sur les gains et d'une fiscalite reduite (24.7% vs 31.4%).`
+        });
+      }
+    }
+
+    // Abattement renewal reminder (every 15 years from first donation)
+    if (donations.length > 0) {
+      const firstDonYear = Math.min(...donations.map(d => d.annee));
+      const renewalYear = firstDonYear + RENOUVELLEMENT_ANNEES;
+      const projMax = currentYear + (params.projectionYears || 30);
+      if (renewalYear <= projMax) {
+        events.push({ year: renewalYear, age: ageDonateur + (renewalYear - currentYear), type: 'donation', icon: 'gift', color: 'pink',
+          title: 'Renouvellement des abattements',
+          desc: `Les abattements de 100 000 EUR par enfant se renouvellent. Tu peux planifier un nouveau cycle de donations en franchise de droits. ${nbEnfants > 0 ? `Soit ${formatCurrency(ABATTEMENT_PARENT_ENFANT * nbEnfants)} au total pour tes ${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''}.` : ''}`
+        });
+      }
+    }
+
+    for (let i = 0; i < snapshots.length; i++) {
+      const s = snapshots[i];
+      const prevS = i > 0 ? snapshots[i - 1] : null;
+
+      // AV reaching 300K -> donation
+      const avTotal = projGroupKeys.filter(k => k === 'Assurance Vie').reduce((sum, k) => sum + (s.placementDetail[k] || 0), 0);
+      if (!avDonationTriggered && avTotal >= 300000) {
+        avDonationTriggered = true;
+        events.push({ year: s.calendarYear, age: s.age, type: 'donation', icon: 'gift', color: 'purple',
+          title: 'Donation via Assurance Vie',
+          desc: `L'AV atteint ${formatCurrency(avTotal)}. C'est le moment d'envisager des donations aux enfants : 150 000 EUR par enfant via le cadre fiscal avantageux de l'AV (abattement de 152 500 EUR par beneficiaire sur les capitaux deces). Pense a mettre a jour les clauses beneficiaires.`,
+          montant: 300000
+        });
+      }
+
+      // PEA ceiling
+      if (!peaCeilingTriggered) {
+        const peaApports = projGroupKeys.filter(k => k.startsWith('PEA')).reduce((sum, k) => sum + (s.placementApports[k] || 0), 0);
+        if (peaApports >= 145000) {
+          peaCeilingTriggered = true;
+          const peaValue = projGroupKeys.filter(k => k.startsWith('PEA')).reduce((sum, k) => sum + (s.placementDetail[k] || 0), 0);
+          events.push({ year: s.calendarYear, age: s.age, type: 'strategie', icon: 'flag', color: 'blue',
+            title: 'Plafond PEA atteint',
+            desc: `Tes apports PEA approchent le plafond de 150 000 EUR (valeur : ${formatCurrency(peaValue)}). Ne casse surtout pas ton PEA, ses gains continueront de composer en franchise d'impot. Les versements seront rediriges automatiquement.`
+          });
+        }
+      }
+
+      // Patrimoine milestones
+      if (!halfMillionTriggered && s.patrimoineNet >= 500000) {
+        halfMillionTriggered = true;
+        events.push({ year: s.calendarYear, age: s.age, type: 'cap', icon: 'star', color: 'amber',
+          title: 'Cap des 500 000 EUR',
+          desc: `Patrimoine net de ${formatCurrency(s.patrimoineNet)}. Les interets composes accelerent. Verifie ton allocation cible et pense a diversifier.`
+        });
+      }
+      if (!millionTriggered && s.patrimoineNet >= 1000000) {
+        millionTriggered = true;
+        events.push({ year: s.calendarYear, age: s.age, type: 'cap', icon: 'star', color: 'amber',
+          title: 'Millionnaire !',
+          desc: `Patrimoine net de ${formatCurrency(s.patrimoineNet)}. Consulte un CGP pour optimiser ta fiscalite et anticiper la transmission. Envisage des donations anticipees (abattement 100 000 EUR/enfant renouvelable tous les 15 ans).`
+        });
+      }
+      if (!twoMillionTriggered && s.patrimoineNet >= 2000000) {
+        twoMillionTriggered = true;
+        events.push({ year: s.calendarYear, age: s.age, type: 'cap', icon: 'star', color: 'purple',
+          title: 'Cap des 2 000 000 EUR',
+          desc: `Attention a l'IFI si ta part immobiliere depasse 1.3M EUR net. Planifie des donations en nue-propriete pour reduire la base taxable tout en conservant l'usufruit.`
+        });
+      }
+
+      // Debt-free
+      if (!debtFreeTriggered && prevS && prevS.totalDette > 0 && s.totalDette <= 0) {
+        debtFreeTriggered = true;
+        events.push({ year: s.calendarYear, age: s.age, type: 'cap', icon: 'check', color: 'emerald',
+          title: 'Plus aucune dette !',
+          desc: `Tous tes emprunts sont rembourses. Ta capacite d'epargne augmente de ${formatCurrency(prevS.mensualites)}/mois. Redirige ce montant vers tes placements.`
+        });
+      }
+
+      // FIRE
+      if (!fireTriggered && s.depensesMensuelles > 0) {
+        const depAn = s.depensesMensuelles * 12;
+        if (s.totalLiquiditesNettes >= depAn * 25) {
+          fireTriggered = true;
+          events.push({ year: s.calendarYear, age: s.age, type: 'strategie', icon: 'fire', color: 'orange',
+            title: 'Independance financiere (FIRE)',
+            desc: `Tes liquidites nettes (${formatCurrency(s.totalLiquiditesNettes)}) representent 25x tes depenses annuelles. En theorie, tu pourrais vivre de tes placements avec la regle des 4%.`
+          });
+        }
+      }
+
+      // Retirement
+      if (s.isRetraite) {
+        events.push({ year: s.calendarYear, age: s.age, type: 'retraite', icon: 'sun', color: 'cyan',
+          title: 'Depart a la retraite',
+          desc: `Patrimoine net projete : ${formatCurrency(s.patrimoineNet)}, dont ${formatCurrency(s.totalLiquiditesNettes)} en liquidites nettes apres impots.`
+        });
+      }
+    }
+
+    events.sort((a, b) => a.year - b.year);
+
+    const iconSvgs = {
+      gift: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a4 4 0 00-4-4 4 4 0 014 4zm0 0V6a4 4 0 014-4 4 4 0 01-4 4zM5 8h14M5 8a2 2 0 00-2 2v1h18v-1a2 2 0 00-2-2M3 11v5a2 2 0 002 2h14a2 2 0 002-2v-5"/></svg>',
+      flag: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z"/></svg>',
+      star: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>',
+      check: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+      shield: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+      clock: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+      sun: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>',
+      fire: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/></svg>'
+    };
+
+    const colorClasses = {
+      purple: { dot: 'bg-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
+      blue: { dot: 'bg-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
+      amber: { dot: 'bg-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
+      emerald: { dot: 'bg-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+      cyan: { dot: 'bg-cyan-500', bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/30' },
+      orange: { dot: 'bg-orange-500', bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
+      pink: { dot: 'bg-pink-500', bg: 'bg-pink-500/10', text: 'text-pink-400', border: 'border-pink-500/30' },
+    };
+
+    let html = '';
+    events.forEach((evt) => {
+      const cc = colorClasses[evt.color] || colorClasses.blue;
+      const icon = iconSvgs[evt.icon] || iconSvgs.star;
+      html += `
+        <div class="relative mb-5 last:mb-0">
+          <div class="absolute -left-[18px] top-1 w-5 h-5 rounded-full ${cc.dot} flex items-center justify-center text-white shadow-lg">
+            ${icon}
+          </div>
+          <div class="${cc.bg} border ${cc.border} rounded-lg p-4 ml-2">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="${cc.text} font-bold text-sm">${evt.year}</span>
+              <span class="text-gray-500 text-xs">${evt.age} ans</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded ${cc.bg} ${cc.text} font-medium uppercase tracking-wider">${evt.type}</span>
+            </div>
+            <h4 class="text-gray-200 font-semibold text-sm mb-1">${evt.title}</h4>
+            <p class="text-gray-400 text-xs leading-relaxed">${evt.desc}</p>
+          </div>
+        </div>`;
+    });
+
+    timelineContainer.innerHTML = html || '<p class="text-gray-500 text-sm">Ajoute des placements et des parametres de projection pour voir les conseils personnalises.</p>';
+  }
 
   if (nbEnfants > 0 && donations.length > 0 && document.getElementById('chart-waterfall')) {
     // Recompute waterfall data
