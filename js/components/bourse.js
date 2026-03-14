@@ -288,8 +288,9 @@ function createTVMiniWidget(containerId, symbol) {
   const container = document.getElementById(containerId);
   if (!container || !symbol) return;
 
-  // Clear any existing widget
   container.innerHTML = '';
+  container.className = (container.className || '').replace(/tradingview-widget-container/g, '').trim();
+  container.classList.add('tradingview-widget-container');
 
   const widgetDiv = document.createElement('div');
   widgetDiv.className = 'tradingview-widget-container__widget';
@@ -299,7 +300,7 @@ function createTVMiniWidget(containerId, symbol) {
 
   const script = document.createElement('script');
   script.type = 'text/javascript';
-  script.src = 'https://s.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js';
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js';
   script.async = true;
   script.textContent = JSON.stringify({
     symbol: symbol,
@@ -320,6 +321,8 @@ function createTVMainChart(containerId, symbol) {
   if (!container || !symbol) return;
 
   container.innerHTML = '';
+  container.className = (container.className || '').replace(/tradingview-widget-container/g, '').trim();
+  container.classList.add('tradingview-widget-container');
 
   const widgetDiv = document.createElement('div');
   widgetDiv.className = 'tradingview-widget-container__widget';
@@ -329,7 +332,7 @@ function createTVMainChart(containerId, symbol) {
 
   const script = document.createElement('script');
   script.type = 'text/javascript';
-  script.src = 'https://s.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
   script.async = true;
   script.textContent = JSON.stringify({
     symbol: symbol,

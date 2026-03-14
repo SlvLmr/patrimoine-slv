@@ -45,7 +45,7 @@ export function render(store) {
       </div>
 
       <!-- Parameters — collapsible -->
-      <details class="card-dark rounded-xl group" open>
+      <details class="card-dark rounded-xl group">
         <summary class="flex items-center justify-between px-4 py-2 cursor-pointer select-none">
           <div class="flex items-center gap-2">
             <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
