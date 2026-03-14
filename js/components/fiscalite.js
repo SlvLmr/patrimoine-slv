@@ -1362,6 +1362,11 @@ function renderImpactHTML(totalDroitsSansdon, succSansdon, totalFiscaliteAvecdon
 
 const CHILD_COLORS = ['accent-purple', 'accent-cyan', 'accent-green', 'accent-amber', 'accent-blue', 'accent-red'];
 
+function childAge(dateNaissance) {
+  if (!dateNaissance) return null;
+  return Math.floor((Date.now() - new Date(dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000));
+}
+
 function renderTimelineHTML(timeline, ageDonateur) {
   if (!timeline || timeline.length === 0) return '<p class="text-sm text-gray-500 text-center py-4">Ajoutez des enfants pour voir le plan</p>';
   return `
@@ -1626,13 +1631,85 @@ export function render(store) {
 
       ${nbEnfants === 0 ? `
       <div class="card-dark rounded-xl p-6 text-center">
-        <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-accent-purple/20 flex items-center justify-center">
-          <svg class="w-6 h-6 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-accent-purple/15 flex items-center justify-center">
+          <svg class="w-7 h-7 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </div>
-        <p class="text-sm text-gray-400 mb-3">Ajoutez vos enfants dans l'onglet <strong class="text-accent-purple">Enfants</strong> pour lancer la simulation</p>
-        <button id="btn-go-enfants" class="px-4 py-2 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition">Aller dans Enfants</button>
+        <h2 class="text-base font-bold text-gray-200 mb-1">Commencez par ajouter vos enfants</h2>
+        <p class="text-sm text-gray-400 mb-4">La simulation de succession et les stratégies de transmission seront calculées automatiquement</p>
+        <button id="btn-add-enfant" class="px-5 py-2.5 bg-accent-purple text-dark-900 text-sm font-bold rounded-xl hover:opacity-90 transition inline-flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          Ajouter un enfant
+        </button>
       </div>
       ` : `
+      <!-- FAMILLE — Gestion des enfants -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-accent-purple/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-gray-200">Famille</h2>
+            <p class="text-[10px] text-gray-500">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} · Capacité exonérée : ${formatCurrency((ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants)} par cycle de 15 ans</p>
+          </div>
+          <button id="btn-add-enfant" class="ml-auto px-3 py-1.5 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            Ajouter un enfant
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-${Math.min(nbEnfants, 4)} gap-3">
+          ${enfants.map((enf, i) => {
+            const age = childAge(enf.dateNaissance);
+            const color = CHILD_COLORS[i % CHILD_COLORS.length];
+            const enfDons = (cfg.donations || []).filter(d => d.enfantId === enf.id);
+            const totalDonne = enfDons.reduce((s, d) => s + (Number(d.montant) || 0), 0);
+            const abattRestant = Math.max(0, ABATTEMENT_PARENT_ENFANT - totalDonne);
+            const abattPct = Math.min(100, Math.round((1 - abattRestant / ABATTEMENT_PARENT_ENFANT) * 100));
+            const tepaUsed = enfDons.some(d => d.type === 'don_tepa');
+
+            return `
+            <div class="bg-dark-800/40 rounded-xl p-3 border border-dark-400/10 hover:border-${color}/30 transition group relative">
+              <button class="enfant-delete absolute top-2 right-2 w-5 h-5 rounded-full bg-dark-600/60 text-gray-500 hover:bg-accent-red/20 hover:text-accent-red transition opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs" data-id="${enf.id}">&times;</button>
+              <div class="flex items-center gap-2.5 mb-2">
+                <div class="w-9 h-9 rounded-full bg-${color}/20 border-2 border-${color}/30 flex items-center justify-center text-sm font-bold text-${color}">
+                  ${(enf.prenom || '?')[0].toUpperCase()}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <h3 class="text-sm font-bold text-gray-100">${enf.prenom || 'Sans nom'}</h3>
+                    <button class="enfant-edit text-gray-600 hover:text-${color} transition opacity-0 group-hover:opacity-100" data-id="${enf.id}">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                  </div>
+                  <p class="text-[10px] text-gray-500">${age !== null ? `${age} ans` : ''}${enf.dateNaissance ? ` · ${new Date(enf.dateNaissance).toLocaleDateString('fr-FR')}` : ''}</p>
+                </div>
+              </div>
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="text-gray-500">Donné</span>
+                  <span class="font-medium ${totalDonne > 0 ? 'text-accent-green' : 'text-gray-500'}">${totalDonne > 0 ? formatCurrency(totalDonne) : '—'}</span>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[10px] mb-0.5">
+                    <span class="text-gray-500">Abattement</span>
+                    <span class="text-gray-500">${abattPct}%</span>
+                  </div>
+                  <div class="h-1 bg-dark-600 rounded-full overflow-hidden">
+                    <div class="h-full bg-${color} rounded-full transition-all" style="width:${abattPct}%"></div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="text-gray-500">TEPA</span>
+                  <span class="font-medium ${tepaUsed ? 'text-gray-400' : 'text-accent-cyan'}">${tepaUsed ? 'Utilisé' : 'Disponible'}</span>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
       <!-- DASHBOARD — Vue d'ensemble -->
       <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-2 mb-4">
@@ -2165,9 +2242,61 @@ export function mount(store, navigate) {
     });
   }
 
-  // --- Navigate to enfants page ---
-  document.getElementById('btn-go-enfants')?.addEventListener('click', () => {
-    navigate('enfants');
+  // --- Gestion des enfants (intégré dans la page succession) ---
+  document.getElementById('btn-add-enfant')?.addEventListener('click', () => {
+    openModal('Ajouter un enfant', `
+      ${inputField('prenom', 'Prénom', '', 'text')}
+      ${inputField('dateNaissance', 'Date de naissance', '', 'date')}
+    `, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      if (!data.prenom) return;
+      const c = getConfig(store);
+      if (!c.enfants) c.enfants = [];
+      c.enfants.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        prenom: data.prenom,
+        dateNaissance: data.dateNaissance
+      });
+      saveConfig(store, c);
+      navigate('fiscalite');
+    });
+  });
+
+  document.querySelectorAll('.enfant-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const c = getConfig(store);
+      const enf = (c.enfants || []).find(e => e.id === id);
+      if (!enf) return;
+      openModal("Modifier l'enfant", `
+        ${inputField('prenom', 'Prénom', enf.prenom || '', 'text')}
+        ${inputField('dateNaissance', 'Date de naissance', enf.dateNaissance || '', 'date')}
+      `, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        enf.prenom = data.prenom || enf.prenom;
+        enf.dateNaissance = data.dateNaissance || enf.dateNaissance;
+        saveConfig(store, c);
+        navigate('fiscalite');
+      });
+    });
+  });
+
+  document.querySelectorAll('.enfant-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const c = getConfig(store);
+      const enf = (c.enfants || []).find(e => e.id === id);
+      if (!enf) return;
+      openModal('Supprimer cet enfant ?', `
+        <p class="text-sm text-gray-400">Toutes les donations enregistrées pour <strong class="text-gray-200">${enf.prenom}</strong> seront également supprimées.</p>
+      `, () => {
+        const c2 = getConfig(store);
+        c2.enfants = (c2.enfants || []).filter(e => e.id !== id);
+        c2.donations = (c2.donations || []).filter(d => d.enfantId !== id);
+        saveConfig(store, c2);
+        navigate('fiscalite');
+      });
+    });
   });
 
   // --- Initial plan binding ---
