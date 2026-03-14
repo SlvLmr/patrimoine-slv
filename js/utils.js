@@ -325,6 +325,7 @@ export function computeProjection(store) {
   let immo = totalImmo;
   let epar = totalEpar;
   let heritage = 0;
+  let donation = 0;
   let revenus = revenusMensuels;
   let depenses = depensesMensuelles;
 
@@ -407,10 +408,11 @@ export function computeProjection(store) {
       const isRecurring = (transfer.frequency === 'annual' || transfer.frequency === 'monthly') && inRange;
       if (!isOnce && !isRecurring) continue;
 
-      const destSim = placSims.find(ps => ps.id === transfer.destinationId);
-      if (!destSim) continue;
+      const isDonation = transfer.destinationId === '__donation__';
+      const destSim = isDonation ? null : placSims.find(ps => ps.id === transfer.destinationId);
+      if (!destSim && !isDonation) continue;
       // Skip transfers to PEE after souhaité retirement (PEE is liquidated at end of that year)
-      if (destSim.isPEE && currentAge > ageRetraitePEE) continue;
+      if (destSim && destSim.isPEE && currentAge > ageRetraitePEE) continue;
 
       // Monthly: multiply by months in period; annual/once: lump sum
       const multiplier = transfer.frequency === 'monthly' ? monthsInPeriod : 1;
@@ -436,8 +438,12 @@ export function computeProjection(store) {
         epar -= amount;
       }
       if (amount > 0) {
-        destSim.value += amount;
-        destSim.totalApports += amount;
+        if (isDonation) {
+          donation += amount;
+        } else {
+          destSim.value += amount;
+          destSim.totalApports += amount;
+        }
       }
     }
 
@@ -605,6 +611,48 @@ export function computeProjection(store) {
       ps.totalGains = ps.value - ps.totalApports;
       interetsAnnuels += ps.value - prevValue - apportsThisPeriod;
     });
+
+    // AV value cap: if total AV value exceeds 300K (from growth), cap at 300K
+    // and redirect excess to overflow targets. DCA is already stopped by the ceiling check above.
+    {
+      const avTotalNow = getAvTotalValue();
+      if (avTotalNow > AV_PLAFOND) {
+        const excess = avTotalNow - AV_PLAFOND;
+        // Distribute excess proportionally from AV placements
+        const avPlacements = placSims.filter(p => p.groupKey === 'Assurance Vie');
+        avPlacements.forEach(ps => {
+          const ratio = ps.value / avTotalNow;
+          const psExcess = excess * ratio;
+          ps.value -= psExcess;
+          ps.totalGains = ps.value - ps.totalApports;
+        });
+        // Redirect excess to AV overflow targets
+        const categoryToGroupKey = { cto: 'CTO', av: 'Assurance Vie', bitcoin: 'Crypto' };
+        let distributed = 0;
+        for (const target of avOverflowTargets) {
+          if (target.category === 'av') continue; // avoid circular
+          const share = excess * (target.pct || 0) / 100;
+          if (share <= 0) continue;
+          if (target.category === 'epargne') {
+            epar += share;
+            distributed += share;
+          } else {
+            const gk = categoryToGroupKey[target.category];
+            const targetSim = gk ? placSims.find(ps => ps.groupKey === gk && ps.id !== '__av_overflow__') : null;
+            if (targetSim) {
+              targetSim.value += share;
+              targetSim.totalApports += share;
+              distributed += share;
+            }
+          }
+        }
+        const remainder = excess - distributed;
+        if (remainder > 0 && needsAVCTOFallback) {
+          avOverflow.value += remainder;
+          avOverflow.totalApports += remainder;
+        }
+      }
+    }
 
     // PEA overflow: distribute to configured category targets (or fallback CTO)
     {
@@ -851,7 +899,8 @@ export function computeProjection(store) {
       revenusMensuels: Math.round(revenus),
       depensesMensuelles: Math.round(depenses),
       mensualites: Math.round(mensualitesTotales),
-      capaciteEpargne: Math.round(revenus - depenses - mensualitesTotales)
+      capaciteEpargne: Math.round(revenus - depenses - mensualitesTotales),
+      donation: Math.round(donation)
     });
 
     // PEE: liquidate after snapshot so the final value is visible in the table

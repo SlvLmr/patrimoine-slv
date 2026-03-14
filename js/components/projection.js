@@ -277,7 +277,7 @@ export function render(store) {
               <div class="space-y-1">
                 ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
                   const destPlacement = placements.find(p => p.id === t.destinationId);
-                  const destName = destPlacement ? destPlacement.nom : (t.destinationId === '__cto_overflow__' ? 'CTO' : '(supprimé)');
+                  const destName = destPlacement ? destPlacement.nom : (t.destinationId === '__cto_overflow__' ? 'CTO' : (t.destinationId === '__donation__' ? 'Donation' : '(supprimé)'));
                   let sourceLabel, sourceBg;
                   if (t.source === 'heritage') {
                     sourceLabel = 'Héritage'; sourceBg = 'bg-accent-amber/10 text-accent-amber';
@@ -474,6 +474,7 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center">Hérit.</th>
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Immo.</th>
                 <th class="px-1 py-1.5 text-center font-semibold">Liq.</th>
+                <th class="px-1 py-1.5 text-center">Donation</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
@@ -522,6 +523,7 @@ export function render(store) {
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 ${bt}">${formatCurrency(s.heritage)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[11px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
               </tr>`;
               }).join('')}
             </tbody>
@@ -859,7 +861,8 @@ function openTransferModal(store, navigate, editItem = null) {
       value: p.id,
       label: `${p.nom} (${p.enveloppe || p.type})`
     })),
-    ...(!hasCTO ? [{ value: '__cto_overflow__', label: 'CTO (Compte-Titres Ordinaire)' }] : [])
+    ...(!hasCTO ? [{ value: '__cto_overflow__', label: 'CTO (Compte-Titres Ordinaire)' }] : []),
+    { value: '__donation__', label: 'Donation' }
   ];
 
   const title = editItem ? 'Modifier le transfert' : 'Planifier un transfert de capital';
