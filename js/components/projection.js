@@ -130,11 +130,19 @@ export function render(store) {
             const peaRestant = Math.max(0, 150000 - peaApports);
             const moisRestant = peaDCA > 0 ? Math.ceil(peaRestant / peaDCA) : 0;
 
-            // Non-PEA placements (potential overflow targets)
-            const nonPeaPlacements = placements.filter(p => {
-              const env = (p.enveloppe || p.type || '').toUpperCase();
-              return !env.startsWith('PEA') || env === 'PEE';
-            });
+            // Compute average CTO rendement from configured placements
+            const ctoPlacs = placements.filter(p => (p.enveloppe || '').toUpperCase() === 'CTO');
+            const avgCTORend = ctoPlacs.length > 0
+              ? ctoPlacs.reduce((s, p) => s + (rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05)), 0) / ctoPlacs.length
+              : 0.05;
+
+            // Category options for overflow targets
+            const overflowCategories = [
+              { value: 'cto', label: 'CTO' },
+              { value: 'av', label: 'Assurance Vie' },
+              { value: 'bitcoin', label: 'Bitcoin' },
+              { value: 'epargne', label: 'Épargne' },
+            ];
 
             // Current overflow targets from params
             const overflowTargets = params.peaOverflowTargets || [];
@@ -152,14 +160,11 @@ export function render(store) {
             </div>
             <div class="space-y-1.5" id="pea-overflow-targets">
               ${hasTargets ? overflowTargets.map((t, idx) => {
-                const targetPlac = placements.find(p => p.id === t.placementId);
-                const targetName = targetPlac ? targetPlac.nom : '(supprimé)';
-                const targetGK = targetPlac ? getPlacementGroupKey(targetPlac) : '?';
+                const catLabel = overflowCategories.find(c => c.value === t.category)?.label || t.category;
                 return `
               <div class="flex items-center gap-2 text-sm overflow-target-row" data-idx="${idx}">
                 <select class="overflow-target-select flex-1 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-amber/30">
-                  ${nonPeaPlacements.map(p => `<option value="${p.id}" ${p.id === t.placementId ? 'selected' : ''}>${p.nom} (${getPlacementGroupKey(p)})</option>`).join('')}
-                  <option value="__cto_new__" ${!targetPlac && t.placementId !== '__cto_new__' ? '' : t.placementId === '__cto_new__' ? 'selected' : ''}>+ Nouveau CTO</option>
+                  ${overflowCategories.map(c => `<option value="${c.value}" ${c.value === t.category ? 'selected' : ''}>${c.label}</option>`).join('')}
                 </select>
                 <input type="number" class="overflow-target-pct w-16 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 text-center focus:ring-1 focus:ring-accent-amber/30" value="${t.pct || 100}" min="1" max="100" step="1">
                 <span class="text-[10px] text-gray-500">%</span>
@@ -169,10 +174,10 @@ export function render(store) {
               }).join('') : `
               <div class="flex items-center gap-2 text-sm text-gray-500">
                 <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>Par défaut : tout bascule vers un CTO virtuel (5%/an)</span>
+                <span>Par défaut : tout bascule vers le CTO (${(avgCTORend * 100).toFixed(1)}%/an)</span>
               </div>
               `}
-              ${totalPct < 100 && hasTargets ? `<p class="text-[10px] text-accent-amber">Attention : ${totalPct}% alloué — les ${100 - totalPct}% restants iront vers un CTO par défaut</p>` : ''}
+              ${totalPct < 100 && hasTargets ? `<p class="text-[10px] text-accent-amber">Attention : ${totalPct}% alloué — les ${100 - totalPct}% restants iront vers le CTO</p>` : ''}
             </div>
             <button id="btn-add-overflow-target" class="mt-2 text-[11px] text-accent-amber hover:text-accent-amber/80 transition flex items-center gap-1">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
@@ -1334,7 +1339,7 @@ export function mount(store, navigate) {
       const pctInput = row.querySelector('.overflow-target-pct');
       if (select && pctInput) {
         targets.push({
-          placementId: select.value,
+          category: select.value,
           pct: Math.max(1, Math.min(100, parseInt(pctInput.value) || 100))
         });
       }
@@ -1359,18 +1364,14 @@ export function mount(store, navigate) {
 
   document.getElementById('btn-add-overflow-target')?.addEventListener('click', () => {
     const targets = store.get('parametres')?.peaOverflowTargets || [];
-    const allPlac = store.getAll().actifs?.placements || [];
-    const nonPea = allPlac.filter(p => {
-      const env = (p.enveloppe || p.type || '').toUpperCase();
-      return !env.startsWith('PEA') || env === 'PEE';
-    });
-    // Find first non-PEA placement not already targeted
-    const usedIds = new Set(targets.map(t => t.placementId));
-    const available = nonPea.find(p => !usedIds.has(p.id));
+    const categories = ['cto', 'av', 'bitcoin', 'epargne'];
+    // Find first category not already targeted
+    const usedCats = new Set(targets.map(t => t.category));
+    const available = categories.find(c => !usedCats.has(c));
     const remainingPct = Math.max(1, 100 - targets.reduce((s, t) => s + (t.pct || 0), 0));
 
     targets.push({
-      placementId: available ? available.id : '__cto_new__',
+      category: available || 'cto',
       pct: remainingPct
     });
     store.set('parametres.peaOverflowTargets', targets);

@@ -206,10 +206,24 @@ export function computeProjection(store) {
   });
 
   // PEA overflow: when PEA ceiling is reached, DCA is redirected to configured targets
-  // Users can configure peaOverflowTargets: [{ placementId, pct }]
+  // Users can configure peaOverflowTargets: [{ category: 'cto'|'av'|'bitcoin'|'epargne', pct }]
   // If no targets configured, falls back to a virtual CTO placement
   const peaOverflowTargets = params.peaOverflowTargets || [];
-  const rendCTO = params.rendementCTO || 0.05;
+
+  // Compute average rendement per category from existing placements
+  const categoryRendements = {};
+  const catGroups = { cto: [], av: [], bitcoin: [] };
+  placSims.forEach(ps => {
+    if (ps.groupKey === 'CTO') catGroups.cto.push(ps.rendement);
+    else if (ps.groupKey === 'Assurance Vie') catGroups.av.push(ps.rendement);
+    else if (ps.groupKey === 'Crypto') catGroups.bitcoin.push(ps.rendement);
+  });
+  categoryRendements.cto = catGroups.cto.length > 0 ? catGroups.cto.reduce((a, b) => a + b, 0) / catGroups.cto.length : 0.05;
+  categoryRendements.av = catGroups.av.length > 0 ? catGroups.av.reduce((a, b) => a + b, 0) / catGroups.av.length : 0.02;
+  categoryRendements.bitcoin = catGroups.bitcoin.length > 0 ? catGroups.bitcoin.reduce((a, b) => a + b, 0) / catGroups.bitcoin.length : 0.05;
+  categoryRendements.epargne = rendEpar;
+
+  const rendCTO = categoryRendements.cto;
   const ctoOverflow = {
     groupKey: 'CTO',
     id: '__cto_overflow__',
@@ -549,20 +563,32 @@ export function computeProjection(store) {
       interetsAnnuels += ps.value - prevValue - apportsThisPeriod;
     });
 
-    // PEA overflow: distribute to configured targets (or fallback CTO)
+    // PEA overflow: distribute to configured category targets (or fallback CTO)
     {
-      // Distribute overflow to user-configured target placements
+      // Map categories to target placement sims
+      const categoryToGroupKey = { cto: 'CTO', av: 'Assurance Vie', bitcoin: 'Crypto' };
+
+      // Distribute overflow to user-configured category targets
       for (let m = 0; m < monthsInPeriod; m++) {
         if (ctoOverflowMonthly[m] <= 0) continue;
         let distributed = 0;
         for (const target of peaOverflowTargets) {
-          const targetSim = placSims.find(ps => ps.id === target.placementId);
-          if (!targetSim) continue;
           const share = ctoOverflowMonthly[m] * (target.pct || 0) / 100;
-          if (share > 0) {
-            targetSim.value += share;
-            targetSim.totalApports += share;
+          if (share <= 0) continue;
+
+          if (target.category === 'epargne') {
+            // Épargne: add directly to savings pool
+            epar += share;
             distributed += share;
+          } else {
+            // Find first placement matching the category group key
+            const gk = categoryToGroupKey[target.category];
+            const targetSim = gk ? placSims.find(ps => ps.groupKey === gk) : null;
+            if (targetSim) {
+              targetSim.value += share;
+              targetSim.totalApports += share;
+              distributed += share;
+            }
           }
         }
         // Remainder goes to CTO fallback
