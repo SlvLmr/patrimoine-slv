@@ -528,8 +528,9 @@ export function computeProjection(store) {
         }
 
         if (year > 0 && year % 2 === 0) {
-          const freeShares = Math.floor(ps.quantite / 10) * loyaltyMultiplier;
-          ps.quantite += freeShares;
+          const baseShares = Math.floor(ps.quantite / 10);
+          const loyaltyBonus = ps.loyaltyEligible ? Math.floor(baseShares * 0.10) : 0;
+          ps.quantite += baseShares + loyaltyBonus;
         }
 
         ps.dividendeParAction *= (1 + ps.croissanceDividende * periodFraction);
