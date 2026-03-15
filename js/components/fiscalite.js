@@ -463,50 +463,75 @@ export function render(store) {
                     </div>
                   </div>
 
-                  <!-- RIGHT: Donation timeline -->
-                  <div class="flex-1 p-4 ${enfDons.length === 0 ? 'flex items-center justify-center' : ''}">
+                  <!-- RIGHT: Donation table per child -->
+                  <div class="flex-1 p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs text-gray-500 font-medium">Plan de donations</span>
+                      <button data-add-donation-enfant="${enf.id}"
+                        class="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded hover:bg-emerald-500/20 transition text-[11px] flex items-center gap-1 border border-emerald-500/15">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Ajouter
+                      </button>
+                    </div>
                     ${enfDons.length === 0 ? `
-                      <p class="text-gray-600 text-xs text-center">Aucune donation planifiee</p>
+                      <p class="text-gray-600 text-xs text-center py-4">Aucune donation planifiee</p>
                     ` : `
-                      <div class="relative pl-5">
-                        <div class="absolute left-[7px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/40 via-emerald-500/20 to-transparent"></div>
-                        ${enfDons.map((don, idx) => {
-                          const r = enfResults.find(x => x.id === don.id);
-                          const isExonere = r && r.droits === 0;
-                          const dotColor = isExonere ? 'bg-emerald-500' : 'bg-amber-500';
-                          const yearDelta = don.annee - currentYear;
-                          const yearLabel = yearDelta === 0 ? 'Cette annee' : yearDelta > 0 ? `+${yearDelta} an${yearDelta > 1 ? 's' : ''}` : `${yearDelta} an${Math.abs(yearDelta) > 1 ? 's' : ''}`;
-                          return `
-                          <div class="relative mb-3 last:mb-0">
-                            <div class="absolute -left-[13px] top-1.5 w-2.5 h-2.5 rounded-full ${dotColor} ring-2 ring-dark-800/80"></div>
-                            <div class="flex items-center gap-3 text-xs">
-                              <div class="flex items-center gap-1.5 min-w-0">
-                                <span class="font-bold text-gray-300 tabular-nums w-8 flex-shrink-0">${don.annee}</span>
-                                <span class="text-gray-600 text-[10px] w-16 flex-shrink-0">${yearLabel}</span>
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
-                                  don.type === 'don_tepa' ? 'bg-cyan-500/10 text-cyan-400' :
-                                  don.type === 'donation_nue_propriete' ? 'bg-purple-500/10 text-purple-400' :
-                                  don.type === 'donation_cto' ? 'bg-blue-500/10 text-blue-400' :
-                                  'bg-emerald-500/10 text-emerald-400'
-                                }">${donationTypeLabel(don.type)}</span>
-                              </div>
-                              <div class="flex items-center gap-2 ml-auto flex-shrink-0">
-                                <span class="font-semibold text-gray-200">${formatCurrency(don.montant)}</span>
-                                ${r ? `<span class="text-[10px] ${isExonere ? 'text-emerald-500' : 'text-amber-400'}">${isExonere ? 'exonere' : formatCurrency(r.droits) + ' droits'}</span>` : ''}
-                              </div>
-                            </div>
-                          </div>`;
-                        }).join('')}
-                        ${g.renewalYear && g.renewalYear > currentYear ? `
-                        <div class="relative mb-0 mt-1">
-                          <div class="absolute -left-[13px] top-1.5 w-2.5 h-2.5 rounded-full bg-amber-500/50 ring-2 ring-dark-800/80 border border-dashed border-amber-400/50"></div>
-                          <div class="flex items-center gap-3 text-xs">
-                            <span class="font-bold text-amber-400/70 tabular-nums w-8 flex-shrink-0">${g.renewalYear}</span>
-                            <span class="text-amber-400/50 text-[10px]">Renouvellement abattements (cycle 15 ans)</span>
-                          </div>
-                        </div>
-                        ` : ''}
+                      <div class="overflow-x-auto">
+                        <table class="w-full text-xs">
+                          <thead>
+                            <tr class="border-b border-dark-400/30 text-gray-500 text-[10px]">
+                              <th class="text-left py-1.5 px-1.5 font-medium">Type</th>
+                              <th class="text-right py-1.5 px-1.5 font-medium">Montant</th>
+                              <th class="text-center py-1.5 px-1.5 font-medium">Annee</th>
+                              <th class="text-right py-1.5 px-1.5 font-medium">Exonere</th>
+                              <th class="text-right py-1.5 px-1.5 font-medium">Taxable</th>
+                              <th class="text-right py-1.5 px-1.5 font-medium">Droits</th>
+                              <th class="text-right py-1.5 px-1.5 font-medium">Abatt. rest.</th>
+                              <th class="py-1.5 px-0.5"></th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-dark-400/15">
+                            ${enfDons.map(don => {
+                              const r = enfResults.find(x => x.id === don.id);
+                              return `
+                              <tr class="hover:bg-dark-600/20 transition group">
+                                <td class="py-1.5 px-1.5">
+                                  <span class="px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                    don.type === 'don_tepa' ? 'bg-cyan-500/10 text-cyan-400' :
+                                    don.type === 'donation_nue_propriete' ? 'bg-purple-500/10 text-purple-400' :
+                                    don.type === 'donation_cto' ? 'bg-blue-500/10 text-blue-400' :
+                                    'bg-emerald-500/10 text-emerald-400'
+                                  }">${donationTypeLabel(don.type)}</span>
+                                </td>
+                                <td class="py-1.5 px-1.5 text-right text-gray-200 font-medium">${formatCurrency(don.montant)}</td>
+                                <td class="py-1.5 px-1.5 text-center text-gray-400">${don.annee}</td>
+                                <td class="py-1.5 px-1.5 text-right text-emerald-400">${r ? formatCurrency(r.exonere) : '-'}</td>
+                                <td class="py-1.5 px-1.5 text-right text-amber-400">${r ? formatCurrency(r.taxable) : '-'}</td>
+                                <td class="py-1.5 px-1.5 text-right ${r && r.droits > 0 ? 'text-red-400' : 'text-emerald-400'} font-medium">${r ? formatCurrency(r.droits) : '-'}</td>
+                                <td class="py-1.5 px-1.5 text-right text-gray-500 text-[10px]">${r ? formatCurrency(r.abattementRestant) : '-'}</td>
+                                <td class="py-1.5 px-0.5">
+                                  <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                                    <button data-edit-donation="${don.id}" class="p-0.5 rounded hover:bg-dark-500 text-gray-500 hover:text-emerald-300 transition" title="Modifier">
+                                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </button>
+                                    <button data-delete-donation="${don.id}" class="p-0.5 rounded hover:bg-dark-500 text-gray-500 hover:text-red-400 transition" title="Supprimer">
+                                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>`;
+                            }).join('')}
+                          </tbody>
+                        </table>
                       </div>
+                      ${g.renewalYear && g.renewalYear > currentYear ? `
+                      <div class="mt-2 text-[10px] text-amber-400/60 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Renouvellement abattements en ${g.renewalYear} (cycle 15 ans)
+                      </div>
+                      ` : ''}
                     `}
                   </div>
                 </div>
@@ -644,96 +669,25 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- ============================================================ -->
-      <!-- SECTION 4 : PLAN DE DONATIONS -->
-      <!-- ============================================================ -->
-      <div class="card-dark rounded-xl p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-200 flex items-center gap-2">
-            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Plan de donations
-          </h3>
-          <button id="btn-add-donation"
-            class="px-3 py-1.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 rounded-lg hover:from-emerald-500/30 hover:to-teal-500/30 transition text-sm flex items-center gap-1.5 border border-emerald-500/20 ${nbEnfants === 0 ? 'opacity-40 cursor-not-allowed' : ''}">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-            Ajouter une donation
-          </button>
+      <!-- Donation totals summary -->
+      ${donations.length > 0 ? `
+      <div class="card-dark rounded-xl p-4">
+        <div class="flex flex-wrap gap-4 text-sm">
+          <div>
+            <span class="text-gray-500">Total donne :</span>
+            <span class="text-gray-200 font-medium ml-1">${formatCurrency(totalDonne)}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">Total droits donation :</span>
+            <span class="${totalDroitsDonation > 0 ? 'text-red-400' : 'text-emerald-400'} font-medium ml-1">${formatCurrency(totalDroitsDonation)}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">Patrimoine residuel :</span>
+            <span class="text-gray-200 font-medium ml-1">${formatCurrency(patrimoineResiduelHorsAV)}</span>
+          </div>
         </div>
-
-        ${donations.length === 0 ? `
-          <p class="text-gray-500 text-sm text-center py-6">
-            ${nbEnfants === 0
-              ? 'Ajoute d\'abord tes enfants ci-dessus.'
-              : 'Aucune donation planifiee. Ajoute des donations pour optimiser ta transmission.'}
-          </p>
-        ` : `
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-dark-400/30 text-gray-500 text-xs">
-                  <th class="text-left py-2 px-2 font-medium">Enfant</th>
-                  <th class="text-left py-2 px-2 font-medium">Type</th>
-                  <th class="text-right py-2 px-2 font-medium">Montant</th>
-                  <th class="text-center py-2 px-2 font-medium">Annee</th>
-                  <th class="text-right py-2 px-2 font-medium">Exonere</th>
-                  <th class="text-right py-2 px-2 font-medium">Taxable</th>
-                  <th class="text-right py-2 px-2 font-medium">Droits</th>
-                  <th class="text-right py-2 px-2 font-medium">Abatt. restant</th>
-                  <th class="py-2 px-1"></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-dark-400/15">
-                ${donations.map(don => {
-                  const enf = enfants.find(e => e.id === don.enfantId);
-                  const results = donResultsParEnfant[don.enfantId] || [];
-                  const r = results.find(x => x.id === don.id);
-                  return `
-                  <tr class="hover:bg-dark-600/20 transition group">
-                    <td class="py-2.5 px-2 text-gray-300">${enf?.prenom || '?'}</td>
-                    <td class="py-2.5 px-2 text-gray-400">${donationTypeLabel(don.type)}</td>
-                    <td class="py-2.5 px-2 text-right text-gray-200 font-medium">${formatCurrency(don.montant)}</td>
-                    <td class="py-2.5 px-2 text-center text-gray-400">${don.annee}</td>
-                    <td class="py-2.5 px-2 text-right text-emerald-400">${r ? formatCurrency(r.exonere) : '-'}</td>
-                    <td class="py-2.5 px-2 text-right text-amber-400">${r ? formatCurrency(r.taxable) : '-'}</td>
-                    <td class="py-2.5 px-2 text-right ${r && r.droits > 0 ? 'text-red-400' : 'text-emerald-400'} font-medium">${r ? formatCurrency(r.droits) : '-'}</td>
-                    <td class="py-2.5 px-2 text-right text-gray-500 text-xs">${r ? formatCurrency(r.abattementRestant) : '-'}</td>
-                    <td class="py-2.5 px-1">
-                      <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
-                        <button data-edit-donation="${don.id}" class="p-1 rounded hover:bg-dark-500 text-gray-500 hover:text-emerald-300 transition" title="Modifier">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        </button>
-                        <button data-delete-donation="${don.id}" class="p-1 rounded hover:bg-dark-500 text-gray-500 hover:text-red-400 transition" title="Supprimer">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>`;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Totals row -->
-          <div class="mt-3 pt-3 border-t border-dark-400/20 flex flex-wrap gap-4 text-sm">
-            <div>
-              <span class="text-gray-500">Total donne :</span>
-              <span class="text-gray-200 font-medium ml-1">${formatCurrency(totalDonne)}</span>
-            </div>
-            <div>
-              <span class="text-gray-500">Total droits donation :</span>
-              <span class="${totalDroitsDonation > 0 ? 'text-red-400' : 'text-emerald-400'} font-medium ml-1">${formatCurrency(totalDroitsDonation)}</span>
-            </div>
-            <div>
-              <span class="text-gray-500">Patrimoine residuel :</span>
-              <span class="text-gray-200 font-medium ml-1">${formatCurrency(patrimoineResiduelHorsAV)}</span>
-            </div>
-          </div>
-        `}
       </div>
+      ` : ''}
 
       <!-- ============================================================ -->
       <!-- SECTION 5 : WATERFALL CHART -->
@@ -930,11 +884,15 @@ export function mount(store, navigate) {
     });
   });
 
-  // --- Add donation ---
-  document.getElementById('btn-add-donation')?.addEventListener('click', () => {
-    const c = getConfig(store);
-    if ((c.enfants || []).length === 0) return;
-    openDonationModal(store, refresh, c.enfants);
+  // --- Add donation per child ---
+  document.querySelectorAll('[data-add-donation-enfant]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = getConfig(store);
+      const enfantId = btn.dataset.addDonationEnfant;
+      const enf = (c.enfants || []).find(e => e.id === enfantId);
+      if (!enf) return;
+      openDonationModal(store, refresh, c.enfants, null, enfantId);
+    });
   });
 
   // --- Edit donation ---
@@ -1432,15 +1390,16 @@ function openEnfantModal(store, refresh, editEnfant = null) {
 // MODAL: Add/Edit Donation
 // ============================================================================
 
-function openDonationModal(store, refresh, enfants, editDon = null) {
+function openDonationModal(store, refresh, enfants, editDon = null, preselectedEnfantId = null) {
   const currentYear = new Date().getFullYear();
   const title = editDon ? 'Modifier la donation' : 'Planifier une donation';
 
   const enfantOptions = enfants.map(e => ({ value: e.id, label: e.prenom || 'Sans nom' }));
   const typeOptions = DONATION_TYPES;
+  const selectedEnfantId = editDon?.enfantId || preselectedEnfantId || enfants[0]?.id || '';
 
   const body = `
-    ${selectField('enfantId', 'Enfant', enfantOptions, editDon?.enfantId || enfants[0]?.id || '')}
+    ${selectField('enfantId', 'Enfant', enfantOptions, selectedEnfantId)}
     ${selectField('type', 'Type de donation', typeOptions, editDon?.type || 'don_manuel')}
     ${inputField('montant', 'Montant (euros)', editDon?.montant || '', 'number', 'min="0" step="1000" placeholder="100000"')}
     ${inputField('annee', 'Annee cible', editDon?.annee || currentYear, 'number', `min="${currentYear}" max="${currentYear + 50}" step="1"`)}
