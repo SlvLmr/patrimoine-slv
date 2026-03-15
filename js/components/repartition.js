@@ -93,7 +93,7 @@ export function render(store) {
       </div>
 
       <!-- Flow + Actions -->
-      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-start">
         <div class="card-dark rounded-2xl p-5">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
@@ -340,8 +340,7 @@ export function mount(store, navigate) {
     // Action cards
     const cardsHTML = actions.map((a, i) => {
       const pct = totalActions > 0 ? (a.valeur / totalActions * 100).toFixed(1) : 0;
-      const pv = a.valeur - (a.quantite * a.pru);
-      const pvPct = (a.quantite * a.pru) > 0 ? (pv / (a.quantite * a.pru) * 100).toFixed(1) : 0;
+      const apport = a.quantite * a.pru;
       const s = a.style;
       return `
         <div id="rep-action-card-${i}" class="card-dark rounded-xl p-3 ${s.border} border transition hover:border-opacity-60">
@@ -357,9 +356,9 @@ export function mount(store, navigate) {
           </div>
           <div class="flex items-center justify-between">
             <p class="text-sm font-bold text-gray-200">${formatCurrency(a.valeur)}</p>
-            <p class="text-[11px] font-medium ${pv >= 0 ? 'text-emerald-400' : 'text-red-400'}">${pv >= 0 ? '+' : ''}${formatCurrency(pv)} <span class="text-[9px]">(${pv >= 0 ? '+' : ''}${pvPct}%)</span></p>
+            <p class="text-[10px] text-gray-500">investi ${formatCurrency(apport)}</p>
           </div>
-          <div class="flex items-center gap-3 mt-1.5">
+          <div class="flex items-center gap-3 mt-1">
             <p class="text-[10px] text-gray-600">${a.quantite} parts</p>
             <p class="text-[10px] text-gray-600">PRU ${formatCurrency(a.pru)}</p>
           </div>
