@@ -277,20 +277,34 @@ export function mount(store, navigate) {
     `;
   }
 
+  // Distinct colors for individual action cards
+  const ACTION_CARD_COLORS = [
+    { color: '#f59e0b', text: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10' },
+    { color: '#3b82f6', text: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
+    { color: '#10b981', text: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10' },
+    { color: '#f43f5e', text: 'text-rose-400', border: 'border-rose-500/30', bg: 'bg-rose-500/10' },
+    { color: '#8b5cf6', text: 'text-violet-400', border: 'border-violet-500/30', bg: 'bg-violet-500/10' },
+    { color: '#06b6d4', text: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/10' },
+    { color: '#ec4899', text: 'text-pink-400', border: 'border-pink-500/30', bg: 'bg-pink-500/10' },
+    { color: '#14b8a6', text: 'text-teal-400', border: 'border-teal-500/30', bg: 'bg-teal-500/10' },
+  ];
+
   function updateActions(snap) {
     const listEl = document.getElementById('rep-actions-list');
     if (!listEl) return;
 
     const actions = placements
       .filter(p => p.categorie === 'Action' && p.quantite && p.pru)
-      .map(p => {
+      .map((p, i) => {
         const projectedValue = snap.placementById?.[p.id] || Number(p.valeur) || (Number(p.quantite) * Number(p.pru));
         return {
+          id: p.id,
           nom: p.nom || 'Action',
           quantite: Number(p.quantite),
           pru: Number(p.pru),
           valeur: projectedValue,
           enveloppe: p.enveloppe || '',
+          style: ACTION_CARD_COLORS[i % ACTION_CARD_COLORS.length],
         };
       })
       .sort((a, b) => b.valeur - a.valeur);
@@ -302,22 +316,128 @@ export function mount(store, navigate) {
 
     const totalActions = actions.reduce((s, a) => s + a.valeur, 0);
 
-    listEl.innerHTML = actions.map(a => {
+    // Total header
+    const headerHTML = `
+      <div class="flex justify-center mb-1">
+        <div class="card-dark rounded-lg px-4 py-2 text-center inline-block border border-amber-500/20">
+          <p class="text-[9px] text-gray-500 uppercase tracking-widest">Total actions</p>
+          <p class="text-lg font-extrabold text-amber-400">${formatCurrency(totalActions)}</p>
+        </div>
+      </div>
+    `;
+
+    // SVG curved connectors
+    const svgHTML = `
+      <div id="rep-actions-svg-wrap" class="hidden lg:block" style="height:35px;">
+        <svg id="rep-actions-svg" class="w-full" style="height:35px;" fill="none">
+          <defs>
+            <filter id="glow-actions" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5"/></filter>
+          </defs>
+        </svg>
+      </div>
+    `;
+
+    // Action cards
+    const cardsHTML = actions.map((a, i) => {
       const pct = totalActions > 0 ? (a.valeur / totalActions * 100).toFixed(1) : 0;
       const pv = a.valeur - (a.quantite * a.pru);
+      const pvPct = (a.quantite * a.pru) > 0 ? (pv / (a.quantite * a.pru) * 100).toFixed(1) : 0;
+      const s = a.style;
       return `
-        <div class="flex items-center justify-between py-1.5 border-b border-dark-400/20 last:border-0">
-          <div class="min-w-0">
-            <p class="text-xs text-gray-200 font-medium truncate">${a.nom}</p>
-            <p class="text-[10px] text-gray-600">${a.quantite} parts · PRU ${formatCurrency(a.pru)}</p>
+        <div id="rep-action-card-${i}" class="card-dark rounded-xl p-3 ${s.border} border transition hover:border-opacity-60">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${s.color}"></div>
+              <span class="text-sm font-semibold ${s.text} truncate">${a.nom}</span>
+            </div>
+            <span class="text-[10px] text-gray-500 flex-shrink-0">${pct}%</span>
           </div>
-          <div class="text-right flex-shrink-0 ml-2">
-            <p class="text-xs text-gray-300 font-medium">${formatCurrency(a.valeur)} <span class="text-[10px] text-gray-600">${pct}%</span></p>
-            <p class="text-[10px] ${pv >= 0 ? 'text-emerald-400' : 'text-red-400'}">${pv >= 0 ? '+' : ''}${formatCurrency(pv)}</p>
+          <div class="w-full h-1 bg-dark-600 rounded-full overflow-hidden mb-2">
+            <div class="h-full rounded-full" style="width: ${pct}%; background: ${s.color}"></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-bold text-gray-200">${formatCurrency(a.valeur)}</p>
+            <p class="text-[11px] font-medium ${pv >= 0 ? 'text-emerald-400' : 'text-red-400'}">${pv >= 0 ? '+' : ''}${formatCurrency(pv)} <span class="text-[9px]">(${pv >= 0 ? '+' : ''}${pvPct}%)</span></p>
+          </div>
+          <div class="flex items-center gap-3 mt-1.5">
+            <p class="text-[10px] text-gray-600">${a.quantite} parts</p>
+            <p class="text-[10px] text-gray-600">PRU ${formatCurrency(a.pru)}</p>
           </div>
         </div>
       `;
     }).join('');
+
+    listEl.innerHTML = headerHTML + svgHTML + `
+      <div id="rep-actions-cards" class="grid grid-cols-1 gap-2">${cardsHTML}</div>
+    `;
+
+    // Draw curved connectors
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        drawActionConnectors(actions);
+      });
+    });
+  }
+
+  function drawActionConnectors(actions) {
+    const svg = document.getElementById('rep-actions-svg');
+    const wrap = document.getElementById('rep-actions-svg-wrap');
+    if (!svg || !wrap) return;
+
+    const wrapRect = wrap.getBoundingClientRect();
+    const w = wrapRect.width;
+    if (w <= 0) return;
+    const h = 35;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.querySelectorAll('path, circle').forEach(el => el.remove());
+
+    const mid = w / 2;
+
+    const cards = actions.map((a, i) => {
+      const el = document.getElementById(`rep-action-card-${i}`);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { cx: r.left + r.width / 2 - wrapRect.left, color: a.style.color };
+    }).filter(Boolean);
+
+    cards.forEach(({ cx, color }) => {
+      const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
+
+      const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      glow.setAttribute('d', d);
+      glow.setAttribute('stroke', color);
+      glow.setAttribute('stroke-width', '4');
+      glow.setAttribute('fill', 'none');
+      glow.setAttribute('opacity', '0.2');
+      glow.setAttribute('filter', 'url(#glow-actions)');
+      svg.appendChild(glow);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      line.setAttribute('d', d);
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width', '1.5');
+      line.setAttribute('fill', 'none');
+      line.setAttribute('opacity', '0.6');
+      svg.appendChild(line);
+
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', cx);
+      dot.setAttribute('cy', h);
+      dot.setAttribute('r', '2');
+      dot.setAttribute('fill', color);
+      dot.setAttribute('opacity', '0.7');
+      svg.appendChild(dot);
+    });
+
+    if (cards.length > 0) {
+      const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      topDot.setAttribute('cx', mid);
+      topDot.setAttribute('cy', '0');
+      topDot.setAttribute('r', '2.5');
+      topDot.setAttribute('fill', '#f59e0b');
+      topDot.setAttribute('opacity', '0.8');
+      svg.appendChild(topDot);
+    }
   }
 
   function updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear) {
@@ -588,11 +708,11 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('rep-chart-donut');
     if (!canvas) return;
 
-    // Use amber shades for individual actions, group colors for the rest
-    const ACTION_SHADES = ['#f59e0b', '#d97706', '#b45309', '#92400e', '#78350f'];
+    // Use distinct colors for individual actions, group colors for the rest
+    const DONUT_ACTION_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
     let actionIdx = 0;
     const colors = allEntries.map(e => {
-      if (e.isAction) return ACTION_SHADES[actionIdx++ % ACTION_SHADES.length];
+      if (e.isAction) return DONUT_ACTION_COLORS[actionIdx++ % DONUT_ACTION_COLORS.length];
       return getGroupStyle(e.gk).color;
     });
 
