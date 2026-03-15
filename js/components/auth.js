@@ -1,4 +1,4 @@
-import { isConfigured, login, register, logout, getCurrentUser } from '../firebase-config.js';
+import { isConfigured, login, register, resetPassword, logout, getCurrentUser } from '../firebase-config.js';
 
 function renderLoginScreen() {
   return `
@@ -56,6 +56,34 @@ function renderAuthCard() {
           </svg>
           Se connecter
         </button>
+        <div class="text-center mt-3">
+          <button type="button" id="forgot-password-link" class="text-xs text-gray-500 hover:text-accent-green transition cursor-pointer">
+            Mot de passe oublié ?
+          </button>
+        </div>
+      </form>
+
+      <!-- Forgot password form (hidden) -->
+      <form id="forgot-password-form" class="space-y-4 hidden">
+        <p class="text-sm text-gray-400 mb-2">Entre ton adresse email pour recevoir un lien de réinitialisation.</p>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1.5">Email</label>
+          <input type="email" id="reset-email" required
+            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
+            placeholder="ton@email.com">
+        </div>
+        <button type="submit" id="reset-btn"
+          class="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 hover:opacity-90 transition flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          Envoyer le lien
+        </button>
+        <div class="text-center">
+          <button type="button" id="back-to-login-link" class="text-xs text-gray-500 hover:text-accent-green transition cursor-pointer">
+            Retour à la connexion
+          </button>
+        </div>
       </form>
 
       <!-- Register form (hidden) -->
@@ -107,8 +135,57 @@ function mountLoginScreen(onSuccess, onSkip) {
 
       document.getElementById('login-form').classList.toggle('hidden', target !== 'login');
       document.getElementById('register-form').classList.toggle('hidden', target !== 'register');
+      document.getElementById('forgot-password-form').classList.add('hidden');
       hideMessages();
     });
+  });
+
+  // Forgot password link
+  document.getElementById('forgot-password-link')?.addEventListener('click', () => {
+    document.getElementById('login-form').classList.add('hidden');
+    document.getElementById('register-form').classList.add('hidden');
+    document.getElementById('forgot-password-form').classList.remove('hidden');
+    document.getElementById('auth-tabs').classList.add('hidden');
+    // Pre-fill email if already typed
+    const loginEmail = document.getElementById('login-email').value.trim();
+    if (loginEmail) document.getElementById('reset-email').value = loginEmail;
+    hideMessages();
+  });
+
+  // Back to login from forgot password
+  document.getElementById('back-to-login-link')?.addEventListener('click', () => {
+    document.getElementById('forgot-password-form').classList.add('hidden');
+    document.getElementById('login-form').classList.remove('hidden');
+    document.getElementById('auth-tabs').classList.remove('hidden');
+    // Re-activate login tab
+    document.querySelectorAll('.auth-tab').forEach(t => {
+      t.classList.remove('bg-dark-600', 'text-accent-green');
+      t.classList.add('text-gray-400');
+    });
+    document.querySelector('[data-tab="login"]').classList.add('bg-dark-600', 'text-accent-green');
+    document.querySelector('[data-tab="login"]').classList.remove('text-gray-400');
+    hideMessages();
+  });
+
+  // Forgot password submit
+  document.getElementById('forgot-password-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('reset-email').value.trim();
+    const btn = document.getElementById('reset-btn');
+
+    hideMessages();
+    btn.disabled = true;
+    btn.innerHTML = '<span class="animate-pulse">Envoi...</span>';
+
+    try {
+      await resetPassword(email);
+      showSuccess('Un email de réinitialisation a été envoyé. Vérifie ta boîte de réception.');
+    } catch (err) {
+      showError(getFirebaseErrorMessage(err.code));
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Envoyer le lien`;
+    }
   });
 
   // Login
