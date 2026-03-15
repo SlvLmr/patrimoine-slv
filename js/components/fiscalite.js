@@ -315,7 +315,8 @@ export function render(store) {
   waterfallValues.push(Math.max(0, totalFiscaliteAvec));
   waterfallColors.push('rgba(251,191,36,0.85)');
 
-  // --- Gauges per child (abattement + TEPA + 15-year renewal) ---
+  // --- Gauges per child (abattement + TEPA + AV + 15-year renewal) ---
+  const avParEnfant = nbEnfants > 0 ? patrimoine.assuranceVie / nbEnfants : 0;
   function childGauges(enfantId) {
     const results = donResultsParEnfant[enfantId] || [];
     const lastResult = results[results.length - 1];
@@ -325,12 +326,16 @@ export function render(store) {
     const tepaRestant = lastResult ? lastResult.tepaRestant : DON_FAMILIAL_TEPA;
     const tepaUtilise = DON_FAMILIAL_TEPA - tepaRestant;
     const tepaPct = Math.round((tepaUtilise / DON_FAMILIAL_TEPA) * 100);
+    // AV: assurance vie abattement 152 500 € par bénéficiaire
+    const avUtilise = Math.min(avParEnfant, AV_ABATTEMENT_PAR_BENEFICIAIRE);
+    const avRestant = Math.max(0, AV_ABATTEMENT_PAR_BENEFICIAIRE - avParEnfant);
+    const avPct = Math.round((avParEnfant / AV_ABATTEMENT_PAR_BENEFICIAIRE) * 100);
     // 15-year renewal: find first donation year for this child
     const enfDons = donations.filter(d => d.enfantId === enfantId).sort((a, b) => a.annee - b.annee);
     const firstDonYear = enfDons.length > 0 ? enfDons[0].annee : null;
     const renewalYear = firstDonYear ? firstDonYear + RENOUVELLEMENT_ANNEES : null;
     const yearsUntilRenewal = renewalYear ? renewalYear - currentYear : null;
-    return { abattRestant, abattUtilise, abattPct, tepaRestant, tepaUtilise, tepaPct, firstDonYear, renewalYear, yearsUntilRenewal };
+    return { abattRestant, abattUtilise, abattPct, tepaRestant, tepaUtilise, tepaPct, avUtilise, avRestant, avPct, firstDonYear, renewalYear, yearsUntilRenewal };
   }
 
   return `
@@ -422,7 +427,7 @@ export function render(store) {
                     </div>
 
                     <!-- Gauge 2: TEPA -->
-                    <div>
+                    <div class="mb-2.5">
                       <div class="flex justify-between text-[11px] mb-1">
                         <span class="text-gray-500 flex items-center gap-1">
                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -436,6 +441,24 @@ export function render(store) {
                       <div class="flex justify-between mt-0.5">
                         <span class="text-[10px] ${g.tepaRestant > 0 ? 'text-cyan-400' : 'text-red-400'}">${g.tepaRestant > 0 ? formatCurrency(g.tepaRestant) + ' disponible' : 'Utilise'}</span>
                         <span class="text-[10px] text-gray-600">< 80 ans</span>
+                      </div>
+                    </div>
+
+                    <!-- Gauge 3: Assurance Vie -->
+                    <div>
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-gray-500 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                          Assurance Vie
+                        </span>
+                        <span class="text-gray-400">${formatCurrency(g.avUtilise)} / ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}</span>
+                      </div>
+                      <div class="h-1.5 bg-dark-600 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all ${g.avPct >= 100 ? 'bg-red-500' : g.avPct >= 50 ? 'bg-amber-500' : 'bg-purple-500'}" style="width: ${Math.min(100, g.avPct)}%"></div>
+                      </div>
+                      <div class="flex justify-between mt-0.5">
+                        <span class="text-[10px] ${g.avRestant > 0 ? 'text-purple-400' : 'text-red-400'}">${g.avRestant > 0 ? formatCurrency(g.avRestant) + ' disponible' : 'Sature'}</span>
+                        <span class="text-[10px] text-gray-600">Art. 990 I</span>
                       </div>
                     </div>
                   </div>
