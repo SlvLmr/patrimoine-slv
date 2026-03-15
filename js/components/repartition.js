@@ -266,11 +266,6 @@ export function mount(store, navigate) {
           <p class="text-[10px] ${totalPlacements - snap.totalApports >= 0 ? 'text-emerald-600' : 'text-red-500'}"><span class="${totalPlacements - snap.totalApports >= 0 ? 'text-emerald-400' : 'text-red-400'}">${totalPlacements - snap.totalApports >= 0 ? '+' : ''}${formatCurrency(totalPlacements - snap.totalApports)}</span> gains</p>
         </div>
       </div>
-      <div class="card-dark rounded-xl px-4 py-3 text-center">
-        <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Capacité d'épargne</p>
-        <p class="text-xl font-bold ${snap.capaciteEpargne >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(snap.capaciteEpargne)}</p>
-        <p class="text-[10px] text-gray-600 mt-0.5">/mois</p>
-      </div>
     `;
   }
 
