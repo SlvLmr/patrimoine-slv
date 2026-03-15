@@ -17,6 +17,18 @@ const GROUP_COLORS = {
 };
 const DEFAULT_GROUP = { color: '#6366f1', bg: 'bg-indigo-500/15', text: 'text-indigo-400', border: 'border-indigo-500/30' };
 
+// Distinct colors for individual action cards & donut slices
+const ACTION_CARD_COLORS = [
+  { color: '#f59e0b', text: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10' },
+  { color: '#3b82f6', text: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
+  { color: '#10b981', text: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10' },
+  { color: '#f43f5e', text: 'text-rose-400', border: 'border-rose-500/30', bg: 'bg-rose-500/10' },
+  { color: '#8b5cf6', text: 'text-violet-400', border: 'border-violet-500/30', bg: 'bg-violet-500/10' },
+  { color: '#06b6d4', text: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/10' },
+  { color: '#ec4899', text: 'text-pink-400', border: 'border-pink-500/30', bg: 'bg-pink-500/10' },
+  { color: '#14b8a6', text: 'text-teal-400', border: 'border-teal-500/30', bg: 'bg-teal-500/10' },
+];
+
 function getGroupStyle(gk) {
   return GROUP_COLORS[gk] || DEFAULT_GROUP;
 }
@@ -245,10 +257,10 @@ export function mount(store, navigate) {
     const totalPlacements = snap.placements || 0;
 
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
-    try { updateActions(snap); } catch(e) { console.error('updateActions error:', e); }
-    try { updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear); } catch(e) { console.error('updateFlow error:', e); }
-    try { updateDonut(snap, groupKeys, calYear); } catch(e) { console.error('updateDonut error:', e); }
-    try { updateTable(dcaByPlacement, snap, totalPlacements, calYear); } catch(e) { console.error('updateTable error:', e); }
+    updateActions(snap);
+    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear);
+    updateDonut(snap, groupKeys, calYear);
+    updateTable(dcaByPlacement, snap, totalPlacements, calYear);
   }
 
   function updateKPI(totalDCA, nbWithDCA, snap, totalPlacements) {
@@ -276,18 +288,6 @@ export function mount(store, navigate) {
       </div>
     `;
   }
-
-  // Distinct colors for individual action cards
-  const ACTION_CARD_COLORS = [
-    { color: '#f59e0b', text: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10' },
-    { color: '#3b82f6', text: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
-    { color: '#10b981', text: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10' },
-    { color: '#f43f5e', text: 'text-rose-400', border: 'border-rose-500/30', bg: 'bg-rose-500/10' },
-    { color: '#8b5cf6', text: 'text-violet-400', border: 'border-violet-500/30', bg: 'bg-violet-500/10' },
-    { color: '#06b6d4', text: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/10' },
-    { color: '#ec4899', text: 'text-pink-400', border: 'border-pink-500/30', bg: 'bg-pink-500/10' },
-    { color: '#14b8a6', text: 'text-teal-400', border: 'border-teal-500/30', bg: 'bg-teal-500/10' },
-  ];
 
   function updateActions(snap) {
     const listEl = document.getElementById('rep-actions-list');
