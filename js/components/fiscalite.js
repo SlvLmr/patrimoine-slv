@@ -407,43 +407,6 @@ export function render(store) {
       </div>
 
       <!-- ============================================================ -->
-      <!-- SECTION 2 : PATRIMOINE (auto from store, read-only) -->
-      <!-- ============================================================ -->
-      <div class="card-dark rounded-xl p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-200 flex items-center gap-2">
-            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
-            Patrimoine actuel
-          </h3>
-          <span class="text-xs text-gray-600">Donnees issues de ton portefeuille</span>
-        </div>
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
-            <p class="text-xs text-gray-500 mb-1">Immobilier</p>
-            <p class="text-lg font-bold text-amber-400">${formatCurrency(patrimoine.immobilier)}</p>
-          </div>
-          <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
-            <p class="text-xs text-gray-500 mb-1">Placements (hors AV)</p>
-            <p class="text-lg font-bold text-blue-400">${formatCurrency(patrimoine.placements)}</p>
-          </div>
-          <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
-            <p class="text-xs text-gray-500 mb-1">Assurance Vie</p>
-            <p class="text-lg font-bold text-purple-400">${formatCurrency(patrimoine.assuranceVie)}</p>
-          </div>
-          <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
-            <p class="text-xs text-gray-500 mb-1">Épargne</p>
-            <p class="text-lg font-bold text-emerald-400">${formatCurrency(patrimoine.epargne)}</p>
-          </div>
-          <div class="card-dark rounded-xl p-3 text-center border border-dark-400/20">
-            <p class="text-xs text-gray-500 mb-1">Patrimoine net</p>
-            <p class="text-lg font-bold gradient-text">${formatCurrency(patrimoine.patrimoineNet)}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ============================================================ -->
       <!-- SECTION 2b : PROJECTION SLIDER -->
       <!-- ============================================================ -->
       <div class="card-dark rounded-xl p-5">
@@ -500,6 +463,55 @@ export function render(store) {
             <p id="fisc-proj-net-delta" class="text-[10px] text-gray-600"></p>
           </div>
         </div>
+
+        <!-- Impact comparison -->
+        ${nbEnfants > 0 ? `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <!-- Sans optimisation -->
+          <div class="card-dark rounded-xl p-5 border border-red-500/20">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-300">Sans optimisation</p>
+                <p class="text-xs text-gray-600">Droits de succession bruts</p>
+              </div>
+            </div>
+            <p class="text-3xl font-bold text-red-400">${formatCurrency(totalDroitsSans)}</p>
+            <p class="text-xs text-gray-500 mt-1">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
+          </div>
+
+          <!-- Avec strategie -->
+          <div class="card-dark rounded-xl p-5 border border-emerald-500/20">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-300">Avec votre strategie</p>
+                <p class="text-xs text-gray-600">Droits apres donations planifiees</p>
+              </div>
+            </div>
+            <p class="text-3xl font-bold text-emerald-400">${formatCurrency(totalFiscaliteAvec)}</p>
+            ${economie > 0 ? `
+            <div class="mt-2 flex items-center gap-2">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-medium">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                ${formatCurrency(economie)} economies
+              </span>
+              <span class="text-xs text-gray-500">(${economiePct}% de reduction)</span>
+            </div>
+            ` : `
+            <p class="text-xs text-gray-500 mt-1">Ajoute des donations pour reduire les droits</p>
+            `}
+          </div>
+        </div>
+        ` : ''}
       </div>
 
       <!-- ============================================================ -->
@@ -519,61 +531,6 @@ export function render(store) {
           <p class="text-gray-500 text-sm">Chargement de l'analyse...</p>
         </div>
       </div>
-
-      <!-- ============================================================ -->
-      <!-- SECTION 3 : IMPACT COMPARISON -->
-      <!-- ============================================================ -->
-      ${nbEnfants > 0 ? `
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Sans optimisation -->
-        <div class="card-dark rounded-xl p-5 border border-red-500/20">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center">
-              <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-300">Sans optimisation</p>
-              <p class="text-xs text-gray-600">Droits de succession bruts</p>
-            </div>
-          </div>
-          <p class="text-3xl font-bold text-red-400">${formatCurrency(totalDroitsSans)}</p>
-          <p class="text-xs text-gray-500 mt-1">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
-        </div>
-
-        <!-- Avec strategie -->
-        <div class="card-dark rounded-xl p-5 border border-emerald-500/20">
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-300">Avec votre strategie</p>
-              <p class="text-xs text-gray-600">Droits apres donations planifiees</p>
-            </div>
-          </div>
-          <p class="text-3xl font-bold text-emerald-400">${formatCurrency(totalFiscaliteAvec)}</p>
-          ${economie > 0 ? `
-          <div class="mt-2 flex items-center gap-2">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-medium">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-              ${formatCurrency(economie)} economies
-            </span>
-            <span class="text-xs text-gray-500">(${economiePct}% de reduction)</span>
-          </div>
-          ` : `
-          <p class="text-xs text-gray-500 mt-1">Ajoute des donations pour reduire les droits</p>
-          `}
-        </div>
-      </div>
-      ` : `
-      <div class="card-dark rounded-xl p-8 text-center">
-        <p class="text-gray-400">Ajoute au moins un enfant pour voir l'impact fiscal de ta strategie de transmission.</p>
-      </div>
-      `}
 
       <!-- ============================================================ -->
       <!-- SECTION 4 : PLAN DE DONATIONS -->
