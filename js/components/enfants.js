@@ -70,7 +70,7 @@ export function render(store) {
             <p class="text-sm text-gray-400">Ajoutez vos enfants pour simuler les donations et la transmission</p>
           </div>
         ` : `
-          <div class="grid grid-cols-1 md:grid-cols-${Math.min(nbEnfants, 3)} gap-4">
+          <div class="grid grid-cols-1 ${nbEnfants >= 2 ? 'sm:grid-cols-2' : ''} ${nbEnfants >= 3 ? 'lg:grid-cols-3' : ''} gap-4">
             ${enfants.map((enf, i) => {
               const age = childAge(enf.dateNaissance);
               const color = CHILD_COLORS[i % CHILD_COLORS.length];
@@ -146,6 +146,12 @@ export function render(store) {
                     <div class="h-full bg-${color} rounded-full transition-all" style="width: ${Math.min(100, (1 - abattRestant / ABATTEMENT_PARENT_ENFANT) * 100)}%"></div>
                   </div>
                 </div>
+
+                <!-- Bouton ajouter donation -->
+                <button class="btn-add-donation mt-3 w-full py-1.5 bg-${color}/10 hover:bg-${color}/20 text-${color} text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 border border-${color}/20" data-id="${enf.id}" data-prenom="${enf.prenom || ''}">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                  Donation
+                </button>
               </div>`;
             }).join('')}
           </div>
@@ -235,6 +241,44 @@ export function mount(store, navigate) {
         enf.prenom = data.prenom || enf.prenom;
         enf.dateNaissance = data.dateNaissance || enf.dateNaissance;
         saveConfig(store, c);
+        navigate('enfants');
+      });
+    });
+  });
+
+  // --- Ajouter donation ---
+  document.querySelectorAll('.btn-add-donation').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const enfantId = btn.dataset.id;
+      const prenom = btn.dataset.prenom;
+      const c = getConfig(store);
+      const enfDons = (c.donations || []).filter(d => d.enfantId === enfantId);
+      const tepaUsed = enfDons.some(d => d.type === 'don_tepa');
+      openModal(`Donation pour ${prenom}`, `
+        ${inputField('montant', 'Montant (€)', '', 'number')}
+        <div class="mt-3">
+          <label class="block text-xs text-gray-400 mb-1">Type</label>
+          <select id="field-type" class="w-full px-3 py-2 bg-dark-700 border border-dark-400/30 rounded-lg text-sm text-gray-200">
+            <option value="donation">Donation classique (abattement 100 000 €)</option>
+            <option value="don_tepa" ${tepaUsed ? 'disabled' : ''}>Don familial TEPA (31 865 €)${tepaUsed ? ' — déjà utilisé' : ''}</option>
+          </select>
+        </div>
+        ${inputField('annee', 'Année', new Date().getFullYear().toString(), 'number')}
+      `, () => {
+        const body = document.getElementById('modal-body');
+        const data = getFormData(body);
+        const type = body.querySelector('#field-type')?.value || 'donation';
+        const montant = Number(data.montant);
+        if (!montant || montant <= 0) return;
+        const cfg2 = getConfig(store);
+        if (!cfg2.donations) cfg2.donations = [];
+        cfg2.donations.push({
+          enfantId,
+          montant,
+          type,
+          annee: Number(data.annee) || new Date().getFullYear()
+        });
+        saveConfig(store, cfg2);
         navigate('enfants');
       });
     });
