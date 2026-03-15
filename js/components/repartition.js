@@ -77,10 +77,8 @@ export function render(store) {
           <span class="text-[10px] text-gray-600">${currentYear}</span>
           <span class="text-[10px] text-gray-600">${currentYear + years}</span>
         </div>
+        <div id="rep-kpi" class="grid grid-cols-3 gap-3 mt-4"></div>
       </div>
-
-      <!-- KPI Cards -->
-      <div id="rep-kpi" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
 
       <!-- Flow Visualization -->
       <div class="card-dark rounded-2xl p-5">
