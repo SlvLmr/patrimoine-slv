@@ -402,6 +402,10 @@ summary[style*="list-style:none"]::-webkit-details-marker {
   }
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 /* Range slider — dark theme */
 #strat-proj-slider {
   -webkit-appearance: none;

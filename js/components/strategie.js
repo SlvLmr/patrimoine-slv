@@ -539,9 +539,6 @@ function renderProjectionWidget(store) {
         </div>
       </div>
     </div>
-    <script type="module">
-      window.__stratProjData = ${JSON.stringify(snapshotsData)};
-    </script>
   `;
 }
 
@@ -588,10 +585,10 @@ export function render(store) {
       </div>
 
       <!-- ═══ NAVIGATION RAPIDE ═══ -->
-      <div class="flex flex-wrap gap-2" id="strat-nav">
+      <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="strat-nav">
         ${STEPS.map(s => {
           const c = colorClasses(s.color);
-          return `<button class="strat-nav-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition hover:scale-105 ${c.badge}" data-target="${s.id}">
+          return `<button class="strat-nav-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition hover:scale-105 whitespace-nowrap shrink-0 ${c.badge}" data-target="${s.id}">
             <span class="mr-1">${s.num}</span>${s.date}
           </button>`;
         }).join('')}
@@ -684,7 +681,25 @@ export function render(store) {
 export function mount(store) {
   // ─── Projection slider ───
   const slider = document.getElementById('strat-proj-slider');
-  const data = window.__stratProjData;
+  // Compute projection data directly from store (script tags in innerHTML don't execute)
+  let data = null;
+  if (slider && store) {
+    const snapshots = computeProjection(store);
+    if (snapshots && snapshots.length > 0) {
+      const getAV = (snap) => (snap.placementDetail ? (snap.placementDetail['Assurance Vie'] || 0) : 0);
+      const getPlacHorsAV = (snap) => {
+        if (!snap.placementDetail) return 0;
+        let t = 0;
+        for (const [k, v] of Object.entries(snap.placementDetail)) { if (k !== 'Assurance Vie') t += v; }
+        return t;
+      };
+      data = snapshots.map((snap, i) => ({
+        year: snap.calendarYear, age: snap.age, offset: i,
+        immobilier: snap.immobilier, placementsHorsAV: getPlacHorsAV(snap),
+        assuranceVie: getAV(snap), epargne: snap.epargne, patrimoineNet: snap.patrimoineNet
+      }));
+    }
+  }
   if (slider && data && data.length > 0) {
     const currentYear = new Date().getFullYear();
     const nbEnfants = 2;
