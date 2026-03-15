@@ -480,8 +480,8 @@ export function render(store) {
                 <p class="text-xs text-gray-600">Droits de succession bruts</p>
               </div>
             </div>
-            <p class="text-3xl font-bold text-red-400">${formatCurrency(totalDroitsSans)}</p>
-            <p class="text-xs text-gray-500 mt-1">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
+            <p id="fisc-succ-sans-amount" class="text-3xl font-bold text-red-400">${formatCurrency(totalDroitsSans)}</p>
+            <p id="fisc-succ-sans-detail" class="text-xs text-gray-500 mt-1">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
           </div>
 
           <!-- Avec strategie -->
@@ -497,7 +497,8 @@ export function render(store) {
                 <p class="text-xs text-gray-600">Droits apres donations planifiees</p>
               </div>
             </div>
-            <p class="text-3xl font-bold text-emerald-400">${formatCurrency(totalFiscaliteAvec)}</p>
+            <p id="fisc-succ-avec-amount" class="text-3xl font-bold text-emerald-400">${formatCurrency(totalFiscaliteAvec)}</p>
+            <div id="fisc-succ-avec-detail">
             ${economie > 0 ? `
             <div class="mt-2 flex items-center gap-2">
               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-medium">
@@ -509,6 +510,7 @@ export function render(store) {
             ` : `
             <p class="text-xs text-gray-500 mt-1">Ajoute des donations pour reduire les droits</p>
             `}
+            </div>
           </div>
         </div>
         ` : ''}
@@ -869,6 +871,16 @@ export function mount(store, navigate) {
   if (slider && snapshots.length > 0) {
     slider.max = snapshots.length - 1;
 
+    // Pre-compute original succession values for reset on yearIdx === 0
+    const origSansAmount = document.getElementById('fisc-succ-sans-amount');
+    const origSansDetail = document.getElementById('fisc-succ-sans-detail');
+    const origAvecAmount = document.getElementById('fisc-succ-avec-amount');
+    const origAvecDetail = document.getElementById('fisc-succ-avec-detail');
+    const origSansText = origSansAmount ? origSansAmount.textContent : '';
+    const origSansDetailText = origSansDetail ? origSansDetail.textContent : '';
+    const origAvecText = origAvecAmount ? origAvecAmount.textContent : '';
+    const origAvecDetailHTML = origAvecDetail ? origAvecDetail.innerHTML : '';
+
     const updateSlider = (yearIdx) => {
       const s = snapshots[yearIdx];
       if (!s) return;
@@ -881,6 +893,64 @@ export function mount(store, navigate) {
         if (projKpis) projKpis.style.display = '';
       }
       sliderAge.textContent = `${s.age} ans`;
+
+      // Update succession tax blocks based on projected patrimoine
+      if (nbEnfants > 0) {
+        if (yearIdx === 0) {
+          // Reset to original values
+          if (origSansAmount) origSansAmount.textContent = origSansText;
+          if (origSansDetail) origSansDetail.textContent = origSansDetailText;
+          if (origAvecAmount) origAvecAmount.textContent = origAvecText;
+          if (origAvecDetail) origAvecDetail.innerHTML = origAvecDetailHTML;
+        } else {
+          // Compute projected patrimoine breakdown
+          const projAV = projGroupKeys.filter(k => k === 'Assurance Vie').reduce((sum, k) => sum + (s.placementDetail[k] || 0), 0);
+          const projPatrimoineHorsAV = s.patrimoineNet - projAV;
+          const projAge = s.age;
+
+          // Sans optimisation: succession on full projected patrimoine
+          const projSuccSans = calculerSuccessionParEnfant(projPatrimoineHorsAV, nbEnfants, projAV / nbEnfants);
+          const projTotalDroitsSans = (projSuccSans.droits + projSuccSans.avDroits) * nbEnfants;
+
+          if (origSansAmount) origSansAmount.textContent = formatCurrency(projTotalDroitsSans);
+          if (origSansDetail) origSansDetail.textContent = `${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun`;
+
+          // Avec strategie: consider donations planned up to projected year
+          const cfg = getConfig(store);
+          const projDonations = (cfg.donations || []).filter(d => d.annee <= s.calendarYear);
+          let projTotalDroitsDonation = 0;
+          let projTotalDonne = 0;
+          for (const enf of enfants) {
+            const dons = projDonations.filter(d => d.enfantId === enf.id).sort((a, b) => a.annee - b.annee);
+            const results = simulerDonations(enf, dons, ageDonateur);
+            projTotalDonne += results.reduce((sum, r) => sum + r.exonere + r.taxable, 0);
+            projTotalDroitsDonation += results.reduce((sum, r) => sum + r.droits, 0);
+          }
+
+          const projResiduelHorsAV = Math.max(0, projPatrimoineHorsAV - projTotalDonne);
+          const projSuccAvec = calculerSuccessionParEnfant(projResiduelHorsAV, nbEnfants, projAV / nbEnfants);
+          const projTotalDroitsResiduelle = (projSuccAvec.droits + projSuccAvec.avDroits) * nbEnfants;
+          const projTotalFiscaliteAvec = projTotalDroitsDonation + projTotalDroitsResiduelle;
+          const projEconomie = projTotalDroitsSans - projTotalFiscaliteAvec;
+          const projEconomiePct = projTotalDroitsSans > 0 ? (projEconomie / projTotalDroitsSans * 100).toFixed(0) : 0;
+
+          if (origAvecAmount) origAvecAmount.textContent = formatCurrency(projTotalFiscaliteAvec);
+          if (origAvecDetail) {
+            if (projEconomie > 0) {
+              origAvecDetail.innerHTML = `
+              <div class="mt-2 flex items-center gap-2">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-medium">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                  ${formatCurrency(projEconomie)} economies
+                </span>
+                <span class="text-xs text-gray-500">(${projEconomiePct}% de reduction)</span>
+              </div>`;
+            } else {
+              origAvecDetail.innerHTML = `<p class="text-xs text-gray-500 mt-1">Ajoute des donations pour reduire les droits</p>`;
+            }
+          }
+        }
+      }
 
       if (yearIdx === 0) return;
 
