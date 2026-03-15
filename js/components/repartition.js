@@ -508,18 +508,12 @@ export function mount(store, navigate) {
       .sort((a, b) => b.value - a.value);
 
     const allEntries = [...entries];
-    if (snap.epargne > 0) allEntries.push({ gk: 'Épargne', value: snap.epargne });
-    if (snap.immobilier > 0) allEntries.push({ gk: 'Immobilier', value: snap.immobilier });
     const grandTotal = allEntries.reduce((s, e) => s + e.value, 0);
 
     const canvas = document.getElementById('rep-chart-donut');
     if (!canvas) return;
 
-    const colors = allEntries.map(e => {
-      if (e.gk === 'Épargne') return '#6366f1';
-      if (e.gk === 'Immobilier') return '#8b6914';
-      return getGroupStyle(e.gk).color;
-    });
+    const colors = allEntries.map(e => getGroupStyle(e.gk).color);
 
     createChart('rep-chart-donut', {
       type: 'doughnut',
