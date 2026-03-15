@@ -1,4 +1,4 @@
-import { formatCurrency } from '../utils.js?v=5';
+import { formatCurrency, computeProjection } from '../utils.js?v=5';
 
 // ============================================================================
 // STRATEGIE PATRIMONIALE — Plan complet Sylvain
@@ -414,11 +414,142 @@ function renderHorizontalTimeline() {
   `;
 }
 
+// ─── Projection Widget ────────────────────────────────────────────────────
+
+function renderProjectionWidget(store) {
+  const snapshots = computeProjection(store);
+  if (!snapshots || snapshots.length === 0) return '';
+  const params = store.get('parametres');
+  const years = params.projectionYears || 30;
+  const ageFinAnnee = params.ageFinAnnee || 43;
+  const currentYear = new Date().getFullYear();
+  const nbEnfants = 2;
+  const abattementParEnfant = 100000;
+
+  // Separate AV from other placements
+  const getAV = (snap) => {
+    if (!snap.placementDetail) return 0;
+    return snap.placementDetail['Assurance Vie'] || 0;
+  };
+  const getPlacementsHorsAV = (snap) => {
+    if (!snap.placementDetail) return 0;
+    let total = 0;
+    for (const [k, v] of Object.entries(snap.placementDetail)) {
+      if (k !== 'Assurance Vie') total += v;
+    }
+    return total;
+  };
+
+  // Pre-compute snapshots data as JSON for JS access
+  const snapshotsData = snapshots.map((snap, i) => ({
+    year: snap.calendarYear,
+    age: snap.age,
+    offset: i,
+    immobilier: snap.immobilier,
+    placementsHorsAV: getPlacementsHorsAV(snap),
+    assuranceVie: getAV(snap),
+    epargne: snap.epargne,
+    patrimoineNet: snap.patrimoineNet
+  }));
+
+  const first = snapshotsData[0];
+
+  return `
+    <div class="card-dark rounded-xl border border-sky-500/15 overflow-hidden" id="strat-projection-widget">
+      <div class="px-5 py-4 flex items-center justify-between">
+        <h3 class="text-base font-bold text-gray-200 flex items-center gap-2">
+          <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          Projection dans le temps
+        </h3>
+        <div class="text-right">
+          <span class="text-sky-400 font-bold text-sm" id="strat-proj-year-label">Fin ${first.year} (+0 an)</span>
+          <span class="text-gray-500 text-xs ml-1.5" id="strat-proj-age-label">${first.age} ans</span>
+        </div>
+      </div>
+
+      <!-- Slider -->
+      <div class="px-5 pb-2">
+        <input type="range" id="strat-proj-slider" min="0" max="${snapshots.length - 1}" value="0" step="1"
+          class="w-full h-2 rounded-lg appearance-none cursor-pointer accent-sky-500"
+          style="background: linear-gradient(to right, #0ea5e9 0%, #0ea5e9 0%, #374151 0%, #374151 100%);">
+        <div class="flex justify-between text-[10px] text-gray-600 mt-1">
+          <span>${currentYear}</span>
+          <span>+10 ans</span>
+          <span>+20 ans</span>
+          <span>+${years} ans</span>
+        </div>
+      </div>
+
+      <!-- Value cards -->
+      <div class="px-5 pb-4 grid grid-cols-2 sm:grid-cols-5 gap-2" id="strat-proj-cards">
+        <div class="card-dark rounded-lg border border-amber-500/15 p-3 text-center">
+          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Immobilier</p>
+          <p class="text-lg font-bold text-amber-400 mt-1" id="strat-proj-immo">${formatCurrency(first.immobilier)}</p>
+          <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-immo-delta">—</p>
+        </div>
+        <div class="card-dark rounded-lg border border-blue-500/15 p-3 text-center">
+          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Placements (hors AV)</p>
+          <p class="text-lg font-bold text-blue-400 mt-1" id="strat-proj-plac">${formatCurrency(first.placementsHorsAV)}</p>
+          <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-plac-delta">—</p>
+        </div>
+        <div class="card-dark rounded-lg border border-purple-500/15 p-3 text-center">
+          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Assurance Vie</p>
+          <p class="text-lg font-bold text-purple-400 mt-1" id="strat-proj-av">${formatCurrency(first.assuranceVie)}</p>
+          <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-av-delta">—</p>
+        </div>
+        <div class="card-dark rounded-lg border border-emerald-500/15 p-3 text-center">
+          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Épargne</p>
+          <p class="text-lg font-bold text-emerald-400 mt-1" id="strat-proj-epar">${formatCurrency(first.epargne)}</p>
+          <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-epar-delta">—</p>
+        </div>
+        <div class="card-dark rounded-lg border border-gray-500/15 p-3 text-center col-span-2 sm:col-span-1">
+          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Patrimoine net</p>
+          <p class="text-lg font-bold text-gray-100 mt-1" id="strat-proj-net">${formatCurrency(first.patrimoineNet)}</p>
+          <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-net-delta">—</p>
+        </div>
+      </div>
+
+      <!-- Succession comparison -->
+      <div class="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 gap-3" id="strat-proj-succession">
+        <div class="card-dark rounded-xl border border-red-500/15 p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-gray-200">Sans optimisation</p>
+              <p class="text-[10px] text-gray-500">Droits de succession bruts</p>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-red-400" id="strat-proj-droits-bruts">0 €</p>
+          <p class="text-[10px] text-gray-500 mt-1" id="strat-proj-droits-detail">${nbEnfants} enfants — abattement ${formatCurrency(abattementParEnfant)} chacun</p>
+        </div>
+        <div class="card-dark rounded-xl border border-emerald-500/15 p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-gray-200">Avec votre stratégie</p>
+              <p class="text-[10px] text-gray-500">Droits après donations planifiées</p>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-emerald-400" id="strat-proj-droits-opti">0 €</p>
+          <p class="text-[10px] text-gray-500 mt-1">Ajoute des donations pour réduire les droits</p>
+        </div>
+      </div>
+    </div>
+    <script type="module">
+      window.__stratProjData = ${JSON.stringify(snapshotsData)};
+    </script>
+  `;
+}
+
 // ============================================================================
 // RENDER
 // ============================================================================
 
-export function render() {
+export function render(store) {
   return `
     <div class="max-w-4xl mx-auto space-y-8">
 
@@ -439,6 +570,9 @@ export function render() {
 
       <!-- ═══ HORIZONTAL TIMELINE ═══ -->
       ${renderHorizontalTimeline()}
+
+      <!-- ═══ PROJECTION WIDGET ═══ -->
+      ${store ? renderProjectionWidget(store) : ''}
 
       <!-- ═══ PRINCIPE DIRECTEUR ═══ -->
       <div class="card-dark rounded-xl p-5 border border-amber-500/15 bg-gradient-to-r from-amber-500/5 to-transparent">
@@ -547,7 +681,117 @@ export function render() {
 // MOUNT
 // ============================================================================
 
-export function mount() {
+export function mount(store) {
+  // ─── Projection slider ───
+  const slider = document.getElementById('strat-proj-slider');
+  const data = window.__stratProjData;
+  if (slider && data && data.length > 0) {
+    const currentYear = new Date().getFullYear();
+    const nbEnfants = 2;
+    const abattementParEnfant = 100000;
+    // AV abattement per child for succession (hors succession up to 152500/child)
+    const avAbattementParEnfant = 152500;
+    const first = data[0];
+
+    // French succession tax brackets (per child share after abattement)
+    function computeDroitsSuccession(baseImposableParEnfant) {
+      if (baseImposableParEnfant <= 0) return 0;
+      const tranches = [
+        { max: 8072, taux: 0.05 },
+        { max: 12109, taux: 0.10 },
+        { max: 15932, taux: 0.15 },
+        { max: 552324, taux: 0.20 },
+        { max: 902838, taux: 0.30 },
+        { max: 1805677, taux: 0.40 },
+        { max: Infinity, taux: 0.45 }
+      ];
+      let droits = 0;
+      let prev = 0;
+      for (const t of tranches) {
+        if (baseImposableParEnfant <= prev) break;
+        const taxable = Math.min(baseImposableParEnfant, t.max) - prev;
+        if (taxable > 0) droits += taxable * t.taux;
+        prev = t.max;
+      }
+      return droits;
+    }
+
+    function fmtCur(v) {
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
+    }
+
+    function fmtDelta(v) {
+      return (v >= 0 ? '+' : '') + fmtCur(v);
+    }
+
+    function updateProjection(index) {
+      const snap = data[index];
+      const offset = index;
+      const yearLabel = document.getElementById('strat-proj-year-label');
+      const ageLabel = document.getElementById('strat-proj-age-label');
+      yearLabel.textContent = `Fin ${snap.year} (+${offset} an${offset > 1 ? 's' : ''})`;
+      ageLabel.textContent = `${snap.age} ans`;
+
+      // Update slider track gradient
+      const pct = (index / (data.length - 1)) * 100;
+      slider.style.background = `linear-gradient(to right, #0ea5e9 0%, #0ea5e9 ${pct}%, #374151 ${pct}%, #374151 100%)`;
+
+      // Values
+      document.getElementById('strat-proj-immo').textContent = fmtCur(snap.immobilier);
+      document.getElementById('strat-proj-plac').textContent = fmtCur(snap.placementsHorsAV);
+      document.getElementById('strat-proj-av').textContent = fmtCur(snap.assuranceVie);
+      document.getElementById('strat-proj-epar').textContent = fmtCur(snap.epargne);
+      document.getElementById('strat-proj-net').textContent = fmtCur(snap.patrimoineNet);
+
+      // Deltas
+      const setDelta = (id, val) => {
+        const el = document.getElementById(id);
+        if (val === 0) { el.textContent = '—'; el.className = 'text-[10px] text-gray-600 mt-0.5'; }
+        else {
+          el.textContent = fmtDelta(val);
+          el.className = `text-[10px] ${val >= 0 ? 'text-emerald-400' : 'text-red-400'} mt-0.5`;
+        }
+      };
+      setDelta('strat-proj-immo-delta', snap.immobilier - first.immobilier);
+      setDelta('strat-proj-plac-delta', snap.placementsHorsAV - first.placementsHorsAV);
+      setDelta('strat-proj-av-delta', snap.assuranceVie - first.assuranceVie);
+      setDelta('strat-proj-epar-delta', snap.epargne - first.epargne);
+      setDelta('strat-proj-net-delta', snap.patrimoineNet - first.patrimoineNet);
+
+      // Succession — Sans optimisation
+      // Full patrimoine net enters succession, minus AV (hors succession up to abattement)
+      const patrimoineSuccession = snap.patrimoineNet;
+      const partParEnfant = patrimoineSuccession / nbEnfants;
+      const baseImposableParEnfant = Math.max(0, partParEnfant - abattementParEnfant);
+      const droitsBruts = Math.round(computeDroitsSuccession(baseImposableParEnfant) * nbEnfants);
+      document.getElementById('strat-proj-droits-bruts').textContent = fmtCur(droitsBruts);
+
+      // Succession — Avec stratégie
+      // AV is hors succession (152500/enfant), maison démembrée (NP transmise = exclue),
+      // Donations consommées (don Sarkozy 31865/enfant + abattement 100k rechargé)
+      const avHorsSuccession = Math.min(snap.assuranceVie, avAbattementParEnfant * nbEnfants);
+      // Nue-propriété maison transmise en 2026 (~198k exclue de la succession)
+      const npTransmise = 198000;
+      // Don Sarkozy cumulé (progressif, jusqu'à 31865/enfant)
+      const yearsElapsed = snap.year - currentYear;
+      const donSarkozyParEnfant = yearsElapsed >= 4 ? Math.min(31865, 5000 + Math.min(26865, (yearsElapsed - 4) * 2500)) : 0;
+      const donSarkozyTotal = donSarkozyParEnfant * nbEnfants;
+      // Abattement rechargé en 2040 (15 ans après 2026) — donation titres CTO ~35k/enfant
+      const donTitresCTO = (yearsElapsed >= 14) ? 35000 * nbEnfants : 0;
+
+      const patrimoineOpti = Math.max(0, snap.patrimoineNet - avHorsSuccession - npTransmise - donSarkozyTotal - donTitresCTO);
+      const partParEnfantOpti = patrimoineOpti / nbEnfants;
+      // Abattement 100k rechargé if 15+ years since 2026
+      const abattementDispo = (yearsElapsed >= 14) ? abattementParEnfant : 0;
+      const baseImposableOpti = Math.max(0, partParEnfantOpti - abattementDispo);
+      const droitsOpti = Math.round(computeDroitsSuccession(baseImposableOpti) * nbEnfants);
+      document.getElementById('strat-proj-droits-opti').textContent = fmtCur(droitsOpti);
+    }
+
+    slider.addEventListener('input', () => updateProjection(parseInt(slider.value)));
+    updateProjection(0);
+  }
+
   // ─── Navigation rapide: scroll to step on click ───
   document.querySelectorAll('.strat-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {

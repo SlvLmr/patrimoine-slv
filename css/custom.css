@@ -401,3 +401,32 @@ summary[style*="list-style:none"]::-webkit-details-marker {
     color: black !important;
   }
 }
+
+/* Range slider — dark theme */
+#strat-proj-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  outline: none;
+}
+#strat-proj-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  border: 3px solid #1e293b;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+}
+#strat-proj-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  border: 3px solid #1e293b;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+}
