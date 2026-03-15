@@ -93,7 +93,7 @@ export function render(store) {
       </div>
 
       <!-- Flow + Actions -->
-      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-start">
+      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-stretch">
         <div class="card-dark rounded-2xl p-5">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
@@ -314,14 +314,15 @@ export function mount(store, navigate) {
       return;
     }
 
+    const totalApportActions = actions.reduce((s, a) => s + (a.quantite * a.pru), 0);
     const totalActions = actions.reduce((s, a) => s + a.valeur, 0);
 
     // Total header
     const headerHTML = `
       <div class="flex justify-center mb-1">
         <div class="card-dark rounded-lg px-4 py-2 text-center inline-block border border-amber-500/20">
-          <p class="text-[9px] text-gray-500 uppercase tracking-widest">Total actions</p>
-          <p class="text-lg font-extrabold text-amber-400">${formatCurrency(totalActions)}</p>
+          <p class="text-[9px] text-gray-500 uppercase tracking-widest">Total investi</p>
+          <p class="text-lg font-extrabold text-amber-400">${formatCurrency(totalApportActions)}</p>
         </div>
       </div>
     `;
@@ -355,8 +356,8 @@ export function mount(store, navigate) {
             <div class="h-full rounded-full" style="width: ${pct}%; background: ${s.color}"></div>
           </div>
           <div class="flex items-center justify-between">
-            <p class="text-sm font-bold text-gray-200">${formatCurrency(a.valeur)}</p>
-            <p class="text-[10px] text-gray-500">investi ${formatCurrency(apport)}</p>
+            <p class="text-sm font-bold text-gray-200">${formatCurrency(apport)}</p>
+            <p class="text-[10px] text-gray-500">valorisé ${formatCurrency(a.valeur)}</p>
           </div>
           <div class="flex items-center gap-3 mt-1">
             <p class="text-[10px] text-gray-600">${a.quantite} parts</p>
