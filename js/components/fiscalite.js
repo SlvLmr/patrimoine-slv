@@ -315,14 +315,22 @@ export function render(store) {
   waterfallValues.push(Math.max(0, totalFiscaliteAvec));
   waterfallColors.push('rgba(251,191,36,0.85)');
 
-  // --- Abattement gauge per child ---
-  function abattementGauge(enfantId) {
+  // --- Gauges per child (abattement + TEPA + 15-year renewal) ---
+  function childGauges(enfantId) {
     const results = donResultsParEnfant[enfantId] || [];
     const lastResult = results[results.length - 1];
-    const restant = lastResult ? lastResult.abattementRestant : ABATTEMENT_PARENT_ENFANT;
-    const utilise = ABATTEMENT_PARENT_ENFANT - restant;
-    const pct = Math.round((utilise / ABATTEMENT_PARENT_ENFANT) * 100);
-    return { restant, utilise, pct };
+    const abattRestant = lastResult ? lastResult.abattementRestant : ABATTEMENT_PARENT_ENFANT;
+    const abattUtilise = ABATTEMENT_PARENT_ENFANT - abattRestant;
+    const abattPct = Math.round((abattUtilise / ABATTEMENT_PARENT_ENFANT) * 100);
+    const tepaRestant = lastResult ? lastResult.tepaRestant : DON_FAMILIAL_TEPA;
+    const tepaUtilise = DON_FAMILIAL_TEPA - tepaRestant;
+    const tepaPct = Math.round((tepaUtilise / DON_FAMILIAL_TEPA) * 100);
+    // 15-year renewal: find first donation year for this child
+    const enfDons = donations.filter(d => d.enfantId === enfantId).sort((a, b) => a.annee - b.annee);
+    const firstDonYear = enfDons.length > 0 ? enfDons[0].annee : null;
+    const renewalYear = firstDonYear ? firstDonYear + RENOUVELLEMENT_ANNEES : null;
+    const yearsUntilRenewal = renewalYear ? renewalYear - currentYear : null;
+    return { abattRestant, abattUtilise, abattPct, tepaRestant, tepaUtilise, tepaPct, firstDonYear, renewalYear, yearsUntilRenewal };
   }
 
   return `
@@ -364,41 +372,120 @@ export function render(store) {
         ${enfants.length === 0 ? `
           <p class="text-gray-500 text-sm text-center py-6">Aucun enfant enregistre. Ajoute tes enfants pour simuler la succession.</p>
         ` : `
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="space-y-4">
             ${enfants.map(enf => {
               const age = getAge(enf.dateNaissance);
-              const gauge = abattementGauge(enf.id);
+              const g = childGauges(enf.id);
+              const enfDons = donations.filter(d => d.enfantId === enf.id).sort((a, b) => a.annee - b.annee);
+              const enfResults = donResultsParEnfant[enf.id] || [];
               return `
-              <div class="bg-dark-800/50 rounded-lg p-3 border border-dark-400/20 group">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full bg-pink-500/15 flex items-center justify-center text-pink-300 text-sm font-bold">
-                      ${(enf.prenom || '?')[0].toUpperCase()}
+              <div class="bg-dark-800/50 rounded-lg border border-dark-400/20 group">
+                <div class="flex flex-col md:flex-row">
+                  <!-- LEFT: Child info + gauges -->
+                  <div class="p-4 md:w-64 md:min-w-[256px] md:border-r border-dark-400/15 flex-shrink-0">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-full bg-pink-500/15 flex items-center justify-center text-pink-300 text-sm font-bold">
+                          ${(enf.prenom || '?')[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-gray-200">${enf.prenom || 'Sans nom'}</p>
+                          <p class="text-[11px] text-gray-500">${age !== null ? age + ' ans' : 'Age inconnu'}</p>
+                        </div>
+                      </div>
+                      <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <button data-edit-enfant="${enf.id}" class="p-1 rounded hover:bg-dark-500 text-gray-500 hover:text-pink-300 transition" title="Modifier">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </button>
+                        <button data-delete-enfant="${enf.id}" class="p-1 rounded hover:bg-dark-500 text-gray-500 hover:text-red-400 transition" title="Supprimer">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
                     </div>
+
+                    <!-- Gauge 1: Abattement 100k -->
+                    <div class="mb-2.5">
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-gray-500 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                          Abattement
+                        </span>
+                        <span class="text-gray-400">${formatCurrency(g.abattUtilise)} / ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</span>
+                      </div>
+                      <div class="h-1.5 bg-dark-600 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all ${g.abattPct >= 100 ? 'bg-red-500' : g.abattPct >= 50 ? 'bg-amber-500' : 'bg-emerald-500'}" style="width: ${Math.min(100, g.abattPct)}%"></div>
+                      </div>
+                      <div class="flex justify-between mt-0.5">
+                        <span class="text-[10px] ${g.abattRestant > 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(g.abattRestant)} restant</span>
+                        ${g.renewalYear ? `<span class="text-[10px] text-amber-400/70" title="L'abattement se renouvelle 15 ans apres la 1ere donation">Renouv. ${g.renewalYear}</span>` : ''}
+                      </div>
+                    </div>
+
+                    <!-- Gauge 2: TEPA -->
                     <div>
-                      <p class="text-sm font-medium text-gray-200">${enf.prenom || 'Sans nom'}</p>
-                      <p class="text-xs text-gray-500">${age !== null ? age + ' ans' : 'Age inconnu'}</p>
+                      <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-gray-500 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                          TEPA
+                        </span>
+                        <span class="text-gray-400">${formatCurrency(g.tepaUtilise)} / ${formatCurrency(DON_FAMILIAL_TEPA)}</span>
+                      </div>
+                      <div class="h-1.5 bg-dark-600 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all ${g.tepaPct >= 100 ? 'bg-red-500' : g.tepaPct >= 50 ? 'bg-amber-500' : 'bg-cyan-500'}" style="width: ${Math.min(100, g.tepaPct)}%"></div>
+                      </div>
+                      <div class="flex justify-between mt-0.5">
+                        <span class="text-[10px] ${g.tepaRestant > 0 ? 'text-cyan-400' : 'text-red-400'}">${g.tepaRestant > 0 ? formatCurrency(g.tepaRestant) + ' disponible' : 'Utilise'}</span>
+                        <span class="text-[10px] text-gray-600">< 80 ans</span>
+                      </div>
                     </div>
                   </div>
-                  <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                    <button data-edit-enfant="${enf.id}" class="p-1 rounded hover:bg-dark-500 text-gray-500 hover:text-pink-300 transition" title="Modifier">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    </button>
-                    <button data-delete-enfant="${enf.id}" class="p-1 rounded hover:bg-dark-500 text-gray-500 hover:text-red-400 transition" title="Supprimer">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    </button>
+
+                  <!-- RIGHT: Donation timeline -->
+                  <div class="flex-1 p-4 ${enfDons.length === 0 ? 'flex items-center justify-center' : ''}">
+                    ${enfDons.length === 0 ? `
+                      <p class="text-gray-600 text-xs text-center">Aucune donation planifiee</p>
+                    ` : `
+                      <div class="relative pl-5">
+                        <div class="absolute left-[7px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/40 via-emerald-500/20 to-transparent"></div>
+                        ${enfDons.map((don, idx) => {
+                          const r = enfResults.find(x => x.id === don.id);
+                          const isExonere = r && r.droits === 0;
+                          const dotColor = isExonere ? 'bg-emerald-500' : 'bg-amber-500';
+                          const yearDelta = don.annee - currentYear;
+                          const yearLabel = yearDelta === 0 ? 'Cette annee' : yearDelta > 0 ? `+${yearDelta} an${yearDelta > 1 ? 's' : ''}` : `${yearDelta} an${Math.abs(yearDelta) > 1 ? 's' : ''}`;
+                          return `
+                          <div class="relative mb-3 last:mb-0">
+                            <div class="absolute -left-[13px] top-1.5 w-2.5 h-2.5 rounded-full ${dotColor} ring-2 ring-dark-800/80"></div>
+                            <div class="flex items-center gap-3 text-xs">
+                              <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="font-bold text-gray-300 tabular-nums w-8 flex-shrink-0">${don.annee}</span>
+                                <span class="text-gray-600 text-[10px] w-16 flex-shrink-0">${yearLabel}</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
+                                  don.type === 'don_tepa' ? 'bg-cyan-500/10 text-cyan-400' :
+                                  don.type === 'donation_nue_propriete' ? 'bg-purple-500/10 text-purple-400' :
+                                  don.type === 'donation_cto' ? 'bg-blue-500/10 text-blue-400' :
+                                  'bg-emerald-500/10 text-emerald-400'
+                                }">${donationTypeLabel(don.type)}</span>
+                              </div>
+                              <div class="flex items-center gap-2 ml-auto flex-shrink-0">
+                                <span class="font-semibold text-gray-200">${formatCurrency(don.montant)}</span>
+                                ${r ? `<span class="text-[10px] ${isExonere ? 'text-emerald-500' : 'text-amber-400'}">${isExonere ? 'exonere' : formatCurrency(r.droits) + ' droits'}</span>` : ''}
+                              </div>
+                            </div>
+                          </div>`;
+                        }).join('')}
+                        ${g.renewalYear && g.renewalYear > currentYear ? `
+                        <div class="relative mb-0 mt-1">
+                          <div class="absolute -left-[13px] top-1.5 w-2.5 h-2.5 rounded-full bg-amber-500/50 ring-2 ring-dark-800/80 border border-dashed border-amber-400/50"></div>
+                          <div class="flex items-center gap-3 text-xs">
+                            <span class="font-bold text-amber-400/70 tabular-nums w-8 flex-shrink-0">${g.renewalYear}</span>
+                            <span class="text-amber-400/50 text-[10px]">Renouvellement abattements (cycle 15 ans)</span>
+                          </div>
+                        </div>
+                        ` : ''}
+                      </div>
+                    `}
                   </div>
-                </div>
-                <!-- Abattement gauge -->
-                <div class="mt-1">
-                  <div class="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Abattement utilise</span>
-                    <span>${formatCurrency(gauge.utilise)} / ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</span>
-                  </div>
-                  <div class="h-1.5 bg-dark-600 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all ${gauge.pct >= 100 ? 'bg-red-500' : gauge.pct >= 50 ? 'bg-amber-500' : 'bg-emerald-500'}" style="width: ${Math.min(100, gauge.pct)}%"></div>
-                  </div>
-                  <p class="text-xs mt-1 ${gauge.restant > 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(gauge.restant)} restant</p>
                 </div>
               </div>`;
             }).join('')}
