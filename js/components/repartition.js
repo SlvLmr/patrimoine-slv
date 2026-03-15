@@ -58,26 +58,35 @@ export function render(store) {
         </button>
       </div>
 
-      <!-- Time Slider -->
-      <div class="card-dark rounded-2xl px-6 py-4">
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="text-sm text-gray-400">Année</span>
+      <!-- Time Slider + Actions -->
+      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+        <div class="card-dark rounded-2xl px-6 py-4">
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="text-sm text-gray-400">Année</span>
+            </div>
+            <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
+              class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              style="accent-color: #c9a76c;">
+            <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
+              <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
+              <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
+            </div>
           </div>
-          <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
-            class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-amber-500"
-            style="accent-color: #c9a76c;">
-          <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
-            <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
-            <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
+          <div class="flex justify-between mt-1 px-1">
+            <span class="text-[10px] text-gray-600">${currentYear}</span>
+            <span class="text-[10px] text-gray-600">${currentYear + years}</span>
           </div>
+          <div id="rep-kpi" class="grid grid-cols-3 gap-3 mt-4"></div>
         </div>
-        <div class="flex justify-between mt-1 px-1">
-          <span class="text-[10px] text-gray-600">${currentYear}</span>
-          <span class="text-[10px] text-gray-600">${currentYear + years}</span>
+        <div class="card-dark rounded-2xl px-5 py-4">
+          <div class="flex items-center gap-2 mb-3">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
+          </div>
+          <div id="rep-actions-list" class="space-y-2"></div>
         </div>
-        <div id="rep-kpi" class="grid grid-cols-3 gap-3 mt-4"></div>
       </div>
 
       <!-- Flow Visualization -->
@@ -236,6 +245,7 @@ export function mount(store, navigate) {
     const totalPlacements = snap.placements || 0;
 
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
+    updateActions(snap);
     updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear);
     updateDonut(snap, groupKeys, calYear);
     updateTable(dcaByPlacement, snap, totalPlacements, calYear);
@@ -265,6 +275,49 @@ export function mount(store, navigate) {
         </div>
       </div>
     `;
+  }
+
+  function updateActions(snap) {
+    const listEl = document.getElementById('rep-actions-list');
+    if (!listEl) return;
+
+    const actions = placements
+      .filter(p => p.categorie === 'Action' && p.quantite && p.pru)
+      .map(p => {
+        const projectedValue = snap.placementById?.[p.id] || Number(p.valeur) || (Number(p.quantite) * Number(p.pru));
+        return {
+          nom: p.nom || 'Action',
+          quantite: Number(p.quantite),
+          pru: Number(p.pru),
+          valeur: projectedValue,
+          enveloppe: p.enveloppe || '',
+        };
+      })
+      .sort((a, b) => b.valeur - a.valeur);
+
+    if (!actions.length) {
+      listEl.innerHTML = '<p class="text-xs text-gray-600 text-center py-4">Aucune action individuelle</p>';
+      return;
+    }
+
+    const totalActions = actions.reduce((s, a) => s + a.valeur, 0);
+
+    listEl.innerHTML = actions.map(a => {
+      const pct = totalActions > 0 ? (a.valeur / totalActions * 100).toFixed(1) : 0;
+      const pv = a.valeur - (a.quantite * a.pru);
+      return `
+        <div class="flex items-center justify-between py-1.5 border-b border-dark-400/20 last:border-0">
+          <div class="min-w-0">
+            <p class="text-xs text-gray-200 font-medium truncate">${a.nom}</p>
+            <p class="text-[10px] text-gray-600">${a.quantite} parts · PRU ${formatCurrency(a.pru)}</p>
+          </div>
+          <div class="text-right flex-shrink-0 ml-2">
+            <p class="text-xs text-gray-300 font-medium">${formatCurrency(a.valeur)} <span class="text-[10px] text-gray-600">${pct}%</span></p>
+            <p class="text-[10px] ${pv >= 0 ? 'text-emerald-400' : 'text-red-400'}">${pv >= 0 ? '+' : ''}${formatCurrency(pv)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   function updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear) {
@@ -500,10 +553,34 @@ export function mount(store, navigate) {
     if (donutYearEl) donutYearEl.textContent = `- ${calYear}`;
 
     const detail = snap.placementDetail || {};
-    const entries = gKeys
-      .map(gk => ({ gk, value: detail[gk] || 0 }))
-      .filter(e => e.value > 0)
-      .sort((a, b) => b.value - a.value);
+    const placementById = snap.placementById || {};
+
+    // Build entries: expand "PEA Actions" into individual stocks
+    const entries = [];
+    gKeys.forEach(gk => {
+      const value = detail[gk] || 0;
+      if (value <= 0) return;
+      if (gk === 'PEA Actions') {
+        // Replace group with individual action placements
+        const actionPlacements = placements
+          .filter(p => getPlacementGroupKey(p) === 'PEA Actions')
+          .map(p => ({
+            gk: p.nom || 'Action',
+            value: placementById[p.id] || Number(p.valeur) || Number(p.apport) || 0,
+            isAction: true,
+          }))
+          .filter(e => e.value > 0)
+          .sort((a, b) => b.value - a.value);
+        if (actionPlacements.length) {
+          entries.push(...actionPlacements);
+        } else {
+          entries.push({ gk, value });
+        }
+      } else {
+        entries.push({ gk, value });
+      }
+    });
+    entries.sort((a, b) => b.value - a.value);
 
     const allEntries = [...entries];
     const grandTotal = allEntries.reduce((s, e) => s + e.value, 0);
@@ -511,7 +588,13 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('rep-chart-donut');
     if (!canvas) return;
 
-    const colors = allEntries.map(e => getGroupStyle(e.gk).color);
+    // Use amber shades for individual actions, group colors for the rest
+    const ACTION_SHADES = ['#f59e0b', '#d97706', '#b45309', '#92400e', '#78350f'];
+    let actionIdx = 0;
+    const colors = allEntries.map(e => {
+      if (e.isAction) return ACTION_SHADES[actionIdx++ % ACTION_SHADES.length];
+      return getGroupStyle(e.gk).color;
+    });
 
     createChart('rep-chart-donut', {
       type: 'doughnut',
