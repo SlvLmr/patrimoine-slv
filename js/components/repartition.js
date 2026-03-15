@@ -245,10 +245,10 @@ export function mount(store, navigate) {
     const totalPlacements = snap.placements || 0;
 
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
-    updateActions(snap);
-    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear);
-    updateDonut(snap, groupKeys, calYear);
-    updateTable(dcaByPlacement, snap, totalPlacements, calYear);
+    try { updateActions(snap); } catch(e) { console.error('updateActions error:', e); }
+    try { updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear); } catch(e) { console.error('updateFlow error:', e); }
+    try { updateDonut(snap, groupKeys, calYear); } catch(e) { console.error('updateDonut error:', e); }
+    try { updateTable(dcaByPlacement, snap, totalPlacements, calYear); } catch(e) { console.error('updateTable error:', e); }
   }
 
   function updateKPI(totalDCA, nbWithDCA, snap, totalPlacements) {
@@ -294,7 +294,7 @@ export function mount(store, navigate) {
     if (!listEl) return;
 
     const actions = placements
-      .filter(p => p.categorie === 'Action' && p.quantite && p.pru)
+      .filter(p => (p.categorie || '') === 'Action' && Number(p.quantite) > 0 && Number(p.pru) > 0)
       .map((p, i) => {
         const projectedValue = snap.placementById?.[p.id] || Number(p.valeur) || (Number(p.quantite) * Number(p.pru));
         return {
