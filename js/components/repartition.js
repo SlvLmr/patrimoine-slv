@@ -94,15 +94,15 @@ export function render(store) {
 
       <!-- Flow + Actions -->
       <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-stretch">
-        <div class="card-dark rounded-2xl p-5">
-          <div class="flex items-center justify-between mb-4">
+        <div class="card-dark rounded-2xl p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
               <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Flux mensuels</h2>
             </div>
             <span class="text-[10px] text-gray-600">Cliquez sur un placement pour le modifier</span>
           </div>
-          <div id="rep-flow" class="space-y-0"></div>
+          <div id="rep-flow" class="space-y-0 flex-1 flex flex-col"></div>
         </div>
         <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
           <div class="flex items-center gap-2 mb-3 flex-shrink-0">
@@ -527,7 +527,7 @@ export function mount(store, navigate) {
     ` : '';
 
     flowEl.innerHTML = (totalDCA > 0 ? sourceHTML + connectorHTML : '') + `
-      <div id="rep-flow-cards" class="grid grid-cols-1 sm:grid-cols-2 ${sortedGroups.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2">
+      <div id="rep-flow-cards" class="grid grid-cols-1 sm:grid-cols-2 ${sortedGroups.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2 flex-1">
         ${destCardsHTML}
       </div>
       ${emptyGroupHTML}
