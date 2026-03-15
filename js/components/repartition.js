@@ -104,12 +104,12 @@ export function render(store) {
           </div>
           <div id="rep-flow" class="space-y-0"></div>
         </div>
-        <div class="card-dark rounded-2xl px-5 py-4">
+        <div class="card-dark rounded-2xl px-5 py-4 flex flex-col">
           <div class="flex items-center gap-2 mb-3">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
           </div>
-          <div id="rep-actions-list" class="space-y-2"></div>
+          <div id="rep-actions-list" class="space-y-2 flex-1 flex flex-col"></div>
         </div>
       </div>
 
@@ -368,7 +368,7 @@ export function mount(store, navigate) {
     }).join('');
 
     listEl.innerHTML = headerHTML + svgHTML + `
-      <div id="rep-actions-cards" class="grid grid-cols-1 gap-2">${cardsHTML}</div>
+      <div id="rep-actions-cards" class="grid grid-cols-1 gap-2 flex-1">${cardsHTML}</div>
     `;
 
     // Draw curved connectors
