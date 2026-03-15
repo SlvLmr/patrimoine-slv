@@ -104,12 +104,12 @@ export function render(store) {
           </div>
           <div id="rep-flow" class="space-y-0"></div>
         </div>
-        <div class="card-dark rounded-2xl px-5 py-4 flex flex-col">
-          <div class="flex items-center gap-2 mb-3">
+        <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
+          <div class="flex items-center gap-2 mb-3 flex-shrink-0">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
           </div>
-          <div id="rep-actions-list" class="space-y-2 flex-1 flex flex-col"></div>
+          <div id="rep-actions-list" class="space-y-2 flex-1 overflow-y-auto"></div>
         </div>
       </div>
 
@@ -319,18 +319,18 @@ export function mount(store, navigate) {
 
     // Total header
     const headerHTML = `
-      <div class="flex justify-center mb-1">
-        <div class="card-dark rounded-lg px-4 py-2 text-center inline-block border border-amber-500/20">
+      <div class="flex justify-center mb-0.5">
+        <div class="card-dark rounded-lg px-3 py-1.5 text-center inline-block border border-amber-500/20">
           <p class="text-[9px] text-gray-500 uppercase tracking-widest">Total investi</p>
-          <p class="text-lg font-extrabold text-amber-400">${formatCurrency(totalApportActions)}</p>
+          <p class="text-base font-extrabold text-amber-400">${formatCurrency(totalApportActions)}</p>
         </div>
       </div>
     `;
 
     // SVG curved connectors
     const svgHTML = `
-      <div id="rep-actions-svg-wrap" class="hidden lg:block" style="height:35px;">
-        <svg id="rep-actions-svg" class="w-full" style="height:35px;" fill="none">
+      <div id="rep-actions-svg-wrap" class="hidden lg:block" style="height:25px;">
+        <svg id="rep-actions-svg" class="w-full" style="height:25px;" fill="none">
           <defs>
             <filter id="glow-actions" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5"/></filter>
           </defs>
@@ -344,22 +344,22 @@ export function mount(store, navigate) {
       const apport = a.quantite * a.pru;
       const s = a.style;
       return `
-        <div id="rep-action-card-${i}" class="card-dark rounded-xl p-3 ${s.border} border transition hover:border-opacity-60">
-          <div class="flex items-center justify-between mb-1.5">
-            <div class="flex items-center gap-2 min-w-0">
+        <div id="rep-action-card-${i}" class="card-dark rounded-xl px-3 py-2 ${s.border} border transition hover:border-opacity-60">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1.5 min-w-0">
               <div class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${s.color}"></div>
-              <span class="text-sm font-semibold ${s.text} truncate">${a.nom}</span>
+              <span class="text-xs font-semibold ${s.text} truncate">${a.nom}</span>
             </div>
             <span class="text-[10px] text-gray-500 flex-shrink-0">${pct}%</span>
           </div>
-          <div class="w-full h-1 bg-dark-600 rounded-full overflow-hidden mb-2">
+          <div class="w-full h-0.5 bg-dark-600 rounded-full overflow-hidden mb-1.5">
             <div class="h-full rounded-full" style="width: ${pct}%; background: ${s.color}"></div>
           </div>
           <div class="flex items-center justify-between">
-            <p class="text-sm font-bold text-gray-200">${formatCurrency(apport)}</p>
+            <p class="text-xs font-bold text-gray-200">${formatCurrency(apport)}</p>
             <p class="text-[10px] text-gray-500">valorisé ${formatCurrency(a.valeur)}</p>
           </div>
-          <div class="flex items-center gap-3 mt-1">
+          <div class="flex items-center gap-2 mt-0.5">
             <p class="text-[10px] text-gray-600">${a.quantite} parts</p>
             <p class="text-[10px] text-gray-600">PRU ${formatCurrency(a.pru)}</p>
           </div>
@@ -387,7 +387,7 @@ export function mount(store, navigate) {
     const wrapRect = wrap.getBoundingClientRect();
     const w = wrapRect.width;
     if (w <= 0) return;
-    const h = 35;
+    const h = 25;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     svg.querySelectorAll('path, circle').forEach(el => el.remove());
 
