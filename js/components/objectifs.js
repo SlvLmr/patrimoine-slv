@@ -11,8 +11,10 @@ function getAllActifs(store) {
   (state.actifs.epargne || []).forEach(a => {
     items.push({ id: a.id, path: 'actifs.epargne', nom: a.nom, valeur: Number(a.solde) || 0, type: 'epargne', icon: 'epargne' });
   });
+  const liveSoldes = store.computeLiveSoldes();
   (state.actifs.comptesCourants || []).forEach(a => {
-    items.push({ id: a.id, path: 'actifs.comptesCourants', nom: a.nom, valeur: Number(a.solde) || 0, type: 'courant', icon: 'courant' });
+    const liveVal = a.id === 'cc-cic' ? liveSoldes.cic : a.id === 'cc-trade' ? liveSoldes.tr : (Number(a.solde) || 0);
+    items.push({ id: a.id, path: 'actifs.comptesCourants', nom: a.nom, valeur: liveVal, type: 'courant', icon: 'courant' });
   });
 
   // Placements

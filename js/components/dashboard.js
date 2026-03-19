@@ -195,7 +195,7 @@ export function render(store) {
   const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || Number(i.apport) || 0), 0);
   const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
-  const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const ccTotal = store.totalComptesCourantsLive();
 
   const hasData = totalActifs > 0 || totalPassifs > 0;
 
@@ -450,12 +450,12 @@ export function render(store) {
   `;
 }
 
-export function mount(store) {
+export function mount(store, navigate) {
   const state = store.getAll();
   const immoTotal = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const placTotal = state.actifs.placements.reduce((s, i) => s + (Number(i.valeur) || Number(i.apport) || 0), 0);
   const eparTotal = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
-  const ccTotal = (state.actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const ccTotal = store.totalComptesCourantsLive();
   const totalActifs = store.totalActifs();
   const totalPassifs = store.totalPassifs();
 

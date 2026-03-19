@@ -181,7 +181,7 @@ function getPatrimoineFromStore(store) {
     return env.includes('AV') || env.includes('ASSURANCE') || env.includes('VIE');
   }).reduce((s, i) => s + (Number(i.valeur) || 0), 0);
   const epargne = (actifs.epargne || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
-  const comptesCourants = (actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const comptesCourants = store.totalComptesCourantsLive();
   const emprunts = (passifs.emprunts || []).reduce((s, i) => s + (Number(i.capitalRestant) || 0), 0);
   const totalActifs = immobilier + placements + epargne + comptesCourants + assuranceVie;
   const patrimoineNet = totalActifs - emprunts;

@@ -18,7 +18,7 @@ function getPatrimoineNet(store) {
   const immobilier = (actifs.immobilier || []).reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const placements = (actifs.placements || []).reduce((s, i) => s + (Number(i.valeur) || 0), 0);
   const epargne = (actifs.epargne || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
-  const comptes = (actifs.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+  const comptes = store.totalComptesCourantsLive();
   const emprunts = (passifs.emprunts || []).reduce((s, i) => s + (Number(i.capitalRestant) || 0), 0);
   return immobilier + placements + epargne + comptes - emprunts;
 }

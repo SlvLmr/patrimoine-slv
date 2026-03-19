@@ -2,44 +2,8 @@ function fmt(v) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
 }
 
-function getCurrentMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
 function computeLiveSoldes(store) {
-  const comptes = store.get('actifs')?.comptesCourants || [];
-  const bankNames = store.getBankNames();
-  const baseCIC = Number(comptes.find(c => c.id === 'cc-cic')?.solde) || 0;
-  const baseTR = Number(comptes.find(c => c.id === 'cc-trade')?.solde) || 0;
-
-  const soldePrecedent = store.get('soldeMoisPrecedent') || {};
-  const prevCIC = Number(soldePrecedent.cic) || 0;
-  const prevTR = Number(soldePrecedent.tr) || 0;
-
-  const items = store.get('suiviDepenses') || [];
-  const revenus = store.get('suiviRevenus') || [];
-
-  const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
-  const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-
-  const monthKey = getCurrentMonthKey();
-  const depMensuelles = store.get('depensesMensuellesCIC') || [];
-  const cicCochees = store.get('cicMensuellesCochees') || {};
-  const cocheesThisMonth = cicCochees[monthKey] || [];
-  const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
-
-  const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
-  const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-
-  const trFeatures = store.get('trFeatures') || {};
-  const trInterets = Number(trFeatures.interets) || 0;
-  const trRoundup = Number(trFeatures.roundup) || 0;
-
-  return {
-    cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
-    tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup
-  };
+  return store.computeLiveSoldes();
 }
 
 export function render(store) {

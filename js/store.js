@@ -469,13 +469,65 @@ const Store = {
     }
   },
 
+  // Compute live soldes for comptes courants (accounting for transactions from vie quotidienne)
+  computeLiveSoldes() {
+    const comptes = this._state.actifs?.comptesCourants || [];
+    const bankNames = this.getBankNames();
+    const baseCIC = Number(comptes.find(c => c.id === 'cc-cic')?.solde) || 0;
+    const baseTR = Number(comptes.find(c => c.id === 'cc-trade')?.solde) || 0;
+
+    const soldePrecedent = this._state.soldeMoisPrecedent || {};
+    const prevCIC = Number(soldePrecedent.cic) || 0;
+    const prevTR = Number(soldePrecedent.tr) || 0;
+
+    const items = this._state.suiviDepenses || [];
+    const revenus = this._state.suiviRevenus || [];
+
+    const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
+
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const depMensuelles = this._state.depensesMensuellesCIC || [];
+    const cicCochees = this._state.cicMensuellesCochees || {};
+    const cocheesThisMonth = cicCochees[monthKey] || [];
+    const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+
+    const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
+
+    const trFeatures = this._state.trFeatures || {};
+    const trInterets = Number(trFeatures.interets) || 0;
+    const trRoundup = Number(trFeatures.roundup) || 0;
+
+    return {
+      cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
+      tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup
+    };
+  },
+
+  // Get total live CC balance (accounting for transactions)
+  totalComptesCourantsLive() {
+    const liveSoldes = this.computeLiveSoldes();
+    const comptes = this._state.actifs?.comptesCourants || [];
+    if (comptes.length === 0) {
+      // Even without explicit accounts, include live soldes from transactions
+      return liveSoldes.cic + liveSoldes.tr;
+    }
+    return comptes.reduce((s, c) => {
+      if (c.id === 'cc-cic') return s + liveSoldes.cic;
+      if (c.id === 'cc-trade') return s + liveSoldes.tr;
+      return s + (Number(c.solde) || 0);
+    }, 0);
+  },
+
   // Computed values
   totalActifs() {
     const a = this._state.actifs;
     const immo = a.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
     const plac = a.placements.reduce((s, i) => s + (Number(i.valeur) || 0), 0);
     const epar = a.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
-    const cc = (a.comptesCourants || []).reduce((s, i) => s + (Number(i.solde) || 0), 0);
+    const cc = this.totalComptesCourantsLive();
     return immo + plac + epar + cc;
   },
 
