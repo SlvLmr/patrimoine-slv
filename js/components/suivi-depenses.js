@@ -94,7 +94,7 @@ export function render(store) {
 
   // A récupérer NDF = budget NDF - somme NDF
   const paramètres = store.get('parametres') || {};
-  const budgetNDF = Number(paramètres.budgetNDF) || Number(store.get('budgetNDF')) || 789.99;
+  const budgetNDF = paramètres.budgetNDF !== undefined ? Number(paramètres.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 789.99);
   const ndfTR = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const aRecupererNDF = budgetNDF - ndfTR;
 
@@ -115,7 +115,7 @@ export function render(store) {
   const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   // Enveloppe restante pour quotidien = budget quotidien - (dépenses rouges + virements sortants TR)
-  const budgetQuotidien = Number(paramètres.budgetQuotidien) || Number(store.get('budgetQuotidien')) || 700;
+  const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 700);
   const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
@@ -289,14 +289,14 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
+          ${budgetNDF > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
             <span class="text-xs text-gray-500">${lblNDF}</span>
             <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
+          </div>` : ''}
+          ${budgetQuotidien > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
             <span class="text-xs text-gray-500">${lblEnveloppe}</span>
             <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
-          </div>
+          </div>` : '<div class="mb-4"></div>'}
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="interets">
             <span class="text-[11px] text-gray-500">${lblInterets}</span>
             <span class="text-[11px] font-medium text-accent-green">+${formatCurrencyCents(trInterets)}</span>
@@ -563,7 +563,7 @@ export function mount(store, navigate) {
       const labels = store.get('customLabels') || {};
       const currentLabel = labels.aRecupererNDF || 'A récupérer NDF';
       const params = store.get('parametres') || {};
-      const current = Number(params.budgetNDF) || Number(store.get('budgetNDF')) || 789.99;
+      const current = params.budgetNDF !== undefined ? Number(params.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 789.99);
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget NDF (€)', current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -585,7 +585,7 @@ export function mount(store, navigate) {
       const labels = store.get('customLabels') || {};
       const currentLabel = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
       const paramsQ = store.get('parametres') || {};
-      const current = Number(paramsQ.budgetQuotidien) || Number(store.get('budgetQuotidien')) || 700;
+      const current = paramsQ.budgetQuotidien !== undefined ? Number(paramsQ.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 700);
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget quotidien (€)', current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));

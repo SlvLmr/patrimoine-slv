@@ -51,18 +51,17 @@ const navItems = [
   { id: '_title_investissement', sectionTitle: 'Investissement' },
   { id: 'portefeuille-live', label: 'Portefeuille', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
   { id: 'repartition', label: 'Répartition', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
-  { id: 'bourse', label: 'Bourse', icon: 'M3 3v18h18M9 17V9m4 8V5m4 12v-4' },
   { id: '_title_demain', sectionTitle: 'Demain' },
-  { id: 'objectifs', label: 'Objectifs', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
   { id: 'projection', label: 'Projection', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-  { id: 'fiscalite', label: 'Succession', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
   { id: 'strategie', label: 'Stratégie', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-  { id: '_title_outils', sectionTitle: 'Outils' },
-  { id: 'simulateur-interets', label: 'Intérêts composés', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
-  { id: 'simulateur-succession', label: 'Cap Succession', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
-  { id: 'simulateur-fire', label: 'Simulateur FIRE', icon: 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z' },
-  { id: 'simulateur-credit', label: 'Crédit immobilier', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2' },
-  { id: 'simulateur-auto', label: 'Crédit voiture', icon: 'M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zM3 9l2-5h14l2 5M3 9h18v6a1 1 0 01-1 1h-1a3 3 0 00-6 0H11a3 3 0 00-6 0H4a1 1 0 01-1-1V9z' },
+  { id: '_title_outils', sectionTitle: 'Outils', collapsible: true },
+  { id: 'simulateur-interets', label: 'Intérêts composés', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', outilsGroup: true },
+  { id: 'simulateur-succession', label: 'Cap Succession', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', outilsGroup: true },
+  { id: 'simulateur-fire', label: 'Simulateur FIRE', icon: 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z', outilsGroup: true },
+  { id: 'simulateur-credit', label: 'Crédit immobilier', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2', outilsGroup: true },
+  { id: 'simulateur-auto', label: 'Crédit voiture', icon: 'M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zM3 9l2-5h14l2 5M3 9h18v6a1 1 0 01-1 1h-1a3 3 0 00-6 0H11a3 3 0 00-6 0H4a1 1 0 01-1-1V9z', outilsGroup: true },
+  { id: 'bourse', label: 'Bourse', icon: 'M3 3v18h18M9 17V9m4 8V5m4 12v-4', outilsGroup: true },
+  { id: 'fiscalite', label: 'Succession', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z', outilsGroup: true },
 ];
 
 let appStarted = false;
@@ -85,6 +84,7 @@ function renderPage() {
   if (hash === 'actifs' || hash === 'passifs' || hash === 'heritage') { hash = 'projection'; window.location.hash = 'projection'; return; }
   if (hash === 'dashboard') { hash = 'revenus-depenses'; window.location.hash = 'revenus-depenses'; return; }
   if (hash === 'enfants') { hash = 'fiscalite'; window.location.hash = 'fiscalite'; return; }
+  if (hash === 'objectifs') { hash = 'projection'; window.location.hash = 'projection'; return; }
   const component = routes[hash] || routes['revenus-depenses'];
   const contentEl = document.getElementById('app-content');
 
@@ -130,8 +130,20 @@ function getProfileDisplayName() {
 // Build sidebar navigation
 function initNav() {
   const nav = document.getElementById('nav-links');
+  let inOutilsGroup = false;
   nav.innerHTML = navItems.map(item => {
     if (item.sectionTitle) {
+      if (item.collapsible) {
+        inOutilsGroup = true;
+        return `<div class="mt-4 mb-1.5 mx-3">
+          <button id="outils-toggle" class="flex items-center gap-1.5 w-full text-left">
+            <span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span>
+            <svg id="outils-chevron" class="w-3 h-3 text-gray-600 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
+        <div id="outils-items" class="hidden">`;
+      }
+      inOutilsGroup = false;
       return `<div class="section-title-wrap mt-4 mb-1.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
     }
     if (item.separator) {
@@ -147,7 +159,17 @@ function initNav() {
       <span class="nav-label${item.isProfile ? ' nav-profile-name' : ''}">${label}</span>
       ${item.live ? '<span class="live-dot"></span>' : ''}
     </a>`;
-  }).join('');
+  }).join('') + (inOutilsGroup ? '</div>' : '');
+
+  // Outils toggle
+  document.getElementById('outils-toggle')?.addEventListener('click', () => {
+    const items = document.getElementById('outils-items');
+    const chevron = document.getElementById('outils-chevron');
+    if (items) {
+      items.classList.toggle('hidden');
+      chevron?.classList.toggle('rotate-180');
+    }
+  });
 }
 
 // Profile switcher
