@@ -34,11 +34,9 @@ function computeLiveSoldes(store) {
 
   const trFeatures = store.get('trFeatures') || {};
   const trInterets = Number(trFeatures.interets) || 0;
-  const trRoundup = Number(trFeatures.roundup) || 0;
-
   return {
     cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
-    tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup
+    tr: baseTR + prevTR + revTR + trInterets - depTR
   };
 }
 

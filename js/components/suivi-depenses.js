@@ -123,12 +123,7 @@ export function render(store) {
   const trFeatures = store.get('trFeatures') || {};
   const trInterets = Number(trFeatures.interets) || 0;
   const lblInterets = trFeatures.lblInterets || 'Intérêts (2%/an)';
-  const trSaveback = Number(trFeatures.saveback) || 0;
-  const lblSaveback = trFeatures.lblSaveback || 'Saveback 1% → Bitcoin';
-  const trRoundup = Number(trFeatures.roundup) || 0;
-  const lblRoundup = trFeatures.lblRoundup || 'Round-up → CTO';
-
-  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup;
+  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR;
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
@@ -293,21 +288,13 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblNDF}</span>
             <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
           </div>` : ''}
-          ${budgetQuotidien > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
             <span class="text-xs text-gray-500">${lblEnveloppe}</span>
             <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
-          </div>` : '<div class="mb-4"></div>'}
+          </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="interets">
             <span class="text-[11px] text-gray-500">${lblInterets}</span>
             <span class="text-[11px] font-medium text-accent-green">+${formatCurrencyCents(trInterets)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="saveback">
-            <span class="text-[11px] text-gray-500">${lblSaveback}</span>
-            <span class="text-[11px] font-medium text-accent-amber">${formatCurrencyCents(trSaveback)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="roundup">
-            <span class="text-[11px] text-gray-500">${lblRoundup}</span>
-            <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
           </div>
           ${opsTR.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-tr">
@@ -604,8 +591,6 @@ export function mount(store, navigate) {
   // Edit TR features (Intérêts, Saveback, Round-up)
   const trFeatureMeta = {
     interets: { valueKey: 'interets', lblKey: 'lblInterets', defaultLbl: 'Intérêts (2%/an)' },
-    saveback: { valueKey: 'saveback', lblKey: 'lblSaveback', defaultLbl: 'Saveback 1% → Bitcoin' },
-    roundup: { valueKey: 'roundup', lblKey: 'lblRoundup', defaultLbl: 'Round-up → CTO' },
   };
   document.querySelectorAll('[data-edit-tr-feature]').forEach(el => {
     el.addEventListener('click', () => {

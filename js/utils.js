@@ -287,29 +287,6 @@ export function computeProjection(store) {
     return s + (i.frequence === 'Annuel' ? montant / 12 : montant);
   }, 0);
 
-  // Trade Republic features: saveback (1% CB → BTC) & round-up (arrondi → CTO)
-  // Estimate monthly TR spending from suiviDepenses or depenses tagged as investment on TR
-  const trDepensesMensuelles = state.depenses
-    .filter(d => d.typeDepense !== 'Investissement')
-    .reduce((s, d) => {
-      const m = Number(d.montantMensuel) || 0;
-      return s + (d.frequence === 'Annuel' ? m / 12 : m);
-    }, 0);
-  const trSavebackPct = params.trSavebackPct || 0.01;
-  const trRoundupPct = params.trRoundupPct || 0.03;
-  const trSavebackMensuel = trDepensesMensuelles * trSavebackPct; // → BTC (free, not deducted)
-  const trRoundupMensuel = trDepensesMensuelles * trRoundupPct; // average round-up → CTO (deducted)
-  // Inject saveback into Crypto (BTC) placement DCA
-  const cryptoPlac = placSims.find(ps => ps.groupKey === 'Crypto');
-  if (cryptoPlac) {
-    cryptoPlac.dcaMensuel += trSavebackMensuel;
-    // Saveback is free money (not from your pocket), so don't count as expense
-  }
-  // Inject round-up into CTO overflow (deducted from capacity)
-  if (ctoOverflow) {
-    ctoOverflow.dcaMensuel += trRoundupMensuel;
-  }
-
   // Heritage injections by year offset
   const heritageItems = (state.heritage || []).filter(h => h.dateInjection && h.montant);
   const currentYear = new Date().getFullYear();
