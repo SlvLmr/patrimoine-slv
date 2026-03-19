@@ -293,10 +293,10 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblNDF}</span>
             <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
           </div>` : ''}
-          ${budgetQuotidien > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
             <span class="text-xs text-gray-500">${lblEnveloppe}</span>
             <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
-          </div>` : '<div class="mb-4"></div>'}
+          </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="interets">
             <span class="text-[11px] text-gray-500">${lblInterets}</span>
             <span class="text-[11px] font-medium text-accent-green">+${formatCurrencyCents(trInterets)}</span>
