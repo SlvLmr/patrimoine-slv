@@ -71,6 +71,8 @@ export function render(store) {
   const info = getUserInfo(store);
   const params = getParametres(store);
   const enfants = getEnfants(store);
+  const epargne = store.get('actifs.epargne') || [];
+  const immobilier = store.get('actifs.immobilier') || [];
   const user = getCurrentUser();
   const email = user?.email || '';
   const age = computeAge(info.dateNaissance);
@@ -229,19 +231,84 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Paramètres financiers -->
+      <!-- Valeurs patrimoniales éditables -->
       <div class="bg-dark-700 rounded-2xl border border-dark-400/30 overflow-hidden">
         <div class="px-6 py-4 border-b border-dark-400/20">
-          <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Paramètres financiers</h2>
-          <p class="text-xs text-gray-600 mt-1">Ces valeurs sont utilisées dans les projections, simulateurs et le suivi quotidien</p>
+          <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Mes valeurs patrimoniales</h2>
+          <p class="text-xs text-gray-600 mt-1">Modifiez ici vos soldes et estimations — les changements se reflètent dans Portefeuille et Projection</p>
         </div>
-        <div class="p-6 space-y-6">
-          <!-- Rendements -->
+        <div class="p-6 space-y-5">
+          <!-- Épargne -->
+          ${epargne.length > 0 ? `
           <div>
             <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-              Rendements par défaut
+              <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              Épargne
             </h3>
+            <div class="space-y-2">
+              ${epargne.map(e => `
+              <div class="flex items-center gap-3 bg-dark-800/50 rounded-lg px-4 py-2.5">
+                <span class="text-sm text-gray-300 flex-1 min-w-0 truncate">${e.nom}</span>
+                <div class="relative w-36">
+                  <input type="number" step="0.01" min="0" value="${Number(e.solde) || 0}"
+                    data-epargne-id="${e.id}" data-field="solde"
+                    class="asset-val w-full bg-dark-900 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 text-right focus:outline-none focus:border-accent-amber transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
+                </div>
+              </div>`).join('')}
+            </div>
+          </div>` : `
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              Épargne
+            </h3>
+            <p class="text-xs text-gray-600">Aucun compte d'épargne. Ajoutez-en dans <a href="#actifs" class="text-accent-amber hover:underline">Actifs</a>.</p>
+          </div>`}
+
+          <!-- Immobilier -->
+          ${immobilier.length > 0 ? `
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Immobilier — Estimation actuelle
+            </h3>
+            <div class="space-y-2">
+              ${immobilier.map(i => `
+              <div class="flex items-center gap-3 bg-dark-800/50 rounded-lg px-4 py-2.5">
+                <span class="text-sm text-gray-300 flex-1 min-w-0 truncate">${i.nom}</span>
+                <div class="relative w-36">
+                  <input type="number" step="1000" min="0" value="${Number(i.valeurActuelle) || 0}"
+                    data-immo-id="${i.id}" data-field="valeurActuelle"
+                    class="asset-val w-full bg-dark-900 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 text-right focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
+                </div>
+              </div>`).join('')}
+            </div>
+          </div>` : `
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Immobilier
+            </h3>
+            <p class="text-xs text-gray-600">Aucun bien immobilier. Ajoutez-en dans <a href="#actifs" class="text-accent-amber hover:underline">Actifs</a>.</p>
+          </div>`}
+        </div>
+      </div>
+
+      <!-- Paramètres financiers (avancé) -->
+      <details class="bg-dark-700 rounded-2xl border border-dark-400/30 overflow-hidden">
+        <summary class="px-6 py-4 cursor-pointer select-none flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Paramètres avancés</h2>
+            <p class="text-xs text-gray-600 mt-1">Taux de rendement, fiscalité, budgets</p>
+          </div>
+          <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-6 pb-6 space-y-6 border-t border-dark-400/20 pt-4">
+          <!-- Rendements -->
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Rendements par défaut</h3>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Inflation</label>
@@ -277,13 +344,9 @@ export function render(store) {
               </div>
             </div>
           </div>
-
           <!-- Fiscalité -->
           <div>
-            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
-              Fiscalité des placements
-            </h3>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Fiscalité des placements</h3>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">PFU (flat tax)</label>
@@ -311,20 +374,16 @@ export function render(store) {
               </div>
             </div>
           </div>
-
           <!-- Budgets -->
           <div>
-            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <svg class="w-4 h-4 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-              Budgets mensuels
-            </h3>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Budgets mensuels</h3>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Enveloppe quotidien</label>
                 <div class="relative">
                   <input id="param-budget-quotidien" type="number" step="1" min="0" value="${params.budgetQuotidien || 700}"
                     class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">€</span>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
                 </div>
               </div>
               <div>
@@ -332,18 +391,14 @@ export function render(store) {
                 <div class="relative">
                   <input id="param-budget-ndf" type="number" step="0.01" min="0" value="${params.budgetNDF || 789.99}"
                     class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">€</span>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
                 </div>
               </div>
             </div>
           </div>
-
           <!-- Trade Republic -->
           <div>
-            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Trade Republic
-            </h3>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Trade Republic</h3>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Saveback (CB → BTC)</label>
@@ -364,7 +419,7 @@ export function render(store) {
             </div>
           </div>
         </div>
-      </div>
+      </details>
 
       <!-- Saved indicator -->
       <div id="save-indicator" class="text-center text-xs text-gray-600 opacity-0 transition-opacity duration-300">Sauvegardé</div>
@@ -429,6 +484,25 @@ export function mount(store, navigate) {
   document.getElementById('info-retraite-plein')?.addEventListener('input', (e) => saveParam('ageRetraiteTauxPlein', parseInt(e.target.value) || 65));
   document.getElementById('info-pension-legal')?.addEventListener('input', (e) => saveParam('pensionTauxLegal', parseInt(e.target.value) || 0));
   document.getElementById('info-pension-plein')?.addEventListener('input', (e) => saveParam('pensionTauxPlein', parseInt(e.target.value) || 0));
+
+  // Asset values (épargne soldes + immobilier estimations)
+  document.querySelectorAll('[data-epargne-id]').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const id = e.target.dataset.epargneId;
+      const val = parseFloat(e.target.value) || 0;
+      store.updateItem('actifs.epargne', id, { solde: val });
+      showSaved();
+    });
+  });
+
+  document.querySelectorAll('[data-immo-id]').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const id = e.target.dataset.immoId;
+      const val = parseFloat(e.target.value) || 0;
+      store.updateItem('actifs.immobilier', id, { valeurActuelle: val });
+      showSaved();
+    });
+  });
 
   // Financial parameters (percentages → stored as decimals)
   document.getElementById('param-inflation')?.addEventListener('input', (e) => saveParam('inflationRate', (parseFloat(e.target.value) || 0) / 100));
