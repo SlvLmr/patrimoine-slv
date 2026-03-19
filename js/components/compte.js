@@ -229,6 +229,143 @@ export function render(store) {
         </div>
       </div>
 
+      <!-- Paramètres financiers -->
+      <div class="bg-dark-700 rounded-2xl border border-dark-400/30 overflow-hidden">
+        <div class="px-6 py-4 border-b border-dark-400/20">
+          <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Paramètres financiers</h2>
+          <p class="text-xs text-gray-600 mt-1">Ces valeurs sont utilisées dans les projections, simulateurs et le suivi quotidien</p>
+        </div>
+        <div class="p-6 space-y-6">
+          <!-- Rendements -->
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              Rendements par défaut
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Inflation</label>
+                <div class="relative">
+                  <input id="param-inflation" type="number" step="0.1" min="0" max="20" value="${((params.inflationRate || 0.02) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Immobilier</label>
+                <div class="relative">
+                  <input id="param-rend-immo" type="number" step="0.1" min="0" max="20" value="${((params.rendementImmobilier || 0.02) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Épargne</label>
+                <div class="relative">
+                  <input id="param-rend-epargne" type="number" step="0.1" min="0" max="20" value="${((params.rendementEpargne || 0.02) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Placements</label>
+                <div class="relative">
+                  <input id="param-rend-placements" type="number" step="0.1" min="0" max="30" value="${((params.rendementPlacementsDefaut || 0.05) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fiscalité -->
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+              Fiscalité des placements
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">PFU (flat tax)</label>
+                <div class="relative">
+                  <input id="param-pfu" type="number" step="0.1" min="0" max="50" value="${((params.tauxPFU || 0.314) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">PS (CSG/CRDS)</label>
+                <div class="relative">
+                  <input id="param-ps" type="number" step="0.1" min="0" max="50" value="${((params.tauxPS || 0.172) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">AV IR après 8 ans</label>
+                <div class="relative">
+                  <input id="param-av-ir" type="number" step="0.1" min="0" max="50" value="${((params.tauxAVIR || 0.075) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Budgets -->
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+              Budgets mensuels
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Enveloppe quotidien</label>
+                <div class="relative">
+                  <input id="param-budget-quotidien" type="number" step="1" min="0" value="${params.budgetQuotidien || 700}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">€</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Budget NDF</label>
+                <div class="relative">
+                  <input id="param-budget-ndf" type="number" step="0.01" min="0" value="${params.budgetNDF || 789.99}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">€</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trade Republic -->
+          <div>
+            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Trade Republic
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Saveback (CB → BTC)</label>
+                <div class="relative">
+                  <input id="param-tr-saveback" type="number" step="0.1" min="0" max="10" value="${((params.trSavebackPct || 0.01) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Round-up (arrondi → CTO)</label>
+                <div class="relative">
+                  <input id="param-tr-roundup" type="number" step="0.1" min="0" max="10" value="${((params.trRoundupPct || 0.03) * 100).toFixed(1)}"
+                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Saved indicator -->
       <div id="save-indicator" class="text-center text-xs text-gray-600 opacity-0 transition-opacity duration-300">Sauvegardé</div>
     </div>
@@ -292,6 +429,25 @@ export function mount(store, navigate) {
   document.getElementById('info-retraite-plein')?.addEventListener('input', (e) => saveParam('ageRetraiteTauxPlein', parseInt(e.target.value) || 65));
   document.getElementById('info-pension-legal')?.addEventListener('input', (e) => saveParam('pensionTauxLegal', parseInt(e.target.value) || 0));
   document.getElementById('info-pension-plein')?.addEventListener('input', (e) => saveParam('pensionTauxPlein', parseInt(e.target.value) || 0));
+
+  // Financial parameters (percentages → stored as decimals)
+  document.getElementById('param-inflation')?.addEventListener('input', (e) => saveParam('inflationRate', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-rend-immo')?.addEventListener('input', (e) => saveParam('rendementImmobilier', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-rend-epargne')?.addEventListener('input', (e) => saveParam('rendementEpargne', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-rend-placements')?.addEventListener('input', (e) => saveParam('rendementPlacementsDefaut', (parseFloat(e.target.value) || 0) / 100));
+
+  // Tax rates
+  document.getElementById('param-pfu')?.addEventListener('input', (e) => saveParam('tauxPFU', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-ps')?.addEventListener('input', (e) => saveParam('tauxPS', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-av-ir')?.addEventListener('input', (e) => saveParam('tauxAVIR', (parseFloat(e.target.value) || 0) / 100));
+
+  // Budgets (stored as raw euros)
+  document.getElementById('param-budget-quotidien')?.addEventListener('input', (e) => saveParam('budgetQuotidien', parseFloat(e.target.value) || 0));
+  document.getElementById('param-budget-ndf')?.addEventListener('input', (e) => saveParam('budgetNDF', parseFloat(e.target.value) || 0));
+
+  // Trade Republic
+  document.getElementById('param-tr-saveback')?.addEventListener('input', (e) => saveParam('trSavebackPct', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-tr-roundup')?.addEventListener('input', (e) => saveParam('trRoundupPct', (parseFloat(e.target.value) || 0) / 100));
 
   // Photo upload (main user)
   document.getElementById('photo-upload')?.addEventListener('change', (e) => {

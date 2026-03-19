@@ -167,10 +167,11 @@ export function computeProjection(store) {
   const cashInjectionsParams = params.cashInjections || {};
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
-    // Priority: per-placement override (from projection UI) > placement's own rendement > fallback 5%
+    // Priority: per-placement override (from projection UI) > placement's own rendement > fallback
+    const defaultRend = params.rendementPlacementsDefaut || 0.05;
     const rend = rendementPlacements[p.id] !== undefined
       ? rendementPlacements[p.id]
-      : (Number(p.rendement) || 0.05);
+      : (Number(p.rendement) || defaultRend);
     // Cash injections: placement-level (actifs) takes priority, fallback to parametres
     const placInj = p.cashInjections || [];
     const paramInj = cashInjectionsParams[p.id] || [];
@@ -218,9 +219,10 @@ export function computeProjection(store) {
     else if (ps.groupKey === 'Assurance Vie') catGroups.av.push(ps.rendement);
     else if (ps.groupKey === 'Crypto') catGroups.bitcoin.push(ps.rendement);
   });
-  categoryRendements.cto = catGroups.cto.length > 0 ? catGroups.cto.reduce((a, b) => a + b, 0) / catGroups.cto.length : 0.05;
-  categoryRendements.av = catGroups.av.length > 0 ? catGroups.av.reduce((a, b) => a + b, 0) / catGroups.av.length : 0.02;
-  categoryRendements.bitcoin = catGroups.bitcoin.length > 0 ? catGroups.bitcoin.reduce((a, b) => a + b, 0) / catGroups.bitcoin.length : 0.05;
+  const defaultRendPlac = params.rendementPlacementsDefaut || 0.05;
+  categoryRendements.cto = catGroups.cto.length > 0 ? catGroups.cto.reduce((a, b) => a + b, 0) / catGroups.cto.length : defaultRendPlac;
+  categoryRendements.av = catGroups.av.length > 0 ? catGroups.av.reduce((a, b) => a + b, 0) / catGroups.av.length : (params.rendementEpargne || 0.02);
+  categoryRendements.bitcoin = catGroups.bitcoin.length > 0 ? catGroups.bitcoin.reduce((a, b) => a + b, 0) / catGroups.bitcoin.length : defaultRendPlac;
   categoryRendements.epargne = rendEpar;
 
   const rendCTO = categoryRendements.cto;
@@ -293,8 +295,10 @@ export function computeProjection(store) {
       const m = Number(d.montantMensuel) || 0;
       return s + (d.frequence === 'Annuel' ? m / 12 : m);
     }, 0);
-  const trSavebackMensuel = trDepensesMensuelles * 0.01; // 1% → BTC (free, not deducted)
-  const trRoundupMensuel = trDepensesMensuelles * 0.03; // ~3% average round-up → CTO (deducted)
+  const trSavebackPct = params.trSavebackPct || 0.01;
+  const trRoundupPct = params.trRoundupPct || 0.03;
+  const trSavebackMensuel = trDepensesMensuelles * trSavebackPct; // → BTC (free, not deducted)
+  const trRoundupMensuel = trDepensesMensuelles * trRoundupPct; // average round-up → CTO (deducted)
   // Inject saveback into Crypto (BTC) placement DCA
   const cryptoPlac = placSims.find(ps => ps.groupKey === 'Crypto');
   if (cryptoPlac) {
@@ -344,9 +348,9 @@ export function computeProjection(store) {
   // Helper: compute total current value of all AV placements (for value-based ceiling)
   const getAvTotalValue = () => placSims.filter(p => p.groupKey === 'Assurance Vie').reduce((sum, p) => sum + p.value, 0);
   let cumulInterets = 0;
-  const PFU_RATE = 0.314;  // Prélèvement Forfaitaire Unique: 14.2% IR + 17.2% PS
-  const PS_RATE = 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
-  const AV_IR_AFTER8 = 0.075; // AV après 8 ans: 7.5% IR (hors abattement)
+  const PFU_RATE = params.tauxPFU || 0.314;  // Prélèvement Forfaitaire Unique: 14.2% IR + 17.2% PS
+  const PS_RATE = params.tauxPS || 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
+  const AV_IR_AFTER8 = params.tauxAVIR || 0.075; // AV après 8 ans: 7.5% IR (hors abattement)
   const AV_ABATTEMENT = 4600; // Abattement annuel AV > 8 ans (célibataire)
 
   // Compute tax rate for a placement based on envelope type and age
