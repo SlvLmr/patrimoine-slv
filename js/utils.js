@@ -150,7 +150,7 @@ export function computeProjection(store) {
   let eparRendTotal = 0, eparWeightTotal = 0;
   state.actifs.epargne.forEach(e => {
     const sol = Number(e.solde) || 0;
-    const taux = Number(e.tauxInteret) || (params.rendementEpargne || 0.02);
+    const taux = params.rendementEpargne || Number(e.tauxInteret) || 0.02;
     eparRendTotal += taux * sol;
     eparWeightTotal += sol;
   });

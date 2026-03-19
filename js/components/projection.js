@@ -62,8 +62,6 @@ export function render(store) {
                 ['param-years', 'Horizon', params.projectionYears, '1', '50', '1', ''],
                 ['param-age', 'Âge', params.ageFinAnnee || 43, '18', '100', '1', ''],
                 ['param-inflation', 'Inflation', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', '0.5', '%'],
-                ['param-rend-immo', 'Immo', ((params.rendementImmobilier || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
-                ['param-rend-epar', 'Épargne', ((params.rendementEpargne || 0) * 100).toFixed(1), '0', '30', '0.5', '%'],
               ].map(([id, label, val, min, max, step, suffix]) => `
               <div class="flex items-center gap-1">
                 <span class="text-xs text-gray-500">${label}</span>
@@ -1224,8 +1222,6 @@ export function mount(store, navigate) {
     store.set('parametres.ageFinAnnee', parseInt(document.getElementById('param-age').value) || 43);
     store.set('parametres.ageRetraite', parseInt(document.getElementById('param-retraite').value) || 64);
     store.set('parametres.inflationRate', (parseFloat(document.getElementById('param-inflation').value) || 2) / 100);
-    store.set('parametres.rendementImmobilier', (parseFloat(document.getElementById('param-rend-immo').value) || 2) / 100);
-    store.set('parametres.rendementEpargne', (parseFloat(document.getElementById('param-rend-epar').value) || 2) / 100);
     // Global envelope rendements removed — now controlled per-placement via .plac-rend inputs
 
     // Per-placement rendement overrides
