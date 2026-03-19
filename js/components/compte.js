@@ -243,7 +243,11 @@ export function render(store) {
             <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
               <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
               Immobilier — Estimation actuelle
-              <span class="text-[10px] text-gray-600 ml-1">Rendement ${((params.rendementImmobilier || 0.02) * 100).toFixed(1)}%</span>
+              <span class="text-[10px] text-gray-500 ml-2 flex items-center gap-1">Rdt
+                <input id="param-rend-immo-inline" type="number" step="0.1" min="0" max="50" value="${((params.rendementImmobilier || 0.02) * 100).toFixed(1)}"
+                  class="w-12 bg-dark-900 border border-dark-400/50 rounded px-1 py-0.5 text-[11px] text-gray-300 text-center focus:outline-none focus:border-accent-green transition"/>
+                %
+              </span>
             </h3>
             <div class="space-y-2">
               ${immobilier.map(i => `
@@ -273,7 +277,11 @@ export function render(store) {
             <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
               <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
               Épargne
-              <span class="text-[10px] text-gray-600 ml-1">Rendement ${((params.rendementEpargne || 0.02) * 100).toFixed(1)}%</span>
+              <span class="text-[10px] text-gray-500 ml-2 flex items-center gap-1">Rdt
+                <input id="param-rend-epargne-inline" type="number" step="0.1" min="0" max="50" value="${((params.rendementEpargne || 0.02) * 100).toFixed(1)}"
+                  class="w-12 bg-dark-900 border border-dark-400/50 rounded px-1 py-0.5 text-[11px] text-gray-300 text-center focus:outline-none focus:border-accent-amber transition"/>
+                %
+              </span>
             </h3>
             <div class="space-y-2">
               ${epargne.map(e => `
@@ -305,7 +313,7 @@ export function render(store) {
         <summary class="px-6 py-4 cursor-pointer select-none flex items-center justify-between">
           <div>
             <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Paramètres avancés</h2>
-            <p class="text-xs text-gray-600 mt-1">Taux de rendement, fiscalité, budgets</p>
+            <p class="text-xs text-gray-600 mt-1">Taux de rendement, fiscalité</p>
           </div>
           <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
@@ -316,8 +324,6 @@ export function render(store) {
             <div class="flex flex-wrap items-end gap-3">
               ${[
                 ['param-inflation', 'Inflation', ((params.inflationRate || 0.02) * 100).toFixed(1), '%'],
-                ['param-rend-immo', 'Rdt Immo', ((params.rendementImmobilier || 0.02) * 100).toFixed(1), '%'],
-                ['param-rend-epargne', 'Rdt Épargne', ((params.rendementEpargne || 0.02) * 100).toFixed(1), '%'],
                 ['param-rend-placements', 'Rdt Plac.', ((params.rendementPlacementsDefaut || 0.05) * 100).toFixed(1), '%'],
                 ['param-pfu', 'Flat Tax', ((params.tauxPFU || 0.314) * 100).toFixed(1), '%'],
                 ['param-ps', 'PS (CSG)', ((params.tauxPS || 0.172) * 100).toFixed(1), '%'],
@@ -331,50 +337,6 @@ export function render(store) {
                   <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">${suffix}</span>
                 </div>
               </div>`).join('')}
-            </div>
-          </div>
-          <!-- Budgets -->
-          <div>
-            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Budgets mensuels</h3>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Enveloppe quotidien</label>
-                <div class="relative">
-                  <input id="param-budget-quotidien" type="number" step="1" min="0" value="${params.budgetQuotidien !== undefined ? params.budgetQuotidien : 700}"
-                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Budget NDF</label>
-                <div class="relative">
-                  <input id="param-budget-ndf" type="number" step="0.01" min="0" value="${params.budgetNDF !== undefined ? params.budgetNDF : 789.99}"
-                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Trade Republic -->
-          <div>
-            <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Trade Republic</h3>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Saveback (CB → BTC)</label>
-                <div class="relative">
-                  <input id="param-tr-saveback" type="number" step="0.1" min="0" max="10" value="${((params.trSavebackPct || 0.01) * 100).toFixed(1)}"
-                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs text-gray-500 mb-1">Round-up (arrondi → CTO)</label>
-                <div class="relative">
-                  <input id="param-tr-roundup" type="number" step="0.1" min="0" max="10" value="${((params.trRoundupPct || 0.03) * 100).toFixed(1)}"
-                    class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7"/>
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">%</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -521,8 +483,8 @@ export function mount(store, navigate) {
 
   // Financial parameters (percentages → stored as decimals)
   document.getElementById('param-inflation')?.addEventListener('input', (e) => saveParam('inflationRate', (parseFloat(e.target.value) || 0) / 100));
-  document.getElementById('param-rend-immo')?.addEventListener('input', (e) => saveParam('rendementImmobilier', (parseFloat(e.target.value) || 0) / 100));
-  document.getElementById('param-rend-epargne')?.addEventListener('input', (e) => saveParam('rendementEpargne', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-rend-immo-inline')?.addEventListener('input', (e) => saveParam('rendementImmobilier', (parseFloat(e.target.value) || 0) / 100));
+  document.getElementById('param-rend-epargne-inline')?.addEventListener('input', (e) => saveParam('rendementEpargne', (parseFloat(e.target.value) || 0) / 100));
   document.getElementById('param-rend-placements')?.addEventListener('input', (e) => saveParam('rendementPlacementsDefaut', (parseFloat(e.target.value) || 0) / 100));
 
   // Tax rates
@@ -530,19 +492,6 @@ export function mount(store, navigate) {
   document.getElementById('param-ps')?.addEventListener('input', (e) => saveParam('tauxPS', (parseFloat(e.target.value) || 0) / 100));
   document.getElementById('param-av-ir')?.addEventListener('input', (e) => saveParam('tauxAVIR', (parseFloat(e.target.value) || 0) / 100));
 
-  // Budgets (stored as raw euros)
-  document.getElementById('param-budget-quotidien')?.addEventListener('input', (e) => {
-    const val = e.target.value;
-    saveParam('budgetQuotidien', val === '' ? 0 : parseFloat(val));
-  });
-  document.getElementById('param-budget-ndf')?.addEventListener('input', (e) => {
-    const val = e.target.value;
-    saveParam('budgetNDF', val === '' ? 0 : parseFloat(val));
-  });
-
-  // Trade Republic
-  document.getElementById('param-tr-saveback')?.addEventListener('input', (e) => saveParam('trSavebackPct', (parseFloat(e.target.value) || 0) / 100));
-  document.getElementById('param-tr-roundup')?.addEventListener('input', (e) => saveParam('trRoundupPct', (parseFloat(e.target.value) || 0) / 100));
 
   // Photo upload (main user)
   document.getElementById('photo-upload')?.addEventListener('change', (e) => {
