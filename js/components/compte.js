@@ -324,7 +324,6 @@ export function render(store) {
             <div class="flex flex-wrap items-end gap-3">
               ${[
                 ['param-inflation', 'Inflation', ((params.inflationRate || 0.02) * 100).toFixed(1), '%'],
-                ['param-rend-placements', 'Rdt Plac.', ((params.rendementPlacementsDefaut || 0.05) * 100).toFixed(1), '%'],
                 ['param-pfu', 'Flat Tax', ((params.tauxPFU || 0.314) * 100).toFixed(1), '%'],
                 ['param-ps', 'PS (CSG)', ((params.tauxPS || 0.172) * 100).toFixed(1), '%'],
                 ['param-av-ir', 'AV IR 8a', ((params.tauxAVIR || 0.075) * 100).toFixed(1), '%'],
@@ -485,8 +484,6 @@ export function mount(store, navigate) {
   document.getElementById('param-inflation')?.addEventListener('input', (e) => saveParam('inflationRate', (parseFloat(e.target.value) || 0) / 100));
   document.getElementById('param-rend-immo-inline')?.addEventListener('input', (e) => saveParam('rendementImmobilier', (parseFloat(e.target.value) || 0) / 100));
   document.getElementById('param-rend-epargne-inline')?.addEventListener('input', (e) => saveParam('rendementEpargne', (parseFloat(e.target.value) || 0) / 100));
-  document.getElementById('param-rend-placements')?.addEventListener('input', (e) => saveParam('rendementPlacementsDefaut', (parseFloat(e.target.value) || 0) / 100));
-
   // Tax rates
   document.getElementById('param-pfu')?.addEventListener('input', (e) => saveParam('tauxPFU', (parseFloat(e.target.value) || 0) / 100));
   document.getElementById('param-ps')?.addEventListener('input', (e) => saveParam('tauxPS', (parseFloat(e.target.value) || 0) / 100));
