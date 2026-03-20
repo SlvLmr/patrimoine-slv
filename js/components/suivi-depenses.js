@@ -97,6 +97,7 @@ export function render(store) {
   const budgetNDF = paramètres.budgetNDF !== undefined ? Number(paramètres.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 789.99);
   const ndfTR = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const aRecupererNDF = budgetNDF - ndfTR;
+  const sommeARecuperer = budgetNDF - ndfTR + 39.99;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -291,7 +292,7 @@ export function render(store) {
           </div>
           ${budgetNDF > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
             <span class="text-xs text-gray-500">${lblNDF}</span>
-            <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
+            <span class="text-xs font-medium text-purple-400">${formatCurrencyCents(aRecupererNDF)} <span class="text-gray-400">(${formatCurrencyCents(sommeARecuperer)})</span></span>
           </div>` : ''}
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
             <span class="text-xs text-gray-500">${lblEnveloppe}</span>
