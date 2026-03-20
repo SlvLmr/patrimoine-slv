@@ -97,7 +97,7 @@ export function render(store) {
   const budgetNDF = paramètres.budgetNDF !== undefined ? Number(paramètres.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 789.99);
   const ndfTR = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const aRecupererNDF = budgetNDF - ndfTR;
-  const sommeARecuperer = budgetNDF - ndfTR + 39.99;
+  const sommeARecuperer = 789.99 + 39.99 - ndfTR;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
