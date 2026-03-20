@@ -225,7 +225,7 @@ export function render(store) {
                 <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalCIC)}</p>
               </div>
               <div id="ptf-card-tr" class="card-dark rounded-xl p-2.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold">${bankNames.secondary}</p>
+                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold whitespace-nowrap">${bankNames.secondary}</p>
                 <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalTR)}</p>
               </div>
             </div>
