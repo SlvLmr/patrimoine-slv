@@ -287,8 +287,9 @@ export function render(store) {
               </div>
               <div class="space-y-1">
                 ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
+                  const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_epargne__': 'Epargne', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
                   const destPlacement = placements.find(p => p.id === t.destinationId);
-                  const destName = destPlacement ? destPlacement.nom : (t.destinationId === '__cto_overflow__' ? 'CTO' : (t.destinationId === '__donation__' ? 'Donation' : '(supprimé)'));
+                  const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
                   let sourceLabel, sourceBg;
                   if (t.source === 'heritage') {
                     sourceLabel = 'Héritage'; sourceBg = 'bg-accent-amber/10 text-accent-amber';
@@ -868,11 +869,11 @@ function openTransferModal(store, navigate, editItem = null) {
   ];
 
   const destOptions = [
-    ...placements.map(p => ({
-      value: p.id,
-      label: `${p.nom} (${p.enveloppe || p.type})`
-    })),
-    ...(!hasCTO ? [{ value: '__cto_overflow__', label: 'CTO (Compte-Titres Ordinaire)' }] : []),
+    ...(placements.some(p => (p.enveloppe || p.type) === 'PEA') ? [{ value: '__cat_pea__', label: 'PEA' }] : []),
+    { value: '__cat_cto__', label: 'CTO' },
+    ...(placements.some(p => (p.enveloppe || p.type) === 'Crypto') ? [{ value: '__cat_bitcoin__', label: 'Bitcoin' }] : []),
+    ...(placements.some(p => (p.enveloppe || p.type) === 'AV') ? [{ value: '__cat_av__', label: 'Assurance Vie' }] : []),
+    { value: '__cat_epargne__', label: 'Epargne' },
     { value: '__donation__', label: 'Donation' }
   ];
 

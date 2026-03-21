@@ -413,8 +413,27 @@ export function computeProjection(store) {
       if (!isOnce && !isRecurring) continue;
 
       const isDonation = transfer.destinationId === '__donation__';
-      const destSim = isDonation ? null : placSims.find(ps => ps.id === transfer.destinationId);
-      if (!destSim && !isDonation) continue;
+      const isEpargne = transfer.destinationId === '__cat_epargne__';
+      // Resolve category-level destination IDs to actual placements
+      let destSim = null;
+      if (!isDonation && !isEpargne) {
+        const catMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie' };
+        const catGroupKey = catMap[transfer.destinationId];
+        if (catGroupKey) {
+          if (catGroupKey === 'PEA') {
+            destSim = placSims.find(ps => ps.groupKey.startsWith('PEA'));
+          } else if (catGroupKey === 'Assurance Vie') {
+            destSim = placSims.find(ps => ps.groupKey === 'Assurance Vie');
+          } else if (catGroupKey === 'CTO') {
+            destSim = placSims.find(ps => ps.groupKey === 'CTO');
+          } else if (catGroupKey === 'Crypto') {
+            destSim = placSims.find(ps => ps.groupKey === 'Crypto');
+          }
+        } else {
+          destSim = placSims.find(ps => ps.id === transfer.destinationId);
+        }
+      }
+      if (!destSim && !isDonation && !isEpargne) continue;
       // Skip transfers to PEE after souhaité retirement (PEE is liquidated at end of that year)
       if (destSim && destSim.isPEE && currentAge > ageRetraitePEE) continue;
 
@@ -444,6 +463,8 @@ export function computeProjection(store) {
       if (amount > 0) {
         if (isDonation) {
           donation += amount;
+        } else if (isEpargne) {
+          epar += amount;
         } else {
           destSim.value += amount;
           destSim.totalApports += amount;
