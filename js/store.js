@@ -1,4 +1,4 @@
-import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud } from './firebase-config.js';
+import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud, discoverProfilesFromCloud } from './firebase-config.js';
 
 
 const PROFILES_KEY = 'patrimoine-slv-profiles';
@@ -8,6 +8,7 @@ const ACTIVE_PROFILE_KEY = 'patrimoine-slv-active-profile';
 let _cloudSyncPending = 0;
 let _cloudSyncFailed = false;
 let _onSyncStatusChange = null;
+let _metaSyncedThisSession = false;
 
 const defaultState = {
   actifs: {
@@ -172,7 +173,20 @@ function saveState(profileId, state) {
     if (user) {
       _cloudSyncPending++;
       _notifySyncStatus();
-      saveToCloud(user.uid, profileId, state).then(ok => {
+
+      // Ensure profiles metadata is pushed to cloud at least once per session
+      // This fixes the bug where profile data was saved but metadata was not,
+      // making profiles invisible on other devices
+      const metaPromise = !_metaSyncedThisSession
+        ? saveProfilesToCloud(user.uid, getProfiles()).then(ok => {
+            if (ok) _metaSyncedThisSession = true;
+          }).catch(() => {})
+        : Promise.resolve();
+
+      Promise.all([
+        saveToCloud(user.uid, profileId, state),
+        metaPromise
+      ]).then(([ok]) => {
         _cloudSyncPending--;
         if (!ok) _cloudSyncFailed = true;
         else _cloudSyncFailed = false;
@@ -361,7 +375,18 @@ const Store = {
 
     try {
       // Load profiles from cloud
-      const cloudProfiles = await loadProfilesFromCloud(user.uid);
+      let cloudProfiles = await loadProfilesFromCloud(user.uid);
+
+      // Fallback: if meta document is missing, try to discover profiles
+      // from the subcollection directly (recovers orphaned data)
+      if (!cloudProfiles || cloudProfiles.length === 0) {
+        cloudProfiles = await discoverProfilesFromCloud(user.uid);
+        // If discovered, rebuild the meta document so future syncs work
+        if (cloudProfiles && cloudProfiles.length > 0) {
+          await saveProfilesToCloud(user.uid, cloudProfiles);
+        }
+      }
+
       if (cloudProfiles && cloudProfiles.length > 0) {
         localStorage.setItem(PROFILES_KEY, JSON.stringify(cloudProfiles));
 
@@ -382,14 +407,19 @@ const Store = {
         setActiveProfileId(activeId);
         this._state = loadState(activeId);
         localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
+        _metaSyncedThisSession = true;
         _cloudSyncFailed = false;
         _notifySyncStatus();
         return true;
       }
 
-      // No cloud data yet — only push to cloud if local data is non-empty
-      // (avoid pushing empty default data that would overwrite potential future real data)
+      // No cloud data at all — push local profiles metadata so it exists for other devices
+      // (only push metadata, not data, to avoid overwriting with empty defaults)
       const localProfiles = getProfiles();
+      await saveProfilesToCloud(user.uid, localProfiles);
+      _metaSyncedThisSession = true;
+
+      // Also push profile data if local has real content
       const hasRealData = localProfiles.some(p => {
         const state = loadState(p.id);
         return (state.actifs?.immobilier?.length > 0) ||
@@ -419,6 +449,7 @@ const Store = {
     try {
       const profiles = getProfiles();
       await saveProfilesToCloud(user.uid, profiles);
+      _metaSyncedThisSession = true;
 
       for (const p of profiles) {
         const data = loadState(p.id);

@@ -179,6 +179,36 @@ async function loadProfilesFromCloud(userId) {
   }
 }
 
+// Discover profiles by listing documents in the profiles subcollection
+// Used as fallback when meta document is missing
+async function discoverProfilesFromCloud(userId) {
+  const { db } = initFirebase();
+  if (!db || !userId) return null;
+  try {
+    const colRef = _firebaseFirestore.collection(db, 'users', userId, 'profiles');
+    const snap = await withRetry(() => _firebaseFirestore.getDocs(colRef));
+    if (snap.empty) return null;
+    const profiles = [];
+    snap.forEach(doc => {
+      const data = doc.data();
+      let name = 'Mon patrimoine';
+      try {
+        const parsed = JSON.parse(data.data);
+        if (parsed.userInfo?.prenom) name = `Profil de ${parsed.userInfo.prenom}`;
+      } catch {}
+      profiles.push({
+        id: doc.id,
+        name,
+        createdAt: data.updatedAt || new Date().toISOString()
+      });
+    });
+    return profiles.length > 0 ? profiles : null;
+  } catch (e) {
+    console.error('Cloud discover profiles error:', e);
+    return null;
+  }
+}
+
 export {
   isConfigured,
   loadFirebaseSDK,
@@ -192,5 +222,6 @@ export {
   saveToCloud,
   loadFromCloud,
   saveProfilesToCloud,
-  loadProfilesFromCloud
+  loadProfilesFromCloud,
+  discoverProfilesFromCloud
 };
