@@ -117,7 +117,10 @@ async function withRetry(fn, maxRetries = 2) {
 // Firestore sync functions
 async function saveToCloud(userId, profileId, data) {
   const { db } = initFirebase();
-  if (!db || !userId) return false;
+  if (!db || !userId) {
+    console.warn('Cloud save skipped: db=', !!db, 'userId=', !!userId);
+    return false;
+  }
   try {
     await withRetry(() => _firebaseFirestore.setDoc(
       _firebaseFirestore.doc(db, 'users', userId, 'profiles', profileId), {
@@ -126,7 +129,7 @@ async function saveToCloud(userId, profileId, data) {
     }));
     return true;
   } catch (e) {
-    console.error('Cloud save error:', e);
+    console.error('Cloud save error:', e.code, e.message);
     return false;
   }
 }
@@ -179,6 +182,30 @@ async function loadProfilesFromCloud(userId) {
   }
 }
 
+// Test Firestore connection by writing a test document
+async function testCloudConnection(userId) {
+  const { db } = initFirebase();
+  if (!db || !userId) return { ok: false, error: 'Firebase non initialisé (db ou userId manquant)' };
+  try {
+    // Try to write a small test document
+    const testRef = _firebaseFirestore.doc(db, 'users', userId, 'meta', '_ping');
+    await _firebaseFirestore.setDoc(testRef, { t: Date.now() }, { merge: true });
+    return { ok: true };
+  } catch (e) {
+    let msg;
+    if (e.code === 'permission-denied') {
+      msg = 'Accès refusé par Firestore. Les règles de sécurité bloquent l\'accès. Va dans la console Firebase > Firestore > Règles et autorise l\'accès pour les utilisateurs authentifiés.';
+    } else if (e.code === 'unavailable' || e.code === 'failed-precondition') {
+      msg = 'Firestore indisponible. Vérifie ta connexion internet.';
+    } else if (e.code === 'not-found') {
+      msg = 'Base Firestore introuvable. Vérifie que Firestore est activé dans ta console Firebase.';
+    } else {
+      msg = `Erreur Firestore: ${e.code || e.message}`;
+    }
+    return { ok: false, error: msg };
+  }
+}
+
 // Discover profiles by listing documents in the profiles subcollection
 // Used as fallback when meta document is missing
 async function discoverProfilesFromCloud(userId) {
@@ -223,5 +250,6 @@ export {
   loadFromCloud,
   saveProfilesToCloud,
   loadProfilesFromCloud,
-  discoverProfilesFromCloud
+  discoverProfilesFromCloud,
+  testCloudConnection
 };

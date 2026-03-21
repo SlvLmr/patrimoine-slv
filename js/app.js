@@ -1,5 +1,5 @@
 import { Store } from './store.js';
-import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout } from './firebase-config.js';
+import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as Heritage from './components/heritage.js';
@@ -21,6 +21,24 @@ import * as SimulateurSuccession from './components/simulateur-succession.js';
 
 
 const store = Store.init();
+
+// Toast notification system — visible on mobile and desktop
+function showToast(message, type = 'error', duration = 8000) {
+  // Remove existing toast
+  document.getElementById('sync-toast')?.remove();
+  const colors = {
+    error: 'bg-red-500/90 text-white',
+    success: 'bg-accent-green/90 text-dark-900',
+    warning: 'bg-amber-500/90 text-dark-900',
+    info: 'bg-blue-500/90 text-white'
+  };
+  const toast = document.createElement('div');
+  toast.id = 'sync-toast';
+  toast.className = `fixed top-4 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-xl shadow-2xl text-sm font-medium max-w-sm text-center ${colors[type] || colors.error}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  if (duration > 0) setTimeout(() => toast.remove(), duration);
+}
 
 const routes = {
   heritage: Heritage,
@@ -614,17 +632,39 @@ function showLoginScreen() {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
               </svg>
             </div>
-            <p class="text-gray-400 text-sm">Synchronisation de tes données...</p>
+            <p id="sync-progress-msg" class="text-gray-400 text-sm">Test de la connexion cloud...</p>
           </div>
         </div>
       `;
+
+      // Test Firestore connection first
+      const user = getCurrentUser();
+      const testResult = await testCloudConnection(user.uid);
+      if (!testResult.ok) {
+        showToast(testResult.error, 'error', 0); // persistent toast
+        contentEl.querySelector('#sync-progress-msg').textContent = 'Erreur de connexion cloud';
+        contentEl.querySelector('#sync-progress-msg').classList.add('text-red-400');
+        // Still show the app after a delay so user isn't stuck
+        setTimeout(() => { store.init(); showApp(); updateUserBar(); }, 3000);
+        setTimeout(() => { _loginSyncInProgress = false; }, 4000);
+        return;
+      }
+
+      contentEl.querySelector('#sync-progress-msg').textContent = 'Synchronisation de tes données...';
+
       // Sync from cloud
       const synced = await store.syncFromCloud();
       // Re-init the app
       store.init();
       showApp();
       updateUserBar();
-      if (synced) updateSyncStatus();
+      if (synced) {
+        showToast('Données synchronisées !', 'success', 3000);
+        updateSyncStatus();
+      } else {
+        // No cloud data found — push local data
+        showToast('Aucune donnée cloud trouvée. Tes données locales seront sauvegardées.', 'info', 5000);
+      }
 
       // Release the guard after a short delay (let onAuth fire and skip)
       setTimeout(() => { _loginSyncInProgress = false; }, 2000);
@@ -682,10 +722,20 @@ let _loginSyncInProgress = false;
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   // Track sync status changes to update the UI indicator
-  store.onSyncStatusChange(() => updateSyncStatus());
+  store.onSyncStatusChange(() => {
+    updateSyncStatus();
+    // Show toast on sync failure (visible on mobile unlike sidebar indicator)
+    const { failed } = store.getSyncStatus();
+    if (failed) {
+      showToast('Erreur de synchronisation cloud. Vérifie ta connexion.', 'error');
+    }
+  });
+
+  // Always show the app immediately with local data (never leave user on blank page)
+  showApp();
 
   if (isConfigured()) {
-    // Load Firebase SDK, then decide what to show based on auth state
+    // Load Firebase SDK in background, then handle auth
     loadFirebaseSDK().then(() => {
       onAuth(async (user) => {
         if (user) {
@@ -694,12 +744,20 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUserBar();
             return;
           }
-          // User is already authenticated (persisted session) — show app then sync
-          if (!appStarted) showApp();
+
+          // Test Firestore connection on first auth
+          const testResult = await testCloudConnection(user.uid);
+          if (!testResult.ok) {
+            showToast(testResult.error, 'error', 15000);
+            updateUserBar();
+            return;
+          }
+
           const synced = await store.syncFromCloud();
           if (synced) {
             store.init();
             renderPage();
+            showToast('Données synchronisées', 'success', 3000);
           }
           updateSyncStatus();
         } else {
@@ -714,19 +772,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (!hasLocalData) {
             // New device with no data — show login screen directly
-            showApp();
             showLoginScreen();
-          } else {
-            // Has local data but not logged in — show app normally
-            if (!appStarted) showApp();
           }
         }
         updateUserBar();
       });
     }).catch(e => {
       console.warn('Firebase SDK failed to load:', e);
-      // Fallback: show app with local data only
-      if (!appStarted) showApp();
+      showToast('Impossible de charger Firebase. Synchronisation désactivée.', 'warning', 10000);
     });
 
     // Re-sync from cloud when tab becomes visible again (e.g. switching PCs)
@@ -746,9 +799,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSyncStatus();
       }
     });
-  } else {
-    // Firebase not configured — show app with local data only
-    showApp();
   }
 });
 
