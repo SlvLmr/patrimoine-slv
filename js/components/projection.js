@@ -11,6 +11,9 @@ export function render(store) {
   const placements = (store.getAll().actifs?.placements || []);
   const heritageItems = store.get('heritage') || [];
   const capitalTransfers = params.capitalTransfers || [];
+  const surplusAnnuel = store.get('surplusAnnuel') || [];
+  const surplusByYear = {};
+  surplusAnnuel.forEach(s => { surplusByYear[Number(s.year)] = Number(s.montant) || 0; });
   const currentCalendarYear = new Date().getFullYear();
   const last = snapshots[snapshots.length - 1];
   const first = snapshots[0];
@@ -287,10 +290,10 @@ export function render(store) {
               </div>
               <div class="space-y-1">
                 ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
-                  const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_epargne__': 'Epargne', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
+                  const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_epargne__': 'Epargne', 'surplus': 'Surplus', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
                   const destPlacement = placements.find(p => p.id === t.destinationId);
                   const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
-                  const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'heritage': 'Héritage', '__donation__': 'Donation' };
+                  const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'surplus': 'Surplus', 'heritage': 'Héritage', '__donation__': 'Donation' };
                   const sourceLabel = catSrcNames[t.source] || t.source;
                   const sourceBg = t.source === 'heritage' ? 'bg-accent-amber/10 text-accent-amber' : t.source === 'epargne' ? 'bg-accent-cyan/10 text-accent-cyan' : 'bg-purple-500/10 text-purple-300';
                   const freqLabels = { annual: '/an', monthly: '/mois', once: '×1' };
@@ -472,6 +475,7 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center font-semibold text-gray-400">Apports</th>
                 <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
                 <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
+                <th class="px-1 py-1.5 text-center">Surplus</th>
                 <th class="px-1 py-1.5 text-center">Épargne</th>
                 <th class="px-1 py-1.5 text-center">Hérit.</th>
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Immo.</th>
@@ -521,6 +525,7 @@ export function render(store) {
                 <td class="px-1 py-0.5 text-center text-[11px] text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-[11px] ${bt} ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px] ${bt} proj-tip-wrap">${formatCurrency(s.cashApresImpot)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(s.totalApports)}</div><div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Placements</span><span class="text-gray-200">${formatCurrency(s.placements)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(s.totalApports)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts</span><span class="text-red-400">-${formatCurrency(s.totalTaxes)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(s.cashApresImpot)}</span></div></div></td>
+                <td class="px-0 py-0 text-center text-[11px] ${bt}"><input type="number" class="surplus-input w-full bg-transparent text-center text-[11px] text-gray-200 border-0 outline-none focus:bg-dark-600/50 focus:text-accent-cyan px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${surplusByYear[s.calendarYear] || ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 ${bt}">${formatCurrency(s.epargne)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 ${bt}">${formatCurrency(s.heritage)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
@@ -854,6 +859,7 @@ function openTransferModal(store, navigate, editItem = null) {
     { value: '__cat_av__', label: 'Assurance Vie' },
     { value: '__cat_pee__', label: 'PEE' },
     { value: 'epargne', label: 'Epargne' },
+    { value: 'surplus', label: 'Surplus' },
     { value: 'heritage', label: 'Héritage' },
     { value: '__donation__', label: 'Donation' }
   ];
@@ -864,6 +870,7 @@ function openTransferModal(store, navigate, editItem = null) {
     { value: '__cat_bitcoin__', label: 'Bitcoin' },
     { value: '__cat_av__', label: 'Assurance Vie' },
     { value: '__cat_epargne__', label: 'Epargne' },
+    { value: 'surplus', label: 'Surplus' },
     { value: '__donation__', label: 'Donation' }
   ];
 
@@ -1395,6 +1402,28 @@ export function mount(store, navigate) {
     });
     // Clear saved strategy so defaults regenerate
     store.set('parametres.strategie', {});
+  });
+
+  // --- Surplus annuel inline editing ---
+  document.querySelectorAll('.surplus-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const year = parseInt(input.dataset.year);
+      const montant = Number(input.value) || 0;
+      const surplus = store.get('surplusAnnuel') || [];
+      const existing = surplus.find(s => Number(s.year) === year);
+      if (montant > 0) {
+        if (existing) {
+          existing.montant = montant;
+        } else {
+          surplus.push({ year, montant });
+        }
+      } else {
+        const idx = surplus.findIndex(s => Number(s.year) === year);
+        if (idx >= 0) surplus.splice(idx, 1);
+      }
+      store.set('surplusAnnuel', surplus);
+      navigate('projection');
+    });
   });
 
   // --- Heritage CRUD from projection ---

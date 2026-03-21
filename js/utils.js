@@ -162,6 +162,11 @@ export function computeProjection(store) {
   // Capital transfers (épargne/héritage → placement)
   const capitalTransfers = params.capitalTransfers || [];
 
+  // Surplus annuel (manually entered yearly surplus → adds to liquidités)
+  const surplusAnnuel = state.surplusAnnuel || [];
+  const surplusByYear = {};
+  surplusAnnuel.forEach(s => { surplusByYear[Number(s.year)] = Number(s.montant) || 0; });
+
   // Build per-placement simulation state
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjectionsParams = params.cashInjections || {};
@@ -330,6 +335,7 @@ export function computeProjection(store) {
   let epar = totalEpar;
   let heritage = 0;
   let donation = 0;
+  let surplus = 0;
   let revenus = revenusMensuels;
   let depenses = depensesMensuelles;
 
@@ -388,6 +394,13 @@ export function computeProjection(store) {
       heritage += heritageByYear[year].liq;
     }
 
+    // Inject surplus annuel (adds to liquidités/épargne)
+    const calYearForSurplus = currentCalendarYear + year;
+    if (surplusByYear[calYearForSurplus]) {
+      surplus += surplusByYear[calYearForSurplus];
+      epar += surplusByYear[calYearForSurplus];
+    }
+
     // --- Grow assets FIRST, then snapshot (so year 0 = end of current year) ---
     const monthsInPeriod = (year === 0) ? remainingMonths : 12;
     const periodFraction = monthsInPeriod / 12;
@@ -414,9 +427,10 @@ export function computeProjection(store) {
 
       const isDonation = transfer.destinationId === '__donation__';
       const isEpargne = transfer.destinationId === '__cat_epargne__';
+      const isSurplusDest = transfer.destinationId === 'surplus';
       // Resolve category-level destination IDs to actual placements
       let destSim = null;
-      if (!isDonation && !isEpargne) {
+      if (!isDonation && !isEpargne && !isSurplusDest) {
         const catMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie' };
         const catGroupKey = catMap[transfer.destinationId];
         if (catGroupKey) {
@@ -433,7 +447,7 @@ export function computeProjection(store) {
           destSim = placSims.find(ps => ps.id === transfer.destinationId);
         }
       }
-      if (!destSim && !isDonation && !isEpargne) continue;
+      if (!destSim && !isDonation && !isEpargne && !isSurplusDest) continue;
       // Skip transfers to PEE after souhaité retirement (PEE is liquidated at end of that year)
       if (destSim && destSim.isPEE && currentAge > ageRetraitePEE) continue;
 
@@ -448,6 +462,9 @@ export function computeProjection(store) {
       } else if (transfer.source === 'epargne') {
         amount = Math.min(amount, Math.max(0, epar));
         epar -= amount;
+      } else if (transfer.source === 'surplus') {
+        amount = Math.min(amount, Math.max(0, surplus));
+        surplus -= amount;
       } else if (transfer.source === '__donation__') {
         amount = Math.min(amount, Math.max(0, donation));
         donation -= amount;
@@ -475,6 +492,8 @@ export function computeProjection(store) {
           donation += amount;
         } else if (isEpargne) {
           epar += amount;
+        } else if (isSurplusDest) {
+          surplus += amount;
         } else {
           destSim.value += amount;
           destSim.totalApports += amount;
@@ -955,6 +974,7 @@ export function computeProjection(store) {
       placementTaxes: detailTaxes,
       placementTaxRates: detailTaxRates,
       placements: Math.round(finalTotalPlacements),
+      surplus: Math.round(surplus),
       epargne: Math.round(epar),
       heritage: Math.round(heritage),
       interetsAnnuels: Math.round(Math.max(0, interetsAnnuels)),
