@@ -601,6 +601,9 @@ function showLoginScreen() {
   mountLoginScreen(
     // onSuccess: user logged in
     async () => {
+      // Prevent onAuth callback from doing a duplicate sync
+      _loginSyncInProgress = true;
+
       // Show loading state
       const contentEl = document.getElementById('app-content');
       contentEl.innerHTML = `
@@ -616,10 +619,15 @@ function showLoginScreen() {
         </div>
       `;
       // Sync from cloud
-      await store.syncFromCloud();
+      const synced = await store.syncFromCloud();
       // Re-init the app
       store.init();
       showApp();
+      updateUserBar();
+      if (synced) updateSyncStatus();
+
+      // Release the guard after a short delay (let onAuth fire and skip)
+      setTimeout(() => { _loginSyncInProgress = false; }, 2000);
     },
     // onSkip: continue without account
     () => {
@@ -668,30 +676,57 @@ function showApp() {
   renderPage();
 }
 
+// Guard to prevent double sync when login triggers both onSuccess and onAuth
+let _loginSyncInProgress = false;
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   // Track sync status changes to update the UI indicator
   store.onSyncStatusChange(() => updateSyncStatus());
 
-  // Always show app immediately with local data (no waiting for Firebase)
-  showApp();
-
   if (isConfigured()) {
-    // Load Firebase SDK in background, then sync
+    // Load Firebase SDK, then decide what to show based on auth state
     loadFirebaseSDK().then(() => {
       onAuth(async (user) => {
         if (user) {
+          // If login screen already triggered a sync, skip duplicate
+          if (_loginSyncInProgress) {
+            updateUserBar();
+            return;
+          }
+          // User is already authenticated (persisted session) — show app then sync
+          if (!appStarted) showApp();
           const synced = await store.syncFromCloud();
           if (synced) {
             store.init();
             renderPage();
           }
           updateSyncStatus();
+        } else {
+          // No user — check if this is a new/empty device
+          const s = store.getAll();
+          const hasLocalData = (s.actifs?.immobilier?.length > 0) ||
+                   (s.actifs?.placements?.length > 0) ||
+                   (s.actifs?.epargne?.length > 0) ||
+                   (s.revenus?.length > 0) ||
+                   (s.depenses?.length > 0) ||
+                   (s.userInfo?.prenom);
+
+          if (!hasLocalData) {
+            // New device with no data — show login screen directly
+            showApp();
+            showLoginScreen();
+          } else {
+            // Has local data but not logged in — show app normally
+            if (!appStarted) showApp();
+          }
         }
         updateUserBar();
       });
     }).catch(e => {
       console.warn('Firebase SDK failed to load:', e);
+      // Fallback: show app with local data only
+      if (!appStarted) showApp();
     });
 
     // Re-sync from cloud when tab becomes visible again (e.g. switching PCs)
@@ -711,6 +746,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSyncStatus();
       }
     });
+  } else {
+    // Firebase not configured — show app with local data only
+    showApp();
   }
 });
 
