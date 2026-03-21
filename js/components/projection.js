@@ -290,19 +290,9 @@ export function render(store) {
                   const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_epargne__': 'Epargne', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
                   const destPlacement = placements.find(p => p.id === t.destinationId);
                   const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
-                  let sourceLabel, sourceBg;
-                  if (t.source === 'heritage') {
-                    sourceLabel = 'Héritage'; sourceBg = 'bg-accent-amber/10 text-accent-amber';
-                  } else if (t.source === 'epargne') {
-                    sourceLabel = 'Épargne'; sourceBg = 'bg-accent-cyan/10 text-accent-cyan';
-                  } else if (t.source?.startsWith('placement:')) {
-                    const srcId = t.source.replace('placement:', '');
-                    const srcPlac = placements.find(p => p.id === srcId);
-                    sourceLabel = srcPlac ? srcPlac.nom : (srcId === '__cto_overflow__' ? 'CTO' : '(supprimé)');
-                    sourceBg = 'bg-purple-500/10 text-purple-300';
-                  } else {
-                    sourceLabel = t.source; sourceBg = 'bg-gray-500/10 text-gray-400';
-                  }
+                  const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'heritage': 'Héritage', '__donation__': 'Donation' };
+                  const sourceLabel = catSrcNames[t.source] || t.source;
+                  const sourceBg = t.source === 'heritage' ? 'bg-accent-amber/10 text-accent-amber' : t.source === 'epargne' ? 'bg-accent-cyan/10 text-accent-cyan' : 'bg-purple-500/10 text-purple-300';
                   const freqLabels = { annual: '/an', monthly: '/mois', once: '×1' };
                   const freqLabel = freqLabels[t.frequency] || '×1';
                   return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-purple-400/40 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
@@ -857,22 +847,22 @@ function openTransferModal(store, navigate, editItem = null) {
 
   // Build dynamic source options from all placements + épargne + héritage
   // Include CTO overflow (virtual placement for PEA ceiling overflow)
-  const hasCTO = placements.some(p => (p.enveloppe || p.type) === 'CTO');
   const sourceOptions = [
-    { value: 'epargne', label: 'Épargne (livrets, fonds euros)' },
-    ...(heritageItems.length > 0 ? [{ value: 'heritage', label: 'Héritage (liquidités)' }] : []),
-    ...placements.map(p => ({
-      value: `placement:${p.id}`,
-      label: `${p.nom} (${p.enveloppe || p.type})`
-    })),
-    ...(!hasCTO ? [{ value: 'placement:__cto_overflow__', label: 'CTO (Compte-Titres Ordinaire)' }] : [])
+    { value: '__cat_pea__', label: 'PEA' },
+    { value: '__cat_cto__', label: 'CTO' },
+    { value: '__cat_bitcoin__', label: 'Bitcoin' },
+    { value: '__cat_av__', label: 'Assurance Vie' },
+    { value: '__cat_pee__', label: 'PEE' },
+    { value: 'epargne', label: 'Epargne' },
+    { value: 'heritage', label: 'Héritage' },
+    { value: '__donation__', label: 'Donation' }
   ];
 
   const destOptions = [
-    ...(placements.some(p => (p.enveloppe || p.type) === 'PEA') ? [{ value: '__cat_pea__', label: 'PEA' }] : []),
+    { value: '__cat_pea__', label: 'PEA' },
     { value: '__cat_cto__', label: 'CTO' },
-    ...(placements.some(p => (p.enveloppe || p.type) === 'Crypto') ? [{ value: '__cat_bitcoin__', label: 'Bitcoin' }] : []),
-    ...(placements.some(p => (p.enveloppe || p.type) === 'AV') ? [{ value: '__cat_av__', label: 'Assurance Vie' }] : []),
+    { value: '__cat_bitcoin__', label: 'Bitcoin' },
+    { value: '__cat_av__', label: 'Assurance Vie' },
     { value: '__cat_epargne__', label: 'Epargne' },
     { value: '__donation__', label: 'Donation' }
   ];

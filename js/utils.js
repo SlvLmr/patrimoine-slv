@@ -445,15 +445,25 @@ export function computeProjection(store) {
       if (transfer.source === 'heritage') {
         amount = Math.min(amount, Math.max(0, heritage));
         heritage -= amount;
-      } else if (transfer.source?.startsWith('placement:')) {
-        // Debit from a specific placement
-        const srcId = transfer.source.replace('placement:', '');
-        const srcSim = placSims.find(ps => ps.id === srcId && ps.id !== transfer.destinationId);
-        if (srcSim) {
-          amount = Math.min(amount, Math.max(0, srcSim.value));
-          srcSim.value -= amount;
-        } else {
-          amount = 0;
+      } else if (transfer.source === 'epargne') {
+        amount = Math.min(amount, Math.max(0, epar));
+        epar -= amount;
+      } else if (transfer.source === '__donation__') {
+        amount = Math.min(amount, Math.max(0, donation));
+        donation -= amount;
+      } else if (transfer.source?.startsWith('__cat_')) {
+        // Category-level source: debit from matching placements
+        const srcCatMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE' };
+        const srcGroupKey = srcCatMap[transfer.source];
+        const srcSims = srcGroupKey ? placSims.filter(ps => srcGroupKey === 'PEA' ? ps.groupKey.startsWith('PEA') : ps.groupKey === srcGroupKey) : [];
+        const totalAvailable = srcSims.reduce((sum, ps) => sum + Math.max(0, ps.value), 0);
+        amount = Math.min(amount, totalAvailable);
+        let remaining = amount;
+        for (const ps of srcSims) {
+          if (remaining <= 0) break;
+          const debit = Math.min(remaining, Math.max(0, ps.value));
+          ps.value -= debit;
+          remaining -= debit;
         }
       } else {
         // Default: épargne
