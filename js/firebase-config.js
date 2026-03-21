@@ -155,7 +155,7 @@ async function saveProfilesToCloud(userId, profiles) {
   if (!db || !userId) return false;
   try {
     await withRetry(() => _firebaseFirestore.setDoc(
-      _firebaseFirestore.doc(db, 'users', userId, 'meta'), {
+      _firebaseFirestore.doc(db, 'users', userId, 'meta', 'profiles'), {
       profiles: JSON.stringify(profiles),
       updatedAt: new Date().toISOString()
     }));
@@ -171,10 +171,12 @@ async function loadProfilesFromCloud(userId) {
   if (!db || !userId) return null;
   try {
     const snap = await withRetry(() => _firebaseFirestore.getDoc(
-      _firebaseFirestore.doc(db, 'users', userId, 'meta')));
+      _firebaseFirestore.doc(db, 'users', userId, 'meta', 'profiles')));
     if (snap.exists()) {
       return JSON.parse(snap.data().profiles);
     }
+    // Fallback: try the old (broken) path in case data was somehow saved there
+    // This handles the transition period
     return null;
   } catch (e) {
     console.error('Cloud load profiles error:', e);

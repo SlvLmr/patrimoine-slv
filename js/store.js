@@ -427,6 +427,10 @@ const Store = {
                (state.actifs?.epargne?.length > 0) ||
                (state.revenus?.length > 0) ||
                (state.depenses?.length > 0) ||
+               (state.suiviDepenses?.length > 0) ||
+               (state.suiviRevenus?.length > 0) ||
+               (state.depensesMensuellesCIC?.length > 0) ||
+               (state.surplusAnnuel?.length > 0) ||
                (state.userInfo?.prenom);
       });
       if (hasRealData) {
