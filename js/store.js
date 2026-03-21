@@ -553,7 +553,14 @@ const Store = {
 
     const trFeatures = this._state.trFeatures || {};
     const trInterets = Number(trFeatures.interets) || 0;
-    const trRoundup = Number(trFeatures.roundup) || 0;
+
+    // Auto-compute round-up from actual TR expenses (dépenses + NDF, excluding virements)
+    const trRoundup = items
+      .filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'Virement')
+      .reduce((s, i) => {
+        const m = Number(i.montant) || 0;
+        return s + (Math.ceil(m) - m);
+      }, 0);
 
     return {
       cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,

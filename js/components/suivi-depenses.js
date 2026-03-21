@@ -120,14 +120,20 @@ export function render(store) {
   const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
-  // Trade Republic features (editable values)
+  // Trade Republic features (editable values for interets, auto-computed for saveback & roundup)
   const trFeatures = store.get('trFeatures') || {};
   const trInterets = Number(trFeatures.interets) || 0;
   const lblInterets = trFeatures.lblInterets || 'Intérêts (2%/an)';
-  const trSaveback = Number(trFeatures.saveback) || 0;
   const lblSaveback = trFeatures.lblSaveback || 'Saveback 1% → Bitcoin';
-  const trRoundup = Number(trFeatures.roundup) || 0;
   const lblRoundup = trFeatures.lblRoundup || 'Round-up → CTO';
+
+  // Auto-compute saveback (1%) and round-up from actual TR expenses (dépenses + NDF, excluding virements)
+  const trExpensesForFeatures = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'Virement');
+  const trSaveback = trExpensesForFeatures.reduce((s, i) => s + (Number(i.montant) || 0), 0) * 0.01;
+  const trRoundup = trExpensesForFeatures.reduce((s, i) => {
+    const m = Number(i.montant) || 0;
+    return s + (Math.ceil(m) - m);
+  }, 0);
 
   const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup;
   // Archive data
@@ -436,7 +442,12 @@ export function mount(store, navigate) {
     const finalSoldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
     const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-    const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
+    const archTrFeatures = store.get('trFeatures') || {};
+    const archTrInterets = Number(archTrFeatures.interets) || 0;
+    const archTrRoundup = items
+      .filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'Virement')
+      .reduce((s, i) => { const m = Number(i.montant) || 0; return s + (Math.ceil(m) - m); }, 0);
+    const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR + archTrInterets - depTR - archTrRoundup;
 
     // Build archive summary
     const totalDepenses = items.reduce((s, i) => s + (Number(i.montant) || 0), 0) + totalCochees;
@@ -639,11 +650,11 @@ export function mount(store, navigate) {
     });
   });
 
-  // Edit TR features (Intérêts, Saveback, Round-up)
+  // Edit TR features (Intérêts = editable, Saveback & Round-up = auto-computed, label only)
   const trFeatureMeta = {
-    interets: { valueKey: 'interets', lblKey: 'lblInterets', defaultLbl: 'Intérêts (2%/an)' },
-    saveback: { valueKey: 'saveback', lblKey: 'lblSaveback', defaultLbl: 'Saveback 1% → Bitcoin' },
-    roundup: { valueKey: 'roundup', lblKey: 'lblRoundup', defaultLbl: 'Round-up → CTO' },
+    interets: { valueKey: 'interets', lblKey: 'lblInterets', defaultLbl: 'Intérêts (2%/an)', editable: true },
+    saveback: { lblKey: 'lblSaveback', defaultLbl: 'Saveback 1% → Bitcoin', editable: false },
+    roundup: { lblKey: 'lblRoundup', defaultLbl: 'Round-up → CTO', editable: false },
   };
   document.querySelectorAll('[data-edit-tr-feature]').forEach(el => {
     el.addEventListener('click', () => {
@@ -651,15 +662,25 @@ export function mount(store, navigate) {
       const meta = trFeatureMeta[feat];
       const trFeatures = store.get('trFeatures') || {};
       const currentLabel = trFeatures[meta.lblKey] || meta.defaultLbl;
-      const currentValue = Number(trFeatures[meta.valueKey]) || 0;
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue, 'number', 'step="0.01"');
-      openModal(currentLabel, body, () => {
-        const data = getFormData(document.getElementById('modal-body'));
-        trFeatures[meta.valueKey] = Number(data.montant) || 0;
-        if (data.libelle) trFeatures[meta.lblKey] = data.libelle;
-        store.set('trFeatures', trFeatures);
-        navigate('suivi-depenses');
-      });
+      if (meta.editable) {
+        const currentValue = Number(trFeatures[meta.valueKey]) || 0;
+        const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue, 'number', 'step="0.01"');
+        openModal(currentLabel, body, () => {
+          const data = getFormData(document.getElementById('modal-body'));
+          trFeatures[meta.valueKey] = Number(data.montant) || 0;
+          if (data.libelle) trFeatures[meta.lblKey] = data.libelle;
+          store.set('trFeatures', trFeatures);
+          navigate('suivi-depenses');
+        });
+      } else {
+        const body = inputField('libelle', 'Libellé', currentLabel) + `<p class="text-xs text-gray-500 mt-2">Le montant est calculé automatiquement à partir des dépenses Trade Republic.</p>`;
+        openModal(currentLabel, body, () => {
+          const data = getFormData(document.getElementById('modal-body'));
+          if (data.libelle) trFeatures[meta.lblKey] = data.libelle;
+          store.set('trFeatures', trFeatures);
+          navigate('suivi-depenses');
+        });
+      }
     });
   });
 
