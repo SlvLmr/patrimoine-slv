@@ -88,15 +88,27 @@ function getCurrentUser() {
   return auth?.currentUser || null;
 }
 
+// Retry helper for cloud operations
+async function withRetry(fn, maxRetries = 2) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (attempt === maxRetries) throw e;
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+}
+
 // Firestore sync functions
 async function saveToCloud(userId, profileId, data) {
   const { db } = initFirebase();
   if (!db || !userId) return false;
   try {
-    await setDoc(doc(db, 'users', userId, 'profiles', profileId), {
+    await withRetry(() => setDoc(doc(db, 'users', userId, 'profiles', profileId), {
       data: JSON.stringify(data),
       updatedAt: new Date().toISOString()
-    });
+    }));
     return true;
   } catch (e) {
     console.error('Cloud save error:', e);
@@ -108,7 +120,7 @@ async function loadFromCloud(userId, profileId) {
   const { db } = initFirebase();
   if (!db || !userId) return null;
   try {
-    const snap = await getDoc(doc(db, 'users', userId, 'profiles', profileId));
+    const snap = await withRetry(() => getDoc(doc(db, 'users', userId, 'profiles', profileId)));
     if (snap.exists()) {
       return JSON.parse(snap.data().data);
     }
@@ -123,10 +135,10 @@ async function saveProfilesToCloud(userId, profiles) {
   const { db } = initFirebase();
   if (!db || !userId) return false;
   try {
-    await setDoc(doc(db, 'users', userId, 'meta'), {
+    await withRetry(() => setDoc(doc(db, 'users', userId, 'meta'), {
       profiles: JSON.stringify(profiles),
       updatedAt: new Date().toISOString()
-    });
+    }));
     return true;
   } catch (e) {
     console.error('Cloud save profiles error:', e);
@@ -138,7 +150,7 @@ async function loadProfilesFromCloud(userId) {
   const { db } = initFirebase();
   if (!db || !userId) return null;
   try {
-    const snap = await getDoc(doc(db, 'users', userId, 'meta'));
+    const snap = await withRetry(() => getDoc(doc(db, 'users', userId, 'meta')));
     if (snap.exists()) {
       return JSON.parse(snap.data().profiles);
     }

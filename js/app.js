@@ -215,6 +215,26 @@ function updateSyncStatus(msg) {
     el.textContent = msg;
     return;
   }
+  const { pending, failed } = store.getSyncStatus();
+  if (failed) {
+    el.innerHTML = `<svg class="w-3 h-3 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-red-400 cursor-pointer" id="retry-sync-btn">Erreur sync — Réessayer</span>`;
+    el.querySelector('#retry-sync-btn')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      el.innerHTML = `<span class="text-yellow-400 text-xs">Synchronisation...</span>`;
+      const ok = await store.forceSyncToCloud();
+      if (ok) {
+        updateSyncStatus();
+        renderPage();
+      } else {
+        updateSyncStatus();
+      }
+    });
+    return;
+  }
+  if (pending > 0) {
+    el.innerHTML = `<svg class="w-3 h-3 text-yellow-400 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg><span class="text-yellow-400">Sauvegarde...</span>`;
+    return;
+  }
   const lastSync = localStorage.getItem('patrimoine-slv-last-sync');
   if (lastSync) {
     const time = new Date(lastSync).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -650,6 +670,9 @@ function showApp() {
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
+  // Track sync status changes to update the UI indicator
+  store.onSyncStatusChange(() => updateSyncStatus());
+
   if (isConfigured()) {
     // Firebase is configured: check auth state
     onAuth(async (user) => {
@@ -662,6 +685,25 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         // Not logged in — show login screen
         showLoginScreen();
+      }
+    });
+
+    // Re-sync from cloud when tab becomes visible again (e.g. switching PCs)
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState !== 'visible') return;
+      const user = getCurrentUser();
+      if (!user || !appStarted) return;
+      // Only sync if last sync was more than 30 seconds ago
+      const lastSync = localStorage.getItem('patrimoine-slv-last-sync');
+      if (lastSync) {
+        const elapsed = Date.now() - new Date(lastSync).getTime();
+        if (elapsed < 30000) return;
+      }
+      const synced = await store.syncFromCloud();
+      if (synced) {
+        store.init();
+        renderPage();
+        updateSyncStatus();
       }
     });
   } else {

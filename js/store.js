@@ -4,6 +4,11 @@ import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesT
 const PROFILES_KEY = 'patrimoine-slv-profiles';
 const ACTIVE_PROFILE_KEY = 'patrimoine-slv-active-profile';
 
+// Track cloud sync status
+let _cloudSyncPending = 0;
+let _cloudSyncFailed = false;
+let _onSyncStatusChange = null;
+
 const defaultState = {
   actifs: {
     immobilier: [],
@@ -67,9 +72,25 @@ function getProfiles() {
 
 function saveProfiles(profiles) {
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-  // Cloud sync (fire and forget)
+  // Cloud sync with error tracking
   const user = getCurrentUser();
-  if (user) saveProfilesToCloud(user.uid, profiles);
+  if (user) {
+    _cloudSyncPending++;
+    _notifySyncStatus();
+    saveProfilesToCloud(user.uid, profiles).then(ok => {
+      _cloudSyncPending--;
+      if (!ok) _cloudSyncFailed = true;
+      _notifySyncStatus();
+    }).catch(() => {
+      _cloudSyncPending--;
+      _cloudSyncFailed = true;
+      _notifySyncStatus();
+    });
+  }
+}
+
+function _notifySyncStatus() {
+  if (_onSyncStatusChange) _onSyncStatusChange({ pending: _cloudSyncPending, failed: _cloudSyncFailed });
 }
 
 function getActiveProfileId() {
@@ -145,9 +166,22 @@ function loadState(profileId) {
 function saveState(profileId, state) {
   try {
     localStorage.setItem(getStorageKey(profileId), JSON.stringify(state));
-    // Cloud sync (fire and forget)
+    // Cloud sync with error tracking
     const user = getCurrentUser();
-    if (user) saveToCloud(user.uid, profileId, state);
+    if (user) {
+      _cloudSyncPending++;
+      _notifySyncStatus();
+      saveToCloud(user.uid, profileId, state).then(ok => {
+        _cloudSyncPending--;
+        if (!ok) _cloudSyncFailed = true;
+        else _cloudSyncFailed = false;
+        _notifySyncStatus();
+      }).catch(() => {
+        _cloudSyncPending--;
+        _cloudSyncFailed = true;
+        _notifySyncStatus();
+      });
+    }
   } catch (e) {
     console.error('Erreur de sauvegarde:', e);
     alert('Erreur: espace de stockage insuffisant.');
@@ -338,20 +372,40 @@ const Store = {
           }
         }
 
-        // Re-init with cloud data
-        const activeId = cloudProfiles[0].id;
+        // Re-init with cloud data, preserve active profile if it exists in cloud
+        const currentActiveId = getActiveProfileId();
+        const activeId = cloudProfiles.find(p => p.id === currentActiveId)
+          ? currentActiveId
+          : cloudProfiles[0].id;
         this._profileId = activeId;
         setActiveProfileId(activeId);
         this._state = loadState(activeId);
         localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
+        _cloudSyncFailed = false;
+        _notifySyncStatus();
         return true;
       }
 
-      // No cloud data yet — push local to cloud
-      await this.syncToCloud();
+      // No cloud data yet — only push to cloud if local data is non-empty
+      // (avoid pushing empty default data that would overwrite potential future real data)
+      const localProfiles = getProfiles();
+      const hasRealData = localProfiles.some(p => {
+        const state = loadState(p.id);
+        return (state.actifs?.immobilier?.length > 0) ||
+               (state.actifs?.placements?.length > 0) ||
+               (state.actifs?.epargne?.length > 0) ||
+               (state.revenus?.length > 0) ||
+               (state.depenses?.length > 0) ||
+               (state.userInfo?.prenom);
+      });
+      if (hasRealData) {
+        await this.syncToCloud();
+      }
       return false;
     } catch (e) {
       console.error('Sync from cloud error:', e);
+      _cloudSyncFailed = true;
+      _notifySyncStatus();
       return false;
     }
   },
@@ -610,6 +664,47 @@ const Store = {
       saveState(this._profileId, this._state);
       return true;
     } catch {
+      return false;
+    }
+  },
+
+  // Sync status tracking
+  onSyncStatusChange(callback) {
+    _onSyncStatusChange = callback;
+  },
+
+  getSyncStatus() {
+    return { pending: _cloudSyncPending, failed: _cloudSyncFailed };
+  },
+
+  clearSyncError() {
+    _cloudSyncFailed = false;
+    _notifySyncStatus();
+  },
+
+  // Force push all data to cloud (retry mechanism)
+  async forceSyncToCloud() {
+    const user = getCurrentUser();
+    if (!user) return false;
+
+    try {
+      const profiles = getProfiles();
+      const profilesOk = await saveProfilesToCloud(user.uid, profiles);
+      if (!profilesOk) throw new Error('Failed to save profiles');
+
+      for (const p of profiles) {
+        const data = loadState(p.id);
+        const ok = await saveToCloud(user.uid, p.id, data);
+        if (!ok) throw new Error(`Failed to save profile ${p.id}`);
+      }
+      localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
+      _cloudSyncFailed = false;
+      _notifySyncStatus();
+      return true;
+    } catch (e) {
+      console.error('Force sync to cloud error:', e);
+      _cloudSyncFailed = true;
+      _notifySyncStatus();
       return false;
     }
   }
