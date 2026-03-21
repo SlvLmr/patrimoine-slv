@@ -658,6 +658,10 @@ function showLoginScreen() {
       store.init();
       showApp();
       updateUserBar();
+      // Flush any saves made before login + start real-time sync
+      store.flushPendingSync();
+      store.startRealtimeSync(() => { renderPage(); updateSyncStatus(); });
+
       if (synced) {
         showToast('Données synchronisées !', 'success', 3000);
         updateSyncStatus();
@@ -759,6 +763,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPage();
             showToast('Données synchronisées', 'success', 3000);
           }
+          // Flush any saves made before Firebase was ready + start real-time sync
+          store.flushPendingSync();
+          store.startRealtimeSync(() => { renderPage(); updateSyncStatus(); });
           updateSyncStatus();
         } else {
           // No user — check if this is a new/empty device

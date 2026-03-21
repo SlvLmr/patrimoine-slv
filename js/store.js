@@ -1,14 +1,30 @@
-import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud, discoverProfilesFromCloud } from './firebase-config.js';
+import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud, discoverProfilesFromCloud, subscribeToProfile } from './firebase-config.js';
 
 
 const PROFILES_KEY = 'patrimoine-slv-profiles';
 const ACTIVE_PROFILE_KEY = 'patrimoine-slv-active-profile';
+
+// Unique device ID per browser session — used to ignore our own onSnapshot echoes
+const DEVICE_ID = sessionStorage.getItem('_slv_device') || (() => {
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  sessionStorage.setItem('_slv_device', id);
+  return id;
+})();
 
 // Track cloud sync status
 let _cloudSyncPending = 0;
 let _cloudSyncFailed = false;
 let _onSyncStatusChange = null;
 let _metaSyncedThisSession = false;
+
+// Save queue: tracks whether local data is ahead of cloud
+let _hasPendingSave = false;
+let _cloudSaveTimer = null;
+let _cloudRetryTimer = null;
+
+// Real-time sync
+let _unsubscribeRealtime = null;
+let _onRemoteChangeCallback = null;
 
 const defaultState = {
   actifs: {
@@ -74,7 +90,6 @@ function getProfiles() {
 
 function saveProfiles(profiles) {
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-  // Cloud sync with error tracking
   const user = getCurrentUser();
   if (user) {
     _cloudSyncPending++;
@@ -88,6 +103,8 @@ function saveProfiles(profiles) {
       _cloudSyncFailed = true;
       _notifySyncStatus();
     });
+  } else {
+    _hasPendingSave = true;
   }
 }
 
@@ -168,39 +185,72 @@ function loadState(profileId) {
 function saveState(profileId, state) {
   try {
     localStorage.setItem(getStorageKey(profileId), JSON.stringify(state));
-    // Cloud sync with error tracking
     const user = getCurrentUser();
     if (user) {
-      _cloudSyncPending++;
-      _notifySyncStatus();
-
-      // Ensure profiles metadata is pushed to cloud at least once per session
-      // This fixes the bug where profile data was saved but metadata was not,
-      // making profiles invisible on other devices
-      const metaPromise = !_metaSyncedThisSession
-        ? saveProfilesToCloud(user.uid, getProfiles()).then(ok => {
-            if (ok) _metaSyncedThisSession = true;
-          }).catch(() => {})
-        : Promise.resolve();
-
-      Promise.all([
-        saveToCloud(user.uid, profileId, state),
-        metaPromise
-      ]).then(([ok]) => {
-        _cloudSyncPending--;
-        if (!ok) _cloudSyncFailed = true;
-        else _cloudSyncFailed = false;
-        _notifySyncStatus();
-      }).catch(() => {
-        _cloudSyncPending--;
-        _cloudSyncFailed = true;
-        _notifySyncStatus();
-      });
+      // Debounce cloud saves: wait 500ms for rapid successive changes
+      if (_cloudSaveTimer) clearTimeout(_cloudSaveTimer);
+      _cloudSaveTimer = setTimeout(() => {
+        _pushToCloud(user.uid, profileId, state);
+      }, 500);
+    } else {
+      // Firebase not ready yet — flag for later flush
+      _hasPendingSave = true;
     }
   } catch (e) {
     console.error('Erreur de sauvegarde:', e);
     alert('Erreur: espace de stockage insuffisant.');
   }
+}
+
+// Actually push state to Firestore with retry on failure
+function _pushToCloud(userId, profileId, state) {
+  if (_cloudRetryTimer) { clearTimeout(_cloudRetryTimer); _cloudRetryTimer = null; }
+
+  _cloudSyncPending++;
+  _notifySyncStatus();
+
+  // Ensure profiles metadata is pushed at least once per session
+  const metaPromise = !_metaSyncedThisSession
+    ? saveProfilesToCloud(userId, getProfiles()).then(ok => {
+        if (ok) _metaSyncedThisSession = true;
+      }).catch(() => {})
+    : Promise.resolve();
+
+  Promise.all([
+    saveToCloud(userId, profileId, state, DEVICE_ID),
+    metaPromise
+  ]).then(([ok]) => {
+    _cloudSyncPending--;
+    if (!ok) {
+      _cloudSyncFailed = true;
+      _notifySyncStatus();
+      // Retry in 5 seconds with current state from localStorage
+      _cloudRetryTimer = setTimeout(() => {
+        const user = getCurrentUser();
+        if (user) {
+          const freshState = loadState(profileId);
+          _pushToCloud(user.uid, profileId, freshState);
+        }
+      }, 5000);
+    } else {
+      _cloudSyncFailed = false;
+      _hasPendingSave = false;
+      localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
+      _notifySyncStatus();
+    }
+  }).catch(() => {
+    _cloudSyncPending--;
+    _cloudSyncFailed = true;
+    _notifySyncStatus();
+    // Retry in 5 seconds
+    _cloudRetryTimer = setTimeout(() => {
+      const user = getCurrentUser();
+      if (user) {
+        const freshState = loadState(profileId);
+        _pushToCloud(user.uid, profileId, freshState);
+      }
+    }, 5000);
+  });
 }
 
 const Store = {
@@ -457,9 +507,10 @@ const Store = {
 
       for (const p of profiles) {
         const data = loadState(p.id);
-        await saveToCloud(user.uid, p.id, data);
+        await saveToCloud(user.uid, p.id, data, DEVICE_ID);
       }
       localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
+      _hasPendingSave = false;
       return true;
     } catch (e) {
       console.error('Sync to cloud error:', e);
@@ -492,6 +543,10 @@ const Store = {
     this._profileId = id;
     setActiveProfileId(id);
     this._state = loadState(id);
+    // Restart real-time listener on the new profile
+    if (_unsubscribeRealtime) {
+      this.startRealtimeSync(_onRemoteChangeCallback);
+    }
     return true;
   },
 
@@ -730,11 +785,12 @@ const Store = {
 
       for (const p of profiles) {
         const data = loadState(p.id);
-        const ok = await saveToCloud(user.uid, p.id, data);
+        const ok = await saveToCloud(user.uid, p.id, data, DEVICE_ID);
         if (!ok) throw new Error(`Failed to save profile ${p.id}`);
       }
       localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
       _cloudSyncFailed = false;
+      _hasPendingSave = false;
       _notifySyncStatus();
       return true;
     } catch (e) {
@@ -742,6 +798,46 @@ const Store = {
       _cloudSyncFailed = true;
       _notifySyncStatus();
       return false;
+    }
+  },
+
+  // Flush saves that were queued before Firebase was ready
+  flushPendingSync() {
+    if (!_hasPendingSave) return;
+    const user = getCurrentUser();
+    if (!user) return;
+    _pushToCloud(user.uid, this._profileId, this._state);
+  },
+
+  // Start real-time Firestore listener for cross-device sync
+  startRealtimeSync(onRemoteChange) {
+    this.stopRealtimeSync();
+    _onRemoteChangeCallback = onRemoteChange || null;
+    const user = getCurrentUser();
+    if (!user) return;
+
+    _unsubscribeRealtime = subscribeToProfile(user.uid, this._profileId, (docData) => {
+      // Ignore our own writes
+      if (docData.deviceId === DEVICE_ID) return;
+
+      try {
+        const remoteState = JSON.parse(docData.data);
+        // Update localStorage and in-memory state
+        localStorage.setItem(getStorageKey(this._profileId), JSON.stringify(remoteState));
+        this._state = loadState(this._profileId);
+        localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
+        if (_onRemoteChangeCallback) _onRemoteChangeCallback();
+      } catch (e) {
+        console.error('Error applying remote state:', e);
+      }
+    });
+  },
+
+  // Stop the real-time listener
+  stopRealtimeSync() {
+    if (_unsubscribeRealtime) {
+      _unsubscribeRealtime();
+      _unsubscribeRealtime = null;
     }
   }
 };

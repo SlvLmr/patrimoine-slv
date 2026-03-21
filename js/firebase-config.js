@@ -115,7 +115,7 @@ async function withRetry(fn, maxRetries = 2) {
 }
 
 // Firestore sync functions
-async function saveToCloud(userId, profileId, data) {
+async function saveToCloud(userId, profileId, data, deviceId) {
   const { db } = initFirebase();
   if (!db || !userId) {
     console.warn('Cloud save skipped: db=', !!db, 'userId=', !!userId);
@@ -125,7 +125,8 @@ async function saveToCloud(userId, profileId, data) {
     await withRetry(() => _firebaseFirestore.setDoc(
       _firebaseFirestore.doc(db, 'users', userId, 'profiles', profileId), {
       data: JSON.stringify(data),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      deviceId: deviceId || null
     }));
     return true;
   } catch (e) {
@@ -238,6 +239,21 @@ async function discoverProfilesFromCloud(userId) {
   }
 }
 
+// Real-time listener for profile data changes (cross-device sync)
+function subscribeToProfile(userId, profileId, onChange, onError) {
+  const { db } = initFirebase();
+  if (!db || !userId) return () => {};
+
+  const docRef = _firebaseFirestore.doc(db, 'users', userId, 'profiles', profileId);
+  return _firebaseFirestore.onSnapshot(docRef, (snap) => {
+    if (!snap.exists()) return;
+    onChange(snap.data());
+  }, (error) => {
+    console.error('Realtime sync error:', error);
+    if (onError) onError(error);
+  });
+}
+
 export {
   isConfigured,
   loadFirebaseSDK,
@@ -253,5 +269,6 @@ export {
   saveProfilesToCloud,
   loadProfilesFromCloud,
   discoverProfilesFromCloud,
-  testCloudConnection
+  testCloudConnection,
+  subscribeToProfile
 };
