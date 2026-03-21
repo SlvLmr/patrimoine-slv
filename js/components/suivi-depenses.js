@@ -326,31 +326,68 @@ export function render(store) {
 
       ${archives.length > 0 ? `
       <!-- Archives -->
-      <details class="card-dark rounded-xl group">
-        <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+      <div class="card-dark rounded-xl">
+        <div class="px-5 py-4">
           <h2 class="text-sm font-semibold text-gray-400">Archives mensuelles</h2>
-          <svg class="w-4 h-4 text-gray-600 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </summary>
-        <div class="divide-y divide-dark-400/20">
-          ${archives.sort((a, b) => b.mois.localeCompare(a.mois)).map(a => {
-            const label = new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
-            return `
-          <div class="px-5 py-3">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-sm text-gray-300 capitalize">${label}</span>
-              <div class="flex items-center gap-3">
-                <span class="text-xs text-gray-500">${a.count} dépense${a.count > 1 ? 's' : ''}</span>
-                <span class="text-sm font-semibold text-accent-red">${formatCurrencyCents(a.total)}</span>
-              </div>
-            </div>
-            ${cats.length > 0 ? `<div class="flex flex-wrap gap-1 mt-1">${cats.map(([cat, val]) =>
-              `<span class="text-[10px] px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-500">${cat} ${formatCurrencyCents(val)}</span>`
-            ).join('')}</div>` : ''}
-          </div>`;
-          }).join('')}
         </div>
-      </details>
+        <!-- Tableau récapitulatif -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-dark-400/30">
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mois</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Revenus</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Dépenses</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Solde ${bankNames.primary}</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Solde ${bankNames.secondary}</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ops</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-dark-400/20">
+              ${archives.sort((a, b) => b.mois.localeCompare(a.mois)).map(a => {
+                const label = new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                const rev = a.totalRevenus || 0;
+                const dep = a.total || 0;
+                const balance = rev - dep;
+                const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
+                return `
+              <tr class="hover:bg-dark-600/30 transition group">
+                <td class="px-4 py-2.5">
+                  <span class="text-gray-200 capitalize font-medium">${label}</span>
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <span class="text-accent-green font-medium">${formatCurrencyCents(rev)}</span>
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <span class="text-accent-red font-medium">${formatCurrencyCents(dep)}</span>
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <span class="font-semibold ${balance >= 0 ? 'text-accent-green' : 'text-accent-red'}">${balance >= 0 ? '+' : ''}${formatCurrencyCents(balance)}</span>
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <span class="text-gray-300 font-medium">${a.soldeFinalCIC !== undefined ? formatCurrencyCents(a.soldeFinalCIC) : '—'}</span>
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <span class="text-gray-300 font-medium">${a.soldeFinalTR !== undefined ? formatCurrencyCents(a.soldeFinalTR) : '—'}</span>
+                </td>
+                <td class="px-4 py-2.5 text-center">
+                  <span class="text-xs text-gray-500">${a.count}</span>
+                </td>
+              </tr>
+              ${cats.length > 0 ? `
+              <tr class="bg-dark-800/30">
+                <td colspan="7" class="px-4 py-1.5">
+                  <div class="flex flex-wrap gap-1">${cats.map(([cat, val]) =>
+                    `<span class="text-[10px] px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-500">${cat} ${formatCurrencyCents(val)}</span>`
+                  ).join('')}</div>
+                </td>
+              </tr>` : ''}`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
       ` : ''}
     </div>
   `;
