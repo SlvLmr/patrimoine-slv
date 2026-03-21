@@ -348,7 +348,7 @@ export function computeProjection(store) {
   // Helper: compute total current value of all AV placements (for value-based ceiling)
   const getAvTotalValue = () => placSims.filter(p => p.groupKey === 'Assurance Vie').reduce((sum, p) => sum + p.value, 0);
   let cumulInterets = 0;
-  const PFU_RATE = params.tauxPFU || 0.314;  // Prélèvement Forfaitaire Unique: 14.2% IR + 17.2% PS
+  const PFU_RATE = params.tauxPFU || 0.30;  // Prélèvement Forfaitaire Unique: 12.8% IR + 17.2% PS
   const PS_RATE = params.tauxPS || 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
   const AV_IR_AFTER8 = params.tauxAVIR || 0.075; // AV après 8 ans: 7.5% IR (hors abattement)
   const AV_ABATTEMENT = 4600; // Abattement annuel AV > 8 ans (célibataire)
@@ -367,14 +367,14 @@ export function computeProjection(store) {
     }
     if (isAV) {
       // AV: after 8 years → PS 17.2% + 7.5% IR (simplified, ignoring abatement for now)
-      // before 8 years → PFU 31.4%
+      // before 8 years → PFU 30%
       return envelopeAge >= 8 ? (PS_RATE + AV_IR_AFTER8) : PFU_RATE;
     }
     if (isPEE) {
       // PEE: only social charges on gains (no IR)
       return PS_RATE;
     }
-    // CTO, Crypto, PER, Autre → PFU 31.4%
+    // CTO, Crypto, PER, Autre → PFU 30%
     return PFU_RATE;
   }
 
@@ -512,9 +512,18 @@ export function computeProjection(store) {
               if (overflow > 0) avOverflowMonthly[m] += overflow;
             }
             if (dcaThisMonth > 0) {
-              ps.quantite += dcaThisMonth / ps.prixAction;
-              ps.totalApports += dcaThisMonth;
-              if (isPEA) peaApportsCumules += dcaThisMonth;
+              if (isPEA && ps.prixAction > 0) {
+                // PEA: whole shares only, remainder stays as cash in PEA
+                const wholeShares = Math.floor(dcaThisMonth / ps.prixAction);
+                const spent = wholeShares * ps.prixAction;
+                ps.quantite += wholeShares;
+                ps.totalApports += spent;
+                if (isPEA) peaApportsCumules += spent;
+                // Unspent remainder carries over (simplified: lost in sim)
+              } else {
+                ps.quantite += dcaThisMonth / ps.prixAction;
+                ps.totalApports += dcaThisMonth;
+              }
             }
           }
           // Monthly price growth
@@ -526,7 +535,13 @@ export function computeProjection(store) {
             const dividendTotal = ps.quantite * ps.dividendeParAction * loyaltyMultiplier;
             interetsAnnuels += dividendTotal;
             if (ps.prixAction > 0) {
-              ps.quantite += dividendTotal / ps.prixAction;
+              if (isPEA) {
+                // PEA: reinvest dividends in whole shares only
+                const wholeShares = Math.floor(dividendTotal / ps.prixAction);
+                ps.quantite += wholeShares;
+              } else {
+                ps.quantite += dividendTotal / ps.prixAction;
+              }
             }
           }
         }
@@ -587,8 +602,17 @@ export function computeProjection(store) {
           }
           if (amount > 0) {
             if (ps.isAirLiquide && ps.prixAction > 0) {
-              ps.quantite += amount / ps.prixAction;
-              ps.value = ps.quantite * ps.prixAction;
+              if (isPEAPlacement) {
+                // PEA: whole shares only
+                const wholeShares = Math.floor(amount / ps.prixAction);
+                const spent = wholeShares * ps.prixAction;
+                ps.quantite += wholeShares;
+                ps.value = ps.quantite * ps.prixAction;
+                amount = spent; // adjust apport to actual spent
+              } else {
+                ps.quantite += amount / ps.prixAction;
+                ps.value = ps.quantite * ps.prixAction;
+              }
             } else {
               ps.value += amount;
             }

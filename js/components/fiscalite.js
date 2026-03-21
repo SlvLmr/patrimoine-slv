@@ -1073,7 +1073,7 @@ export function mount(store, navigate) {
       if (pea5Year >= currentYear && pea5Year <= projMax) {
         events.push({ year: pea5Year, age: ageDonateur + (pea5Year - currentYear), type: 'fiscal', icon: 'shield', color: 'emerald',
           title: 'PEA : fiscalite avantageuse',
-          desc: `Ton PEA aura 5 ans. Les retraits seront soumis uniquement aux prelevements sociaux (17.2% au lieu de 31.4%). Conserve-le absolument, ne le casse pas.`
+          desc: `Ton PEA aura 5 ans. Les retraits seront soumis uniquement aux prelevements sociaux (17.2% au lieu de 30%). Conserve-le absolument, ne le casse pas.`
         });
       }
     }
@@ -1088,7 +1088,7 @@ export function mount(store, navigate) {
       if (av8Year >= currentYear && av8Year <= projMax) {
         events.push({ year: av8Year, age: ageDonateur + (av8Year - currentYear), type: 'fiscal', icon: 'clock', color: 'amber',
           title: 'Assurance Vie : maturite fiscale',
-          desc: `Ton AV aura 8 ans. Tu beneficies d'un abattement annuel de 4 600 EUR sur les gains et d'une fiscalite reduite (24.7% vs 31.4%).`
+          desc: `Ton AV aura 8 ans. Tu beneficies d'un abattement annuel de 4 600 EUR sur les gains et d'une fiscalite reduite (24.7% vs 30%).`
         });
       }
     }

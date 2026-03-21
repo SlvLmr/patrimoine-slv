@@ -324,7 +324,7 @@ export function render(store) {
             <div class="flex flex-wrap items-end gap-3">
               ${[
                 ['param-inflation', 'Inflation', ((params.inflationRate || 0.02) * 100).toFixed(1), '%'],
-                ['param-pfu', 'Flat Tax', ((params.tauxPFU || 0.314) * 100).toFixed(1), '%'],
+                ['param-pfu', 'Flat Tax', ((params.tauxPFU || 0.30) * 100).toFixed(1), '%'],
                 ['param-ps', 'PS (CSG)', ((params.tauxPS || 0.172) * 100).toFixed(1), '%'],
                 ['param-av-ir', 'AV IR 8a', ((params.tauxAVIR || 0.075) * 100).toFixed(1), '%'],
               ].map(([id, label, val, suffix]) => `
