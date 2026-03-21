@@ -9,11 +9,25 @@
 // 5. Copie ta config Firebase ci-dessous
 // ============================================
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
-  from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc }
-  from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+// Firebase SDK loaded lazily to avoid blocking app startup
+let _firebaseApp = null;
+let _firebaseAuth = null;
+let _firebaseFirestore = null;
+let _sdkLoadPromise = null;
+
+async function loadFirebaseSDK() {
+  if (_sdkLoadPromise) return _sdkLoadPromise;
+  _sdkLoadPromise = Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js'),
+    import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js')
+  ]).then(([appMod, authMod, firestoreMod]) => {
+    _firebaseApp = appMod;
+    _firebaseAuth = authMod;
+    _firebaseFirestore = firestoreMod;
+  });
+  return _sdkLoadPromise;
+}
 
 const firebaseConfig = {
   apiKey: "AIzaSyADxr-G7gcQDDPEcNkxiMCCCnfeuaJ48p0",
@@ -35,12 +49,12 @@ function isConfigured() {
 
 function initFirebase() {
   if (initialized) return { auth, db };
-  if (!isConfigured()) return { auth: null, db: null };
+  if (!isConfigured() || !_firebaseApp) return { auth: null, db: null };
 
   try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
+    app = _firebaseApp.initializeApp(firebaseConfig);
+    auth = _firebaseAuth.getAuth(app);
+    db = _firebaseFirestore.getFirestore(app);
     initialized = true;
   } catch (e) {
     console.error('Firebase init error:', e);
@@ -53,25 +67,25 @@ function initFirebase() {
 async function register(email, password) {
   const { auth } = initFirebase();
   if (!auth) throw new Error('Firebase non configuré');
-  return createUserWithEmailAndPassword(auth, email, password);
+  return _firebaseAuth.createUserWithEmailAndPassword(auth, email, password);
 }
 
 async function login(email, password) {
   const { auth } = initFirebase();
   if (!auth) throw new Error('Firebase non configuré');
-  return signInWithEmailAndPassword(auth, email, password);
+  return _firebaseAuth.signInWithEmailAndPassword(auth, email, password);
 }
 
 async function logout() {
   const { auth } = initFirebase();
   if (!auth) return;
-  return signOut(auth);
+  return _firebaseAuth.signOut(auth);
 }
 
 async function resetPassword(email) {
   const { auth } = initFirebase();
   if (!auth) throw new Error('Firebase non configuré');
-  return sendPasswordResetEmail(auth, email);
+  return _firebaseAuth.sendPasswordResetEmail(auth, email);
 }
 
 function onAuth(callback) {
@@ -80,7 +94,7 @@ function onAuth(callback) {
     callback(null);
     return () => {};
   }
-  return onAuthStateChanged(auth, callback);
+  return _firebaseAuth.onAuthStateChanged(auth, callback);
 }
 
 function getCurrentUser() {
@@ -105,7 +119,8 @@ async function saveToCloud(userId, profileId, data) {
   const { db } = initFirebase();
   if (!db || !userId) return false;
   try {
-    await withRetry(() => setDoc(doc(db, 'users', userId, 'profiles', profileId), {
+    await withRetry(() => _firebaseFirestore.setDoc(
+      _firebaseFirestore.doc(db, 'users', userId, 'profiles', profileId), {
       data: JSON.stringify(data),
       updatedAt: new Date().toISOString()
     }));
@@ -120,7 +135,8 @@ async function loadFromCloud(userId, profileId) {
   const { db } = initFirebase();
   if (!db || !userId) return null;
   try {
-    const snap = await withRetry(() => getDoc(doc(db, 'users', userId, 'profiles', profileId)));
+    const snap = await withRetry(() => _firebaseFirestore.getDoc(
+      _firebaseFirestore.doc(db, 'users', userId, 'profiles', profileId)));
     if (snap.exists()) {
       return JSON.parse(snap.data().data);
     }
@@ -135,7 +151,8 @@ async function saveProfilesToCloud(userId, profiles) {
   const { db } = initFirebase();
   if (!db || !userId) return false;
   try {
-    await withRetry(() => setDoc(doc(db, 'users', userId, 'meta'), {
+    await withRetry(() => _firebaseFirestore.setDoc(
+      _firebaseFirestore.doc(db, 'users', userId, 'meta'), {
       profiles: JSON.stringify(profiles),
       updatedAt: new Date().toISOString()
     }));
@@ -150,7 +167,8 @@ async function loadProfilesFromCloud(userId) {
   const { db } = initFirebase();
   if (!db || !userId) return null;
   try {
-    const snap = await withRetry(() => getDoc(doc(db, 'users', userId, 'meta')));
+    const snap = await withRetry(() => _firebaseFirestore.getDoc(
+      _firebaseFirestore.doc(db, 'users', userId, 'meta')));
     if (snap.exists()) {
       return JSON.parse(snap.data().profiles);
     }
@@ -163,6 +181,7 @@ async function loadProfilesFromCloud(userId) {
 
 export {
   isConfigured,
+  loadFirebaseSDK,
   initFirebase,
   register,
   login,

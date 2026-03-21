@@ -1,5 +1,5 @@
 import { Store } from './store.js';
-import { isConfigured, onAuth, getCurrentUser, logout as firebaseLogout } from './firebase-config.js';
+import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as Heritage from './components/heritage.js';
@@ -673,19 +673,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // Track sync status changes to update the UI indicator
   store.onSyncStatusChange(() => updateSyncStatus());
 
+  // Always show app immediately with local data (no waiting for Firebase)
+  showApp();
+
   if (isConfigured()) {
-    // Firebase is configured: check auth state
-    onAuth(async (user) => {
-      if (user) {
-        // Already logged in — sync and show app
-        await store.syncFromCloud();
-        localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
-        store.init();
-        showApp();
-      } else {
-        // Not logged in — show login screen
-        showLoginScreen();
-      }
+    // Load Firebase SDK in background, then sync
+    loadFirebaseSDK().then(() => {
+      onAuth(async (user) => {
+        if (user) {
+          const synced = await store.syncFromCloud();
+          if (synced) {
+            store.init();
+            renderPage();
+          }
+          updateSyncStatus();
+        }
+        updateUserBar();
+      });
+    }).catch(e => {
+      console.warn('Firebase SDK failed to load:', e);
     });
 
     // Re-sync from cloud when tab becomes visible again (e.g. switching PCs)
@@ -693,7 +699,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (document.visibilityState !== 'visible') return;
       const user = getCurrentUser();
       if (!user || !appStarted) return;
-      // Only sync if last sync was more than 30 seconds ago
       const lastSync = localStorage.getItem('patrimoine-slv-last-sync');
       if (lastSync) {
         const elapsed = Date.now() - new Date(lastSync).getTime();
@@ -706,9 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSyncStatus();
       }
     });
-  } else {
-    // No Firebase configured — go straight to app (local only)
-    showApp();
   }
 });
 
