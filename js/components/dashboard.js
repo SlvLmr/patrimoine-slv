@@ -33,7 +33,7 @@ function generateTimelineEvents(snapshots, store) {
         icon: 'shield',
         color: 'emerald',
         title: 'PEA : fiscalite avantageuse',
-        desc: `Ton PEA aura 5 ans. Les retraits ne seront plus soumis qu'aux prelevements sociaux (17.2% au lieu de 30%). Conserve-le absolument.`
+        desc: `Ton PEA aura 5 ans. Les retraits ne seront plus soumis qu'aux prelevements sociaux (17.2% au lieu de 31.4%). Conserve-le absolument.`
       });
     }
   }
@@ -52,7 +52,7 @@ function generateTimelineEvents(snapshots, store) {
         icon: 'clock',
         color: 'amber',
         title: 'Assurance Vie : maturite fiscale',
-        desc: `Ton AV aura 8 ans. Tu beneficies d'un abattement annuel de 4 600 EUR sur les gains et d'une fiscalite reduite (24.7% vs 30%).`
+        desc: `Ton AV aura 8 ans. Tu beneficies d'un abattement annuel de 4 600 EUR sur les gains et d'une fiscalite reduite (24.7% vs 31.4%).`
       });
     }
   }

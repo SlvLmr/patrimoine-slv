@@ -724,7 +724,7 @@ export function render(store) {
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-gray-300 font-semibold mb-1">Net d'impôts (toutes enveloppes)</h3>
               <p><code class="text-gray-300 bg-dark-900/60 px-1 rounded">Σ valeur placements − Σ impôts sur gains (par enveloppe)</code></p>
-              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui. Chaque enveloppe est taxée selon sa fiscalité propre : PEA (17.2% ou 30%), AV (24.7% ou 30%), CTO/Crypto (30%), PEE (17.2%).</p>
+              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui. Chaque enveloppe est taxée selon sa fiscalité propre : PEA (17.2% ou 31.4%), AV (24.7% ou 31.4%), CTO/Crypto (31.4%), PEE (17.2%).</p>
             </div>
           </div>
 

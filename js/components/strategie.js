@@ -130,7 +130,7 @@ const STEPS = [
     badgeColor: 'emerald',
     num: '⑥',
     title: 'Donation de titres CTO → CTO enfants · Purge des plus-values',
-    body: `Tu transfères des titres en nature depuis ton CTO perso vers les CTO de Gaspard (~27 ans) et Agathe (~25 ans). Tu ne vends pas. Résultat : zéro flat tax (30%) pour toi. Tes enfants reçoivent les titres à leur valeur du jour — leur nouvelle base fiscale. L'abattement rechargé couvre la transmission.`,
+    body: `Tu transfères des titres en nature depuis ton CTO perso vers les CTO de Gaspard (~27 ans) et Agathe (~25 ans). Tu ne vends pas. Résultat : zéro flat tax (31.4%) pour toi. Tes enfants reçoivent les titres à leur valeur du jour — leur nouvelle base fiscale. L'abattement rechargé couvre la transmission.`,
     details: [
       { icon: 'arrow', text: `<strong>Exemple</strong> : 50 000 € de titres achetés en 2038 valant 70 000 € en 2041 → si tu vends : 6 000 € de flat tax. Si tu donnes : <strong class="text-emerald-400">0 € de taxe</strong>, base fiscale des enfants = 70 000 €.` },
       { icon: 'arrow', text: `Don Sarkozy soldé : compléter le solde restant en cash depuis les livrets.` },
