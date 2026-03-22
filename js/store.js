@@ -25,6 +25,8 @@ let _cloudRetryTimer = null;
 // Real-time sync
 let _unsubscribeRealtime = null;
 let _onRemoteChangeCallback = null;
+let _realtimeRetryTimer = null;
+let _realtimeRetryCount = 0;
 
 const defaultState = {
   actifs: {
@@ -813,31 +815,68 @@ const Store = {
   startRealtimeSync(onRemoteChange) {
     this.stopRealtimeSync();
     _onRemoteChangeCallback = onRemoteChange || null;
+    _realtimeRetryCount = 0;
+    this._startRealtimeListener();
+  },
+
+  _startRealtimeListener() {
     const user = getCurrentUser();
     if (!user) return;
 
-    _unsubscribeRealtime = subscribeToProfile(user.uid, this._profileId, (docData) => {
+    // Pin profileId at subscription time to avoid race conditions
+    const subscribedProfileId = this._profileId;
+
+    _unsubscribeRealtime = subscribeToProfile(user.uid, subscribedProfileId, (docData) => {
       // Ignore our own writes
       if (docData.deviceId === DEVICE_ID) return;
+
+      // Ignore if user switched to a different profile since subscription
+      if (this._profileId !== subscribedProfileId) return;
 
       try {
         const remoteState = JSON.parse(docData.data);
         // Update localStorage and in-memory state
-        localStorage.setItem(getStorageKey(this._profileId), JSON.stringify(remoteState));
-        this._state = loadState(this._profileId);
+        localStorage.setItem(getStorageKey(subscribedProfileId), JSON.stringify(remoteState));
+        this._state = loadState(subscribedProfileId);
         localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
         if (_onRemoteChangeCallback) _onRemoteChangeCallback();
       } catch (e) {
         console.error('Error applying remote state:', e);
+      }
+    }, (error) => {
+      console.error('Realtime listener error, will retry:', error);
+      _unsubscribeRealtime = null;
+      // Retry with exponential backoff (2s, 4s, 8s, max 30s)
+      if (_realtimeRetryCount < 5) {
+        const delay = Math.min(2000 * Math.pow(2, _realtimeRetryCount), 30000);
+        _realtimeRetryCount++;
+        _realtimeRetryTimer = setTimeout(() => {
+          this._startRealtimeListener();
+        }, delay);
       }
     });
   },
 
   // Stop the real-time listener
   stopRealtimeSync() {
+    if (_realtimeRetryTimer) {
+      clearTimeout(_realtimeRetryTimer);
+      _realtimeRetryTimer = null;
+    }
     if (_unsubscribeRealtime) {
       _unsubscribeRealtime();
       _unsubscribeRealtime = null;
+    }
+  },
+
+  // Flush pending cloud save immediately (best-effort, for beforeunload)
+  flushImmediateSync() {
+    if (!_cloudSaveTimer) return;
+    clearTimeout(_cloudSaveTimer);
+    _cloudSaveTimer = null;
+    const user = getCurrentUser();
+    if (user) {
+      _pushToCloud(user.uid, this._profileId, this._state);
     }
   }
 };

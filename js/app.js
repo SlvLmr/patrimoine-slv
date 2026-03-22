@@ -791,20 +791,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Re-sync from cloud when tab becomes visible again (e.g. switching PCs)
     document.addEventListener('visibilitychange', async () => {
-      if (document.visibilityState !== 'visible') return;
+      if (!appStarted) return;
       const user = getCurrentUser();
-      if (!user || !appStarted) return;
+
+      if (document.visibilityState === 'hidden') {
+        // Flush any pending debounced saves before the tab goes to background
+        if (user) store.flushImmediateSync();
+        return;
+      }
+
+      // Tab became visible — re-sync and restart listener
+      if (!user) return;
       const lastSync = localStorage.getItem('patrimoine-slv-last-sync');
       if (lastSync) {
         const elapsed = Date.now() - new Date(lastSync).getTime();
-        if (elapsed < 30000) return;
+        if (elapsed < 5000) return;
       }
+      // Restart real-time listener (it may have been disconnected while backgrounded)
+      store.startRealtimeSync(() => { renderPage(); updateSyncStatus(); });
       const synced = await store.syncFromCloud();
       if (synced) {
         store.init();
         renderPage();
         updateSyncStatus();
       }
+    });
+
+    // Flush pending saves when the page is about to unload
+    window.addEventListener('pagehide', () => {
+      store.flushImmediateSync();
     });
   }
 });
