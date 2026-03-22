@@ -790,9 +790,25 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
           focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
           step="1">
       </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-300 flex-1">Surplus</label>
+        <input type="number" name="actu-surplus" value="${existing.surplus !== undefined ? existing.surplus : ''}"
+          placeholder="${formatCurrency(snapshot.surplus || 0).replace(/[^\d\s]/g, '').trim()}"
+          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
+          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          step="1">
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-300 flex-1">Donation</label>
+        <input type="number" name="actu-donation" value="${existing.donation !== undefined ? existing.donation : ''}"
+          placeholder="${formatCurrency(snapshot.donation || 0).replace(/[^\d\s]/g, '').trim()}"
+          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
+          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          step="1">
+      </div>
     </div>
 
-    ${Object.keys(existingPlac).length > 0 || existing.epargne !== undefined || existing.immobilier !== undefined
+    ${Object.keys(existingPlac).length > 0 || existing.epargne !== undefined || existing.immobilier !== undefined || existing.surplus !== undefined || existing.donation !== undefined
       ? '<div class="mt-4 pt-3 border-t border-dark-400/30"><button id="actu-clear" class="text-xs text-red-400 hover:text-red-300 transition">Supprimer cette actualisation</button></div>'
       : ''}
   `;
@@ -820,6 +836,16 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
     const immoInput = modalBody.querySelector('[name="actu-immobilier"]');
     if (immoInput && immoInput.value !== '') {
       actu.immobilier = Number(immoInput.value);
+      hasAny = true;
+    }
+    const surplusInput = modalBody.querySelector('[name="actu-surplus"]');
+    if (surplusInput && surplusInput.value !== '') {
+      actu.surplus = Number(surplusInput.value);
+      hasAny = true;
+    }
+    const donationInput = modalBody.querySelector('[name="actu-donation"]');
+    if (donationInput && donationInput.value !== '') {
+      actu.donation = Number(donationInput.value);
       hasAny = true;
     }
 

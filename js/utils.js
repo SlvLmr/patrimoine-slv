@@ -900,7 +900,7 @@ export function computeProjection(store) {
     // Check if user has entered real values for this calendar year
     const calYearStr = String(currentCalendarYear + year);
     const actu = actualisations[calYearStr];
-    const hasActu = actu && (actu.placements || actu.epargne !== undefined || actu.immobilier !== undefined);
+    const hasActu = actu && (actu.placements || actu.epargne !== undefined || actu.immobilier !== undefined || actu.surplus !== undefined || actu.donation !== undefined);
 
     // If actualisation exists, override simulation state with real values
     // so future years project from actual performance
@@ -943,6 +943,12 @@ export function computeProjection(store) {
       }
       if (actu.immobilier !== undefined) {
         immo = Number(actu.immobilier);
+      }
+      if (actu.surplus !== undefined) {
+        surplus = Number(actu.surplus);
+      }
+      if (actu.donation !== undefined) {
+        donation = Number(actu.donation);
       }
     }
 
