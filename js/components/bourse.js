@@ -153,7 +153,14 @@ function savePriceCache(cache) {
 async function fetchYahooChart(yahooTicker) {
   // Use Yahoo Finance v8 chart API — returns 1 month of daily data
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooTicker)}?range=1mo&interval=1d&includePrePost=false`;
-  const resp = await fetch(url);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  let resp;
+  try {
+    resp = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
   if (!resp.ok) throw new Error(`Yahoo ${resp.status}`);
   const json = await resp.json();
   const result = json?.chart?.result?.[0];

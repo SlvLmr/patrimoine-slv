@@ -127,14 +127,22 @@ export async function saveToDrive(jsonString, filename) {
   if (existing.result.files && existing.result.files.length > 0) {
     // Update existing file
     const fileId = existing.result.files[0].id;
-    const resp = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${gapi.client.getToken().access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: jsonString,
-    });
+    const controller1 = new AbortController();
+    const tid1 = setTimeout(() => controller1.abort(), 30000);
+    let resp;
+    try {
+      resp = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${gapi.client.getToken().access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: jsonString,
+        signal: controller1.signal,
+      });
+    } finally {
+      clearTimeout(tid1);
+    }
     if (!resp.ok) throw new Error('Upload failed');
     return await resp.json();
   } else {
@@ -143,13 +151,21 @@ export async function saveToDrive(jsonString, filename) {
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     form.append('file', blob);
 
-    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` },
-      body: form,
-    });
-    if (!resp.ok) throw new Error('Upload failed');
-    return await resp.json();
+    const controller2 = new AbortController();
+    const tid2 = setTimeout(() => controller2.abort(), 30000);
+    let resp2;
+    try {
+      resp2 = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${gapi.client.getToken().access_token}` },
+        body: form,
+        signal: controller2.signal,
+      });
+    } finally {
+      clearTimeout(tid2);
+    }
+    if (!resp2.ok) throw new Error('Upload failed');
+    return await resp2.json();
   }
 }
 

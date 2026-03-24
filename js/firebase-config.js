@@ -102,11 +102,15 @@ function getCurrentUser() {
   return auth?.currentUser || null;
 }
 
-// Retry helper for cloud operations
+// Retry helper for cloud operations (with 15s timeout per attempt)
 async function withRetry(fn, maxRetries = 2) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await fn();
+      const result = await Promise.race([
+        fn(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 15000))
+      ]);
+      return result;
     } catch (e) {
       if (attempt === maxRetries) throw e;
       await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
