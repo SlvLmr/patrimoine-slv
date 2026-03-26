@@ -488,7 +488,7 @@ function renderProjectionWidget(store) {
           <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-immo-delta">—</p>
         </div>
         <div class="card-dark rounded-lg border border-blue-500/15 p-3 text-center">
-          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Placements (hors AV)</p>
+          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Investissements (PEA, CTO, BTC)</p>
           <p class="text-lg font-bold text-blue-400 mt-1" id="strat-proj-plac">${formatCurrency(first.placementsHorsAV)}</p>
           <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-plac-delta">—</p>
         </div>
@@ -509,33 +509,27 @@ function renderProjectionWidget(store) {
         </div>
       </div>
 
-      <!-- Succession comparison -->
+      <!-- Succession comparison (compact: amount on the right) -->
       <div class="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 gap-3" id="strat-proj-succession">
-        <div class="card-dark rounded-xl border border-red-500/15 p-4">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
-              <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </div>
-            <div>
-              <p class="text-sm font-bold text-gray-200">Sans optimisation</p>
-              <p class="text-[10px] text-gray-500">Droits de succession bruts</p>
-            </div>
+        <div class="card-dark rounded-xl border border-red-500/15 px-4 py-3 flex items-center gap-3">
+          <div class="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </div>
-          <p class="text-2xl font-bold text-red-400" id="strat-proj-droits-bruts">0 €</p>
-          <p class="text-[10px] text-gray-500 mt-1" id="strat-proj-droits-detail">${nbEnfants} enfants — abattement ${formatCurrency(abattementParEnfant)} chacun</p>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-gray-200">Sans optimisation</p>
+            <p class="text-[10px] text-gray-500" id="strat-proj-droits-detail">${nbEnfants} enfants — abattement ${formatCurrency(abattementParEnfant)} chacun</p>
+          </div>
+          <p class="text-xl font-bold text-red-400 tabular-nums flex-shrink-0" id="strat-proj-droits-bruts">0 €</p>
         </div>
-        <div class="card-dark rounded-xl border border-emerald-500/15 p-4">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            </div>
-            <div>
-              <p class="text-sm font-bold text-gray-200">Avec votre stratégie</p>
-              <p class="text-[10px] text-gray-500">Droits après donations planifiées</p>
-            </div>
+        <div class="card-dark rounded-xl border border-emerald-500/15 px-4 py-3 flex items-center gap-3">
+          <div class="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           </div>
-          <p class="text-2xl font-bold text-emerald-400" id="strat-proj-droits-opti">0 €</p>
-          <p class="text-[10px] text-gray-500 mt-1">Ajoute des donations pour réduire les droits</p>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-gray-200">Avec votre stratégie</p>
+            <p class="text-[10px] text-gray-500">Ajoute des donations pour réduire les droits</p>
+          </div>
+          <p class="text-xl font-bold text-emerald-400 tabular-nums flex-shrink-0" id="strat-proj-droits-opti">0 €</p>
         </div>
       </div>
     </div>
