@@ -1,8 +1,23 @@
-import { formatCurrency, openModal } from '../utils.js?v=5';
+import { formatCurrency, openModal, computeProjection } from '../utils.js?v=5';
 
 // ============================================================================
 // HYPOTHÈSES — Plan théorique éditable
 // ============================================================================
+
+const ABATTEMENT_PARENT_ENFANT = 100000;
+const DON_FAMILIAL_TEPA = 31865;
+const AV_ABATTEMENT_PAR_BENEFICIAIRE = 152500;
+const AGE_MAX_DONATEUR_TEPA = 80;
+const RENOUVELLEMENT_ANNEES = 15;
+
+function getDonationConfig(store) {
+  return store.get('donationConfig') || { enfants: [], donations: [] };
+}
+
+function childAge(dateNaissance) {
+  if (!dateNaissance) return null;
+  return Math.floor((Date.now() - new Date(dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000));
+}
 
 const DEFAULT_THEMES = [
   { id: 'investissement', label: 'Investissement', color: 'emerald', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
@@ -148,11 +163,30 @@ function renderTimeline(hypotheses, themes) {
 
 // ─── Hypothesis card ─────────────────────────────────────────────────────────
 
-function renderCard(item, themes) {
+function renderCard(item, themes, enfants = []) {
   const themeMap = {};
   themes.forEach(t => { themeMap[t.id] = t; });
   const theme = themeMap[item.theme] || { label: 'Autre', color: 'emerald', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' };
   const cc = c(theme.color);
+
+  // Build child badges for donation cards
+  const isDonation = item.theme === 'donation';
+  const enfantIds = item.enfantIds || [];
+  let enfantBadges = '';
+  if (isDonation && enfants.length > 0) {
+    if (enfantIds.length === 0 || enfantIds.length === enfants.length) {
+      enfantBadges = `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">Tous les enfants</span>`;
+    } else {
+      enfantBadges = enfantIds.map(eid => {
+        const enf = enfants.find(e => e.id === eid);
+        return enf ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">${enf.prenom}</span>` : '';
+      }).join('');
+    }
+    if (item.donationType) {
+      const typeLabels = { donation: 'Classique', don_tepa: 'TEPA', av_donation: 'Assurance Vie' };
+      enfantBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Classique'}</span>`;
+    }
+  }
 
   return `
     <div id="hyp-${item.id}" class="group rounded-xl border ${cc.border} ${cc.bg} transition-all duration-200 hover:shadow-lg overflow-hidden">
@@ -171,6 +205,7 @@ function renderCard(item, themes) {
             <span class="text-xs font-semibold ${cc.text} px-2 py-0.5 rounded-full ${cc.bg} border ${cc.border}">${theme.label}</span>
             <span class="text-xs text-gray-500 font-medium">${item.annee}</span>
             ${item.montant ? `<span class="text-xs font-bold text-gray-300">${formatCurrency(item.montant)}</span>` : ''}
+            ${enfantBadges}
           </div>
           <h3 class="text-sm font-semibold text-gray-200 leading-snug">${item.titre}</h3>
           ${item.description ? `<p class="text-xs text-gray-500 mt-1.5 leading-relaxed">${item.description}</p>` : ''}
@@ -191,8 +226,10 @@ function renderCard(item, themes) {
 
 // ─── Modal form HTML ─────────────────────────────────────────────────────────
 
-function getFormHtml(themes, item = null) {
+function getFormHtml(themes, item = null, enfants = []) {
   const isEdit = !!item;
+  const isDonationTheme = item?.theme === 'donation';
+  const currentEnfantIds = item?.enfantIds || [];
   return `
     <div class="space-y-4">
       <div>
@@ -233,6 +270,45 @@ function getFormHtml(themes, item = null) {
         </div>
         <input type="hidden" id="hyp-form-theme" value="${item?.theme || themes[0]?.id || ''}"/>
       </div>
+      <!-- Donation type (shown only for donation theme) -->
+      <div id="hyp-form-donation-type-row" class="${isDonationTheme ? '' : 'hidden'}">
+        <label class="block text-xs text-gray-500 mb-1.5">Type de donation</label>
+        <select id="hyp-form-donation-type"
+          class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
+          <option value="donation" ${(item?.donationType || 'donation') === 'donation' ? 'selected' : ''}>Donation classique (abattement 100 000 \u20ac)</option>
+          <option value="don_tepa" ${item?.donationType === 'don_tepa' ? 'selected' : ''}>Don familial TEPA (31 865 \u20ac)</option>
+          <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Versement Assurance Vie (abattement 152 500 \u20ac)</option>
+        </select>
+      </div>
+      <!-- Child assignment (shown only for donation theme) -->
+      <div id="hyp-form-enfant-row" class="${isDonationTheme ? '' : 'hidden'}">
+        ${enfants.length > 0 ? `
+        <label class="block text-xs text-gray-500 mb-1.5">Bénéficiaire(s)</label>
+        <div id="hyp-form-enfants" class="flex flex-wrap gap-2">
+          <button type="button" class="hyp-enfant-btn px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150
+            ${currentEnfantIds.length === 0 || currentEnfantIds.length === enfants.length
+              ? 'bg-purple-500/10 border-purple-500/30 text-purple-400 ring-2 ring-purple-400/30'
+              : 'border-dark-400/30 text-gray-500 hover:text-purple-400 hover:border-purple-500/30'
+            }" data-enfant-id="all">
+            Tous mes enfants
+          </button>
+          ${enfants.map(enf => {
+            const selected = currentEnfantIds.includes(enf.id) && currentEnfantIds.length < enfants.length;
+            return `
+            <button type="button" class="hyp-enfant-btn px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150
+              ${selected
+                ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 ring-2 ring-cyan-400/30'
+                : 'border-dark-400/30 text-gray-500 hover:text-cyan-400 hover:border-cyan-500/30'
+              }" data-enfant-id="${enf.id}">
+              ${enf.prenom || 'Sans nom'}
+            </button>`;
+          }).join('')}
+        </div>
+        <input type="hidden" id="hyp-form-enfant-ids" value="${JSON.stringify(currentEnfantIds)}"/>
+        ` : `
+        <p class="text-xs text-gray-500 italic">Ajoutez des enfants dans la page Famille pour affecter les donations</p>
+        `}
+      </div>
       <div>
         <label class="block text-xs text-gray-500 mb-1.5">Description</label>
         <textarea id="hyp-form-desc" rows="3" placeholder="Notes, détails, conditions..."
@@ -269,16 +345,157 @@ function getThemeManagerHtml(themes) {
     </div>`;
 }
 
+// ─── Per-child gauge rendering ──────────────────────────────────────────────
+
+function computeChildGaugesAtYear(enfant, hypotheses, enfants, calendarYear, ageDonateur, currentYear, avParEnfant) {
+  // Filter donation-type hypotheses assigned to this child, up to calendarYear
+  const donHyps = hypotheses.filter(h => {
+    if (h.theme !== 'donation') return false;
+    if (h.annee > calendarYear) return false;
+    const ids = h.enfantIds || [];
+    // If no enfantIds specified, or all enfants, it applies to this child
+    if (ids.length === 0 || ids.length === enfants.length || ids.includes(enfant.id)) return true;
+    return false;
+  });
+
+  let abattementUtilise = 0;
+  let tepaUtilise = 0;
+  let avUtilise = 0;
+
+  // Sort by year
+  const sortedDons = [...donHyps].sort((a, b) => (a.annee || 0) - (b.annee || 0));
+  const firstDonYear = sortedDons.length > 0 ? sortedDons[0].annee : null;
+
+  for (const h of sortedDons) {
+    // Check 15-year renewal
+    if (firstDonYear && (h.annee - firstDonYear) >= RENOUVELLEMENT_ANNEES) {
+      abattementUtilise = 0;
+      tepaUtilise = 0;
+    }
+
+    // Per-child share: if hypothesis applies to multiple children, split the amount
+    const ids = h.enfantIds || [];
+    const nbBeneficiaires = (ids.length === 0 || ids.length === enfants.length) ? enfants.length : ids.length;
+    const montantPerChild = (h.montant || 0) / nbBeneficiaires;
+    const donType = h.donationType || 'donation';
+    const ageDon = ageDonateur + (h.annee - currentYear);
+
+    if (donType === 'don_tepa') {
+      if (ageDon < AGE_MAX_DONATEUR_TEPA) {
+        const tepaDisp = DON_FAMILIAL_TEPA - tepaUtilise;
+        const tepaUse = Math.min(montantPerChild, tepaDisp);
+        tepaUtilise += tepaUse;
+        const rest = montantPerChild - tepaUse;
+        if (rest > 0) {
+          const abattDisp = ABATTEMENT_PARENT_ENFANT - abattementUtilise;
+          abattementUtilise += Math.min(rest, abattDisp);
+        }
+      }
+    } else if (donType === 'av_donation') {
+      avUtilise += montantPerChild;
+    } else {
+      // Classic donation
+      const abattDisp = ABATTEMENT_PARENT_ENFANT - abattementUtilise;
+      abattementUtilise += Math.min(montantPerChild, abattDisp);
+    }
+  }
+
+  const abattRestant = Math.max(0, ABATTEMENT_PARENT_ENFANT - abattementUtilise);
+  const tepaRestant = Math.max(0, DON_FAMILIAL_TEPA - tepaUtilise);
+  const avRestant = Math.max(0, AV_ABATTEMENT_PAR_BENEFICIAIRE - avUtilise);
+  const ageCurrent = ageDonateur + (calendarYear - currentYear);
+
+  return {
+    abattementUtilise, abattRestant,
+    abattPct: Math.round((abattementUtilise / ABATTEMENT_PARENT_ENFANT) * 100),
+    tepaUtilise, tepaRestant,
+    tepaPct: Math.round((tepaUtilise / DON_FAMILIAL_TEPA) * 100),
+    avUtilise, avRestant,
+    avPct: Math.round((avUtilise / AV_ABATTEMENT_PAR_BENEFICIAIRE) * 100),
+    donataireAge: ageCurrent,
+    isTepaAvailable: ageCurrent < AGE_MAX_DONATEUR_TEPA
+  };
+}
+
+function renderChildGauges(enfant, gauges, color) {
+  const age = childAge(enfant.dateNaissance);
+  return `
+    <div class="bg-dark-800/40 rounded-xl p-4 border border-dark-400/10">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-full bg-${color}/20 border-2 border-${color}/30 flex items-center justify-center text-sm font-bold text-${color}">
+          ${(enfant.prenom || '?')[0].toUpperCase()}
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-gray-100">${enfant.prenom || 'Sans nom'}</h4>
+          <p class="text-[10px] text-gray-500">${age !== null ? `${age} ans` : ''}</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <!-- Abattement -->
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-gray-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Abattement
+            </span>
+            <span class="text-gray-400">${formatCurrency(gauges.abattementUtilise)} / ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</span>
+          </div>
+          <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all ${gauges.abattPct >= 100 ? 'bg-red-500' : gauges.abattPct >= 50 ? 'bg-amber-500' : 'bg-emerald-500'}" style="width: ${Math.min(100, gauges.abattPct)}%"></div>
+          </div>
+          <p class="text-[10px] mt-0.5 font-medium ${gauges.abattRestant > 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(gauges.abattRestant)} restant</p>
+        </div>
+        <!-- TEPA -->
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-gray-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              TEPA
+            </span>
+            <span class="text-gray-400">${formatCurrency(gauges.tepaUtilise)} / ${formatCurrency(DON_FAMILIAL_TEPA)}</span>
+          </div>
+          <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all ${gauges.tepaPct >= 100 ? 'bg-red-500' : gauges.tepaPct >= 50 ? 'bg-amber-500' : 'bg-cyan-500'}" style="width: ${Math.min(100, gauges.tepaPct)}%"></div>
+          </div>
+          <p class="text-[10px] mt-0.5 font-medium ${gauges.isTepaAvailable ? 'text-cyan-400' : 'text-gray-500'}">${formatCurrency(gauges.tepaRestant)} disponible ${gauges.isTepaAvailable ? '' : '(> 80 ans)'}</p>
+        </div>
+        <!-- Assurance Vie -->
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-gray-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Assurance Vie
+            </span>
+            <span class="text-gray-400">${formatCurrency(gauges.avUtilise)} / ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}</span>
+          </div>
+          <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all ${gauges.avPct >= 100 ? 'bg-red-500' : gauges.avPct >= 50 ? 'bg-amber-500' : 'bg-purple-500'}" style="width: ${Math.min(100, gauges.avPct)}%"></div>
+          </div>
+          <p class="text-[10px] mt-0.5 font-medium text-purple-400">${formatCurrency(gauges.avRestant)} disponible <span class="text-gray-600">Art. 990 I</span></p>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ─── Main render ─────────────────────────────────────────────────────────────
 
 export function render(store) {
   const hypotheses = getHypotheses(store);
   const themes = getThemes(store);
   const sorted = [...hypotheses].sort((a, b) => (a.annee || 0) - (b.annee || 0));
+  const cfg = getDonationConfig(store);
+  const enfants = cfg.enfants || [];
+  const params = store.get('parametres') || {};
+  const ageDonateur = params.ageFinAnnee || 43;
+  const currentYear = new Date().getFullYear();
+  const projectionYears = params.projectionYears || 30;
 
   // Group by theme for display
   const themeMap = {};
   themes.forEach(t => { themeMap[t.id] = t; });
+
+  // Compute initial gauges for each child (at current year)
+  const childColors = ['accent-purple', 'accent-cyan', 'accent-green', 'accent-amber', 'accent-blue', 'accent-red'];
 
   return `
     <div class="max-w-4xl mx-auto space-y-6">
@@ -310,6 +527,47 @@ export function render(store) {
       <!-- Timeline -->
       ${renderTimeline(sorted, themes)}
 
+      <!-- Children Gauges Section (below timeline) -->
+      ${enfants.length > 0 ? `
+      <div class="card-dark rounded-2xl border border-dark-400/20 overflow-hidden">
+        <div class="px-6 py-4 border-b border-dark-400/15 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Suivi des abattements par enfant
+          </h2>
+          <span id="hyp-gauges-year-label" class="text-xs text-gray-500">Aujourd'hui (${currentYear})</span>
+        </div>
+        <div class="p-6">
+          <!-- Year slider for gauges -->
+          <div class="mb-5">
+            <input type="range" id="hyp-gauges-slider" min="0" max="${projectionYears}" value="0" step="1"
+              class="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-purple-500
+              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+              [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:shadow-lg
+              [&::-webkit-slider-thumb]:shadow-purple-500/30 [&::-webkit-slider-thumb]:cursor-grab
+              [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full
+              [&::-moz-range-thumb]:bg-purple-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-grab">
+            <div class="flex justify-between mt-1 text-xs text-gray-600">
+              <span>${currentYear}</span>
+              <span>+10 ans</span>
+              <span>+20 ans</span>
+              <span>+${projectionYears} ans</span>
+            </div>
+          </div>
+          <!-- Gauges grid -->
+          <div id="hyp-gauges-container" class="grid grid-cols-1 ${enfants.length >= 2 ? 'md:grid-cols-2' : ''} gap-4">
+            ${enfants.map((enf, i) => {
+              const color = childColors[i % childColors.length];
+              const gauges = computeChildGaugesAtYear(enf, hypotheses, enfants, currentYear, ageDonateur, currentYear, 0);
+              return renderChildGauges(enf, gauges, color);
+            }).join('')}
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
       <!-- Filter chips -->
       ${themes.length > 0 && hypotheses.length > 0 ? `
       <div class="flex flex-wrap gap-2 items-center">
@@ -325,7 +583,7 @@ export function render(store) {
       <div id="hyp-cards-list" class="space-y-3">
         ${sorted.length === 0
           ? ''
-          : sorted.map(item => renderCard(item, themes)).join('')
+          : sorted.map(item => renderCard(item, themes, enfants)).join('')
         }
       </div>
     </div>`;
@@ -335,28 +593,71 @@ export function render(store) {
 
 export function mount(store, navigate) {
   const themes = () => getThemes(store);
+  const cfg = getDonationConfig(store);
+  const enfants = cfg.enfants || [];
+  const params = store.get('parametres') || {};
+  const ageDonateur = params.ageFinAnnee || 43;
+  const currentYear = new Date().getFullYear();
+  const projectionYears = params.projectionYears || 30;
+  const childColors = ['accent-purple', 'accent-cyan', 'accent-green', 'accent-amber', 'accent-blue', 'accent-red'];
 
   function refresh() {
     const el = document.getElementById('app-content');
     if (el) { el.innerHTML = render(store); mount(store, navigate); }
   }
 
+  // ── Gauge slider
+  const gaugeSlider = document.getElementById('hyp-gauges-slider');
+  if (gaugeSlider && enfants.length > 0) {
+    const gaugeLabel = document.getElementById('hyp-gauges-year-label');
+    const gaugeContainer = document.getElementById('hyp-gauges-container');
+
+    const updateGauges = (yearOffset) => {
+      const calYear = currentYear + yearOffset;
+      const hypotheses = getHypotheses(store);
+      if (gaugeLabel) {
+        gaugeLabel.textContent = yearOffset === 0
+          ? `Aujourd'hui (${currentYear})`
+          : `Fin ${calYear} (+${yearOffset} an${yearOffset > 1 ? 's' : ''})`;
+      }
+      if (gaugeContainer) {
+        gaugeContainer.innerHTML = enfants.map((enf, i) => {
+          const color = childColors[i % childColors.length];
+          const gauges = computeChildGaugesAtYear(enf, hypotheses, enfants, calYear, ageDonateur, currentYear, 0);
+          return renderChildGauges(enf, gauges, color);
+        }).join('');
+      }
+    };
+
+    gaugeSlider.addEventListener('input', (e) => updateGauges(parseInt(e.target.value)));
+  }
+
   // ── Add hypothesis
   document.getElementById('btn-add-hyp')?.addEventListener('click', () => {
-    const modal = openModal('Nouvelle hypothèse', getFormHtml(themes()), () => {
+    const modal = openModal('Nouvelle hypothèse', getFormHtml(themes(), null, enfants), () => {
       const titre = document.getElementById('hyp-form-titre')?.value.trim();
       const annee = parseInt(document.getElementById('hyp-form-annee')?.value) || new Date().getFullYear();
       const montant = parseFloat(document.getElementById('hyp-form-montant')?.value) || null;
       const theme = document.getElementById('hyp-form-theme')?.value || themes()[0]?.id;
       const description = document.getElementById('hyp-form-desc')?.value.trim();
+      const donationType = document.getElementById('hyp-form-donation-type')?.value || 'donation';
+      let enfantIds = [];
+      try { enfantIds = JSON.parse(document.getElementById('hyp-form-enfant-ids')?.value || '[]'); } catch(e) {}
       if (!titre) return;
 
+      const newItem = { id: generateId(), titre, annee, montant, theme, description };
+      if (theme === 'donation') {
+        newItem.donationType = donationType;
+        newItem.enfantIds = enfantIds;
+      }
       const items = getHypotheses(store);
-      items.push({ id: generateId(), titre, annee, montant, theme, description });
+      items.push(newItem);
       saveHypotheses(store, items);
       refresh();
     });
     mountThemeSelector(modal);
+    mountEnfantSelector(modal, enfants);
+    mountDonationThemeToggle(modal);
   });
 
   // ── Edit hypothesis
@@ -367,16 +668,25 @@ export function mount(store, navigate) {
       const item = items.find(i => i.id === id);
       if (!item) return;
 
-      const modal = openModal('Modifier l\'hypothèse', getFormHtml(themes(), item), () => {
+      const modal = openModal('Modifier l\'hypothèse', getFormHtml(themes(), item, enfants), () => {
         item.titre = document.getElementById('hyp-form-titre')?.value.trim() || item.titre;
         item.annee = parseInt(document.getElementById('hyp-form-annee')?.value) || item.annee;
         item.montant = parseFloat(document.getElementById('hyp-form-montant')?.value) || null;
         item.theme = document.getElementById('hyp-form-theme')?.value || item.theme;
         item.description = document.getElementById('hyp-form-desc')?.value.trim();
+        if (item.theme === 'donation') {
+          item.donationType = document.getElementById('hyp-form-donation-type')?.value || 'donation';
+          try { item.enfantIds = JSON.parse(document.getElementById('hyp-form-enfant-ids')?.value || '[]'); } catch(e) {}
+        } else {
+          delete item.donationType;
+          delete item.enfantIds;
+        }
         saveHypotheses(store, items);
         refresh();
       });
       mountThemeSelector(modal);
+      mountEnfantSelector(modal, enfants);
+      mountDonationThemeToggle(modal);
     });
   });
 
@@ -499,7 +809,77 @@ function mountThemeSelector(modal) {
         // Activate clicked
         btn.classList.remove('border-dark-400/30', 'text-gray-500');
         btn.classList.add('ring-2');
+
+        // Toggle donation-specific fields
+        const donTypeRow = document.getElementById('hyp-form-donation-type-row');
+        const enfantRow = document.getElementById('hyp-form-enfant-row');
+        if (donTypeRow) donTypeRow.classList.toggle('hidden', themeId !== 'donation');
+        if (enfantRow) enfantRow.classList.toggle('hidden', themeId !== 'donation');
       });
     });
   }, 50);
+}
+
+// ── Enfant selector in modal
+function mountEnfantSelector(modal, enfants) {
+  setTimeout(() => {
+    modal?.querySelectorAll('.hyp-enfant-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const enfantId = btn.dataset.enfantId;
+        const hiddenInput = document.getElementById('hyp-form-enfant-ids');
+        if (!hiddenInput) return;
+
+        let selectedIds = [];
+        try { selectedIds = JSON.parse(hiddenInput.value || '[]'); } catch(e) {}
+
+        if (enfantId === 'all') {
+          // Select all
+          selectedIds = enfants.map(e => e.id);
+        } else {
+          // Toggle individual child
+          if (selectedIds.includes(enfantId)) {
+            selectedIds = selectedIds.filter(id => id !== enfantId);
+          } else {
+            selectedIds.push(enfantId);
+          }
+        }
+
+        hiddenInput.value = JSON.stringify(selectedIds);
+
+        // Update button styles
+        modal.querySelectorAll('.hyp-enfant-btn').forEach(b => {
+          b.className = b.className
+            .replace(/bg-\S+\/10/g, '')
+            .replace(/border-\S+\/30/g, '')
+            .replace(/text-\S+/g, '')
+            .replace(/ring-2\s*\S*/g, '');
+          b.classList.add('border-dark-400/30', 'text-gray-500');
+          b.classList.remove('ring-2');
+        });
+
+        const isAll = selectedIds.length === 0 || selectedIds.length === enfants.length;
+        // Style "all" button
+        const allBtn = modal.querySelector('.hyp-enfant-btn[data-enfant-id="all"]');
+        if (allBtn && isAll) {
+          allBtn.classList.remove('border-dark-400/30', 'text-gray-500');
+          allBtn.classList.add('bg-purple-500/10', 'border-purple-500/30', 'text-purple-400', 'ring-2', 'ring-purple-400/30');
+        }
+        // Style individual buttons
+        if (!isAll) {
+          selectedIds.forEach(id => {
+            const b = modal.querySelector(`.hyp-enfant-btn[data-enfant-id="${id}"]`);
+            if (b) {
+              b.classList.remove('border-dark-400/30', 'text-gray-500');
+              b.classList.add('bg-cyan-500/10', 'border-cyan-500/30', 'text-cyan-400', 'ring-2', 'ring-cyan-400/30');
+            }
+          });
+        }
+      });
+    });
+  }, 50);
+}
+
+// ── Toggle donation fields when theme changes
+function mountDonationThemeToggle(modal) {
+  // Already handled via mountThemeSelector — the toggle logic is inside the theme button click
 }
