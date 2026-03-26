@@ -26,7 +26,87 @@ const DEFAULT_THEMES = [
   { id: 'succession',     label: 'Succession',      color: 'blue',    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
   { id: 'retraite',       label: 'Retraite',        color: 'cyan',    icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
   { id: 'fiscalite',      label: 'Fiscalité',       color: 'rose',    icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
+  { id: 'note',           label: 'Note',            color: 'sky',     icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
 ];
+
+// ─── Notary fees estimation ──────────────────────────────────────────────────
+// Barème proportionnel des émoluments notariés (donations / actes immobiliers)
+function estimerFraisNotaire(montant, theme, donationType) {
+  if (!montant || montant <= 0) return null;
+
+  if (theme === 'donation') {
+    // Émoluments proportionnels du notaire pour acte de donation
+    // Barème dégressif officiel (Art. A444-67 Code de commerce)
+    let emoluments = 0;
+    const tranches = [
+      { max: 6500, taux: 0.04837 },
+      { max: 17000, taux: 0.01995 },
+      { max: 60000, taux: 0.01330 },
+      { max: Infinity, taux: 0.00998 }
+    ];
+    let reste = montant;
+    let prev = 0;
+    for (const t of tranches) {
+      const tranche = Math.min(reste, t.max - prev);
+      if (tranche <= 0) break;
+      emoluments += tranche * t.taux;
+      reste -= tranche;
+      prev = t.max;
+    }
+    // Taxe de publicité foncière (si donation immobilière) : 0.715%
+    const isImmo = donationType === 'donation';
+    const tpf = isImmo ? montant * 0.00715 : 0;
+    // Contribution de sécurité immobilière : 0.10% (min 15€)
+    const csi = isImmo ? Math.max(15, montant * 0.001) : 0;
+    // Frais divers (copies, débours, etc.) : ~150-300€
+    const divers = 200;
+    // TVA sur émoluments : 20%
+    const tva = emoluments * 0.20;
+
+    const total = Math.round(emoluments + tva + tpf + csi + divers);
+    const detail = isImmo
+      ? `Émol. ${Math.round(emoluments)}€ + TVA ${Math.round(tva)}€ + TPF ${Math.round(tpf)}€ + CSI ${Math.round(csi)}€`
+      : `Émol. ${Math.round(emoluments)}€ + TVA ${Math.round(tva)}€ + débours ~${divers}€`;
+
+    if (donationType === 'don_tepa') {
+      // Don manuel TEPA : pas d'acte notarié obligatoire, juste déclaration
+      return { total: 0, detail: 'Don manuel : pas de frais de notaire (déclaration 2735 gratuite)' };
+    }
+    if (donationType === 'av_donation') {
+      // Assurance Vie : modification de clause bénéficiaire, pas d'acte notarié
+      return { total: 0, detail: 'AV : pas de frais de notaire (modification clause bénéficiaire)' };
+    }
+    return { total, detail };
+  }
+
+  if (theme === 'immobilier') {
+    // Frais de notaire classiques pour achat immobilier (ancien : ~7-8%)
+    const droitsMutation = montant * 0.0580; // DMTO 5.80%
+    let emoluments = 0;
+    const tranches = [
+      { max: 6500, taux: 0.03870 },
+      { max: 17000, taux: 0.01596 },
+      { max: 60000, taux: 0.01064 },
+      { max: Infinity, taux: 0.00799 }
+    ];
+    let reste = montant;
+    let prev = 0;
+    for (const t of tranches) {
+      const tranche = Math.min(reste, t.max - prev);
+      if (tranche <= 0) break;
+      emoluments += tranche * t.taux;
+      reste -= tranche;
+      prev = t.max;
+    }
+    const csi = Math.max(15, montant * 0.001);
+    const tva = emoluments * 0.20;
+    const divers = 800;
+    const total = Math.round(droitsMutation + emoluments + tva + csi + divers);
+    return { total, detail: `DMTO ${Math.round(droitsMutation)}€ + émol. ${Math.round(emoluments)}€ + TVA + CSI + débours` };
+  }
+
+  return null;
+}
 
 // Color mapping for Tailwind classes
 const COLOR_MAP = {
@@ -111,6 +191,7 @@ function renderTimeline(hypotheses, themes) {
     succession: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
     retraite: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     fiscalite: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>',
+    note: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>',
   };
 
   return `
@@ -211,6 +292,7 @@ function renderCard(item, themes, enfants = []) {
   themes.forEach(t => { themeMap[t.id] = t; });
   const theme = themeMap[item.theme] || { label: 'Autre', color: 'emerald', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' };
   const cc = c(theme.color);
+  const isNote = item.theme === 'note';
 
   // Build child badges for donation cards
   const isDonation = item.theme === 'donation';
@@ -229,6 +311,37 @@ function renderCard(item, themes, enfants = []) {
       const typeLabels = { donation: 'Classique', don_tepa: 'Loi Sarkozy', av_donation: 'Donation AV' };
       enfantBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Classique'}</span>`;
     }
+  }
+
+  // Notary fees estimation
+  const fraisNotaire = estimerFraisNotaire(item.montant, item.theme, item.donationType);
+
+  // Note cards have a distinct style (lighter, no icon, just text)
+  if (isNote) {
+    return `
+      <div id="hyp-${item.id}" class="group rounded-lg border border-dashed ${cc.border} bg-sky-500/5 transition-all duration-200 hover:bg-sky-500/10 overflow-hidden">
+        <div class="px-4 py-3 flex items-start gap-3">
+          <svg class="w-4 h-4 ${cc.text} mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${theme.icon}"/>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-[10px] ${cc.text} font-medium">${item.annee}</span>
+              <span class="text-[10px] text-gray-600">— Note</span>
+            </div>
+            <p class="text-sm text-gray-300 leading-relaxed">${item.titre}</p>
+            ${item.description ? `<p class="text-xs text-gray-500 mt-1 leading-relaxed italic">${item.description}</p>` : ''}
+          </div>
+          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <button class="hyp-edit p-1 rounded-lg hover:bg-dark-600 text-gray-500 hover:text-accent-green transition" data-id="${item.id}" title="Modifier">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button class="hyp-delete p-1 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-400 transition" data-id="${item.id}" title="Supprimer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`;
   }
 
   return `
@@ -252,6 +365,18 @@ function renderCard(item, themes, enfants = []) {
           </div>
           <h3 class="text-sm font-semibold text-gray-200 leading-snug">${item.titre}</h3>
           ${item.description ? `<p class="text-xs text-gray-500 mt-1.5 leading-relaxed">${item.description}</p>` : ''}
+          ${fraisNotaire ? `
+          <div class="mt-2 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-dark-800/50 border border-dark-400/10">
+            <svg class="w-3.5 h-3.5 text-amber-400/70 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+            </svg>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] text-gray-400">Frais de notaire estimés</span>
+              <span class="text-[10px] font-bold ${fraisNotaire.total > 0 ? 'text-amber-400' : 'text-emerald-400'} ml-1.5">${fraisNotaire.total > 0 ? formatCurrency(fraisNotaire.total) : 'Aucun'}</span>
+            </div>
+            <span class="text-[9px] text-gray-600 hidden sm:block">${fraisNotaire.detail}</span>
+          </div>
+          ` : ''}
         </div>
 
         <!-- Actions -->
@@ -409,11 +534,16 @@ function computeChildGaugesAtYear(enfant, hypotheses, enfants, calendarYear, age
   const sortedDons = [...donHyps].sort((a, b) => (a.annee || 0) - (b.annee || 0));
   const firstDonYear = sortedDons.length > 0 ? sortedDons[0].annee : null;
 
+  // Track the start of each 15-year cycle
+  let cycleStart = firstDonYear;
+
   for (const h of sortedDons) {
-    // Check 15-year renewal
-    if (firstDonYear && (h.annee - firstDonYear) >= RENOUVELLEMENT_ANNEES) {
+    // Check 15-year renewal: reset when a new cycle begins
+    if (cycleStart && (h.annee - cycleStart) >= RENOUVELLEMENT_ANNEES) {
       abattementUtilise = 0;
       tepaUtilise = 0;
+      // Advance cycle start to this donation's year
+      cycleStart = h.annee;
     }
 
     // Per-child share: if hypothesis applies to multiple children, split the amount
