@@ -16,6 +16,9 @@ const BANK_ICON_PRIMARY = `<svg class="w-8 h-8 text-accent-blue" fill="none" vie
 const BANK_ICON_SECONDARY = `<svg class="w-8 h-8 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
   </svg>`;
+const BANK_ICON_EXTRA = `<svg class="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/>
+  </svg>`;
 const PENCIL_ICON = `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
 
 function getToday() {
@@ -56,7 +59,8 @@ const DEPENSES_MENSUELLES_CIC = [
 
 export function render(store) {
   const bankNames = store.getBankNames();
-  const COMPTES = [bankNames.primary, bankNames.secondary];
+  const extraBanks = bankNames.extra || [];
+  const COMPTES = [bankNames.primary, bankNames.secondary, ...extraBanks.map(b => b.name)];
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
   if (!store.get('suiviRevenus')) store.set('suiviRevenus', []);
   // Init depenses mensuelles from defaults if not present
@@ -143,6 +147,25 @@ export function render(store) {
   const lblRoundup = trFeatures.lblRoundup || 'Round-up → CTO';
 
   const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup;
+
+  // Extra banks computation
+  const extraBankData = extraBanks.map(bank => {
+    const ccId = 'cc-' + bank.id;
+    const baseSolde = Number(comptesCourants.find(c => c.id === ccId)?.solde) || 0;
+    const prevSolde = Number(soldePrecedent[bank.id]) || 0;
+    const obligSolde = Number(soldeObligatoire[bank.id]) || 0;
+    const rev = revenus.filter(r => r.compte === bank.name).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const dep = items.filter(i => i.compte === bank.name).reduce((s, i) => s + (Number(i.montant) || 0), 0);
+    const solde = baseSolde + prevSolde + rev - dep;
+    const ops = [
+      ...items.filter(i => i.compte === bank.name).map(i => ({ ...i, type: 'depense' })),
+      ...revenus.filter(r => r.compte === bank.name).map(r => ({ ...r, type: 'revenu' }))
+    ];
+    const lblPrev = labels[`soldeDebutMois_${bank.id}`] || 'Solde début de mois';
+    const lblOblig = labels[`soldeObligatoire_${bank.id}`] || 'Solde obligatoire';
+    return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig };
+  });
+
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
@@ -189,7 +212,7 @@ export function render(store) {
       </div>`;
   };
 
-  const noOps = opsCIC.length === 0 && opsTR.length === 0 && archives.length === 0;
+  const noOps = opsCIC.length === 0 && opsTR.length === 0 && extraBankData.every(b => b.ops.length === 0) && archives.length === 0;
 
   return `
     <div class="space-y-4">
@@ -217,7 +240,7 @@ export function render(store) {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 ${extraBanks.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-3">
         <!-- Primary bank -->
         <div class="card-dark rounded-xl overflow-hidden">
           <div class="px-4 py-3 flex items-center gap-3 border-b border-dark-400/30">
@@ -337,6 +360,49 @@ export function render(store) {
           </div>
           ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
         </div>
+
+        ${extraBankData.map(bank => `
+        <!-- Extra bank: ${bank.name} -->
+        <div class="card-dark rounded-xl overflow-hidden">
+          <div class="px-4 py-3 flex items-center gap-3 border-b border-dark-400/30">
+            ${BANK_ICON_EXTRA}
+            <div class="flex-1">
+              <div class="flex items-center gap-1.5">
+                <p class="text-sm text-gray-400">Compte courant ${bank.name}</p>
+                <button data-rename-bank="extra-${bank.id}" class="text-gray-600 hover:text-cyan-400 transition p-0.5 rounded hover:bg-dark-600/50" title="Renommer">${PENCIL_ICON}</button>
+              </div>
+              <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(bank.solde)}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button data-edit-solde="${bank.ccId}" class="text-xs text-gray-500 hover:text-cyan-400 transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
+              <button data-remove-bank="${bank.id}" class="text-xs text-gray-500 hover:text-accent-red transition px-2 py-1 rounded hover:bg-dark-600/50" title="Supprimer cette banque">✕</button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="${bank.id}">
+            <span class="text-xs text-gray-500">${bank.lblPrev}</span>
+            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="${bank.id}">
+            <span class="text-xs text-gray-500">${bank.lblOblig}</span>
+            <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
+          </div>
+          ${bank.ops.length > 0 ? `
+          <div class="divide-y divide-dark-400/20" id="ops-drop-${bank.id}">
+            ${bank.ops.map(renderOp).join('')}
+          </div>
+          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
+        </div>
+        `).join('')}
+
+        ${extraBanks.length === 0 ? `
+        <!-- Add bank button -->
+        <div id="btn-add-bank" class="card-dark rounded-xl overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:border-cyan-400/30 hover:bg-dark-600/20 transition min-h-[120px] border border-dashed border-dark-400/30">
+          <svg class="w-10 h-10 text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          <span class="text-sm text-gray-500">Ajouter une banque</span>
+        </div>
+        ` : ''}
       </div>
 
       ${noOps ? `
@@ -416,13 +482,20 @@ export function render(store) {
 
 export function mount(store, navigate) {
   const bankNames = store.getBankNames();
-  const COMPTES = [bankNames.primary, bankNames.secondary];
+  const extraBanks = bankNames.extra || [];
+  const COMPTES = [bankNames.primary, bankNames.secondary, ...extraBanks.map(b => b.name)];
 
   // Rename bank
   document.querySelectorAll('[data-rename-bank]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const key = btn.dataset.renameBank; // 'primary' or 'secondary'
-      const currentName = bankNames[key];
+      const key = btn.dataset.renameBank; // 'primary', 'secondary', or 'extra-{id}'
+      let currentName;
+      if (key.startsWith('extra-')) {
+        const bankId = key.replace('extra-', '');
+        currentName = (extraBanks.find(b => b.id === bankId) || {}).name || '';
+      } else {
+        currentName = bankNames[key];
+      }
       const body = inputField('nom', 'Nom de la banque', currentName);
       openModal('Renommer la banque', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -459,6 +532,16 @@ export function mount(store, navigate) {
     const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
     const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
 
+    // Extra banks final soldes
+    const extraFinals = {};
+    for (const bank of extraBanks) {
+      const base = Number(comptesCourants.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
+      const prev = Number(soldePrecedent[bank.id]) || 0;
+      const rev = revenus.filter(r => r.compte === bank.name).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+      const dep = items.filter(i => i.compte === bank.name).reduce((s, i) => s + (Number(i.montant) || 0), 0);
+      extraFinals[bank.id] = base + prev + rev - dep;
+    }
+
     // Build archive summary
     const totalDepenses = items.reduce((s, i) => s + (Number(i.montant) || 0), 0) + totalCochees;
     const totalRevenus = revenus.reduce((s, r) => s + (Number(r.montant) || 0), 0);
@@ -478,6 +561,7 @@ export function mount(store, navigate) {
           <div class="border-t border-dark-400/30 my-1"></div>
           <div class="flex justify-between"><span class="text-gray-400">Solde final ${bankNames.primary}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeCIC)}</span></div>
           <div class="flex justify-between"><span class="text-gray-400">Solde final ${bankNames.secondary}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeTR)}</span></div>
+          ${extraBanks.map(bank => `<div class="flex justify-between"><span class="text-gray-400">Solde final ${bank.name}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(extraFinals[bank.id])}</span></div>`).join('')}
         </div>
         <p class="text-[11px] text-gray-500">Les soldes finaux deviendront les "soldes mois précédent" du mois suivant. Les opérations et coches seront remises à zéro.</p>
       </div>
@@ -486,7 +570,7 @@ export function mount(store, navigate) {
     openModal('Clôturer le mois', body, () => {
       // Save archive
       const archives = store.get('archiveDepenses') || [];
-      archives.push({
+      const archiveEntry = {
         mois: monthKey,
         total: totalDepenses,
         totalRevenus,
@@ -494,11 +578,19 @@ export function mount(store, navigate) {
         categories,
         soldeFinalCIC: finalSoldeCIC,
         soldeFinalTR: finalSoldeTR
-      });
+      };
+      for (const bank of extraBanks) {
+        archiveEntry['soldeFinal_' + bank.id] = extraFinals[bank.id];
+      }
+      archives.push(archiveEntry);
       store.set('archiveDepenses', archives);
 
       // Set solde mois précédent to final computed soldes
-      store.set('soldeMoisPrecedent', { cic: finalSoldeCIC, tr: finalSoldeTR });
+      const newPrev = { cic: finalSoldeCIC, tr: finalSoldeTR };
+      for (const bank of extraBanks) {
+        newPrev[bank.id] = extraFinals[bank.id];
+      }
+      store.set('soldeMoisPrecedent', newPrev);
 
       // Clear operations
       store.set('suiviDepenses', []);
@@ -551,7 +643,7 @@ export function mount(store, navigate) {
       const ccs = actifs.comptesCourants || [];
       const cc = ccs.find(c => c.id === ccId);
       const currentSolde = cc ? Number(cc.solde) || 0 : 0;
-      const label = ccId === 'cc-cic' ? bankNames.primary : bankNames.secondary;
+      let label = ccId === 'cc-cic' ? bankNames.primary : ccId === 'cc-trade' ? bankNames.secondary : (cc?.nom || 'Banque');
       const body = inputField('solde', `Solde ${label} (€)`, currentSolde, 'number', 'step="0.01"');
       openModal(`Modifier le solde ${label}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -571,8 +663,9 @@ export function mount(store, navigate) {
   // Edit solde mois précédent
   document.querySelectorAll('[data-edit-prev]').forEach(el => {
     el.addEventListener('click', () => {
-      const key = el.dataset.editPrev; // 'cic' or 'tr'
-      const bankLabel = key === 'cic' ? bankNames.primary : bankNames.secondary;
+      const key = el.dataset.editPrev; // 'cic', 'tr', or extra bank id
+      const extraBank = extraBanks.find(b => b.id === key);
+      const bankLabel = key === 'cic' ? bankNames.primary : key === 'tr' ? bankNames.secondary : (extraBank?.name || 'Banque');
       const prev = store.get('soldeMoisPrecedent') || {};
       const labels = store.get('customLabels') || {};
       const lblKey = `soldeDebutMois_${key}`;
@@ -595,8 +688,9 @@ export function mount(store, navigate) {
   // Edit solde obligatoire
   document.querySelectorAll('[data-edit-oblig]').forEach(el => {
     el.addEventListener('click', () => {
-      const key = el.dataset.editOblig; // 'cic' or 'tr'
-      const bankLabel = key === 'cic' ? bankNames.primary : bankNames.secondary;
+      const key = el.dataset.editOblig; // 'cic', 'tr', or extra bank id
+      const extraBankO = extraBanks.find(b => b.id === key);
+      const bankLabel = key === 'cic' ? bankNames.primary : key === 'tr' ? bankNames.secondary : (extraBankO?.name || 'Banque');
       const oblig = store.get('soldeObligatoire') || {};
       const labels = store.get('customLabels') || {};
       const lblKey = `soldeObligatoire_${key}`;
@@ -1007,6 +1101,33 @@ export function mount(store, navigate) {
 
   setupDragDrop('ops-drop-cic');
   setupDragDrop('ops-drop-tr');
+  extraBanks.forEach(bank => setupDragDrop('ops-drop-' + bank.id));
+
+  // Add bank
+  document.getElementById('btn-add-bank')?.addEventListener('click', () => {
+    const body = inputField('nom', 'Nom de la banque', '', 'text', 'placeholder="Ex: Boursorama"');
+    openModal('Ajouter une banque', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      const name = (data.nom || '').trim();
+      if (!name) return;
+      store.addBank(name);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Remove bank
+  document.querySelectorAll('[data-remove-bank]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bankId = btn.dataset.removeBank;
+      const bank = extraBanks.find(b => b.id === bankId);
+      if (!bank) return;
+      const body = `<p class="text-gray-300 text-sm">Supprimer le compte <span class="font-semibold text-gray-100">${bank.name}</span> et toutes ses opérations ?</p>`;
+      openModal('Supprimer la banque', body, () => {
+        store.removeBank(bankId);
+        navigate('suivi-depenses');
+      });
+    });
+  });
 
   // Add virement (shortcut)
   document.getElementById('btn-add-virement')?.addEventListener('click', () => {

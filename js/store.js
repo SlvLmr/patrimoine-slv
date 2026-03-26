@@ -647,10 +647,22 @@ const Store = {
     const trInterets = Number(trFeatures.interets) || 0;
     const trRoundup = Number(trFeatures.roundup) || 0;
 
-    return {
+    const result = {
       cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
       tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup
     };
+
+    // Extra banks
+    const extraBanks = bankNames.extra || [];
+    for (const bank of extraBanks) {
+      const baseExtra = Number(comptes.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
+      const prevExtra = Number(soldePrecedent[bank.id]) || 0;
+      const revExtra = revenus.filter(r => r.compte === bank.name).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+      const depExtra = items.filter(i => i.compte === bank.name).reduce((s, i) => s + (Number(i.montant) || 0), 0);
+      result[bank.id] = baseExtra + prevExtra + revExtra - depExtra;
+    }
+
+    return result;
   },
 
   // Get total live CC balance (accounting for transactions)
@@ -658,12 +670,15 @@ const Store = {
     const liveSoldes = this.computeLiveSoldes();
     const comptes = this._state.actifs?.comptesCourants || [];
     if (comptes.length === 0) {
-      // Even without explicit accounts, include live soldes from transactions
       return liveSoldes.cic + liveSoldes.tr;
     }
     return comptes.reduce((s, c) => {
       if (c.id === 'cc-cic') return s + liveSoldes.cic;
       if (c.id === 'cc-trade') return s + liveSoldes.tr;
+      // Extra banks
+      if (c.id.startsWith('cc-bank-') && liveSoldes[c.id.replace('cc-', '')] !== undefined) {
+        return s + liveSoldes[c.id.replace('cc-', '')];
+      }
       return s + (Number(c.solde) || 0);
     }, 0);
   },
@@ -720,11 +735,69 @@ const Store = {
   },
 
   getBankNames() {
-    return this._state.bankNames || { primary: 'CIC', secondary: 'Trade Republic' };
+    const names = this._state.bankNames || { primary: 'CIC', secondary: 'Trade Republic' };
+    if (!names.extra) names.extra = [];
+    return names;
+  },
+
+  addBank(name) {
+    const names = this.getBankNames();
+    const id = 'bank-' + Date.now().toString(36);
+    if (!names.extra) names.extra = [];
+    names.extra.push({ id, name });
+    this.set('bankNames', names);
+    // Create compte courant entry
+    const actifs = this._state.actifs || {};
+    const ccs = actifs.comptesCourants || [];
+    ccs.push({ id: 'cc-' + id, nom: name, solde: 0 });
+    actifs.comptesCourants = ccs;
+    this.set('actifs', actifs);
+    return id;
+  },
+
+  removeBank(bankId) {
+    const names = this.getBankNames();
+    const bank = (names.extra || []).find(b => b.id === bankId);
+    if (!bank) return;
+    names.extra = names.extra.filter(b => b.id !== bankId);
+    this.set('bankNames', names);
+    // Remove compte courant
+    const actifs = this._state.actifs || {};
+    actifs.comptesCourants = (actifs.comptesCourants || []).filter(c => c.id !== 'cc-' + bankId);
+    this.set('actifs', actifs);
+    // Remove related operations
+    this.set('suiviDepenses', (this._state.suiviDepenses || []).filter(i => i.compte !== bank.name));
+    this.set('suiviRevenus', (this._state.suiviRevenus || []).filter(i => i.compte !== bank.name));
+    // Clean up prev/oblig
+    const prev = this._state.soldeMoisPrecedent || {};
+    delete prev[bankId];
+    this.set('soldeMoisPrecedent', prev);
+    const oblig = this._state.soldeObligatoire || {};
+    delete oblig[bankId];
+    this.set('soldeObligatoire', oblig);
+    saveState(this._profileId, this._state);
   },
 
   renameBank(key, newName) {
     const names = this.getBankNames();
+    // Handle extra banks
+    if (key.startsWith('extra-')) {
+      const bankId = key.replace('extra-', '');
+      const bank = (names.extra || []).find(b => b.id === bankId);
+      if (!bank || bank.name === newName) return;
+      const oldName = bank.name;
+      bank.name = newName;
+      this.set('bankNames', names);
+      // Migrate operations
+      (this._state.suiviDepenses || []).forEach(i => { if (i.compte === oldName) i.compte = newName; });
+      (this._state.suiviRevenus || []).forEach(i => { if (i.compte === oldName) i.compte = newName; });
+      // Rename compte courant
+      const actifs = this._state.actifs || {};
+      const cc = (actifs.comptesCourants || []).find(c => c.id === 'cc-' + bankId);
+      if (cc) { cc.nom = newName; this.set('actifs', actifs); }
+      saveState(this._profileId, this._state);
+      return;
+    }
     const oldName = names[key];
     if (!oldName || oldName === newName) return;
     names[key] = newName;
