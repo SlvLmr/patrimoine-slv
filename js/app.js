@@ -8,7 +8,7 @@ import * as Projection from './components/projection.js?v=5';
 import * as Fiscalite from './components/fiscalite.js';
 import * as SuiviDepenses from './components/suivi-depenses.js';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
-import * as Bourse from './components/bourse.js';
+
 import * as Compte from './components/compte.js';
 import * as Objectifs from './components/objectifs.js';
 import * as Repartition from './components/repartition.js';
@@ -48,7 +48,7 @@ const routes = {
   projection: Projection,
   repartition: Repartition,
 
-  bourse: Bourse,
+
   fiscalite: Fiscalite,
   objectifs: Objectifs,
   compte: Compte,
@@ -78,7 +78,7 @@ const navItems = [
   { id: 'simulateur-fire', label: 'Simulateur FIRE', icon: 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z', outilsGroup: true },
   { id: 'simulateur-credit', label: 'Crédit immobilier', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2', outilsGroup: true },
   { id: 'simulateur-auto', label: 'Crédit voiture', icon: 'M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zM3 9l2-5h14l2 5M3 9h18v6a1 1 0 01-1 1h-1a3 3 0 00-6 0H11a3 3 0 00-6 0H4a1 1 0 01-1-1V9z', outilsGroup: true },
-  { id: 'bourse', label: 'Bourse', icon: 'M3 3v18h18M9 17V9m4 8V5m4 12v-4', outilsGroup: true },
+
   { id: 'fiscalite', label: 'Succession', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z', outilsGroup: true },
 ];
 
@@ -680,17 +680,6 @@ function showLoginScreen() {
   );
 }
 
-// Background Bourse refresh scheduler
-let bourseTimerId = null;
-function scheduleBourseRefresh() {
-  if (bourseTimerId) clearTimeout(bourseTimerId);
-  const next = Bourse.getNextRefreshTime();
-  const delay = Math.max(next.getTime() - Date.now(), 60000); // min 1 min
-  bourseTimerId = setTimeout(async () => {
-    try { await Bourse.backgroundRefresh(); } catch (e) { console.warn('Bourse background refresh failed:', e); }
-    scheduleBourseRefresh(); // schedule next
-  }, delay);
-}
 
 // Show the main app (after login or skip)
 function showApp() {
@@ -712,9 +701,7 @@ function showApp() {
     initSidebarCollapse();
     appStarted = true;
 
-    // Start background Bourse refresh & do initial fetch
-    Bourse.backgroundRefresh().catch(() => {});
-    scheduleBourseRefresh();
+
   }
 
   renderPage();
