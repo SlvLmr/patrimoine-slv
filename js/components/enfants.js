@@ -152,6 +152,45 @@ export function render(store) {
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                   Donation
                 </button>
+
+                <!-- Livrets d'épargne -->
+                <div class="mt-3 pt-3 border-t border-dark-400/10">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] text-gray-500 uppercase font-semibold flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                      Livrets d'épargne
+                    </span>
+                    <button class="btn-add-livret text-${color} hover:text-${color}/80 transition" data-enfant-id="${enf.id}" data-prenom="${enf.prenom || ''}">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    </button>
+                  </div>
+                  ${(() => {
+                    const livrets = enf.livrets || [];
+                    if (livrets.length === 0) return `<p class="text-[10px] text-gray-600 italic">Aucun livret</p>`;
+                    const totalLivrets = livrets.reduce((s, l) => s + (Number(l.montant) || 0), 0);
+                    return `<div class="space-y-1.5">
+                      ${livrets.map(l => `
+                        <div class="bg-dark-700/40 rounded-lg px-2.5 py-1.5 group/livret">
+                          <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-300 font-medium">${l.nom || 'Livret'}</span>
+                            <span class="text-xs font-semibold text-accent-amber">${formatCurrency(Number(l.montant) || 0)}</span>
+                          </div>
+                          <div class="flex items-center justify-between mt-0.5">
+                            <span class="text-[10px] text-gray-500">Taux : ${Number(l.taux || 0).toFixed(2)} %</span>
+                            <div class="flex gap-1.5 opacity-0 group-hover/livret:opacity-100 transition">
+                              <button class="btn-edit-livret text-accent-blue hover:text-accent-blue/80 text-[10px] font-medium" data-enfant-id="${enf.id}" data-livret-id="${l.id}">Modifier</button>
+                              <button class="btn-del-livret text-accent-red/60 hover:text-accent-red text-[10px] font-medium" data-enfant-id="${enf.id}" data-livret-id="${l.id}">Suppr.</button>
+                            </div>
+                          </div>
+                        </div>
+                      `).join('')}
+                      <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] text-gray-500 font-medium">Total livrets</span>
+                        <span class="text-xs font-bold text-accent-amber">${formatCurrency(totalLivrets)}</span>
+                      </div>
+                    </div>`;
+                  })()}
+                </div>
               </div>`;
             }).join('')}
           </div>
@@ -281,6 +320,73 @@ export function mount(store, navigate) {
         saveConfig(store, cfg2);
         navigate('enfants');
       });
+    });
+  });
+
+  // --- Ajouter livret ---
+  document.querySelectorAll('.btn-add-livret').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const enfantId = btn.dataset.enfantId;
+      const prenom = btn.dataset.prenom;
+      openModal(`Ajouter un livret pour ${prenom}`, `
+        ${inputField('nom', 'Nom du livret', '', 'text', 'placeholder="Ex: Livret A, LEP..."')}
+        ${inputField('montant', 'Montant actuel (€)', '', 'number', 'step="100" min="0"')}
+        ${inputField('taux', 'Taux de rendement annuel (%)', '3.0', 'number', 'step="0.1" min="0" max="100"')}
+      `, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        if (!data.nom) return;
+        const c = getConfig(store);
+        const enf = (c.enfants || []).find(e => e.id === enfantId);
+        if (!enf) return;
+        if (!enf.livrets) enf.livrets = [];
+        enf.livrets.push({
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          nom: data.nom,
+          montant: Number(data.montant) || 0,
+          taux: Number(data.taux) || 0
+        });
+        saveConfig(store, c);
+        navigate('enfants');
+      });
+    });
+  });
+
+  // --- Modifier livret ---
+  document.querySelectorAll('.btn-edit-livret').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const enfantId = btn.dataset.enfantId;
+      const livretId = btn.dataset.livretId;
+      const c = getConfig(store);
+      const enf = (c.enfants || []).find(e => e.id === enfantId);
+      if (!enf) return;
+      const livret = (enf.livrets || []).find(l => l.id === livretId);
+      if (!livret) return;
+      openModal('Modifier le livret', `
+        ${inputField('nom', 'Nom du livret', livret.nom || '', 'text')}
+        ${inputField('montant', 'Montant actuel (€)', livret.montant || '', 'number', 'step="100" min="0"')}
+        ${inputField('taux', 'Taux de rendement annuel (%)', livret.taux || '', 'number', 'step="0.1" min="0" max="100"')}
+      `, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        livret.nom = data.nom || livret.nom;
+        livret.montant = Number(data.montant) || 0;
+        livret.taux = Number(data.taux) || 0;
+        saveConfig(store, c);
+        navigate('enfants');
+      });
+    });
+  });
+
+  // --- Supprimer livret ---
+  document.querySelectorAll('.btn-del-livret').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const enfantId = btn.dataset.enfantId;
+      const livretId = btn.dataset.livretId;
+      const c = getConfig(store);
+      const enf = (c.enfants || []).find(e => e.id === enfantId);
+      if (!enf) return;
+      enf.livrets = (enf.livrets || []).filter(l => l.id !== livretId);
+      saveConfig(store, c);
+      navigate('enfants');
     });
   });
 
