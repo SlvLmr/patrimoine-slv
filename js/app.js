@@ -16,8 +16,8 @@ import * as SimulateurFire from './components/simulateur-fire.js';
 import * as SimulateurCredit from './components/simulateur-credit.js';
 import * as SimulateurInterets from './components/simulateur-interets.js';
 import * as SimulateurAuto from './components/simulateur-auto.js';
-import * as Strategie from './components/strategie.js';
-import * as Hypotheses from './components/hypotheses.js';
+import * as Strategie from './components/strategie.js?v=2';
+import * as Hypotheses from './components/hypotheses.js?v=2';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
 
 
