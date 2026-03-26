@@ -82,6 +82,7 @@ export function render(store) {
   const lblNDF = labels.aRecupererNDF || 'A récupérer NDF';
   const lblEnveloppe = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
   const lblRestantInvest = labels.restantInvestissement || 'Restant pour investissement';
+  const lblRestantPEA = labels.restantPEA || 'Restant pour PEA';
 
   // Solde début de mois
   const soldePrecedent = store.get('soldeMoisPrecedent') || {};
@@ -96,6 +97,10 @@ export function render(store) {
   // Restant pour investissement
   const restantInvest = store.get('restantInvestissement') || {};
   const restantInvestTR = Number(restantInvest.tr) || 0;
+
+  // Restant pour PEA
+  const restantPEA = store.get('restantPEA') || {};
+  const restantPEATR = Number(restantPEA.tr) || 0;
 
   // A récupérer NDF = budget NDF - somme NDF
   const paramètres = store.get('parametres') || {};
@@ -298,6 +303,10 @@ export function render(store) {
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-restant-invest>
             <span class="text-xs text-gray-500">${lblRestantInvest}</span>
             <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-restant-pea>
+            <span class="text-xs text-gray-500">${lblRestantPEA}</span>
+            <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
           </div>
           ${budgetNDF > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
             <span class="text-xs text-gray-500">${lblNDF}</span>
@@ -618,6 +627,27 @@ export function mount(store, navigate) {
         store.set('restantInvestissement', invest);
         if (data.libelle && data.libelle !== currentLabel) {
           labels.restantInvestissement = data.libelle;
+          store.set('customLabels', labels);
+        }
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit restant PEA
+  document.querySelectorAll('[data-edit-restant-pea]').forEach(el => {
+    el.addEventListener('click', () => {
+      const labels = store.get('customLabels') || {};
+      const currentLabel = labels.restantPEA || 'Restant pour PEA';
+      const pea = store.get('restantPEA') || {};
+      const current = Number(pea.tr) || 0;
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"');
+      openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        pea.tr = Number(data.montant) || 0;
+        store.set('restantPEA', pea);
+        if (data.libelle && data.libelle !== currentLabel) {
+          labels.restantPEA = data.libelle;
           store.set('customLabels', labels);
         }
         navigate('suivi-depenses');
