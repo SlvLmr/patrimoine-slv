@@ -209,18 +209,18 @@ function renderTimeline(hypotheses, themes) {
       </div>
 
       <!-- Creative timeline with connecting path -->
-      <div class="overflow-x-auto overflow-y-visible scrollbar-hide pb-2">
-        <div class="relative" style="min-width: 600px; min-height: 120px;">
+      <div class="overflow-visible pb-2">
+        <div class="relative" style="min-width: 600px; min-height: 120px; padding: 0 3%;">
           <!-- Animated gradient line -->
-          <div class="absolute top-[70px] left-0 right-0 h-[3px] rounded-full overflow-hidden">
+          <div class="absolute top-[70px] h-[3px] rounded-full overflow-hidden" style="left: 3%; right: 3%;">
             <div class="w-full h-full bg-gradient-to-r from-emerald-500/20 via-purple-500/40 to-amber-500/20"></div>
           </div>
           <!-- Glow effect on line -->
-          <div class="absolute top-[68px] left-0 right-0 h-[7px] rounded-full bg-gradient-to-r from-emerald-500/5 via-purple-500/15 to-amber-500/5 blur-sm"></div>
+          <div class="absolute top-[68px] h-[7px] rounded-full bg-gradient-to-r from-emerald-500/5 via-purple-500/15 to-amber-500/5 blur-sm" style="left: 3%; right: 3%;"></div>
 
           <!-- Fixed year markers on the line -->
           ${[TIMELINE_START, TIMELINE_START + 10, TIMELINE_START + 20, TIMELINE_START + 30, TIMELINE_END].map(y => {
-            const mPct = ((y - TIMELINE_START) / TIMELINE_SPAN) * 100;
+            const mPct = 3 + ((y - TIMELINE_START) / TIMELINE_SPAN) * 94;
             return `<div class="absolute" style="left: ${mPct}%; top: 78px; transform: translateX(-50%);">
               <div class="w-1 h-1 rounded-full bg-gray-600 mx-auto"></div>
               <span class="text-[9px] text-gray-600 mt-0.5 block text-center">${y}</span>
@@ -229,9 +229,9 @@ function renderTimeline(hypotheses, themes) {
 
           ${years.map((year, yi) => {
             const items = yearGroups[year];
-            // Position based on absolute year within 2026-2066 range, mapped to 0%-100%
+            // Position based on absolute year within 2026-2066 range, mapped to 3%-97%
             const rawPct = Math.max(0, Math.min(1, (year - TIMELINE_START) / TIMELINE_SPAN));
-            const pct = rawPct * 100;
+            const pct = 3 + rawPct * 94;
             const leftPx = `${pct}%`;
             const isFirst = year === TIMELINE_START;
             const isLast = year === TIMELINE_END;
@@ -809,7 +809,7 @@ export function render(store) {
             </h2>
             <span id="hyp-gauges-year-label" class="text-xs font-medium text-purple-400/80 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">Aujourd'hui (${currentYear})</span>
           </div>
-          <div class="relative mt-3 mb-1">
+          <div class="relative mt-3 mb-1" style="padding: 0 3%;">
             <input type="range" id="hyp-gauges-slider" min="0" max="40" value="0" step="1"
               class="w-full h-2.5 bg-dark-600/80 rounded-full appearance-none cursor-pointer
               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6
@@ -820,7 +820,7 @@ export function render(store) {
               [&::-moz-range-thumb]:w-6 [&::-moz-range-thumb]:h-6 [&::-moz-range-thumb]:rounded-full
               [&::-moz-range-thumb]:bg-purple-500 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-purple-300/50 [&::-moz-range-thumb]:cursor-grab">
           </div>
-          <div class="flex justify-between mt-0.5 text-[10px] text-gray-600 font-medium">
+          <div class="flex justify-between mt-0.5 text-[10px] text-gray-600 font-medium" style="padding: 0 3%;">
             <span>2026</span>
             <span>2036</span>
             <span>2046</span>
