@@ -81,6 +81,7 @@ export function render(store) {
   const lblSoldeObligTR = labels.soldeObligatoire_tr || 'Solde obligatoire';
   const lblNDF = labels.aRecupererNDF || 'A récupérer NDF';
   const lblEnveloppe = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
+  const lblRestantInvest = labels.restantInvestissement || 'Restant pour investissement';
 
   // Solde début de mois
   const soldePrecedent = store.get('soldeMoisPrecedent') || {};
@@ -91,6 +92,10 @@ export function render(store) {
   const soldeObligatoire = store.get('soldeObligatoire') || {};
   const soldeObligCIC = Number(soldeObligatoire.cic) || 0;
   const soldeObligTR = Number(soldeObligatoire.tr) || 0;
+
+  // Restant pour investissement
+  const restantInvest = store.get('restantInvestissement') || {};
+  const restantInvestTR = Number(restantInvest.tr) || 0;
 
   // A récupérer NDF = budget NDF - somme NDF
   const paramètres = store.get('parametres') || {};
@@ -289,6 +294,10 @@ export function render(store) {
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-oblig="tr">
             <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-restant-invest>
+            <span class="text-xs text-gray-500">${lblRestantInvest}</span>
+            <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
           </div>
           ${budgetNDF > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
             <span class="text-xs text-gray-500">${lblNDF}</span>
@@ -588,6 +597,27 @@ export function mount(store, navigate) {
         store.set('soldeObligatoire', oblig);
         if (data.libelle && data.libelle !== currentLabel) {
           labels[lblKey] = data.libelle;
+          store.set('customLabels', labels);
+        }
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit restant investissement
+  document.querySelectorAll('[data-edit-restant-invest]').forEach(el => {
+    el.addEventListener('click', () => {
+      const labels = store.get('customLabels') || {};
+      const currentLabel = labels.restantInvestissement || 'Restant pour investissement';
+      const invest = store.get('restantInvestissement') || {};
+      const current = Number(invest.tr) || 0;
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"');
+      openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        invest.tr = Number(data.montant) || 0;
+        store.set('restantInvestissement', invest);
+        if (data.libelle && data.libelle !== currentLabel) {
+          labels.restantInvestissement = data.libelle;
           store.set('customLabels', labels);
         }
         navigate('suivi-depenses');
