@@ -17,6 +17,7 @@ import * as SimulateurCredit from './components/simulateur-credit.js';
 import * as SimulateurInterets from './components/simulateur-interets.js';
 import * as SimulateurAuto from './components/simulateur-auto.js';
 import * as Strategie from './components/strategie.js';
+import * as Hypotheses from './components/hypotheses.js';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
 
 
@@ -57,6 +58,7 @@ const routes = {
   'simulateur-interets': SimulateurInterets,
   'simulateur-auto': SimulateurAuto,
   strategie: Strategie,
+  hypotheses: Hypotheses,
   'simulateur-succession': SimulateurSuccession,
 };
 
@@ -72,6 +74,7 @@ const navItems = [
   { id: '_title_demain', sectionTitle: 'Demain' },
   { id: 'projection', label: 'Projection', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
   { id: 'strategie', label: 'Stratégie', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+  { id: 'hypotheses', label: 'Hypothèses', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: '_title_outils', sectionTitle: 'Outils', collapsible: true },
   { id: 'simulateur-interets', label: 'Intérêts composés', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', outilsGroup: true },
   { id: 'simulateur-succession', label: 'Cap Succession', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', outilsGroup: true },
