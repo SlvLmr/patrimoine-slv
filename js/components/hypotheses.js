@@ -700,7 +700,7 @@ export function render(store) {
               <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-immo-delta">—</p>
             </div>
             <div class="rounded-xl border border-blue-500/20 p-3 text-center bg-blue-500/5 hover:bg-blue-500/10 transition">
-              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Placements (hors AV)</p>
+              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Investissements (PEA, CTO, BTC)</p>
               <p class="text-base font-bold text-blue-400 mt-1 tabular-nums" id="hyp-pat-plac">${formatCurrency(firstSnap.placementsHorsAV)}</p>
               <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-plac-delta">—</p>
             </div>
@@ -721,33 +721,27 @@ export function render(store) {
             </div>
           </div>
 
-          <!-- Succession comparison -->
+          <!-- Succession comparison (compact: amount on the right) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3" id="hyp-succession-compare">
-            <div class="rounded-xl border border-red-500/15 p-4 bg-red-500/5">
-              <div class="flex items-center gap-2 mb-2">
-                <div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
-                  <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </div>
-                <div>
-                  <p class="text-sm font-bold text-gray-200">Sans optimisation</p>
-                  <p class="text-[10px] text-gray-500">Droits de succession bruts</p>
-                </div>
+            <div class="rounded-xl border border-red-500/15 px-4 py-3 bg-red-500/5 flex items-center gap-3">
+              <div class="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </div>
-              <p class="text-2xl font-bold text-red-400 tabular-nums" id="hyp-droits-bruts">0 \u20ac</p>
-              <p class="text-[10px] text-gray-500 mt-1" id="hyp-droits-detail">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-200">Sans optimisation</p>
+                <p class="text-[10px] text-gray-500" id="hyp-droits-detail">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
+              </div>
+              <p class="text-xl font-bold text-red-400 tabular-nums flex-shrink-0" id="hyp-droits-bruts">0 \u20ac</p>
             </div>
-            <div class="rounded-xl border border-emerald-500/15 p-4 bg-emerald-500/5">
-              <div class="flex items-center gap-2 mb-2">
-                <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                </div>
-                <div>
-                  <p class="text-sm font-bold text-gray-200">Avec votre stratégie</p>
-                  <p class="text-[10px] text-gray-500">Droits après donations planifiées</p>
-                </div>
+            <div class="rounded-xl border border-emerald-500/15 px-4 py-3 bg-emerald-500/5 flex items-center gap-3">
+              <div class="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               </div>
-              <p class="text-2xl font-bold text-emerald-400 tabular-nums" id="hyp-droits-opti">0 \u20ac</p>
-              <p class="text-[10px] text-gray-500 mt-1" id="hyp-droits-opti-detail">Ajoute des donations pour réduire les droits</p>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-200">Avec votre stratégie</p>
+                <p class="text-[10px] text-gray-500" id="hyp-droits-opti-detail">Ajoute des donations pour réduire les droits</p>
+              </div>
+              <p class="text-xl font-bold text-emerald-400 tabular-nums flex-shrink-0" id="hyp-droits-opti">0 \u20ac</p>
             </div>
           </div>
         </div>
