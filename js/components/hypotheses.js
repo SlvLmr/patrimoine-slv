@@ -129,16 +129,18 @@ function renderTimeline(hypotheses, themes) {
       <div class="overflow-x-auto scrollbar-hide pb-2">
         <div class="relative" style="min-width: ${Math.max(years.length * 140, 500)}px; height: 120px;">
           <!-- Animated gradient line -->
-          <div class="absolute top-[70px] left-0 right-0 h-[3px] rounded-full overflow-hidden">
+          <div class="absolute top-[70px] left-[5%] right-[5%] h-[3px] rounded-full overflow-hidden">
             <div class="w-full h-full bg-gradient-to-r from-emerald-500/20 via-purple-500/40 to-amber-500/20"></div>
           </div>
           <!-- Glow effect on line -->
-          <div class="absolute top-[68px] left-0 right-0 h-[7px] rounded-full bg-gradient-to-r from-emerald-500/5 via-purple-500/15 to-amber-500/5 blur-sm"></div>
+          <div class="absolute top-[68px] left-[5%] right-[5%] h-[7px] rounded-full bg-gradient-to-r from-emerald-500/5 via-purple-500/15 to-amber-500/5 blur-sm"></div>
 
           ${years.map((year, yi) => {
             const items = yearGroups[year];
-            const pct = years.length === 1 ? 50 : (yi / (years.length - 1)) * 100;
-            const leftPx = years.length === 1 ? '50%' : `${pct}%`;
+            // Map to 5%-95% range so edge items don't get clipped
+            const rawPct = years.length === 1 ? 50 : (yi / (years.length - 1)) * 100;
+            const pct = 5 + (rawPct / 100) * 90;
+            const leftPx = `${pct}%`;
             const isFirst = yi === 0;
             const isLast = yi === years.length - 1;
 
