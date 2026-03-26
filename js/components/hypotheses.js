@@ -212,15 +212,15 @@ function renderTimeline(hypotheses, themes) {
       <div class="overflow-x-auto overflow-y-visible scrollbar-hide pb-2">
         <div class="relative" style="min-width: 600px; min-height: 120px;">
           <!-- Animated gradient line -->
-          <div class="absolute top-[70px] left-[4%] right-[4%] h-[3px] rounded-full overflow-hidden">
+          <div class="absolute top-[70px] left-0 right-0 h-[3px] rounded-full overflow-hidden">
             <div class="w-full h-full bg-gradient-to-r from-emerald-500/20 via-purple-500/40 to-amber-500/20"></div>
           </div>
           <!-- Glow effect on line -->
-          <div class="absolute top-[68px] left-[4%] right-[4%] h-[7px] rounded-full bg-gradient-to-r from-emerald-500/5 via-purple-500/15 to-amber-500/5 blur-sm"></div>
+          <div class="absolute top-[68px] left-0 right-0 h-[7px] rounded-full bg-gradient-to-r from-emerald-500/5 via-purple-500/15 to-amber-500/5 blur-sm"></div>
 
           <!-- Fixed year markers on the line -->
           ${[TIMELINE_START, TIMELINE_START + 10, TIMELINE_START + 20, TIMELINE_START + 30, TIMELINE_END].map(y => {
-            const mPct = 4 + ((y - TIMELINE_START) / TIMELINE_SPAN) * 92;
+            const mPct = ((y - TIMELINE_START) / TIMELINE_SPAN) * 100;
             return `<div class="absolute" style="left: ${mPct}%; top: 78px; transform: translateX(-50%);">
               <div class="w-1 h-1 rounded-full bg-gray-600 mx-auto"></div>
               <span class="text-[9px] text-gray-600 mt-0.5 block text-center">${y}</span>
@@ -229,9 +229,9 @@ function renderTimeline(hypotheses, themes) {
 
           ${years.map((year, yi) => {
             const items = yearGroups[year];
-            // Position based on absolute year within 2026-2066 range, mapped to 4%-96%
+            // Position based on absolute year within 2026-2066 range, mapped to 0%-100%
             const rawPct = Math.max(0, Math.min(1, (year - TIMELINE_START) / TIMELINE_SPAN));
-            const pct = 4 + rawPct * 92;
+            const pct = rawPct * 100;
             const leftPx = `${pct}%`;
             const isFirst = year === TIMELINE_START;
             const isLast = year === TIMELINE_END;
