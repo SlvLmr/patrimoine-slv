@@ -1,4 +1,5 @@
 import { getCurrentUser } from '../firebase-config.js';
+import { formatCurrency } from '../utils.js?v=5';
 
 function getUserInfo(store) {
   return store.get('userInfo') || { prenom: '', nom: '', telephone: '', dateNaissance: '', photo: '' };
@@ -27,42 +28,94 @@ function computeAge(dateNaissance) {
 function renderChildCard(child, index) {
   const age = computeAge(child.dateNaissance);
   const initials = (child.prenom?.[0] || '?').toUpperCase();
+  const livrets = child.livrets || [];
+  const totalLivrets = livrets.reduce((s, l) => s + (Number(l.montant) || 0), 0);
 
   return `
-    <div class="flex items-center gap-4 p-4 bg-dark-800 rounded-xl border border-dark-400/20 group" data-child-idx="${index}">
-      <div class="relative">
-        <label for="child-photo-${index}" class="cursor-pointer block">
-          ${child.photo
-            ? `<img src="${child.photo}" alt="${child.prenom}" class="w-14 h-14 rounded-full object-cover border-2 border-dark-400 group-hover:border-accent-green transition"/>`
-            : `<div class="w-14 h-14 rounded-full bg-dark-600 border-2 border-dark-400 group-hover:border-accent-green transition flex items-center justify-center">
-                <span class="text-lg font-bold text-gray-400">${initials}</span>
-              </div>`
-          }
-          <div class="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-          </div>
-        </label>
-        <input type="file" id="child-photo-${index}" accept="image/*" class="hidden child-photo-input" data-idx="${index}"/>
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input type="text" value="${child.prenom || ''}" placeholder="Prénom"
-            class="child-prenom bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition placeholder-gray-600" data-idx="${index}"/>
-          <div class="flex items-center gap-2">
-            <input type="date" value="${child.dateNaissance || ''}"
-              class="child-dob bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition flex-1" data-idx="${index}"/>
-            ${age !== null ? `<span class="text-xs text-gray-500 whitespace-nowrap">${age} ans</span>` : ''}
+    <div class="p-4 bg-dark-800 rounded-xl border border-dark-400/20 group" data-child-idx="${index}">
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <label for="child-photo-${index}" class="cursor-pointer block">
+            ${child.photo
+              ? `<img src="${child.photo}" alt="${child.prenom}" class="w-14 h-14 rounded-full object-cover border-2 border-dark-400 group-hover:border-accent-green transition"/>`
+              : `<div class="w-14 h-14 rounded-full bg-dark-600 border-2 border-dark-400 group-hover:border-accent-green transition flex items-center justify-center">
+                  <span class="text-lg font-bold text-gray-400">${initials}</span>
+                </div>`
+            }
+            <div class="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+          </label>
+          <input type="file" id="child-photo-${index}" accept="image/*" class="hidden child-photo-input" data-idx="${index}"/>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input type="text" value="${child.prenom || ''}" placeholder="Prénom"
+              class="child-prenom bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition placeholder-gray-600" data-idx="${index}"/>
+            <div class="flex items-center gap-2">
+              <input type="date" value="${child.dateNaissance || ''}"
+                class="child-dob bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition flex-1" data-idx="${index}"/>
+              ${age !== null ? `<span class="text-xs text-gray-500 whitespace-nowrap">${age} ans</span>` : ''}
+            </div>
           </div>
         </div>
+        <button class="child-delete opacity-0 group-hover:opacity-100 text-red-400/60 hover:text-red-400 p-1.5 transition" data-idx="${index}" title="Supprimer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
       </div>
-      <button class="child-delete opacity-0 group-hover:opacity-100 text-red-400/60 hover:text-red-400 p-1.5 transition" data-idx="${index}" title="Supprimer">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
+
+      <!-- Livrets d'épargne de l'enfant -->
+      <div class="mt-3 pt-3 border-t border-dark-400/15">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            Livrets d'épargne
+            ${totalLivrets > 0 ? `<span class="text-accent-amber font-bold">${formatCurrency(totalLivrets)}</span>` : ''}
+          </span>
+          <button class="btn-add-livret text-xs text-accent-green hover:text-accent-amber transition flex items-center gap-1" data-child-idx="${index}">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
+            Ajouter
+          </button>
+        </div>
+        ${livrets.length === 0
+          ? `<p class="text-[11px] text-gray-600 italic py-1">Aucun livret</p>`
+          : `<div class="space-y-2">
+              ${livrets.map((l, li) => `
+                <div class="flex items-center gap-3 bg-dark-900/50 rounded-lg px-3 py-2 group/livret">
+                  <div class="flex-1 min-w-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                      <input type="text" value="${l.nom || ''}" placeholder="Nom du livret"
+                        class="livret-nom bg-transparent border-b border-transparent hover:border-dark-400/50 focus:border-accent-green text-xs text-gray-300 focus:outline-none transition px-0 py-0.5"
+                        data-child-idx="${index}" data-livret-idx="${li}"/>
+                      <div class="relative">
+                        <input type="number" step="100" min="0" value="${Number(l.montant) || 0}"
+                          class="livret-montant w-full bg-dark-800 border border-dark-400/30 rounded-lg px-2 py-1.5 text-xs text-gray-200 text-right focus:outline-none focus:border-accent-green transition pr-5"
+                          data-child-idx="${index}" data-livret-idx="${li}"/>
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">\u20ac</span>
+                      </div>
+                      <div class="relative">
+                        <input type="number" step="0.1" min="0" max="100" value="${Number(l.taux) || 0}"
+                          class="livret-taux w-full bg-dark-800 border border-dark-400/30 rounded-lg px-2 py-1.5 text-xs text-gray-200 text-right focus:outline-none focus:border-accent-green transition pr-5"
+                          data-child-idx="${index}" data-livret-idx="${li}"/>
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="livret-delete opacity-0 group-hover/livret:opacity-100 text-red-400/40 hover:text-red-400 transition" data-child-idx="${index}" data-livret-idx="${li}" title="Supprimer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              `).join('')}
+            </div>`
+        }
+      </div>
     </div>
   `;
 }
@@ -548,6 +601,81 @@ export function mount(store, navigate) {
       const child = enfants[idx];
       if (child && confirm(`Supprimer ${child.prenom || 'cet enfant'} ?`)) {
         enfants.splice(idx, 1);
+        saveEnfants(store, enfants);
+        refresh();
+      }
+    });
+  });
+
+  // --- Livrets d'épargne enfants ---
+  // Add livret
+  document.querySelectorAll('.btn-add-livret').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.childIdx);
+      const enfants = getEnfants(store);
+      if (!enfants[idx]) return;
+      if (!enfants[idx].livrets) enfants[idx].livrets = [];
+      enfants[idx].livrets.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        nom: '',
+        montant: 0,
+        taux: 3.0
+      });
+      saveEnfants(store, enfants);
+      refresh();
+    });
+  });
+
+  // Edit livret nom
+  document.querySelectorAll('.livret-nom').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const childIdx = parseInt(e.target.dataset.childIdx);
+      const livretIdx = parseInt(e.target.dataset.livretIdx);
+      const enfants = getEnfants(store);
+      if (enfants[childIdx]?.livrets?.[livretIdx]) {
+        enfants[childIdx].livrets[livretIdx].nom = e.target.value.trim();
+        saveEnfants(store, enfants);
+        showSaved();
+      }
+    });
+  });
+
+  // Edit livret montant
+  document.querySelectorAll('.livret-montant').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const childIdx = parseInt(e.target.dataset.childIdx);
+      const livretIdx = parseInt(e.target.dataset.livretIdx);
+      const enfants = getEnfants(store);
+      if (enfants[childIdx]?.livrets?.[livretIdx]) {
+        enfants[childIdx].livrets[livretIdx].montant = parseFloat(e.target.value) || 0;
+        saveEnfants(store, enfants);
+        showSaved();
+      }
+    });
+  });
+
+  // Edit livret taux
+  document.querySelectorAll('.livret-taux').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const childIdx = parseInt(e.target.dataset.childIdx);
+      const livretIdx = parseInt(e.target.dataset.livretIdx);
+      const enfants = getEnfants(store);
+      if (enfants[childIdx]?.livrets?.[livretIdx]) {
+        enfants[childIdx].livrets[livretIdx].taux = parseFloat(e.target.value) || 0;
+        saveEnfants(store, enfants);
+        showSaved();
+      }
+    });
+  });
+
+  // Delete livret
+  document.querySelectorAll('.livret-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const childIdx = parseInt(btn.dataset.childIdx);
+      const livretIdx = parseInt(btn.dataset.livretIdx);
+      const enfants = getEnfants(store);
+      if (enfants[childIdx]?.livrets) {
+        enfants[childIdx].livrets.splice(livretIdx, 1);
         saveEnfants(store, enfants);
         refresh();
       }
