@@ -10,8 +10,8 @@ export const COLORS = {
   depenses: '#ff4757',
   primary: '#c9a76c',
   secondary: '#b8976c',
-  grid: 'rgba(56, 56, 63, 0.25)',
-  gridText: '#6b6b75',
+  grid: 'rgba(72, 72, 82, 0.25)',
+  gridText: '#7a7a88',
   actions: '#dbb88a',
   etf: '#c9a76c',
   crypto: '#f59e0b',
@@ -104,10 +104,10 @@ export function createChart(canvasId, config) {
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(11, 11, 15, 0.95)',
+        backgroundColor: 'rgba(30, 30, 40, 0.95)',
         titleColor: '#e8d5b0',
         bodyColor: '#a0a0a5',
-        borderColor: 'rgba(56, 56, 63, 0.6)',
+        borderColor: 'rgba(72, 72, 82, 0.6)',
         borderWidth: 1,
         titleFont: { size: 13, family: 'Inter', weight: '600' },
         bodyFont: { size: 12, family: 'Inter' },
