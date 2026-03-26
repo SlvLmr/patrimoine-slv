@@ -74,11 +74,13 @@ function c(color) {
 function renderTimeline(hypotheses, themes) {
   if (hypotheses.length === 0) {
     return `
-      <div class="card-dark rounded-2xl p-8 text-center border border-dark-400/20">
-        <svg class="w-12 h-12 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <p class="text-gray-500 text-sm">Aucune hypothèse pour le moment</p>
+      <div class="px-6 py-10 text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 mb-3">
+          <svg class="w-7 h-7 text-purple-400/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <p class="text-gray-400 text-sm font-medium">Aucune hypothèse pour le moment</p>
         <p class="text-gray-600 text-xs mt-1">Ajoute ta première hypothèse pour construire ta timeline</p>
       </div>`;
   }
@@ -89,7 +91,6 @@ function renderTimeline(hypotheses, themes) {
 
   const minYear = sorted[0].annee;
   const maxYear = sorted[sorted.length - 1].annee;
-  const span = Math.max(maxYear - minYear, 1);
 
   // Group by year for stacking
   const yearGroups = {};
@@ -100,65 +101,95 @@ function renderTimeline(hypotheses, themes) {
 
   const years = Object.keys(yearGroups).map(Number).sort((a, b) => a - b);
 
+  // Theme icons for timeline events
+  const themeIcons = {
+    investissement: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>',
+    immobilier: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
+    donation: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>',
+    succession: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+    retraite: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    fiscalite: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>',
+  };
+
   return `
-    <div class="card-dark rounded-2xl border border-dark-400/20 overflow-hidden">
-      <div class="px-6 py-4 border-b border-dark-400/15 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-          <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
+    <div class="px-6 pt-6 pb-2">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/30 to-pink-500/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
           Timeline
         </h2>
-        <span class="text-xs text-gray-600">${minYear} — ${maxYear}</span>
+        <span class="text-[11px] font-mono text-purple-400/60 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/15">${minYear} — ${maxYear}</span>
       </div>
-      <div class="p-6 overflow-x-auto scrollbar-hide">
-        <div class="relative" style="min-width: ${Math.max(years.length * 120, 400)}px; height: 140px;">
-          <!-- Main line -->
-          <div class="absolute top-[60px] left-0 right-0 h-[2px] bg-gradient-to-r from-dark-400/20 via-dark-400/50 to-dark-400/20 rounded-full"></div>
-          <div class="absolute top-[59px] left-0 right-0 h-[4px] hyp-timeline-glow rounded-full"></div>
+
+      <!-- Creative timeline with connecting path -->
+      <div class="overflow-x-auto scrollbar-hide pb-2">
+        <div class="relative" style="min-width: ${Math.max(years.length * 140, 500)}px; height: 160px;">
+          <!-- Animated gradient line -->
+          <div class="absolute top-[70px] left-0 right-0 h-[3px] rounded-full overflow-hidden">
+            <div class="w-full h-full bg-gradient-to-r from-emerald-500/20 via-purple-500/40 to-amber-500/20"></div>
+          </div>
+          <!-- Glow effect on line -->
+          <div class="absolute top-[68px] left-0 right-0 h-[7px] rounded-full bg-gradient-to-r from-emerald-500/5 via-purple-500/15 to-amber-500/5 blur-sm"></div>
 
           ${years.map((year, yi) => {
             const items = yearGroups[year];
             const pct = years.length === 1 ? 50 : (yi / (years.length - 1)) * 100;
             const leftPx = years.length === 1 ? '50%' : `${pct}%`;
+            const isFirst = yi === 0;
+            const isLast = yi === years.length - 1;
 
             return `
-              <div class="absolute flex flex-col items-center" style="left: ${leftPx}; transform: translateX(-50%); top: 0; width: 100px;">
-                <!-- Year label -->
-                <span class="text-[11px] font-bold text-gray-400 mb-2">${year}</span>
+              <div class="absolute flex flex-col items-center" style="left: ${leftPx}; transform: translateX(-50%); top: 0; width: 120px;">
+                <!-- Year label with badge -->
+                <div class="flex flex-col items-center mb-2.5">
+                  <span class="text-[11px] font-bold ${isFirst ? 'text-emerald-400' : isLast ? 'text-amber-400' : 'text-gray-300'} tabular-nums">${year}</span>
+                </div>
 
-                <!-- Dots stack -->
-                <div class="flex flex-col items-center gap-1.5">
-                  ${items.map(item => {
-                    const theme = themeMap[item.theme] || { color: 'emerald' };
+                <!-- Dots stack with glow -->
+                <div class="flex flex-col items-center gap-2 relative">
+                  ${items.map((item, di) => {
+                    const theme = themeMap[item.theme] || { color: 'emerald', id: 'investissement' };
                     const cc = c(theme.color);
+                    const iconPath = themeIcons[theme.id] || themeIcons.investissement;
                     return `
-                      <button class="hyp-tl-dot group relative w-5 h-5 rounded-full ${cc.dot} ring-2 ${cc.ring} transition-all duration-200 hover:scale-125 hover:shadow-lg ${cc.glow} cursor-pointer" data-scroll-to="${item.id}" title="${item.titre}">
-                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-dark-700 border border-dark-400/40 rounded-lg text-[10px] text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl z-10">
-                          ${item.titre}${item.montant ? ` · ${formatCurrency(item.montant)}` : ''}
+                      <button class="hyp-tl-dot group relative flex items-center justify-center w-8 h-8 rounded-xl ${cc.bg} border-2 ${cc.border} transition-all duration-300 hover:scale-110 hover:shadow-xl ${cc.glow} cursor-pointer" data-scroll-to="${item.id}" title="${item.titre}">
+                        <svg class="w-4 h-4 ${cc.text}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg>
+                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-dark-800/95 border ${cc.border} rounded-xl text-[10px] text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-2xl z-20 backdrop-blur-sm">
+                          <span class="font-semibold ${cc.text}">${item.titre}</span>
+                          ${item.montant ? `<br/><span class="text-gray-400">${formatCurrency(item.montant)}</span>` : ''}
+                          <div class="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-dark-800/95 border-r border-b ${cc.border}"></div>
                         </span>
                       </button>`;
                   }).join('')}
                 </div>
 
-                <!-- Count label -->
-                ${items.length > 1 ? `<span class="text-[9px] text-gray-600 mt-1">${items.length} hyp.</span>` : ''}
+                <!-- Count & type label below -->
+                <div class="mt-2 text-center">
+                  ${items.length > 1 ? `<span class="text-[9px] text-gray-500 bg-dark-600/50 px-2 py-0.5 rounded-full">${items.length} hyp.</span>` : `<span class="text-[9px] text-gray-600">${(themeMap[items[0].theme] || { label: '' }).label}</span>`}
+                </div>
               </div>`;
           }).join('')}
         </div>
       </div>
 
-      <!-- Legend -->
-      <div class="px-6 pb-4 flex flex-wrap gap-3">
+      <!-- Legend pills -->
+      <div class="flex flex-wrap gap-2 mt-1 mb-2">
         ${themes.filter(t => hypotheses.some(h => h.theme === t.id)).map(t => {
           const cc = c(t.color);
-          return `<span class="flex items-center gap-1.5 text-[10px] text-gray-500">
-            <span class="w-2.5 h-2.5 rounded-full ${cc.dot}"></span>
+          return `<span class="flex items-center gap-1.5 text-[10px] text-gray-400 bg-dark-600/30 px-2.5 py-1 rounded-lg border border-dark-400/10">
+            <span class="w-2 h-2 rounded-full ${cc.dot}"></span>
             ${t.label}
           </span>`;
         }).join('')}
       </div>
-    </div>`;
+    </div>
+
+    <!-- Divider -->
+    <div class="mx-6 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>`;
 }
 
 // ─── Hypothesis card ─────────────────────────────────────────────────────────
@@ -183,7 +214,7 @@ function renderCard(item, themes, enfants = []) {
       }).join('');
     }
     if (item.donationType) {
-      const typeLabels = { donation: 'Classique', don_tepa: 'TEPA', av_donation: 'Assurance Vie' };
+      const typeLabels = { donation: 'Classique', don_tepa: 'Loi Sarkozy', av_donation: 'Donation AV' };
       enfantBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Classique'}</span>`;
     }
   }
@@ -275,9 +306,9 @@ function getFormHtml(themes, item = null, enfants = []) {
         <label class="block text-xs text-gray-500 mb-1.5">Type de donation</label>
         <select id="hyp-form-donation-type"
           class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
-          <option value="donation" ${(item?.donationType || 'donation') === 'donation' ? 'selected' : ''}>Donation classique (abattement 100 000 \u20ac)</option>
-          <option value="don_tepa" ${item?.donationType === 'don_tepa' ? 'selected' : ''}>Don familial TEPA (31 865 \u20ac)</option>
-          <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Versement Assurance Vie (abattement 152 500 \u20ac)</option>
+          <option value="donation" ${(item?.donationType || 'donation') === 'donation' ? 'selected' : ''}>Abattement Immobilier - Cash - CTO (100 000 \u20ac)</option>
+          <option value="don_tepa" ${item?.donationType === 'don_tepa' ? 'selected' : ''}>Donation Loi Sarkozy (31 865 \u20ac, < 80 ans)</option>
+          <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Donation Assurance Vie (152 500 \u20ac, Art. 990 I)</option>
         </select>
       </div>
       <!-- Child assignment (shown only for donation theme) -->
@@ -417,61 +448,122 @@ function computeChildGaugesAtYear(enfant, hypotheses, enfants, calendarYear, age
   };
 }
 
+// ─── Donation tax brackets (Art. 777 CGI) ───────────────────────────────────
+const TRANCHES_DONATION = [
+  { min: 0,       max: 8072,    taux: 0.05 },
+  { min: 8072,    max: 12109,   taux: 0.10 },
+  { min: 12109,   max: 15932,   taux: 0.15 },
+  { min: 15932,   max: 552324,  taux: 0.20 },
+  { min: 552324,  max: 902838,  taux: 0.30 },
+  { min: 902838,  max: 1805677, taux: 0.40 },
+  { min: 1805677, max: Infinity, taux: 0.45 }
+];
+
+const AV_TAUX_1 = 0.20;
+const AV_SEUIL_1 = 700000;
+const AV_TAUX_2 = 0.3125;
+
+function calculerDroitsDonation(montantTaxable) {
+  if (montantTaxable <= 0) return 0;
+  let droits = 0;
+  for (const t of TRANCHES_DONATION) {
+    if (montantTaxable <= t.min) break;
+    droits += (Math.min(montantTaxable, t.max) - t.min) * t.taux;
+  }
+  return Math.round(droits);
+}
+
+function calculerDroitsAV(avTaxable) {
+  if (avTaxable <= 0) return 0;
+  const tranche1 = Math.min(avTaxable, AV_SEUIL_1);
+  const tranche2 = Math.max(0, avTaxable - AV_SEUIL_1);
+  return Math.round(tranche1 * AV_TAUX_1 + tranche2 * AV_TAUX_2);
+}
+
 function renderChildGauges(enfant, gauges, color) {
   const age = childAge(enfant.dateNaissance);
+  // Compute taxes for each category
+  const abattTaxable = Math.max(0, gauges.abattementUtilise - ABATTEMENT_PARENT_ENFANT);
+  const abattDroits = calculerDroitsDonation(abattTaxable);
+  const tepaTaxable = Math.max(0, gauges.tepaUtilise - DON_FAMILIAL_TEPA);
+  const tepaDroits = calculerDroitsDonation(tepaTaxable);
+  const avTaxable = Math.max(0, gauges.avUtilise - AV_ABATTEMENT_PAR_BENEFICIAIRE);
+  const avDroits = calculerDroitsAV(avTaxable);
+  const totalDonations = gauges.abattementUtilise + gauges.tepaUtilise + gauges.avUtilise;
+  const totalDroits = abattDroits + tepaDroits + avDroits;
+
   return `
-    <div class="bg-dark-800/40 rounded-xl p-4 border border-dark-400/10">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-8 h-8 rounded-full bg-${color}/20 border-2 border-${color}/30 flex items-center justify-center text-sm font-bold text-${color}">
+    <div class="bg-dark-800/30 rounded-2xl p-5 border border-dark-400/10 backdrop-blur-sm">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-${color}/20 to-${color}/10 border border-${color}/20 flex items-center justify-center text-sm font-bold text-${color} shadow-lg shadow-${color}/5">
           ${(enfant.prenom || '?')[0].toUpperCase()}
         </div>
-        <div>
+        <div class="flex-1">
           <h4 class="text-sm font-bold text-gray-100">${enfant.prenom || 'Sans nom'}</h4>
           <p class="text-[10px] text-gray-500">${age !== null ? `${age} ans` : ''}</p>
         </div>
+        ${totalDonations > 0 ? `
+        <div class="text-right">
+          <p class="text-[10px] text-gray-500">Droits estimés</p>
+          <p class="text-xs font-bold ${totalDroits > 0 ? 'text-red-400' : 'text-emerald-400'}">${totalDroits > 0 ? formatCurrency(totalDroits) : 'Exonéré'}</p>
+        </div>` : ''}
       </div>
-      <div class="space-y-3">
-        <!-- Abattement -->
+      <div class="space-y-4">
+        <!-- Abattement Immobilier - Cash - CTO -->
         <div>
-          <div class="flex items-center justify-between text-xs mb-1">
-            <span class="text-gray-400 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              Abattement
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="text-gray-300 flex items-center gap-1.5 font-medium">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              Abattement Immobilier - Cash - CTO
             </span>
-            <span class="text-gray-400">${formatCurrency(gauges.abattementUtilise)} / ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</span>
+            <span class="text-gray-400 font-mono text-[11px]">${formatCurrency(gauges.abattementUtilise)} / ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</span>
           </div>
-          <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all ${gauges.abattPct >= 100 ? 'bg-red-500' : gauges.abattPct >= 50 ? 'bg-amber-500' : 'bg-emerald-500'}" style="width: ${Math.min(100, gauges.abattPct)}%"></div>
+          <div class="h-2.5 bg-dark-600/80 rounded-full overflow-hidden shadow-inner">
+            <div class="h-full rounded-full transition-all duration-500 ${gauges.abattPct >= 100 ? 'bg-gradient-to-r from-red-500 to-red-400' : gauges.abattPct >= 50 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-emerald-500 to-emerald-400'}" style="width: ${Math.min(100, gauges.abattPct)}%"></div>
           </div>
-          <p class="text-[10px] mt-0.5 font-medium ${gauges.abattRestant > 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(gauges.abattRestant)} restant</p>
+          <div class="flex items-center justify-between mt-1">
+            <p class="text-[10px] font-medium ${gauges.abattRestant > 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(gauges.abattRestant)} restant</p>
+            <p class="text-[9px] text-gray-600">Art. 779-I CGI · Renouvelable 15 ans · Barème 5% à 45%</p>
+          </div>
+          ${abattDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(abattDroits)}</p>` : ''}
         </div>
-        <!-- TEPA -->
+
+        <!-- Donation Loi Sarkozy -->
         <div>
-          <div class="flex items-center justify-between text-xs mb-1">
-            <span class="text-gray-400 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              TEPA
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="text-gray-300 flex items-center gap-1.5 font-medium">
+              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Donation Loi Sarkozy
             </span>
-            <span class="text-gray-400">${formatCurrency(gauges.tepaUtilise)} / ${formatCurrency(DON_FAMILIAL_TEPA)}</span>
+            <span class="text-gray-400 font-mono text-[11px]">${formatCurrency(gauges.tepaUtilise)} / ${formatCurrency(DON_FAMILIAL_TEPA)}</span>
           </div>
-          <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all ${gauges.tepaPct >= 100 ? 'bg-red-500' : gauges.tepaPct >= 50 ? 'bg-amber-500' : 'bg-cyan-500'}" style="width: ${Math.min(100, gauges.tepaPct)}%"></div>
+          <div class="h-2.5 bg-dark-600/80 rounded-full overflow-hidden shadow-inner">
+            <div class="h-full rounded-full transition-all duration-500 ${gauges.tepaPct >= 100 ? 'bg-gradient-to-r from-red-500 to-red-400' : gauges.tepaPct >= 50 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-cyan-500 to-cyan-400'}" style="width: ${Math.min(100, gauges.tepaPct)}%"></div>
           </div>
-          <p class="text-[10px] mt-0.5 font-medium ${gauges.isTepaAvailable ? 'text-cyan-400' : 'text-gray-500'}">${formatCurrency(gauges.tepaRestant)} disponible ${gauges.isTepaAvailable ? '' : '(> 80 ans)'}</p>
+          <div class="flex items-center justify-between mt-1">
+            <p class="text-[10px] font-medium ${gauges.isTepaAvailable ? 'text-cyan-400' : 'text-gray-500'}">${formatCurrency(gauges.tepaRestant)} disponible ${gauges.isTepaAvailable ? '' : '<span class="text-red-400/70">(donateur > 80 ans)</span>'}</p>
+            <p class="text-[9px] text-gray-600">Art. 790 G CGI · Don familial · Exonéré si < 80 ans</p>
+          </div>
+          ${tepaDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(tepaDroits)}</p>` : ''}
         </div>
-        <!-- Assurance Vie -->
+
+        <!-- Donation Assurance Vie -->
         <div>
-          <div class="flex items-center justify-between text-xs mb-1">
-            <span class="text-gray-400 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              Assurance Vie
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="text-gray-300 flex items-center gap-1.5 font-medium">
+              <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Donation Assurance Vie
             </span>
-            <span class="text-gray-400">${formatCurrency(gauges.avUtilise)} / ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}</span>
+            <span class="text-gray-400 font-mono text-[11px]">${formatCurrency(gauges.avUtilise)} / ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}</span>
           </div>
-          <div class="h-2 bg-dark-600 rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all ${gauges.avPct >= 100 ? 'bg-red-500' : gauges.avPct >= 50 ? 'bg-amber-500' : 'bg-purple-500'}" style="width: ${Math.min(100, gauges.avPct)}%"></div>
+          <div class="h-2.5 bg-dark-600/80 rounded-full overflow-hidden shadow-inner">
+            <div class="h-full rounded-full transition-all duration-500 ${gauges.avPct >= 100 ? 'bg-gradient-to-r from-red-500 to-red-400' : gauges.avPct >= 50 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-purple-500 to-purple-400'}" style="width: ${Math.min(100, gauges.avPct)}%"></div>
           </div>
-          <p class="text-[10px] mt-0.5 font-medium text-purple-400">${formatCurrency(gauges.avRestant)} disponible <span class="text-gray-600">Art. 990 I</span></p>
+          <div class="flex items-center justify-between mt-1">
+            <p class="text-[10px] font-medium text-purple-400">${formatCurrency(gauges.avRestant)} disponible</p>
+            <p class="text-[9px] text-gray-600">Art. 990 I CGI · 20% jusqu'à 700k€ · 31.25% au-delà</p>
+          </div>
+          ${avDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(avDroits)} (prélèvement spécifique AV)</p>` : ''}
         </div>
       </div>
     </div>`;
@@ -497,8 +589,40 @@ export function render(store) {
   // Compute initial gauges for each child (at current year)
   const childColors = ['accent-purple', 'accent-cyan', 'accent-green', 'accent-amber', 'accent-blue', 'accent-red'];
 
+  // Compute projection snapshots for the patrimoine indicator
+  let snapshots = [];
+  try { snapshots = computeProjection(store); } catch(e) { console.error('Projection error in hypotheses:', e); }
+
+  const getAV = (snap) => {
+    if (!snap.placementDetail) return 0;
+    return snap.placementDetail['Assurance Vie'] || 0;
+  };
+  const getPlacementsHorsAV = (snap) => {
+    if (!snap.placementDetail) return 0;
+    let total = 0;
+    for (const [k, v] of Object.entries(snap.placementDetail)) {
+      if (k !== 'Assurance Vie') total += v;
+    }
+    return total;
+  };
+
+  const nbEnfants = enfants.length || 1;
+
+  // Build snapshot data for patrimoine indicator
+  const snapshotsData = snapshots.map((snap, i) => ({
+    year: snap.calendarYear,
+    age: snap.age,
+    immobilier: snap.immobilier || 0,
+    placementsHorsAV: getPlacementsHorsAV(snap),
+    assuranceVie: getAV(snap),
+    epargne: snap.epargne || 0,
+    patrimoineNet: snap.patrimoineNet || 0
+  }));
+
+  const firstSnap = snapshotsData[0] || { immobilier: 0, placementsHorsAV: 0, assuranceVie: 0, epargne: 0, patrimoineNet: 0 };
+
   return `
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="max-w-5xl mx-auto space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -524,39 +648,110 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Timeline -->
-      ${renderTimeline(sorted, themes)}
+      <!-- ═══ UNIFIED MEGA BLOCK: Timeline + Patrimoine + Abattements ═══ -->
+      <div class="card-dark rounded-3xl border border-purple-500/15 overflow-hidden shadow-2xl shadow-purple-500/5" style="background: linear-gradient(180deg, rgba(88,28,135,0.06) 0%, rgba(15,23,42,0) 40%);">
 
-      <!-- Children Gauges Section (below timeline) -->
-      ${enfants.length > 0 ? `
-      <div class="card-dark rounded-2xl border border-dark-400/20 overflow-hidden">
-        <div class="px-6 py-4 border-b border-dark-400/15 flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            Suivi des abattements par enfant
-          </h2>
-          <span id="hyp-gauges-year-label" class="text-xs text-gray-500">Aujourd'hui (${currentYear})</span>
-        </div>
-        <div class="p-6">
-          <!-- Year slider for gauges -->
-          <div class="mb-5">
+        <!-- ── Timeline Section ── -->
+        ${renderTimeline(sorted, themes)}
+
+        <!-- ── Slider Section ── -->
+        ${enfants.length > 0 || snapshots.length > 0 ? `
+        <div class="px-6 pt-4 pb-2">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              Suivi des abattements par enfant
+            </h2>
+            <span id="hyp-gauges-year-label" class="text-xs font-medium text-purple-400/80 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">Aujourd'hui (${currentYear})</span>
+          </div>
+          <div class="relative mt-3 mb-1">
             <input type="range" id="hyp-gauges-slider" min="0" max="${projectionYears}" value="0" step="1"
-              class="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-purple-500
-              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
-              [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:shadow-lg
-              [&::-webkit-slider-thumb]:shadow-purple-500/30 [&::-webkit-slider-thumb]:cursor-grab
-              [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full
-              [&::-moz-range-thumb]:bg-purple-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-grab">
-            <div class="flex justify-between mt-1 text-xs text-gray-600">
-              <span>${currentYear}</span>
-              <span>+10 ans</span>
-              <span>+20 ans</span>
-              <span>+${projectionYears} ans</span>
+              class="w-full h-2.5 bg-dark-600/80 rounded-full appearance-none cursor-pointer
+              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6
+              [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-purple-400 [&::-webkit-slider-thumb]:to-purple-600
+              [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-purple-500/40 [&::-webkit-slider-thumb]:cursor-grab
+              [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-purple-300/50
+              [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110
+              [&::-moz-range-thumb]:w-6 [&::-moz-range-thumb]:h-6 [&::-moz-range-thumb]:rounded-full
+              [&::-moz-range-thumb]:bg-purple-500 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-purple-300/50 [&::-moz-range-thumb]:cursor-grab">
+          </div>
+          <div class="flex justify-between mt-0.5 text-[10px] text-gray-600 font-medium">
+            <span>${currentYear}</span>
+            <span>+10 ans</span>
+            <span>+20 ans</span>
+            <span>+${projectionYears} ans</span>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- ── Patrimoine Indicator Cards (updated by slider) ── -->
+        ${snapshots.length > 0 ? `
+        <div class="px-6 py-4">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2" id="hyp-patrimoine-cards">
+            <div class="rounded-xl border border-amber-500/20 p-3 text-center bg-amber-500/5 hover:bg-amber-500/10 transition">
+              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Immobilier</p>
+              <p class="text-base font-bold text-amber-400 mt-1 tabular-nums" id="hyp-pat-immo">${formatCurrency(firstSnap.immobilier)}</p>
+              <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-immo-delta">—</p>
+            </div>
+            <div class="rounded-xl border border-blue-500/20 p-3 text-center bg-blue-500/5 hover:bg-blue-500/10 transition">
+              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Placements (hors AV)</p>
+              <p class="text-base font-bold text-blue-400 mt-1 tabular-nums" id="hyp-pat-plac">${formatCurrency(firstSnap.placementsHorsAV)}</p>
+              <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-plac-delta">—</p>
+            </div>
+            <div class="rounded-xl border border-purple-500/20 p-3 text-center bg-purple-500/5 hover:bg-purple-500/10 transition">
+              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Assurance Vie</p>
+              <p class="text-base font-bold text-purple-400 mt-1 tabular-nums" id="hyp-pat-av">${formatCurrency(firstSnap.assuranceVie)}</p>
+              <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-av-delta">—</p>
+            </div>
+            <div class="rounded-xl border border-emerald-500/20 p-3 text-center bg-emerald-500/5 hover:bg-emerald-500/10 transition">
+              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Épargne</p>
+              <p class="text-base font-bold text-emerald-400 mt-1 tabular-nums" id="hyp-pat-epar">${formatCurrency(firstSnap.epargne)}</p>
+              <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-epar-delta">—</p>
+            </div>
+            <div class="rounded-xl border border-gray-500/20 p-3 text-center bg-gray-500/5 hover:bg-gray-500/10 transition col-span-2 sm:col-span-1">
+              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Patrimoine net</p>
+              <p class="text-base font-bold text-gray-100 mt-1 tabular-nums" id="hyp-pat-net">${formatCurrency(firstSnap.patrimoineNet)}</p>
+              <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-net-delta">—</p>
             </div>
           </div>
-          <!-- Gauges grid -->
+
+          <!-- Succession comparison -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3" id="hyp-succession-compare">
+            <div class="rounded-xl border border-red-500/15 p-4 bg-red-500/5">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-gray-200">Sans optimisation</p>
+                  <p class="text-[10px] text-gray-500">Droits de succession bruts</p>
+                </div>
+              </div>
+              <p class="text-2xl font-bold text-red-400 tabular-nums" id="hyp-droits-bruts">0 \u20ac</p>
+              <p class="text-[10px] text-gray-500 mt-1" id="hyp-droits-detail">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
+            </div>
+            <div class="rounded-xl border border-emerald-500/15 p-4 bg-emerald-500/5">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-gray-200">Avec votre stratégie</p>
+                  <p class="text-[10px] text-gray-500">Droits après donations planifiées</p>
+                </div>
+              </div>
+              <p class="text-2xl font-bold text-emerald-400 tabular-nums" id="hyp-droits-opti">0 \u20ac</p>
+              <p class="text-[10px] text-gray-500 mt-1" id="hyp-droits-opti-detail">Ajoute des donations pour réduire les droits</p>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- ── Children Gauges ── -->
+        ${enfants.length > 0 ? `
+        <div class="px-6 pb-6">
           <div id="hyp-gauges-container" class="grid grid-cols-1 ${enfants.length >= 2 ? 'md:grid-cols-2' : ''} gap-4">
             ${enfants.map((enf, i) => {
               const color = childColors[i % childColors.length];
@@ -565,8 +760,8 @@ export function render(store) {
             }).join('')}
           </div>
         </div>
+        ` : ''}
       </div>
-      ` : ''}
 
       <!-- Filter chips -->
       ${themes.length > 0 && hypotheses.length > 0 ? `
@@ -606,30 +801,140 @@ export function mount(store, navigate) {
     if (el) { el.innerHTML = render(store); mount(store, navigate); }
   }
 
-  // ── Gauge slider
+  // ── Gauge slider + Patrimoine indicator + Succession comparison
   const gaugeSlider = document.getElementById('hyp-gauges-slider');
-  if (gaugeSlider && enfants.length > 0) {
+  if (gaugeSlider) {
     const gaugeLabel = document.getElementById('hyp-gauges-year-label');
     const gaugeContainer = document.getElementById('hyp-gauges-container');
 
-    const updateGauges = (yearOffset) => {
+    // Compute projection snapshots for patrimoine cards
+    let snapshots = [];
+    try { snapshots = computeProjection(store); } catch(e) {}
+
+    const getAV = (snap) => {
+      if (!snap.placementDetail) return 0;
+      return snap.placementDetail['Assurance Vie'] || 0;
+    };
+    const getPlacementsHorsAV = (snap) => {
+      if (!snap.placementDetail) return 0;
+      let total = 0;
+      for (const [k, v] of Object.entries(snap.placementDetail)) {
+        if (k !== 'Assurance Vie') total += v;
+      }
+      return total;
+    };
+
+    const snapshotsData = snapshots.map((snap, i) => ({
+      immobilier: snap.immobilier || 0,
+      placementsHorsAV: getPlacementsHorsAV(snap),
+      assuranceVie: getAV(snap),
+      epargne: snap.epargne || 0,
+      patrimoineNet: snap.patrimoineNet || 0
+    }));
+    const firstSnap = snapshotsData[0] || { immobilier: 0, placementsHorsAV: 0, assuranceVie: 0, epargne: 0, patrimoineNet: 0 };
+    const nbEnfants = enfants.length || 1;
+
+    // Succession tax calculation (same as fiscalite.js)
+    const TRANCHES = [
+      { min: 0, max: 8072, taux: 0.05 }, { min: 8072, max: 12109, taux: 0.10 },
+      { min: 12109, max: 15932, taux: 0.15 }, { min: 15932, max: 552324, taux: 0.20 },
+      { min: 552324, max: 902838, taux: 0.30 }, { min: 902838, max: 1805677, taux: 0.40 },
+      { min: 1805677, max: Infinity, taux: 0.45 }
+    ];
+    function calcDroits(taxable) {
+      if (taxable <= 0) return 0;
+      let d = 0;
+      for (const t of TRANCHES) { if (taxable <= t.min) break; d += (Math.min(taxable, t.max) - t.min) * t.taux; }
+      return Math.round(d);
+    }
+    function calcSuccession(patrimoineHorsAV, avTotal) {
+      const partBrute = patrimoineHorsAV / nbEnfants;
+      const taxable = Math.max(0, partBrute - 100000);
+      const droitsHorsAV = calcDroits(taxable);
+      const avParEnfant = avTotal / nbEnfants;
+      const avTaxable = Math.max(0, avParEnfant - 152500);
+      const avDroits = avTaxable > 0 ? Math.round(Math.min(avTaxable, 700000) * 0.20 + Math.max(0, avTaxable - 700000) * 0.3125) : 0;
+      return (droitsHorsAV + avDroits) * nbEnfants;
+    }
+    function calcSuccessionOpti(patrimoineHorsAV, avTotal, yearOffset) {
+      const calYear = currentYear + yearOffset;
+      const hyps = getHypotheses(store);
+      let totalDonated = 0;
+      let totalAVDonated = 0;
+      hyps.filter(h => h.theme === 'donation' && h.annee <= calYear).forEach(h => {
+        const donType = h.donationType || 'donation';
+        if (donType === 'av_donation') { totalAVDonated += (h.montant || 0); }
+        else { totalDonated += (h.montant || 0); }
+      });
+      const adjHorsAV = Math.max(0, patrimoineHorsAV - totalDonated);
+      const adjAV = Math.max(0, avTotal - totalAVDonated);
+      return calcSuccession(adjHorsAV, adjAV);
+    }
+
+    // Initial succession calculation
+    if (snapshotsData.length > 0) {
+      const s = snapshotsData[0];
+      const brutEl = document.getElementById('hyp-droits-bruts');
+      const optiEl = document.getElementById('hyp-droits-opti');
+      const horsAV = s.immobilier + s.placementsHorsAV + s.epargne;
+      if (brutEl) brutEl.textContent = formatCurrency(calcSuccession(horsAV, s.assuranceVie));
+      if (optiEl) optiEl.textContent = formatCurrency(calcSuccessionOpti(horsAV, s.assuranceVie, 0));
+    }
+
+    const updateAll = (yearOffset) => {
       const calYear = currentYear + yearOffset;
       const hypotheses = getHypotheses(store);
+
+      // Update year label
       if (gaugeLabel) {
         gaugeLabel.textContent = yearOffset === 0
           ? `Aujourd'hui (${currentYear})`
           : `Fin ${calYear} (+${yearOffset} an${yearOffset > 1 ? 's' : ''})`;
       }
-      if (gaugeContainer) {
+
+      // Update child gauges
+      if (gaugeContainer && enfants.length > 0) {
         gaugeContainer.innerHTML = enfants.map((enf, i) => {
           const color = childColors[i % childColors.length];
           const gauges = computeChildGaugesAtYear(enf, hypotheses, enfants, calYear, ageDonateur, currentYear, 0);
           return renderChildGauges(enf, gauges, color);
         }).join('');
       }
+
+      // Update patrimoine indicator cards
+      const snapIdx = Math.min(yearOffset, snapshotsData.length - 1);
+      const s = snapshotsData[snapIdx];
+      if (s) {
+        const updateCard = (id, value, deltaId, baseValue) => {
+          const el = document.getElementById(id);
+          const dEl = document.getElementById(deltaId);
+          if (el) el.textContent = formatCurrency(value);
+          if (dEl) {
+            if (yearOffset === 0) { dEl.textContent = '—'; dEl.className = 'text-[9px] text-gray-600 mt-0.5'; }
+            else {
+              const delta = value - baseValue;
+              const sign = delta >= 0 ? '+' : '';
+              dEl.textContent = `${sign}${formatCurrency(delta)}`;
+              dEl.className = `text-[9px] mt-0.5 font-medium ${delta >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+          }
+        };
+        updateCard('hyp-pat-immo', s.immobilier, 'hyp-pat-immo-delta', firstSnap.immobilier);
+        updateCard('hyp-pat-plac', s.placementsHorsAV, 'hyp-pat-plac-delta', firstSnap.placementsHorsAV);
+        updateCard('hyp-pat-av', s.assuranceVie, 'hyp-pat-av-delta', firstSnap.assuranceVie);
+        updateCard('hyp-pat-epar', s.epargne, 'hyp-pat-epar-delta', firstSnap.epargne);
+        updateCard('hyp-pat-net', s.patrimoineNet, 'hyp-pat-net-delta', firstSnap.patrimoineNet);
+
+        // Update succession comparison
+        const horsAV = s.immobilier + s.placementsHorsAV + s.epargne;
+        const brutEl = document.getElementById('hyp-droits-bruts');
+        const optiEl = document.getElementById('hyp-droits-opti');
+        if (brutEl) brutEl.textContent = formatCurrency(calcSuccession(horsAV, s.assuranceVie));
+        if (optiEl) optiEl.textContent = formatCurrency(calcSuccessionOpti(horsAV, s.assuranceVie, yearOffset));
+      }
     };
 
-    gaugeSlider.addEventListener('input', (e) => updateGauges(parseInt(e.target.value)));
+    gaugeSlider.addEventListener('input', (e) => updateAll(parseInt(e.target.value)));
   }
 
   // ── Add hypothesis
