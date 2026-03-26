@@ -126,8 +126,8 @@ function renderTimeline(hypotheses, themes) {
       </div>
 
       <!-- Creative timeline with connecting path -->
-      <div class="overflow-x-auto scrollbar-hide pb-2">
-        <div class="relative" style="min-width: ${Math.max(years.length * 140, 500)}px; height: 120px;">
+      <div class="overflow-x-auto overflow-y-visible scrollbar-hide pb-2">
+        <div class="relative" style="min-width: ${Math.max(years.length * 140, 500)}px; min-height: 120px;">
           <!-- Animated gradient line -->
           <div class="absolute top-[70px] left-[5%] right-[5%] h-[3px] rounded-full overflow-hidden">
             <div class="w-full h-full bg-gradient-to-r from-emerald-500/20 via-purple-500/40 to-amber-500/20"></div>
@@ -160,10 +160,10 @@ function renderTimeline(hypotheses, themes) {
                     return `
                       <button class="hyp-tl-dot group relative flex items-center justify-center w-8 h-8 rounded-xl ${cc.bg} border-2 ${cc.border} transition-all duration-300 hover:scale-110 hover:shadow-xl ${cc.glow} cursor-pointer" data-scroll-to="${item.id}" title="${item.titre}">
                         <svg class="w-4 h-4 ${cc.text}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg>
-                        <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-dark-800/95 border ${cc.border} rounded-xl text-[10px] text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-2xl z-20 backdrop-blur-sm">
+                        <span class="absolute top-full left-1/2 -translate-x-1/2 mt-3 px-3 py-2 bg-dark-800/95 border ${cc.border} rounded-xl text-[10px] text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-2xl z-30 backdrop-blur-sm">
+                          <div class="absolute bottom-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-dark-800/95 border-l border-t ${cc.border}"></div>
                           <span class="font-semibold ${cc.text}">${item.titre}</span>
                           ${item.montant ? `<br/><span class="text-gray-400">${formatCurrency(item.montant)}</span>` : ''}
-                          <div class="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-dark-800/95 border-r border-b ${cc.border}"></div>
                         </span>
                       </button>`;
                   }).join('')}
