@@ -92,7 +92,7 @@ export function render(store) {
   // Solde obligatoire
   const soldeObligatoire = store.get('soldeObligatoire') || {};
   const soldeObligCIC = Number(soldeObligatoire.cic) || 0;
-  const soldeObligTR = Number(soldeObligatoire.tr) || 0;
+  // soldeObligTR will be computed after restantInvest, restantPEA and NDF values are available
 
   // Restant pour investissement
   const restantInvest = store.get('restantInvestissement') || {};
@@ -108,6 +108,9 @@ export function render(store) {
   const ndfTR = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const aRecupererNDF = budgetNDF - ndfTR;
   const sommeARecuperer = 39.99 + ndfTR;
+
+  // Solde obligatoire TR = sum of restant invest + restant PEA + NDF values
+  const soldeObligTR = restantInvestTR + restantPEATR + sommeARecuperer + aRecupererNDF;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -296,7 +299,7 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-oblig="tr">
+          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
             <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>
