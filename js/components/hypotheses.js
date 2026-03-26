@@ -573,6 +573,13 @@ function computeChildGaugesAtYear(enfant, hypotheses, enfants, calendarYear, age
     }
   }
 
+  // After processing all donations, check if the current calendar year
+  // is 15+ years past the last cycle start — if so, abattements have renewed
+  if (cycleStart && (calendarYear - cycleStart) >= RENOUVELLEMENT_ANNEES) {
+    abattementUtilise = 0;
+    tepaUtilise = 0;
+  }
+
   const abattRestant = Math.max(0, ABATTEMENT_PARENT_ENFANT - abattementUtilise);
   const tepaRestant = Math.max(0, DON_FAMILIAL_TEPA - tepaUtilise);
   const avRestant = Math.max(0, AV_ABATTEMENT_PAR_BENEFICIAIRE - avUtilise);
