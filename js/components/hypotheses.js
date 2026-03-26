@@ -177,7 +177,7 @@ function renderTimeline(hypotheses, themes) {
       </div>
 
       <!-- Legend pills -->
-      <div class="flex flex-wrap gap-2 mt-1 mb-2">
+      <div class="flex flex-wrap gap-2 mt-1">
         ${themes.filter(t => hypotheses.some(h => h.theme === t.id)).map(t => {
           const cc = c(t.color);
           return `<span class="flex items-center gap-1.5 text-[10px] text-gray-400 bg-dark-600/30 px-2.5 py-1 rounded-lg border border-dark-400/10">
@@ -186,10 +186,43 @@ function renderTimeline(hypotheses, themes) {
           </span>`;
         }).join('')}
       </div>
-    </div>
+    </div>`;
+}
 
+// Render the slider sub-section (placed right after Timeline in the mega block)
+function renderSlider(currentYear, projectionYears) {
+  return `
     <!-- Divider -->
-    <div class="mx-6 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>`;
+    <div class="mx-6 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>
+
+    <div class="px-6 pt-4 pb-2">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+          <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Suivi des abattements par enfant
+        </h2>
+        <span id="hyp-gauges-year-label" class="text-xs font-medium text-purple-400/80 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">Aujourd'hui (${currentYear})</span>
+      </div>
+      <div class="relative mt-3 mb-1">
+        <input type="range" id="hyp-gauges-slider" min="0" max="${projectionYears}" value="0" step="1"
+          class="w-full h-2.5 bg-dark-600/80 rounded-full appearance-none cursor-pointer
+          [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6
+          [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-purple-400 [&::-webkit-slider-thumb]:to-purple-600
+          [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-purple-500/40 [&::-webkit-slider-thumb]:cursor-grab
+          [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-purple-300/50
+          [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110
+          [&::-moz-range-thumb]:w-6 [&::-moz-range-thumb]:h-6 [&::-moz-range-thumb]:rounded-full
+          [&::-moz-range-thumb]:bg-purple-500 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-purple-300/50 [&::-moz-range-thumb]:cursor-grab">
+      </div>
+      <div class="flex justify-between mt-0.5 text-[10px] text-gray-600 font-medium">
+        <span>${currentYear}</span>
+        <span>+10 ans</span>
+        <span>+20 ans</span>
+        <span>+${projectionYears} ans</span>
+      </div>
+    </div>`;
 }
 
 // ─── Hypothesis card ─────────────────────────────────────────────────────────
@@ -654,37 +687,8 @@ export function render(store) {
         <!-- ── Timeline Section ── -->
         ${renderTimeline(sorted, themes)}
 
-        <!-- ── Slider Section ── -->
-        ${enfants.length > 0 || snapshots.length > 0 ? `
-        <div class="px-6 pt-4 pb-2">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-              Suivi des abattements par enfant
-            </h2>
-            <span id="hyp-gauges-year-label" class="text-xs font-medium text-purple-400/80 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">Aujourd'hui (${currentYear})</span>
-          </div>
-          <div class="relative mt-3 mb-1">
-            <input type="range" id="hyp-gauges-slider" min="0" max="${projectionYears}" value="0" step="1"
-              class="w-full h-2.5 bg-dark-600/80 rounded-full appearance-none cursor-pointer
-              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6
-              [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-purple-400 [&::-webkit-slider-thumb]:to-purple-600
-              [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-purple-500/40 [&::-webkit-slider-thumb]:cursor-grab
-              [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-purple-300/50
-              [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110
-              [&::-moz-range-thumb]:w-6 [&::-moz-range-thumb]:h-6 [&::-moz-range-thumb]:rounded-full
-              [&::-moz-range-thumb]:bg-purple-500 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-purple-300/50 [&::-moz-range-thumb]:cursor-grab">
-          </div>
-          <div class="flex justify-between mt-0.5 text-[10px] text-gray-600 font-medium">
-            <span>${currentYear}</span>
-            <span>+10 ans</span>
-            <span>+20 ans</span>
-            <span>+${projectionYears} ans</span>
-          </div>
-        </div>
-        ` : ''}
+        <!-- ── Slider (right under timeline) ── -->
+        ${enfants.length > 0 || snapshots.length > 0 ? renderSlider(currentYear, projectionYears) : ''}
 
         <!-- ── Patrimoine Indicator Cards (updated by slider) ── -->
         ${snapshots.length > 0 ? `
