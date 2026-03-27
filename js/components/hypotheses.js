@@ -659,7 +659,6 @@ function renderChildGauges(enfant, gauges, color) {
           </div>
           <div class="flex items-center justify-between mt-1">
             <p class="text-[10px] font-medium ${gauges.abattRestant > 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(gauges.abattRestant)} restant</p>
-            <p class="text-[9px] text-gray-600">Art. 779-I CGI · Renouvelable 15 ans · Barème 5% à 45%</p>
           </div>
           ${abattDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(abattDroits)}</p>` : ''}
         </div>
@@ -678,7 +677,6 @@ function renderChildGauges(enfant, gauges, color) {
           </div>
           <div class="flex items-center justify-between mt-1">
             <p class="text-[10px] font-medium ${gauges.isTepaAvailable ? 'text-cyan-400' : 'text-gray-500'}">${formatCurrency(gauges.tepaRestant)} disponible ${gauges.isTepaAvailable ? '' : '<span class="text-red-400/70">(donateur > 80 ans)</span>'}</p>
-            <p class="text-[9px] text-gray-600">Art. 790 G CGI · Don familial · Exonéré si < 80 ans</p>
           </div>
           ${tepaDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(tepaDroits)}</p>` : ''}
         </div>
@@ -697,7 +695,6 @@ function renderChildGauges(enfant, gauges, color) {
           </div>
           <div class="flex items-center justify-between mt-1">
             <p class="text-[10px] font-medium ${gauges.isAVAvailable ? 'text-purple-400' : 'text-gray-500'}">${formatCurrency(gauges.avRestant)} disponible ${gauges.isAVAvailable ? '' : '<span class="text-red-400/70">(donateur > 70 ans)</span>'}</p>
-            <p class="text-[9px] text-gray-600">Art. 990 I CGI · avant 70 ans · 152 500 \u20ac/enfant</p>
           </div>
           ${avDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(avDroits)} (prélèvement spécifique AV)</p>` : ''}
         </div>
@@ -908,6 +905,90 @@ export function render(store) {
           ? ''
           : sorted.map(item => renderCard(item, themes, enfants)).join('')
         }
+      </div>
+
+      <!-- Bloc règles fiscales -->
+      <div class="mt-10 rounded-xl border border-dark-400/20 bg-dark-800/40 overflow-hidden">
+        <div class="px-6 py-4 border-b border-dark-400/15">
+          <h2 class="text-sm font-bold text-gray-200">Règles de donation et fiscalité</h2>
+        </div>
+        <div class="px-6 py-5 space-y-5 text-xs text-gray-400 leading-relaxed">
+
+          <!-- Abattement classique -->
+          <div>
+            <h3 class="text-gray-200 font-semibold mb-1.5 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              Abattement en ligne directe (Immo / Cash / CTO)
+            </h3>
+            <ul class="space-y-1 ml-4 list-disc marker:text-gray-600">
+              <li>Chaque parent peut donner jusqu'à <span class="text-gray-200 font-medium">100 000 \u20ac par enfant</span>, en franchise de droits.</li>
+              <li>Ce plafond est <span class="text-gray-200 font-medium">commun</span> aux donations immobilières (nue-propriété), cash et CTO : la somme des trois ne peut pas dépasser 100 000 \u20ac.</li>
+              <li>L'abattement se renouvelle tous les <span class="text-gray-200 font-medium">15 ans</span>.</li>
+              <li>Au-delà de l'abattement, les droits de donation s'appliquent selon un barème progressif de <span class="text-gray-200 font-medium">5 % à 45 %</span>.</li>
+              <li>Référence : art. 779-I du Code général des impôts (CGI).</li>
+            </ul>
+          </div>
+
+          <!-- Donation Sarkozy -->
+          <div>
+            <h3 class="text-gray-200 font-semibold mb-1.5 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              Don familial dit « Sarkozy »
+            </h3>
+            <ul class="space-y-1 ml-4 list-disc marker:text-gray-600">
+              <li>Don de somme d'argent, exonéré dans la limite de <span class="text-gray-200 font-medium">31 865 \u20ac par enfant</span>.</li>
+              <li>Conditions : le donateur doit avoir <span class="text-gray-200 font-medium">moins de 80 ans</span> et le bénéficiaire doit être majeur.</li>
+              <li>Cet abattement est <span class="text-gray-200 font-medium">distinct</span> de l'abattement classique de 100 000 \u20ac (ils se cumulent).</li>
+              <li>Renouvelable tous les <span class="text-gray-200 font-medium">15 ans</span>.</li>
+              <li>Pas de frais de notaire : simple déclaration (formulaire 2735).</li>
+              <li>Référence : art. 790 G du CGI.</li>
+            </ul>
+          </div>
+
+          <!-- Assurance Vie -->
+          <div>
+            <h3 class="text-gray-200 font-semibold mb-1.5 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+              Assurance Vie — Transmission avant 70 ans
+            </h3>
+            <ul class="space-y-1 ml-4 list-disc marker:text-gray-600">
+              <li>Les primes versées <span class="text-gray-200 font-medium">avant les 70 ans</span> du souscripteur bénéficient d'un abattement de <span class="text-gray-200 font-medium">152 500 \u20ac par bénéficiaire</span>.</li>
+              <li>Au-delà : taxation forfaitaire de <span class="text-gray-200 font-medium">20 %</span> jusqu'à 700 000 \u20ac, puis <span class="text-gray-200 font-medium">31,25 %</span>.</li>
+              <li>Les primes versées <span class="text-gray-200 font-medium">après 70 ans</span> relèvent d'un régime différent : abattement global de 30 500 \u20ac (tous bénéficiaires confondus), puis droits de succession classiques.</li>
+              <li>Cet abattement est <span class="text-gray-200 font-medium">distinct</span> des abattements classiques et Sarkozy.</li>
+              <li>Référence : art. 990 I du CGI (avant 70 ans) et art. 757 B (après 70 ans).</li>
+            </ul>
+          </div>
+
+          <!-- Barème droits de donation -->
+          <div>
+            <h3 class="text-gray-200 font-semibold mb-1.5 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              Barème des droits de donation en ligne directe
+            </h3>
+            <div class="overflow-x-auto mt-2">
+              <table class="text-[11px] w-full">
+                <thead>
+                  <tr class="border-b border-dark-400/20 text-gray-500">
+                    <th class="text-left py-1.5 pr-4 font-medium">Tranche</th>
+                    <th class="text-right py-1.5 font-medium">Taux</th>
+                  </tr>
+                </thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">Jusqu'à 8 072 \u20ac</td><td class="text-right">5 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">8 072 \u20ac à 12 109 \u20ac</td><td class="text-right">10 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">12 109 \u20ac à 15 932 \u20ac</td><td class="text-right">15 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">15 932 \u20ac à 552 324 \u20ac</td><td class="text-right">20 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">552 324 \u20ac à 902 838 \u20ac</td><td class="text-right">30 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">902 838 \u20ac à 1 805 677 \u20ac</td><td class="text-right">40 %</td></tr>
+                  <tr><td class="py-1.5 pr-4">Au-delà de 1 805 677 \u20ac</td><td class="text-right">45 %</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="mt-2 text-gray-500">Ce barème s'applique après déduction de l'abattement de 100 000 \u20ac. Référence : art. 777 du CGI.</p>
+          </div>
+
+        </div>
       </div>
     </div>`;
 }
