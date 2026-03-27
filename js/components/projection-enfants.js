@@ -20,6 +20,7 @@ const CHILD_CATEGORIES = [
 
 const CHILD_COLORS = ['#a855f7', '#06b6d4'];
 const DEFAULT_RENDEMENT = 0.07;
+const FIXED_GROUP_KEYS = ['ETF', 'Actions', 'Assurance Vie', 'Bitcoin', 'CTO'];
 
 function getEnfants(store) {
   const cfg = store.get('donationConfig') || { enfants: [] };
@@ -63,9 +64,10 @@ function computeChildProjection(enfant, horizonYears) {
     ? livrets.reduce((s, l) => s + (Number(l.taux) || 0) * (Number(l.montant) || 0), 0) / (livretTotal || 1) / 100
     : 0.03;
 
-  // Group placements
-  const groupKeys = [];
+  // Group placements — always include all fixed columns
+  const groupKeys = [...FIXED_GROUP_KEYS];
   const groups = {};
+  for (const k of groupKeys) groups[k] = [];
   for (const p of placements) {
     const gk = getChildGroupKey(p);
     if (!groups[gk]) { groups[gk] = []; groupKeys.push(gk); }
@@ -317,7 +319,7 @@ function renderTable(snapshots, groupKeys) {
                 const ap = s.placementApports[k] || 0;
                 const ga = s.placementGains[k] || 0;
                 const extra = i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '';
-                return `<td class="px-1 py-0.5 text-center text-gray-200 ${bt} ${extra}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500">${formatCurrency(ap)}</div>` : '<span class="text-gray-700">-</span>'}</td>`;
+                return `<td class="px-1 py-0.5 text-center text-gray-200 ${bt} ${extra}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500">${formatCurrency(ap)}</div>` : `<span class="text-gray-600">${formatCurrency(0)}</span>`}</td>`;
               }).join('')}
               <td class="px-1 py-0.5 text-center text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
               <td class="px-1 py-0.5 text-center font-semibold ${bt} ${s.totalGains >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${s.totalGains >= 0 ? '+' : ''}${formatCurrency(s.totalGains)}</td>
@@ -394,6 +396,8 @@ function drawChildChart(enfant, horizonYears) {
 
   const palette = ['#3b82f6', '#a855f7', '#06b6d4', '#ec4899', '#f97316'];
   (snapshots.groupKeys || []).forEach((k, ki) => {
+    const hasData = snapshots.some(s => (s.placementDetail[k] || 0) > 0);
+    if (!hasData) return;
     const color = palette[ki % palette.length];
     datasets.push({ label: k, data: snapshots.map(s => s.placementDetail[k] || 0), borderColor: color, backgroundColor: createVerticalGradient(ctx, color, 0.15, 0.02), fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 });
   });
