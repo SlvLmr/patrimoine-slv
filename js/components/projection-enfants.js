@@ -6,7 +6,8 @@ import { createChart, VIVID_PALETTE, createVerticalGradient, COLORS } from '../c
 // ============================================================================
 
 const CHILD_ENVELOPPES = [
-  { value: 'CTO', label: 'Compte-Titres (CTO)' },
+  { value: 'CTO', label: 'CTO' },
+  { value: 'PEA', label: 'PEA' },
   { value: 'AV', label: 'Assurance Vie' },
   { value: 'Crypto', label: 'Crypto' },
 ];
@@ -20,7 +21,12 @@ const CHILD_CATEGORIES = [
 
 const CHILD_COLORS = ['#a855f7', '#06b6d4'];
 const DEFAULT_RENDEMENT = 0.07;
-const FIXED_GROUP_KEYS = ['ETF', 'Actions', 'Assurance Vie', 'Bitcoin', 'CTO'];
+const FIXED_GROUP_KEYS = ['ETF (CTO)', 'Actions (CTO)', 'ETF (PEA)', 'Actions (PEA)', 'Bitcoin', 'Assurance Vie'];
+
+// ─── Fiscalité ───────────────────────────────────────────────────────────────
+const PFU_RATE = 0.314;   // Flat tax: 14.2% IR + 17.2% PS
+const PS_RATE  = 0.172;   // Prélèvements sociaux seuls
+const AV_RATE_AFTER8 = 0.247; // AV > 8 ans: 17.2% PS + 7.5% IR
 
 function getEnfants(store) {
   const cfg = store.get('donationConfig') || { enfants: [] };
@@ -42,13 +48,24 @@ function getChildGroupKey(p) {
   const env = p.enveloppe || 'CTO';
   const cat = p.categorie || '';
   if (env === 'CTO') {
-    if (cat.includes('ETF')) return 'ETF';
-    if (cat.includes('Action')) return 'Actions';
-    return 'CTO';
+    if (cat.includes('ETF')) return 'ETF (CTO)';
+    if (cat.includes('Action')) return 'Actions (CTO)';
+    return 'ETF (CTO)'; // default CTO → ETF (CTO)
+  }
+  if (env === 'PEA') {
+    if (cat.includes('Action')) return 'Actions (PEA)';
+    return 'ETF (PEA)'; // default PEA → ETF (PEA)
   }
   if (env === 'Crypto') return 'Bitcoin';
   if (env === 'AV') return 'Assurance Vie';
-  return env;
+  return 'ETF (CTO)';
+}
+
+function getTaxRate(groupKey, envelopeAge) {
+  if (groupKey.includes('(PEA)')) return envelopeAge >= 5 ? PS_RATE : PFU_RATE;
+  if (groupKey === 'Assurance Vie') return envelopeAge >= 8 ? AV_RATE_AFTER8 : PFU_RATE;
+  // CTO, Bitcoin → flat tax
+  return PFU_RATE;
 }
 
 // ─── Projection engine for one child ─────────────────────────────────────────
@@ -88,11 +105,17 @@ function computeChildProjection(enfant, horizonYears) {
     const placTotal = groupKeys.reduce((s, k) => s + gVal[k], 0);
     const totalApports = groupKeys.reduce((s, k) => s + gApp[k], 0);
     const totalGains = placTotal - totalApports;
-    const detail = {}, apports = {}, gains = {};
+    const detail = {}, apports = {}, gains = {}, netImpot = {};
+    let totalNetImpot = 0;
     for (const k of groupKeys) {
       detail[k] = Math.round(gVal[k]);
       apports[k] = Math.round(gApp[k]);
-      gains[k] = Math.round(gVal[k] - gApp[k]);
+      const gain = gVal[k] - gApp[k];
+      gains[k] = Math.round(gain);
+      const tax = getTaxRate(k, y);
+      const net = gApp[k] + gain * (1 - tax);
+      netImpot[k] = Math.round(net);
+      totalNetImpot += net;
     }
 
     snapshots.push({
@@ -104,10 +127,13 @@ function computeChildProjection(enfant, horizonYears) {
       placements: Math.round(placTotal),
       totalApports: Math.round(totalApports),
       totalGains: Math.round(totalGains),
+      totalNetImpot: Math.round(totalNetImpot),
       total: Math.round(livretTotal + placTotal),
+      totalNet: Math.round(livretTotal + totalNetImpot),
       placementDetail: { ...detail },
       placementApports: { ...apports },
       placementGains: { ...gains },
+      placementNetImpot: { ...netImpot },
     });
 
     // Grow
@@ -292,7 +318,7 @@ function renderTable(snapshots, groupKeys) {
     <div class="card-dark rounded-xl overflow-hidden">
       <div class="p-5 border-b border-dark-400/30">
         <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
-        <p class="text-[10px] text-gray-600 mt-1">Valeurs brutes · CTO/Crypto: flat tax 30% sur les gains</p>
+        <p class="text-[10px] text-gray-600 mt-1">CTO/Crypto: flat tax 31,4% · PEA &gt;5 ans: 17,2% PS · PEA &lt;5 ans: 31,4% · AV &gt;8 ans: 24,7% · AV &lt;8 ans: 31,4%</p>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm table-fixed">
@@ -304,6 +330,7 @@ function renderTable(snapshots, groupKeys) {
               ${groupKeys.map((k, i) => `<th class="px-1 py-1.5 text-center ${i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : ''}">${k}</th>`).join('')}
               <th class="px-1 py-1.5 text-center font-semibold text-gray-400">Apports</th>
               <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
+              <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
               <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Livrets</th>
               <th class="px-1 py-1.5 text-center font-semibold text-accent-green">Total</th>
             </tr>
@@ -321,14 +348,14 @@ function renderTable(snapshots, groupKeys) {
               ${groupKeys.map((k, i) => {
                 const val = s.placementDetail[k] || 0;
                 const ap = s.placementApports[k] || 0;
-                const ga = s.placementGains[k] || 0;
                 const extra = i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '';
                 return `<td class="px-1 py-0.5 text-center text-gray-200 ${bt} ${extra}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500">${formatCurrency(ap)}</div>` : `<span class="text-gray-600">${formatCurrency(0)}</span>`}</td>`;
               }).join('')}
               <td class="px-1 py-0.5 text-center text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
               <td class="px-1 py-0.5 text-center font-semibold ${bt} ${s.totalGains >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${s.totalGains >= 0 ? '+' : ''}${formatCurrency(s.totalGains)}</td>
+              <td class="px-1 py-0.5 text-center font-semibold text-gray-300 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.totalNetImpot)}</td>
               <td class="px-1 py-1 text-center text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.livrets)}</td>
-              <td class="px-1 py-1 text-center font-semibold text-accent-green ${bt}">${formatCurrency(s.total)}</td>
+              <td class="px-1 py-1 text-center font-semibold text-accent-green ${bt}">${formatCurrency(s.totalNet)}</td>
             </tr>`;
             }).join('')}
           </tbody>
