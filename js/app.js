@@ -162,7 +162,7 @@ function initNav() {
     if (item.sectionTitle) {
       if (item.collapsible) {
         inOutilsGroup = true;
-        return `<div class="mt-4 mb-1.5 mx-3">
+        return `<div class="mt-3 mb-0.5 mx-3">
           <button id="outils-toggle" class="flex items-center gap-1.5 w-full text-left">
             <span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span>
             <svg id="outils-chevron" class="w-3 h-3 text-gray-600 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -171,7 +171,7 @@ function initNav() {
         <div id="outils-items" class="hidden">`;
       }
       inOutilsGroup = false;
-      return `<div class="section-title-wrap mt-4 mb-1.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
+      return `<div class="section-title-wrap mt-3 mb-0.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
     }
     if (item.separator) {
       return `<div class="my-1.5 mx-3 h-px bg-gradient-to-r from-transparent via-dark-300/50 to-transparent"></div>`;
@@ -179,7 +179,7 @@ function initNav() {
     const label = item.isProfile ? getProfileDisplayName() : item.label;
     return `
     <a href="#${item.id}" data-nav="${item.id}"
-      class="flex items-center gap-3 px-4 py-2 rounded-xl text-sm hover:bg-dark-600 hover:text-accent-green transition-colors text-gray-300">
+      class="flex items-center gap-3 px-4 py-1.5 rounded-xl text-sm hover:bg-dark-600 hover:text-accent-green transition-colors text-gray-300">
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${item.icon}"/>
       </svg>
