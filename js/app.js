@@ -16,6 +16,7 @@ import * as SimulateurFire from './components/simulateur-fire.js';
 import * as SimulateurCredit from './components/simulateur-credit.js';
 import * as SimulateurInterets from './components/simulateur-interets.js';
 import * as SimulateurAuto from './components/simulateur-auto.js';
+import * as SimulateurSalaire from './components/simulateur-salaire.js';
 import * as Strategie from './components/strategie.js?v=20260327a';
 import * as Hypotheses from './components/hypotheses.js?v=20260327a';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
@@ -58,6 +59,7 @@ const routes = {
   'simulateur-credit': SimulateurCredit,
   'simulateur-interets': SimulateurInterets,
   'simulateur-auto': SimulateurAuto,
+  'simulateur-salaire': SimulateurSalaire,
   strategie: Strategie,
   hypotheses: Hypotheses,
   'simulateur-succession': SimulateurSuccession,
@@ -83,6 +85,7 @@ const navItems = [
   { id: 'simulateur-fire', label: 'Simulateur FIRE', icon: 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z', outilsGroup: true },
   { id: 'simulateur-credit', label: 'Crédit immobilier', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2', outilsGroup: true },
   { id: 'simulateur-auto', label: 'Crédit voiture', icon: 'M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zM3 9l2-5h14l2 5M3 9h18v6a1 1 0 01-1 1h-1a3 3 0 00-6 0H11a3 3 0 00-6 0H4a1 1 0 01-1-1V9z', outilsGroup: true },
+  { id: 'simulateur-salaire', label: 'Salaire brut/net', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', outilsGroup: true },
 
   { id: 'fiscalite', label: 'Succession', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z', outilsGroup: true },
   { id: 'strategie', label: 'Stratégie', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', outilsGroup: true },
