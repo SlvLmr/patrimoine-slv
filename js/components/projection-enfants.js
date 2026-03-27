@@ -58,6 +58,7 @@ function computeChildProjection(enfant, horizonYears) {
   const placements = enfant.placements || [];
   const currentYear = new Date().getFullYear();
   const rendements = enfant.rendementPlacements || {};
+  const baseAge = childAge(enfant.dateNaissance);
 
   let livretTotal = livrets.reduce((s, l) => s + (Number(l.montant) || 0), 0);
   const avgLivretRate = livrets.length > 0
@@ -98,6 +99,7 @@ function computeChildProjection(enfant, horizonYears) {
       annee: y,
       calendarYear: currentYear + y,
       label: `${currentYear + y}`,
+      age: baseAge !== null ? baseAge + y : null,
       livrets: Math.round(livretTotal),
       placements: Math.round(placTotal),
       totalApports: Math.round(totalApports),
@@ -297,7 +299,8 @@ function renderTable(snapshots, groupKeys) {
           <thead class="bg-dark-800/50 text-gray-500 text-[10px]">
             <tr>
               <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
-              <th class="w-[32px] px-0 py-1.5 text-center border-r-2 border-dark-300/40">An</th>
+              <th class="w-[28px] px-0 py-1.5 text-center">An</th>
+              <th class="w-[32px] px-0 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
               ${groupKeys.map((k, i) => `<th class="px-1 py-1.5 text-center ${i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : ''}">${k}</th>`).join('')}
               <th class="px-1 py-1.5 text-center font-semibold text-gray-400">Apports</th>
               <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
@@ -313,7 +316,8 @@ function renderTable(snapshots, groupKeys) {
               return `
             <tr class="hover:bg-dark-600/30 transition ${rowClass} text-[11px]">
               <td class="px-1 py-1 text-center font-medium text-gray-200 ${bt}">${s.label}</td>
-              <td class="px-0 py-1 text-center text-gray-500 border-r-2 border-dark-300/40 ${bt}">${s.annee + 1}</td>
+              <td class="px-0 py-1 text-center text-gray-500 ${bt}">${s.annee + 1}</td>
+              <td class="px-0 py-1 text-center text-gray-400 border-r-2 border-dark-300/40 ${bt}">${s.age !== null ? s.age : '–'}</td>
               ${groupKeys.map((k, i) => {
                 const val = s.placementDetail[k] || 0;
                 const ap = s.placementApports[k] || 0;
