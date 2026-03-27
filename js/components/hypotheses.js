@@ -303,8 +303,8 @@ function renderCard(item, themes, enfants = []) {
       }).join('');
     }
     if (item.donationType) {
-      const typeLabels = { abatt_immo: 'Immobilier', abatt_cash: 'Cash', abatt_cto: 'CTO', don_tepa: 'Loi Sarkozy', av_donation: 'Assurance Vie' };
-      extraBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Immobilier'}</span>`;
+      const typeLabels = { abatt_immo: 'Nue-propriété', abatt_cash: 'Cash', abatt_cto: 'CTO', don_tepa: 'Sarkozy', av_donation: 'Assurance Vie' };
+      extraBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Abattement'}</span>`;
     }
   }
   if (isEvenement && item.eventType) {
@@ -319,38 +319,26 @@ function renderCard(item, themes, enfants = []) {
     <div id="hyp-${item.id}" class="group rounded-xl border ${cc.border} ${cc.bg} transition-all duration-200 hover:shadow-lg overflow-hidden">
       <div class="px-5 py-4 flex items-start gap-4">
         <!-- Theme icon -->
-        <div class="flex-shrink-0 w-10 h-10 rounded-xl ${cc.bg} border ${cc.border} flex items-center justify-center mt-0.5">
-          <svg class="w-5 h-5 ${cc.text}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex-shrink-0 w-12 h-12 rounded-xl ${cc.bg} border ${cc.border} flex items-center justify-center">
+          <svg class="w-6 h-6 ${cc.text}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${theme.icon}"/>
           </svg>
         </div>
 
         <!-- Content -->
         <div class="flex-1 min-w-0">
-          <!-- Row 1: Year + Amount (big & impactful) -->
-          <div class="flex items-baseline gap-3 mb-1.5">
-            <span class="text-lg font-extrabold text-white tracking-tight">${item.annee}</span>
-            ${item.montant ? `<span class="text-lg font-extrabold text-white">${formatCurrency(item.montant)}</span>` : ''}
+          <!-- Row 1: Year + Amount — big hero numbers -->
+          <div class="flex items-baseline gap-4 mb-2">
+            <span class="text-2xl font-black text-white">${item.annee}</span>
+            ${item.montant ? `<span class="text-2xl font-black ${cc.text}">${formatCurrency(item.montant)}</span>` : ''}
           </div>
           <!-- Row 2: Title + badges -->
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-xs font-semibold ${cc.text} px-2 py-0.5 rounded-full ${cc.bg} border ${cc.border}">${theme.label}</span>
-            <h3 class="text-sm font-semibold text-gray-300">${item.titre}</h3>
+            <span class="text-[11px] font-semibold ${cc.text} px-2.5 py-1 rounded-full ${cc.bg} border ${cc.border}">${theme.label}</span>
+            <h3 class="text-sm font-bold text-gray-200">${item.titre}</h3>
             ${extraBadges}
           </div>
-          ${item.description ? `<p class="text-xs text-gray-500 mt-1.5 leading-relaxed">${item.description}</p>` : ''}
-          ${fraisNotaire ? `
-          <div class="mt-2 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-dark-800/50 border border-dark-400/10">
-            <svg class="w-3.5 h-3.5 text-amber-400/70 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
-            </svg>
-            <div class="flex-1 min-w-0">
-              <span class="text-[10px] text-gray-400">Frais de notaire estimés</span>
-              <span class="text-[10px] font-bold ${fraisNotaire.total > 0 ? 'text-amber-400' : 'text-emerald-400'} ml-1.5">${fraisNotaire.total > 0 ? formatCurrency(fraisNotaire.total) : 'Aucun'}</span>
-            </div>
-            <span class="text-[9px] text-gray-600 hidden sm:block">${fraisNotaire.detail}</span>
-          </div>
-          ` : ''}
+          ${item.description ? `<p class="text-xs text-gray-500 mt-2 leading-relaxed">${item.description}</p>` : ''}
         </div>
 
         <!-- Actions -->
@@ -363,6 +351,18 @@ function renderCard(item, themes, enfants = []) {
           </button>
         </div>
       </div>
+      ${fraisNotaire ? `
+      <div class="px-5 pb-4 -mt-1">
+        <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-dark-900/60 border border-amber-500/15">
+          <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+          </svg>
+          <span class="text-xs text-gray-300">Frais de notaire estimés</span>
+          <span class="text-sm font-bold ${fraisNotaire.total > 0 ? 'text-amber-400' : 'text-emerald-400'}">${fraisNotaire.total > 0 ? formatCurrency(fraisNotaire.total) : 'Aucun'}</span>
+          <span class="text-[10px] text-gray-500 ml-auto hidden sm:block">${fraisNotaire.detail}</span>
+        </div>
+      </div>
+      ` : ''}
     </div>`;
 }
 
