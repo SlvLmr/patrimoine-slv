@@ -466,8 +466,8 @@ export function render(store) {
                 <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
                 <th class="w-[28px] px-0 py-1.5 text-center">An</th>
                 <th class="w-[32px] px-0 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
-                <th class="px-1 py-1.5 text-center">Actions</th>
-                <th class="px-1 py-1.5 text-center">ETF</th>
+                <th class="px-1 py-1.5 text-center">Actions (PEA)</th>
+                <th class="px-1 py-1.5 text-center">ETF (PEA)</th>
                 <th class="px-1 py-1.5 text-center">Bitcoin</th>
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">CTO</th>
                 <th class="px-1 py-1.5 text-center">AV</th>
