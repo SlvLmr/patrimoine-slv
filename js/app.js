@@ -19,6 +19,7 @@ import * as SimulateurAuto from './components/simulateur-auto.js';
 import * as Strategie from './components/strategie.js?v=20260327a';
 import * as Hypotheses from './components/hypotheses.js?v=20260327a';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
+import * as ProjectionEnfants from './components/projection-enfants.js?v=20260327a';
 
 
 const store = Store.init();
@@ -60,6 +61,7 @@ const routes = {
   strategie: Strategie,
   hypotheses: Hypotheses,
   'simulateur-succession': SimulateurSuccession,
+  'projection-enfants': ProjectionEnfants,
 };
 
 const navItems = [
@@ -73,6 +75,7 @@ const navItems = [
   { id: 'repartition', label: 'Répartition', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
   { id: '_title_demain', sectionTitle: 'Demain' },
   { id: 'projection', label: 'Projection', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { id: 'projection-enfants', label: 'Enfants', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
   { id: 'hypotheses', label: 'Hypothèses', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
   { id: '_title_outils', sectionTitle: 'Outils', collapsible: true },
   { id: 'simulateur-interets', label: 'Intérêts composés', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', outilsGroup: true },
