@@ -317,7 +317,6 @@ function renderCard(item, themes, enfants = []) {
 
   return `
     <div id="hyp-${item.id}" class="group rounded-xl border ${cc.border} ${cc.bg} transition-all duration-200 hover:shadow-lg overflow-hidden">
-      <!-- Card header -->
       <div class="px-5 py-4 flex items-start gap-4">
         <!-- Theme icon -->
         <div class="flex-shrink-0 w-10 h-10 rounded-xl ${cc.bg} border ${cc.border} flex items-center justify-center mt-0.5">
@@ -328,13 +327,17 @@ function renderCard(item, themes, enfants = []) {
 
         <!-- Content -->
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap mb-1">
+          <!-- Row 1: Year + Amount (big & impactful) -->
+          <div class="flex items-baseline gap-3 mb-1.5">
+            <span class="text-lg font-extrabold text-white tracking-tight">${item.annee}</span>
+            ${item.montant ? `<span class="text-lg font-extrabold text-white">${formatCurrency(item.montant)}</span>` : ''}
+          </div>
+          <!-- Row 2: Title + badges -->
+          <div class="flex items-center gap-2 flex-wrap">
             <span class="text-xs font-semibold ${cc.text} px-2 py-0.5 rounded-full ${cc.bg} border ${cc.border}">${theme.label}</span>
-            <span class="text-xs text-gray-500 font-medium">${item.annee}</span>
-            ${item.montant ? `<span class="text-xs font-bold text-gray-300">${formatCurrency(item.montant)}</span>` : ''}
+            <h3 class="text-sm font-semibold text-gray-300">${item.titre}</h3>
             ${extraBadges}
           </div>
-          <h3 class="text-sm font-semibold text-gray-200 leading-snug">${item.titre}</h3>
           ${item.description ? `<p class="text-xs text-gray-500 mt-1.5 leading-relaxed">${item.description}</p>` : ''}
           ${fraisNotaire ? `
           <div class="mt-2 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-dark-800/50 border border-dark-400/10">
