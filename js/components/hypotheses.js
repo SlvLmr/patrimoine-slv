@@ -8,6 +8,7 @@ const ABATTEMENT_PARENT_ENFANT = 100000;
 const DON_FAMILIAL_TEPA = 31865;
 const AV_ABATTEMENT_PAR_BENEFICIAIRE = 152500;
 const AGE_MAX_DONATEUR_TEPA = 80;
+const AGE_MAX_DONATEUR_AV = 70;
 const RENOUVELLEMENT_ANNEES = 15;
 
 function getDonationConfig(store) {
@@ -49,7 +50,7 @@ function estimerFraisNotaire(montant, theme, donationType) {
       prev = t.max;
     }
     // Taxe de publicité foncière (si donation immobilière) : 0.715%
-    const isImmo = donationType === 'donation';
+    const isImmo = donationType === 'abatt_immo';
     const tpf = isImmo ? montant * 0.00715 : 0;
     // Contribution de sécurité immobilière : 0.10% (min 15€)
     const csi = isImmo ? Math.max(15, montant * 0.001) : 0;
@@ -302,8 +303,8 @@ function renderCard(item, themes, enfants = []) {
       }).join('');
     }
     if (item.donationType) {
-      const typeLabels = { donation: 'Classique', don_tepa: 'Loi Sarkozy', av_donation: 'Donation AV' };
-      extraBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Classique'}</span>`;
+      const typeLabels = { abatt_immo: 'Immobilier', abatt_cash: 'Cash', abatt_cto: 'CTO', don_tepa: 'Loi Sarkozy', av_donation: 'Assurance Vie' };
+      extraBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Immobilier'}</span>`;
     }
   }
   if (isEvenement && item.eventType) {
@@ -414,7 +415,9 @@ function getFormHtml(themes, item = null, enfants = []) {
         <label class="block text-xs text-gray-500 mb-1.5">Type de donation</label>
         <select id="hyp-form-donation-type"
           class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
-          <option value="donation" ${(item?.donationType || 'donation') === 'donation' ? 'selected' : ''}>Abattement Immobilier - Cash - CTO (100 000 \u20ac)</option>
+          <option value="abatt_immo" ${(item?.donationType || 'abatt_immo') === 'abatt_immo' ? 'selected' : ''}>Abattement Immobilier — nue-propriété (100 000 \u20ac cumulés)</option>
+          <option value="abatt_cash" ${item?.donationType === 'abatt_cash' ? 'selected' : ''}>Abattement Cash (100 000 \u20ac cumulés)</option>
+          <option value="abatt_cto" ${item?.donationType === 'abatt_cto' ? 'selected' : ''}>Abattement CTO (100 000 \u20ac cumulés)</option>
           <option value="don_tepa" ${item?.donationType === 'don_tepa' ? 'selected' : ''}>Donation Loi Sarkozy (31 865 \u20ac, < 80 ans)</option>
           <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Donation Assurance Vie (152 500 \u20ac, < 70 ans)</option>
         </select>
@@ -531,7 +534,7 @@ function computeChildGaugesAtYear(enfant, hypotheses, enfants, calendarYear, age
     const ids = h.enfantIds || [];
     const nbBeneficiaires = (ids.length === 0 || ids.length === enfants.length) ? enfants.length : ids.length;
     const montantPerChild = (h.montant || 0) / nbBeneficiaires;
-    const donType = h.donationType || 'donation';
+    const donType = h.donationType || 'abatt_immo';
     const ageDon = ageDonateur + (h.annee - currentYear);
 
     if (donType === 'don_tepa') {
@@ -546,7 +549,9 @@ function computeChildGaugesAtYear(enfant, hypotheses, enfants, calendarYear, age
         }
       }
     } else if (donType === 'av_donation') {
-      avUtilise += montantPerChild;
+      if (ageDon < AGE_MAX_DONATEUR_AV) {
+        avUtilise += montantPerChild;
+      }
     } else {
       // Classic donation
       const abattDisp = ABATTEMENT_PARENT_ENFANT - abattementUtilise;
@@ -574,7 +579,8 @@ function computeChildGaugesAtYear(enfant, hypotheses, enfants, calendarYear, age
     avUtilise, avRestant,
     avPct: Math.round((avUtilise / AV_ABATTEMENT_PAR_BENEFICIAIRE) * 100),
     donataireAge: ageCurrent,
-    isTepaAvailable: ageCurrent < AGE_MAX_DONATEUR_TEPA
+    isTepaAvailable: ageCurrent < AGE_MAX_DONATEUR_TEPA,
+    isAVAvailable: ageCurrent < AGE_MAX_DONATEUR_AV
   };
 }
 
@@ -639,12 +645,12 @@ function renderChildGauges(enfant, gauges, color) {
         </div>` : ''}
       </div>
       <div class="space-y-4">
-        <!-- Abattement Immobilier - Cash - CTO -->
+        <!-- Abattement Immo / Cash / CTO (cumulés) -->
         <div>
           <div class="flex items-center justify-between text-xs mb-1.5">
             <span class="text-gray-300 flex items-center gap-1.5 font-medium">
               <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-              Abattement Immobilier - Cash - CTO
+              Abattement Immo / Cash / CTO
             </span>
             <span class="text-gray-400 font-mono text-[11px]">${formatCurrency(gauges.abattementUtilise)} / ${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</span>
           </div>
@@ -690,8 +696,8 @@ function renderChildGauges(enfant, gauges, color) {
             <div class="h-full rounded-full transition-all duration-500 ${gauges.avPct >= 100 ? 'bg-gradient-to-r from-red-500 to-red-400' : gauges.avPct >= 50 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-purple-500 to-purple-400'}" style="width: ${Math.min(100, gauges.avPct)}%"></div>
           </div>
           <div class="flex items-center justify-between mt-1">
-            <p class="text-[10px] font-medium text-purple-400">${formatCurrency(gauges.avRestant)} disponible</p>
-            <p class="text-[9px] text-gray-600">Art. 990 I CGI · 20% jusqu'à 700k€ · 31.25% au-delà</p>
+            <p class="text-[10px] font-medium ${gauges.isAVAvailable ? 'text-purple-400' : 'text-gray-500'}">${formatCurrency(gauges.avRestant)} disponible ${gauges.isAVAvailable ? '' : '<span class="text-red-400/70">(donateur > 70 ans)</span>'}</p>
+            <p class="text-[9px] text-gray-600">Art. 990 I CGI · avant 70 ans · 152 500 \u20ac/enfant</p>
           </div>
           ${avDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(avDroits)} (prélèvement spécifique AV)</p>` : ''}
         </div>
@@ -984,7 +990,7 @@ export function mount(store, navigate) {
       let totalDonated = 0;
       let totalAVDonated = 0;
       hyps.filter(h => h.theme === 'donation' && h.annee <= calYear).forEach(h => {
-        const donType = h.donationType || 'donation';
+        const donType = h.donationType || 'abatt_immo';
         if (donType === 'av_donation') { totalAVDonated += (h.montant || 0); }
         else { totalDonated += (h.montant || 0); }
       });
@@ -1067,7 +1073,7 @@ export function mount(store, navigate) {
       const montant = parseFloat(document.getElementById('hyp-form-montant')?.value) || null;
       const theme = document.getElementById('hyp-form-theme')?.value || themes()[0]?.id;
       const description = document.getElementById('hyp-form-desc')?.value.trim();
-      const donationType = document.getElementById('hyp-form-donation-type')?.value || 'donation';
+      const donationType = document.getElementById('hyp-form-donation-type')?.value || 'abatt_immo';
       let enfantIds = [];
       try { enfantIds = JSON.parse(document.getElementById('hyp-form-enfant-ids')?.value || '[]'); } catch(e) {}
       if (!titre) return;
@@ -1105,7 +1111,7 @@ export function mount(store, navigate) {
         item.theme = document.getElementById('hyp-form-theme')?.value || item.theme;
         item.description = document.getElementById('hyp-form-desc')?.value.trim();
         if (item.theme === 'donation') {
-          item.donationType = document.getElementById('hyp-form-donation-type')?.value || 'donation';
+          item.donationType = document.getElementById('hyp-form-donation-type')?.value || 'abatt_immo';
           try { item.enfantIds = JSON.parse(document.getElementById('hyp-form-enfant-ids')?.value || '[]'); } catch(e) {}
           delete item.eventType;
         } else if (item.theme === 'evenement') {
