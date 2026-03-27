@@ -76,6 +76,14 @@ const DONATION_SOURCES = [
   { value: 'immo', label: 'Immobilier du parent' },
 ];
 
+const DONATION_DEST = [
+  { value: 'CTO', label: 'CTO' },
+  { value: 'PEA', label: 'PEA' },
+  { value: 'AV', label: 'Assurance Vie' },
+  { value: 'Crypto', label: 'Crypto' },
+  { value: 'livrets', label: 'Livrets' },
+];
+
 function getDonationsForChild(store, enfantId) {
   const hypotheses = store.get('hypotheses') || [];
   const donations = {};
@@ -100,6 +108,21 @@ function computeChildProjection(enfant, horizonYears, store) {
   const rendements = enfant.rendementPlacements || {};
   const baseAge = childAge(enfant.dateNaissance);
   const donationsByYear = store ? getDonationsForChild(store, enfant.id) : {};
+  // Merge manual scenarios
+  for (const sc of (enfant.scenarios || [])) {
+    const amt = Number(sc.montant) || 0;
+    if (!amt) continue;
+    if (sc.frequency === 'once') {
+      donationsByYear[sc.year] = (donationsByYear[sc.year] || 0) + amt;
+    } else {
+      const start = sc.year || currentYear;
+      const end = sc.endYear || (currentYear + horizonYears);
+      const yearly = sc.frequency === 'monthly' ? amt * 12 : amt;
+      for (let yr = start; yr <= end; yr++) {
+        donationsByYear[yr] = (donationsByYear[yr] || 0) + yearly;
+      }
+    }
+  }
 
   let livretTotal = livrets.reduce((s, l) => s + (Number(l.montant) || 0), 0);
   const avgLivretRate = livrets.length > 0
@@ -228,9 +251,13 @@ export function render(store) {
   const groupKeys = snapshots.groupKeys || [];
   const placements = enf.placements || [];
   const rendements = enf.rendementPlacements || {};
-  const donationSource = enf.donationSource || 'cash';
+  const scenarios = enf.scenarios || [];
   const first = snapshots[0];
   const last = snapshots[snapshots.length - 1];
+
+  const srcLabels = { cash: 'Cash', cto: 'CTO', immo: 'Immo.' };
+  const destLabels = { CTO: 'CTO', PEA: 'PEA', AV: 'Assurance Vie', Crypto: 'Crypto', livrets: 'Livrets' };
+  const freqLabels = { once: '\u00d71', annual: '/an', monthly: '/mois' };
 
   return `
     <div class="space-y-6">
@@ -244,17 +271,12 @@ export function render(store) {
           <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
         <div class="px-5 pb-4 space-y-3 border-t border-dark-400/15">
-          <!-- Horizon + Donation source -->
+          <!-- Horizon -->
           <div class="flex flex-wrap items-center gap-4 mt-3">
             <label class="text-xs text-gray-500">Horizon</label>
             <input type="number" id="pe-horizon" value="${horizonYears}" min="1" max="40" step="1"
               class="w-16 bg-dark-800 border border-dark-400/50 rounded-lg px-2 py-1.5 text-sm text-gray-200 text-center focus:outline-none focus:border-accent-green transition">
             <span class="text-xs text-gray-500">ans</span>
-            <span class="text-dark-400/50 mx-1">|</span>
-            <label class="text-xs text-gray-500">Source donation</label>
-            <select id="pe-donation-source" class="bg-dark-800 border border-dark-400/50 rounded-lg px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
-              ${DONATION_SOURCES.map(s => `<option value="${s.value}" ${s.value === donationSource ? 'selected' : ''}>${s.label}</option>`).join('')}
-            </select>
           </div>
           <!-- Placements grid -->
           <div>
@@ -277,6 +299,29 @@ export function render(store) {
                   <button class="pe-del-plac opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
                 </div>`;
               }).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>'}
+            </div>
+          </div>
+          <!-- Scénarios de donation -->
+          <div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              <span class="text-xs font-bold text-gray-300 uppercase tracking-wide">Scénarios de donation</span>
+              <button id="pe-add-scenario" class="ml-2 w-7 h-7 flex items-center justify-center rounded-lg bg-pink-500/25 text-pink-400 hover:bg-pink-500/40 transition text-lg font-bold" data-child-idx="${idx}" title="Ajouter un scénario">+</button>
+            </div>
+            <div class="space-y-1">
+              ${scenarios.length > 0 ? scenarios.map(sc => {
+                const srcBg = sc.source === 'immo' ? 'bg-accent-green/10 text-accent-green' : sc.source === 'cto' ? 'bg-purple-500/10 text-purple-300' : 'bg-accent-cyan/10 text-accent-cyan';
+                return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-pink-400/40 hover:bg-dark-700/40 transition cursor-pointer pe-edit-scenario" data-child-idx="${idx}" data-scenario-id="${sc.id}">
+                  <svg class="w-2.5 h-2.5 text-pink-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                  <span class="text-[9px] px-1 py-0.5 rounded-full ${srcBg}">${srcLabels[sc.source] || 'Cash'}</span>
+                  <span class="text-gray-500 text-[9px]">\u2192</span>
+                  <span class="text-xs text-gray-200 font-medium">${destLabels[sc.destination] || sc.destination}</span>
+                  <span class="text-[9px] text-gray-600">${formatCurrency(sc.montant)} ${freqLabels[sc.frequency] || '\u00d71'}</span>
+                  <span class="text-[10px] text-gray-500 ml-auto">${sc.year}</span>
+                  ${sc.endYear ? `<span class="text-[10px] text-gray-600">\u2192${sc.endYear}</span>` : ''}
+                  <button class="pe-del-scenario opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-child-idx="${idx}" data-scenario-id="${sc.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
+                </div>`;
+              }).join('') : '<p class="text-center text-gray-600 text-xs py-1">Aucun scénario — les donations de la page Hypothèses apparaissent automatiquement</p>'}
             </div>
           </div>
         </div>
@@ -521,6 +566,55 @@ function buildPlacementForm(item = {}) {
   </div>`;
 }
 
+// ─── Scenario modal ─────────────────────────────────────────────────────────
+
+function openScenarioModal(store, childIdx, editItem, refresh) {
+  const currentYear = new Date().getFullYear();
+  const body = `<div class="space-y-3">
+    ${selectField('source', 'Source (du parent)', DONATION_SOURCES, editItem?.source || 'cash')}
+    ${selectField('destination', 'Destination (enfant)', DONATION_DEST, editItem?.destination || 'CTO')}
+    ${inputField('montant', 'Montant (\u20ac)', editItem?.montant || '', 'number', 'min="0" step="100" placeholder="50000"')}
+    ${selectField('frequency', 'Fréquence', [
+      { value: 'once', label: 'Une seule fois' },
+      { value: 'annual', label: 'Annuel' },
+      { value: 'monthly', label: 'Mensuel' },
+    ], editItem?.frequency || 'once')}
+    ${inputField('year', 'Année', editItem?.year || currentYear + 1, 'number', `min="${currentYear}" max="${currentYear + 50}" step="1"`)}
+    <div id="pe-scenario-end-wrapper">
+      ${inputField('endYear', 'Année de fin (si récurrent)', editItem?.endYear || '', 'number', `min="${currentYear}" max="${currentYear + 50}" step="1" placeholder="Optionnel"`)}
+    </div>
+  </div>`;
+
+  const modal = openModal(editItem ? 'Modifier le scénario' : 'Ajouter un scénario de donation', body, () => {
+    const data = getFormData(document.getElementById('modal-body'));
+    if (!data.montant || !data.year) return;
+    data.montant = Number(data.montant);
+    data.year = Number(data.year);
+    if (data.endYear) data.endYear = Number(data.endYear); else delete data.endYear;
+
+    const enfs = getEnfants(store);
+    if (!enfs[childIdx]) return;
+    if (!enfs[childIdx].scenarios) enfs[childIdx].scenarios = [];
+    if (editItem) {
+      const sc = enfs[childIdx].scenarios.find(s => s.id === editItem.id);
+      if (sc) Object.assign(sc, data);
+    } else {
+      data.id = generateId();
+      enfs[childIdx].scenarios.push(data);
+    }
+    saveEnfants(store, enfs);
+    refresh();
+  });
+
+  const freqSel = modal.querySelector('#field-frequency');
+  const endWrap = modal.querySelector('#pe-scenario-end-wrapper');
+  if (freqSel && endWrap) {
+    const toggle = () => endWrap.style.display = freqSel.value !== 'once' ? '' : 'none';
+    toggle();
+    freqSel.addEventListener('change', toggle);
+  }
+}
+
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
 export function mount(store, navigate) {
@@ -552,10 +646,29 @@ export function mount(store, navigate) {
     if (enfs[idx]) { enfs[idx].horizonYears = parseInt(e.target.value) || 20; saveEnfants(store, enfs); refresh(); }
   });
 
-  // Donation source change
-  document.getElementById('pe-donation-source')?.addEventListener('change', (e) => {
-    const enfs = getEnfants(store);
-    if (enfs[idx]) { enfs[idx].donationSource = e.target.value; saveEnfants(store, enfs); refresh(); }
+  // Add scenario
+  document.getElementById('pe-add-scenario')?.addEventListener('click', () => openScenarioModal(store, idx, null, refresh));
+  // Edit scenario
+  document.querySelectorAll('.pe-edit-scenario').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ci = parseInt(btn.dataset.childIdx);
+      const sid = btn.dataset.scenarioId;
+      const enfs = getEnfants(store);
+      const sc = (enfs[ci]?.scenarios || []).find(s => s.id === sid);
+      if (sc) openScenarioModal(store, ci, sc, refresh);
+    });
+  });
+  // Delete scenario
+  document.querySelectorAll('.pe-del-scenario').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ci = parseInt(btn.dataset.childIdx);
+      const sid = btn.dataset.scenarioId;
+      const enfs = getEnfants(store);
+      if (!enfs[ci]) return;
+      enfs[ci].scenarios = (enfs[ci].scenarios || []).filter(s => s.id !== sid);
+      saveEnfants(store, enfs);
+      refresh();
+    });
   });
 
   // Rendement change
