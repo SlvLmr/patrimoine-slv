@@ -70,12 +70,36 @@ function getTaxRate(groupKey, envelopeAge) {
 
 // ─── Projection engine for one child ─────────────────────────────────────────
 
-function computeChildProjection(enfant, horizonYears) {
+const DONATION_SOURCES = [
+  { value: 'cash', label: 'Cash du parent' },
+  { value: 'cto', label: 'CTO du parent' },
+  { value: 'immo', label: 'Immobilier du parent' },
+];
+
+function getDonationsForChild(store, enfantId) {
+  const hypotheses = store.get('hypotheses') || [];
+  const donations = {};
+  for (const h of hypotheses) {
+    if (h.theme !== 'donation') continue;
+    const ids = h.enfantIds || [];
+    // If no enfantIds specified, donation applies to all children
+    if (ids.length > 0 && !ids.includes(enfantId)) continue;
+    const cfg = store.get('donationConfig') || { enfants: [] };
+    const nbEnfants = (ids.length === 0) ? (cfg.enfants || []).length : ids.length;
+    const perChild = (h.montant || 0) / Math.max(nbEnfants, 1);
+    const year = h.annee || new Date().getFullYear();
+    donations[year] = (donations[year] || 0) + perChild;
+  }
+  return donations;
+}
+
+function computeChildProjection(enfant, horizonYears, store) {
   const livrets = enfant.livrets || [];
   const placements = enfant.placements || [];
   const currentYear = new Date().getFullYear();
   const rendements = enfant.rendementPlacements || {};
   const baseAge = childAge(enfant.dateNaissance);
+  const donationsByYear = store ? getDonationsForChild(store, enfant.id) : {};
 
   let livretTotal = livrets.reduce((s, l) => s + (Number(l.montant) || 0), 0);
   const avgLivretRate = livrets.length > 0
@@ -118,6 +142,8 @@ function computeChildProjection(enfant, horizonYears) {
       totalNetImpot += net;
     }
 
+    const donation = donationsByYear[currentYear + y] || 0;
+
     snapshots.push({
       annee: y,
       calendarYear: currentYear + y,
@@ -130,6 +156,7 @@ function computeChildProjection(enfant, horizonYears) {
       totalNetImpot: Math.round(totalNetImpot),
       total: Math.round(livretTotal + placTotal),
       totalNet: Math.round(livretTotal + totalNetImpot),
+      donation: Math.round(donation),
       placementDetail: { ...detail },
       placementApports: { ...apports },
       placementGains: { ...gains },
@@ -197,10 +224,11 @@ export function render(store) {
   }
 
   const horizonYears = Number(enf.horizonYears) || 20;
-  const snapshots = computeChildProjection(enf, horizonYears);
+  const snapshots = computeChildProjection(enf, horizonYears, store);
   const groupKeys = snapshots.groupKeys || [];
   const placements = enf.placements || [];
   const rendements = enf.rendementPlacements || {};
+  const donationSource = enf.donationSource || 'cash';
   const first = snapshots[0];
   const last = snapshots[snapshots.length - 1];
 
@@ -216,12 +244,17 @@ export function render(store) {
           <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
         <div class="px-5 pb-4 space-y-3 border-t border-dark-400/15">
-          <!-- Horizon -->
-          <div class="flex items-center gap-4 mt-3">
+          <!-- Horizon + Donation source -->
+          <div class="flex flex-wrap items-center gap-4 mt-3">
             <label class="text-xs text-gray-500">Horizon</label>
             <input type="number" id="pe-horizon" value="${horizonYears}" min="1" max="40" step="1"
               class="w-16 bg-dark-800 border border-dark-400/50 rounded-lg px-2 py-1.5 text-sm text-gray-200 text-center focus:outline-none focus:border-accent-green transition">
             <span class="text-xs text-gray-500">ans</span>
+            <span class="text-dark-400/50 mx-1">|</span>
+            <label class="text-xs text-gray-500">Source donation</label>
+            <select id="pe-donation-source" class="bg-dark-800 border border-dark-400/50 rounded-lg px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
+              ${DONATION_SOURCES.map(s => `<option value="${s.value}" ${s.value === donationSource ? 'selected' : ''}>${s.label}</option>`).join('')}
+            </select>
           </div>
           <!-- Placements grid -->
           <div>
@@ -322,7 +355,7 @@ function renderTable(snapshots, groupKeys) {
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm table-fixed">
-          <thead class="bg-dark-800/50 text-gray-500 text-[10px]">
+          <thead class="bg-dark-800/50 text-gray-500 text-[10px] whitespace-nowrap">
             <tr>
               <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
               <th class="w-[28px] px-0 py-1.5 text-center">An</th>
@@ -332,6 +365,7 @@ function renderTable(snapshots, groupKeys) {
               <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
               <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
               <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Livrets</th>
+              <th class="px-1 py-1.5 text-center text-pink-300/70">Donation</th>
               <th class="px-1 py-1.5 text-center font-semibold text-accent-green">Total</th>
             </tr>
           </thead>
@@ -355,6 +389,7 @@ function renderTable(snapshots, groupKeys) {
               <td class="px-1 py-0.5 text-center font-semibold ${bt} ${s.totalGains >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${s.totalGains >= 0 ? '+' : ''}${formatCurrency(s.totalGains)}</td>
               <td class="px-1 py-0.5 text-center font-semibold text-gray-300 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.totalNetImpot)}</td>
               <td class="px-1 py-1 text-center text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.livrets)}</td>
+              <td class="px-1 py-1 text-center text-[11px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
               <td class="px-1 py-1 text-center font-semibold text-accent-green ${bt}">${formatCurrency(s.totalNet)}</td>
             </tr>`;
             }).join('')}
@@ -414,10 +449,10 @@ function renderComparatif(enfants, store) {
 
 // ─── Charts ──────────────────────────────────────────────────────────────────
 
-function drawChildChart(enfant, horizonYears) {
+function drawChildChart(enfant, horizonYears, store) {
   const canvas = document.getElementById('pe-chart-child');
   if (!canvas) return;
-  const snapshots = computeChildProjection(enfant, horizonYears);
+  const snapshots = computeChildProjection(enfant, horizonYears, store);
   const labels = snapshots.map(s => s.label);
   const ctx = canvas.getContext('2d');
   const datasets = [];
@@ -444,7 +479,7 @@ function drawChildChart(enfant, horizonYears) {
   }});
 }
 
-function drawCompareChart(enfants) {
+function drawCompareChart(enfants, store) {
   const canvas = document.getElementById('pe-chart-compare');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -452,7 +487,7 @@ function drawCompareChart(enfants) {
   let labels = [];
   enfants.forEach((enf, i) => {
     const hz = Number(enf.horizonYears) || 20;
-    const snaps = computeChildProjection(enf, hz);
+    const snaps = computeChildProjection(enf, hz, store);
     if (snaps.length > labels.length) labels = snaps.map(s => s.label);
     datasets.push({ label: enf.prenom || 'Enfant ' + (i + 1), data: snaps.map(s => s.total), borderColor: CHILD_COLORS[i % CHILD_COLORS.length], backgroundColor: createVerticalGradient(ctx, CHILD_COLORS[i % CHILD_COLORS.length], 0.12, 0.02), fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 });
   });
@@ -506,15 +541,21 @@ export function mount(store, navigate) {
 
   // Chart
   if (activeTab === 'compare') {
-    drawCompareChart(enfants);
+    drawCompareChart(enfants, store);
   } else if (enf) {
-    drawChildChart(enf, Number(enf.horizonYears) || 20);
+    drawChildChart(enf, Number(enf.horizonYears) || 20, store);
   }
 
   // Horizon change
   document.getElementById('pe-horizon')?.addEventListener('change', (e) => {
     const enfs = getEnfants(store);
     if (enfs[idx]) { enfs[idx].horizonYears = parseInt(e.target.value) || 20; saveEnfants(store, enfs); refresh(); }
+  });
+
+  // Donation source change
+  document.getElementById('pe-donation-source')?.addEventListener('change', (e) => {
+    const enfs = getEnfants(store);
+    if (enfs[idx]) { enfs[idx].donationSource = e.target.value; saveEnfants(store, enfs); refresh(); }
   });
 
   // Rendement change

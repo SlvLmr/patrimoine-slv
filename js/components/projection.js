@@ -461,7 +461,7 @@ export function render(store) {
         </div>
         <div>
           <table class="w-full text-sm table-fixed">
-            <thead class="bg-dark-800/50 text-gray-500 text-[10px]">
+            <thead class="bg-dark-800/50 text-gray-500 text-[10px] whitespace-nowrap">
               <tr>
                 <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
                 <th class="w-[28px] px-0 py-1.5 text-center">An</th>
