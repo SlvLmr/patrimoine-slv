@@ -488,7 +488,7 @@ function renderProjectionWidget(store) {
           <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-immo-delta">—</p>
         </div>
         <div class="card-dark rounded-lg border border-blue-500/15 p-3 text-center">
-          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Investissements (PEA, CTO, BTC)</p>
+          <p class="text-[10px] text-gray-500 uppercase tracking-wider">Invest. (PEA, CTO, Crypto)</p>
           <p class="text-lg font-bold text-blue-400 mt-1" id="strat-proj-plac">${formatCurrency(first.placementsHorsAV)}</p>
           <p class="text-[10px] text-emerald-400 mt-0.5" id="strat-proj-plac-delta">—</p>
         </div>

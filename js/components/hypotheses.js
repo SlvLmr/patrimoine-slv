@@ -20,13 +20,8 @@ function childAge(dateNaissance) {
 }
 
 const DEFAULT_THEMES = [
-  { id: 'investissement', label: 'Investissement', color: 'emerald', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
-  { id: 'immobilier',     label: 'Immobilier',     color: 'amber',   icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-  { id: 'donation',       label: 'Donation',        color: 'purple',  icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7' },
-  { id: 'succession',     label: 'Succession',      color: 'blue',    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { id: 'retraite',       label: 'Retraite',        color: 'cyan',    icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { id: 'fiscalite',      label: 'Fiscalité',       color: 'rose',    icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
-  { id: 'note',           label: 'Note',            color: 'sky',     icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
+  { id: 'donation',   label: 'Donation',   color: 'purple', icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7' },
+  { id: 'evenement',  label: 'Événement',  color: 'cyan',   icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
 ];
 
 // ─── Notary fees estimation ──────────────────────────────────────────────────
@@ -292,57 +287,32 @@ function renderCard(item, themes, enfants = []) {
   themes.forEach(t => { themeMap[t.id] = t; });
   const theme = themeMap[item.theme] || { label: 'Autre', color: 'emerald', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' };
   const cc = c(theme.color);
-  const isNote = item.theme === 'note';
-
   // Build child badges for donation cards
   const isDonation = item.theme === 'donation';
+  const isEvenement = item.theme === 'evenement';
   const enfantIds = item.enfantIds || [];
-  let enfantBadges = '';
+  let extraBadges = '';
   if (isDonation && enfants.length > 0) {
     if (enfantIds.length === 0 || enfantIds.length === enfants.length) {
-      enfantBadges = `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">Tous les enfants</span>`;
+      extraBadges = `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">Tous les enfants</span>`;
     } else {
-      enfantBadges = enfantIds.map(eid => {
+      extraBadges = enfantIds.map(eid => {
         const enf = enfants.find(e => e.id === eid);
         return enf ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">${enf.prenom}</span>` : '';
       }).join('');
     }
     if (item.donationType) {
       const typeLabels = { donation: 'Classique', don_tepa: 'Loi Sarkozy', av_donation: 'Donation AV' };
-      enfantBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Classique'}</span>`;
+      extraBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">${typeLabels[item.donationType] || 'Classique'}</span>`;
     }
+  }
+  if (isEvenement && item.eventType) {
+    const eventLabels = { retraite: 'Retraite', projet: 'Projet', divers: 'Divers' };
+    extraBadges += `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">${eventLabels[item.eventType] || 'Divers'}</span>`;
   }
 
   // Notary fees estimation
   const fraisNotaire = estimerFraisNotaire(item.montant, item.theme, item.donationType);
-
-  // Note cards have a distinct style (lighter, no icon, just text)
-  if (isNote) {
-    return `
-      <div id="hyp-${item.id}" class="group rounded-lg border border-dashed ${cc.border} bg-sky-500/5 transition-all duration-200 hover:bg-sky-500/10 overflow-hidden">
-        <div class="px-4 py-3 flex items-start gap-3">
-          <svg class="w-4 h-4 ${cc.text} mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${theme.icon}"/>
-          </svg>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-0.5">
-              <span class="text-[10px] ${cc.text} font-medium">${item.annee}</span>
-              <span class="text-[10px] text-gray-600">— Note</span>
-            </div>
-            <p class="text-sm text-gray-300 leading-relaxed">${item.titre}</p>
-            ${item.description ? `<p class="text-xs text-gray-500 mt-1 leading-relaxed italic">${item.description}</p>` : ''}
-          </div>
-          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-            <button class="hyp-edit p-1 rounded-lg hover:bg-dark-600 text-gray-500 hover:text-accent-green transition" data-id="${item.id}" title="Modifier">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            </button>
-            <button class="hyp-delete p-1 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-400 transition" data-id="${item.id}" title="Supprimer">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>`;
-  }
 
   return `
     <div id="hyp-${item.id}" class="group rounded-xl border ${cc.border} ${cc.bg} transition-all duration-200 hover:shadow-lg overflow-hidden">
@@ -361,7 +331,7 @@ function renderCard(item, themes, enfants = []) {
             <span class="text-xs font-semibold ${cc.text} px-2 py-0.5 rounded-full ${cc.bg} border ${cc.border}">${theme.label}</span>
             <span class="text-xs text-gray-500 font-medium">${item.annee}</span>
             ${item.montant ? `<span class="text-xs font-bold text-gray-300">${formatCurrency(item.montant)}</span>` : ''}
-            ${enfantBadges}
+            ${extraBadges}
           </div>
           <h3 class="text-sm font-semibold text-gray-200 leading-snug">${item.titre}</h3>
           ${item.description ? `<p class="text-xs text-gray-500 mt-1.5 leading-relaxed">${item.description}</p>` : ''}
@@ -397,6 +367,7 @@ function renderCard(item, themes, enfants = []) {
 function getFormHtml(themes, item = null, enfants = []) {
   const isEdit = !!item;
   const isDonationTheme = item?.theme === 'donation';
+  const isEvenementTheme = item?.theme === 'evenement';
   const currentEnfantIds = item?.enfantIds || [];
   return `
     <div class="space-y-4">
@@ -445,7 +416,7 @@ function getFormHtml(themes, item = null, enfants = []) {
           class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
           <option value="donation" ${(item?.donationType || 'donation') === 'donation' ? 'selected' : ''}>Abattement Immobilier - Cash - CTO (100 000 \u20ac)</option>
           <option value="don_tepa" ${item?.donationType === 'don_tepa' ? 'selected' : ''}>Donation Loi Sarkozy (31 865 \u20ac, < 80 ans)</option>
-          <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Donation Assurance Vie (152 500 \u20ac, Art. 990 I)</option>
+          <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Donation Assurance Vie (152 500 \u20ac, < 70 ans)</option>
         </select>
       </div>
       <!-- Child assignment (shown only for donation theme) -->
@@ -476,6 +447,16 @@ function getFormHtml(themes, item = null, enfants = []) {
         ` : `
         <p class="text-xs text-gray-500 italic">Ajoutez des enfants dans la page Famille pour affecter les donations</p>
         `}
+      </div>
+      <!-- Event type (shown only for evenement theme) -->
+      <div id="hyp-form-event-type-row" class="${isEvenementTheme ? '' : 'hidden'}">
+        <label class="block text-xs text-gray-500 mb-1.5">Type d'événement</label>
+        <select id="hyp-form-event-type"
+          class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
+          <option value="retraite" ${(item?.eventType || 'retraite') === 'retraite' ? 'selected' : ''}>Retraite</option>
+          <option value="projet" ${item?.eventType === 'projet' ? 'selected' : ''}>Projet</option>
+          <option value="divers" ${item?.eventType === 'divers' ? 'selected' : ''}>Divers</option>
+        </select>
       </div>
       <div>
         <label class="block text-xs text-gray-500 mb-1.5">Description</label>
@@ -786,10 +767,6 @@ export function render(store) {
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btn-manage-themes" class="px-3 py-2 rounded-xl text-xs text-gray-500 hover:text-gray-300 hover:bg-dark-600 border border-dark-400/20 hover:border-dark-400/40 transition flex items-center gap-1.5" title="Gérer les thèmes">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
-            Thèmes
-          </button>
           <button id="btn-add-hyp" class="px-4 py-2 rounded-xl text-xs font-medium bg-gradient-to-r from-accent-green to-accent-blue text-white hover:opacity-90 transition flex items-center gap-1.5 shadow-lg shadow-accent-green/10">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
             Ajouter
@@ -847,7 +824,7 @@ export function render(store) {
               <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-immo-delta">—</p>
             </div>
             <div class="rounded-xl border border-blue-500/20 p-3 text-center bg-blue-500/5 hover:bg-blue-500/10 transition">
-              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Investissements (PEA, CTO, BTC)</p>
+              <p class="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Invest. (PEA, CTO, Crypto)</p>
               <p class="text-base font-bold text-blue-400 mt-1 tabular-nums" id="hyp-pat-plac">${formatCurrency(firstSnap.placementsHorsAV)}</p>
               <p class="text-[9px] text-gray-600 mt-0.5" id="hyp-pat-plac-delta">—</p>
             </div>
@@ -1095,10 +1072,13 @@ export function mount(store, navigate) {
       try { enfantIds = JSON.parse(document.getElementById('hyp-form-enfant-ids')?.value || '[]'); } catch(e) {}
       if (!titre) return;
 
+      const eventType = document.getElementById('hyp-form-event-type')?.value || 'retraite';
       const newItem = { id: generateId(), titre, annee, montant, theme, description };
       if (theme === 'donation') {
         newItem.donationType = donationType;
         newItem.enfantIds = enfantIds;
+      } else if (theme === 'evenement') {
+        newItem.eventType = eventType;
       }
       const items = getHypotheses(store);
       items.push(newItem);
@@ -1127,9 +1107,15 @@ export function mount(store, navigate) {
         if (item.theme === 'donation') {
           item.donationType = document.getElementById('hyp-form-donation-type')?.value || 'donation';
           try { item.enfantIds = JSON.parse(document.getElementById('hyp-form-enfant-ids')?.value || '[]'); } catch(e) {}
+          delete item.eventType;
+        } else if (item.theme === 'evenement') {
+          item.eventType = document.getElementById('hyp-form-event-type')?.value || 'retraite';
+          delete item.donationType;
+          delete item.enfantIds;
         } else {
           delete item.donationType;
           delete item.enfantIds;
+          delete item.eventType;
         }
         saveHypotheses(store, items);
         refresh();
@@ -1263,8 +1249,10 @@ function mountThemeSelector(modal) {
         // Toggle donation-specific fields
         const donTypeRow = document.getElementById('hyp-form-donation-type-row');
         const enfantRow = document.getElementById('hyp-form-enfant-row');
+        const eventTypeRow = document.getElementById('hyp-form-event-type-row');
         if (donTypeRow) donTypeRow.classList.toggle('hidden', themeId !== 'donation');
         if (enfantRow) enfantRow.classList.toggle('hidden', themeId !== 'donation');
+        if (eventTypeRow) eventTypeRow.classList.toggle('hidden', themeId !== 'evenement');
       });
     });
   }, 50);
