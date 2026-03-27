@@ -907,12 +907,13 @@ export function render(store) {
         }
       </div>
 
-      <!-- Bloc règles fiscales -->
-      <div class="mt-10 rounded-xl border border-dark-400/20 bg-dark-800/40 overflow-hidden">
-        <div class="px-6 py-4 border-b border-dark-400/15">
+      <!-- Bloc règles fiscales (collapsible) -->
+      <details class="mt-10 rounded-xl border border-dark-400/20 bg-dark-800/40 overflow-hidden group">
+        <summary class="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-dark-700/30 transition select-none">
           <h2 class="text-sm font-bold text-gray-200">Règles de donation et fiscalité</h2>
-        </div>
-        <div class="px-6 py-5 space-y-5 text-xs text-gray-400 leading-relaxed">
+          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-6 py-5 space-y-5 text-xs text-gray-400 leading-relaxed border-t border-dark-400/15">
 
           <!-- Abattement classique -->
           <div>
@@ -988,8 +989,40 @@ export function render(store) {
             <p class="mt-2 text-gray-500">Ce barème s'applique après déduction de l'abattement de 100 000 \u20ac. Référence : art. 777 du CGI.</p>
           </div>
 
+          <!-- Barème usufruit -->
+          <div>
+            <h3 class="text-gray-200 font-semibold mb-1.5 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+              Barème de l'usufruit (art. 669 CGI)
+            </h3>
+            <p class="mb-2">Lors d'une donation en démembrement, seule la <span class="text-gray-200 font-medium">nue-propriété</span> est taxée. Sa valeur dépend de l'âge du donateur au moment de la donation :</p>
+            <div class="overflow-x-auto mt-2">
+              <table class="text-[11px] w-full">
+                <thead>
+                  <tr class="border-b border-dark-400/20 text-gray-500">
+                    <th class="text-left py-1.5 pr-4 font-medium">Âge du donateur</th>
+                    <th class="text-right py-1.5 pr-4 font-medium">Usufruit</th>
+                    <th class="text-right py-1.5 font-medium">Nue-propriété</th>
+                  </tr>
+                </thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">< 21 ans</td><td class="text-right pr-4">90 %</td><td class="text-right text-rose-400 font-medium">10 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">21 – 30 ans</td><td class="text-right pr-4">80 %</td><td class="text-right text-rose-400 font-medium">20 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">31 – 40 ans</td><td class="text-right pr-4">70 %</td><td class="text-right text-rose-400 font-medium">30 %</td></tr>
+                  <tr class="border-b border-dark-400/10 bg-dark-600/20"><td class="py-1.5 pr-4 text-gray-200">41 – 50 ans</td><td class="text-right pr-4 text-gray-200">60 %</td><td class="text-right text-rose-400 font-bold">40 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">51 – 60 ans</td><td class="text-right pr-4">50 %</td><td class="text-right text-rose-400 font-medium">50 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">61 – 70 ans</td><td class="text-right pr-4">40 %</td><td class="text-right text-rose-400 font-medium">60 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">71 – 80 ans</td><td class="text-right pr-4">30 %</td><td class="text-right text-rose-400 font-medium">70 %</td></tr>
+                  <tr class="border-b border-dark-400/10"><td class="py-1.5 pr-4">81 – 90 ans</td><td class="text-right pr-4">20 %</td><td class="text-right text-rose-400 font-medium">80 %</td></tr>
+                  <tr><td class="py-1.5 pr-4">91 ans et +</td><td class="text-right pr-4">10 %</td><td class="text-right text-rose-400 font-medium">90 %</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="mt-2 text-gray-500">Plus le donateur est jeune, plus l'usufruit est élevé et donc la nue-propriété (base taxable) est faible. C'est pourquoi il est avantageux de donner tôt.</p>
+          </div>
+
         </div>
-      </div>
+      </details>
     </div>`;
 }
 
