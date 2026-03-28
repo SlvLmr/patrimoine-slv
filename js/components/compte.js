@@ -62,7 +62,7 @@ function renderChildCard(child, index) {
             </div>
           </div>
         </div>
-        <button class="child-delete btn-delete p-1.5" data-idx="${index}" title="Supprimer">
+        <button class="child-delete btn-delete ml-1" data-idx="${index}" title="Supprimer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -72,12 +72,12 @@ function renderChildCard(child, index) {
       <!-- Livrets d'épargne de l'enfant -->
       <div class="mt-3 pt-3 border-t border-dark-400/15">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider flex items-center gap-1.5">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          <span class="text-xs text-gray-400 uppercase font-medium tracking-wider flex items-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
             Livrets d'épargne
             ${totalLivrets > 0 ? `<span class="text-accent-amber font-bold">${formatCurrency(totalLivrets)}</span>` : ''}
           </span>
-          <button class="btn-add-livret text-xs text-accent-green hover:text-accent-amber transition flex items-center gap-1" data-child-idx="${index}">
+          <button class="btn-add-livret btn-add w-auto px-3 py-1" data-child-idx="${index}">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
             Ajouter
           </button>
@@ -86,7 +86,7 @@ function renderChildCard(child, index) {
           ? `<p class="text-[11px] text-gray-600 italic py-1">Aucun livret</p>`
           : `<div class="space-y-2">
               ${livrets.map((l, li) => `
-                <div class="row-item flex items-center gap-2">
+                <div class="row-item flex items-center gap-3">
                   <input type="text" value="${l.nom || ''}" placeholder="Nom du livret"
                     class="livret-nom input-inline flex-1 min-w-0 uppercase font-semibold text-xs"
                     data-child-idx="${index}" data-livret-idx="${li}"/>
@@ -102,7 +102,7 @@ function renderChildCard(child, index) {
                       data-child-idx="${index}" data-livret-idx="${li}"/>
                     <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
                   </div>
-                  <button class="livret-delete btn-delete" data-child-idx="${index}" data-livret-idx="${li}" title="Supprimer">
+                  <button class="livret-delete btn-delete ml-1" data-child-idx="${index}" data-livret-idx="${li}" title="Supprimer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -377,8 +377,8 @@ export function render(store) {
       <div class="card-dark rounded-2xl overflow-hidden">
         <div class="px-6 py-4 border-b border-dark-400/20 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Famille</h2>
-          <button id="btn-add-child" class="text-xs text-accent-green hover:text-accent-amber transition flex items-center gap-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button id="btn-add-child" class="btn-add w-auto px-3 py-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/>
             </svg>
             Ajouter un enfant

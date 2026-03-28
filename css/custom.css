@@ -234,8 +234,50 @@ input[type="number"] {
 .row-item:hover .btn-delete {
   opacity: 1;
 }
+/* Also show btn-delete inside any hovered row-item child */
+.row-item:hover > * .btn-delete {
+  opacity: 1;
+}
 .btn-delete:hover {
   color: #f87171;
+}
+
+/* Info/disclaimer box */
+.info-box {
+  background: rgba(22, 22, 30, 0.5);
+  border: 1px solid rgba(42, 42, 52, 0.3);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+/* Table header (sticky) */
+.table-header {
+  position: sticky;
+  top: 0;
+  background: #1c1c26;
+  z-index: 1;
+}
+.table-header th {
+  color: #6b7280;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(42, 42, 52, 0.3);
+  white-space: nowrap;
+}
+
+/* Table row with hover */
+.table-row {
+  border-bottom: 1px solid rgba(42, 42, 52, 0.15);
+  transition: background-color 0.15s;
+}
+.table-row:hover {
+  background: rgba(42, 42, 52, 0.15);
+}
+.table-row-alt {
+  background: rgba(22, 22, 30, 0.3);
 }
 
 /* Gradient text */
