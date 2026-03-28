@@ -1,11 +1,9 @@
 const chartInstances = new Map();
 
-// Plugin to draw strikethrough on hidden legend labels
-const legendStrikethroughPlugin = {
+// Plugin to draw strikethrough on hidden legend labels (used per-chart, not globally)
+export const legendStrikethroughPlugin = {
   id: 'legendStrikethrough',
   afterDraw(chart) {
-    const type = chart.config.type;
-    if (type === 'doughnut' || type === 'pie') return;
     const legend = chart.legend;
     if (!legend || !legend.legendItems) return;
     const ctx = chart.ctx;
@@ -14,8 +12,7 @@ const legendStrikethroughPlugin = {
       if (!meta.hidden) return;
       const hitBox = legend.legendHitBoxes[i];
       if (!hitBox) return;
-      // Draw line through the text area (after the point style)
-      const textX = hitBox.left + 14; // offset past the point style
+      const textX = hitBox.left + 14;
       const textEndX = hitBox.left + hitBox.width;
       const y = hitBox.top + hitBox.height / 2;
       ctx.save();
@@ -29,8 +26,6 @@ const legendStrikethroughPlugin = {
     });
   }
 };
-
-Chart.register(legendStrikethroughPlugin);
 
 export const COLORS = {
   immobilier: '#8b6914',

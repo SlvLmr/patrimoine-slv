@@ -1,5 +1,5 @@
 import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData } from '../utils.js?v=5';
-import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient } from '../charts/chart-config.js';
+import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 
 // Color map for envelope groups
@@ -680,8 +680,6 @@ export function mount(store, navigate) {
     const detail = snap.placementDetail || {};
     const placementById = snap.placementById || {};
 
-    console.log('[DONUT DEBUG]', { calYear, gKeys, detail, placementById, snap: JSON.parse(JSON.stringify(snap)) });
-
     // Build entries: expand "PEA Actions" into individual stocks
     const entries = [];
     gKeys.forEach(gk => {
@@ -945,6 +943,7 @@ export function mount(store, navigate) {
     createChart('rep-chart-area', {
       type: 'line',
       data: { labels, datasets },
+      plugins: [legendStrikethroughPlugin],
       options: {
         scales: {
           x: {
@@ -1038,6 +1037,7 @@ export function mount(store, navigate) {
     createChart('rep-chart-dca', {
       type: 'bar',
       data: { labels, datasets },
+      plugins: [legendStrikethroughPlugin],
       options: {
         scales: {
           x: {
