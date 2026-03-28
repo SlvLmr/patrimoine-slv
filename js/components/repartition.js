@@ -680,6 +680,8 @@ export function mount(store, navigate) {
     const detail = snap.placementDetail || {};
     const placementById = snap.placementById || {};
 
+    console.log('[DONUT DEBUG]', { calYear, gKeys, detail, placementById, snap: JSON.parse(JSON.stringify(snap)) });
+
     // Build entries: expand "PEA Actions" into individual stocks
     const entries = [];
     gKeys.forEach(gk => {
