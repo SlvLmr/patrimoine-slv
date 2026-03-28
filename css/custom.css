@@ -146,9 +146,9 @@ input[type="number"] {
 /* Dark card glass effect with amber-purple gradient */
 .card-dark {
   background:
-    linear-gradient(135deg, rgba(201, 167, 108, 0.06) 0%, transparent 40%, rgba(139, 92, 246, 0.06) 100%),
-    linear-gradient(135deg, rgba(44, 44, 56, 0.95), rgba(36, 36, 46, 0.98));
-  border: 1px solid rgba(82, 82, 96, 0.45);
+    linear-gradient(135deg, rgba(201, 167, 108, 0.04) 0%, transparent 40%, rgba(139, 92, 246, 0.04) 100%),
+    linear-gradient(135deg, rgba(36, 36, 46, 0.95), rgba(28, 28, 36, 0.98));
+  border: 1px solid rgba(72, 72, 82, 0.4);
   backdrop-filter: blur(12px);
   box-shadow: 0 0 30px rgba(201, 167, 108, 0.06), 0 0 60px rgba(139, 92, 246, 0.03);
 }
