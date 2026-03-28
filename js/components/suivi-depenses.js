@@ -236,7 +236,7 @@ export function render(store) {
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
           <span class="text-[13px] font-medium text-gray-100">${sign}${formatCurrencyCents(op.montant)}</span>
-          <button ${delAttr} class="opacity-0 group-hover:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition" onclick="event.stopPropagation()">✕</button>
+          <button ${delAttr} class="btn-delete text-xs" onclick="event.stopPropagation()">✕</button>
         </div>
       </div>`;
   };
@@ -324,7 +324,7 @@ export function render(store) {
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <span class="text-[12px] font-medium ${checked ? 'text-gray-600' : 'text-gray-300'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
-                  <button data-mc-del="${d.id}" class="opacity-0 group-hover/mc:opacity-100 text-accent-red/60 hover:text-accent-red text-xs transition">✕</button>
+                  <button data-mc-del="${d.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
               }).join('')}
