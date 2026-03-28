@@ -46,7 +46,9 @@ export function render(store) {
   const peaPlac = placements.filter(p => (p.enveloppe || '').startsWith('PEA'));
   const ctoPlac = placements.filter(p => (p.enveloppe || '') === 'CTO');
   const cryptoPlac = placements.filter(p => (p.categorie || '') === 'Crypto');
-  const categorizedEnv = new Set([...peaPlac, ...ctoPlac, ...cryptoPlac]);
+  const avPlac = placements.filter(p => (p.enveloppe || '') === 'AV');
+  const peePlac = placements.filter(p => (p.enveloppe || '') === 'PEE');
+  const categorizedEnv = new Set([...peaPlac, ...ctoPlac, ...cryptoPlac, ...avPlac, ...peePlac]);
   const otherPlac = placements.filter(p => !categorizedEnv.has(p));
 
   // Sub-groups under PEA
@@ -57,18 +59,22 @@ export function render(store) {
   const totalPEA = peaPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalCTO = ctoPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalCrypto = cryptoPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalAV = avPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalPEE = peePlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalOtherPlac = otherPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalPeaActions = peaActions.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalPeaETF = peaETF.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalPeaOther = peaOther.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
 
-  // Level 2 envelopes (PEA, CTO, Crypto always visible; Autres only if > 0)
+  // Level 2 envelopes (PEA, CTO, Crypto, AV, PEE always visible; Autres only if > 0)
   const l2Envelopes = [
     { id: 'pea', label: 'PEA', total: totalPEA },
     { id: 'cto', label: 'CTO', total: totalCTO },
     { id: 'crypto', label: 'Crypto', total: totalCrypto },
+    { id: 'av', label: 'Assurance Vie', total: totalAV },
+    { id: 'pee', label: 'PEE', total: totalPEE },
     { id: 'otherplac', label: 'Autres', total: totalOtherPlac },
-  ].filter(e => ['pea', 'cto', 'crypto'].includes(e.id) || e.total > 0);
+  ].filter(e => ['pea', 'cto', 'crypto', 'av', 'pee'].includes(e.id) || e.total > 0);
 
   // Level 3 under PEA (only show if total > 0)
   const l3PEA = [
