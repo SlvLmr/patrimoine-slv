@@ -6,7 +6,7 @@ const CATEGORIES = [
 ];
 
 const CATEGORIES_REVENUS = [
-  'Salaire', 'Prime', 'Freelance', 'Dividendes',
+  'Salaire', 'Prime', 'Apport', 'Dividendes',
   'Remboursement', 'Vente', 'Autre'
 ];
 
