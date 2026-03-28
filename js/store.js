@@ -72,7 +72,17 @@ const defaultState = {
     ageRetraiteTauxLegal: 64,
     pensionTauxLegal: 0,
     ageRetraiteSouhaitee: 62
-  }
+  },
+  // Rendement profiles: Faible / Modéré / Élevé
+  profilRendement: 'modere',
+  profilsRendement: {
+    faible: { label: 'Faible', rendementPlacements: 0.04, rendementImmobilier: 0.01, rendementEpargne: 0.015, inflation: 0.025 },
+    modere: { label: 'Modéré', rendementPlacements: 0.07, rendementImmobilier: 0.02, rendementEpargne: 0.02, inflation: 0.02 },
+    eleve: { label: 'Élevé', rendementPlacements: 0.10, rendementImmobilier: 0.03, rendementEpargne: 0.025, inflation: 0.015 }
+  },
+  // Scenarios: named configurations with overrides
+  scenarioActif: null,
+  scenarios: []
 };
 
 function generateId() {

@@ -133,19 +133,22 @@ function getDcaForYear(placement, year) {
 }
 
 // Projection engine - per-placement simulation with DCA and Air Liquide
-export function computeProjection(store) {
+// overrides: optional object to override store values for scenario comparisons
+//   { rendementPlacements, rendementImmobilier, rendementEpargne, inflation,
+//     dcaMultiplier, extraDcaByGroup, extraTransfers, projectionYears }
+export function computeProjection(store, overrides = {}) {
   const state = store.getAll();
   const params = state.parametres;
-  const years = params.projectionYears || 30;
+  const years = overrides.projectionYears || params.projectionYears || 30;
   const now = new Date();
   const currentCalendarYear = now.getFullYear();
   const currentMonth = now.getMonth(); // 0-based (0=Jan, 11=Dec)
   const remainingMonths = 12 - currentMonth; // months left including current month
-  const inflation = params.inflationRate || 0.02;
+  const inflation = overrides.inflation ?? params.inflationRate ?? 0.02;
   const ageFinAnnee = params.ageFinAnnee || 43;
   const ageRetraite = params.ageRetraite || 64;
   const ageRetraitePEE = ageRetraite;
-  const rendImmo = params.rendementImmobilier || 0.02;
+  const rendImmo = overrides.rendementImmobilier ?? params.rendementImmobilier ?? 0.02;
 
   const totalImmo = state.actifs.immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const totalEpar = state.actifs.epargne.reduce((s, i) => s + (Number(i.solde) || 0), 0);
@@ -158,7 +161,7 @@ export function computeProjection(store) {
     eparRendTotal += taux * sol;
     eparWeightTotal += sol;
   });
-  const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : 0.02;
+  const rendEpar = overrides.rendementEpargne ?? (eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : 0.02);
 
   // Actualisations: real values entered by user for past years
   const actualisations = params.actualisations || {};
@@ -174,13 +177,19 @@ export function computeProjection(store) {
   // Build per-placement simulation state
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjectionsParams = params.cashInjections || {};
+  const overrideRendPlac = overrides.rendementPlacements; // global override for all placements
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
-    // Priority: per-placement override (from projection UI) > placement's own rendement > fallback
+    // Priority: scenario override > per-placement override > placement's own rendement > fallback
     const defaultRend = params.rendementPlacementsDefaut || 0.05;
-    const rend = rendementPlacements[p.id] !== undefined
-      ? rendementPlacements[p.id]
-      : (Number(p.rendement) || defaultRend);
+    let rend;
+    if (overrideRendPlac !== undefined) {
+      rend = overrideRendPlac;
+    } else if (rendementPlacements[p.id] !== undefined) {
+      rend = rendementPlacements[p.id];
+    } else {
+      rend = Number(p.rendement) || defaultRend;
+    }
     // Cash injections: placement-level (actifs) takes priority, fallback to parametres
     const placInj = p.cashInjections || [];
     const paramInj = cashInjectionsParams[p.id] || [];
