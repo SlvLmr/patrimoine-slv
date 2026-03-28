@@ -237,28 +237,27 @@ export function render(store) {
               <span class="text-xs text-gray-500 w-28 flex-shrink-0">Age souhaité</span>
               <input id="info-retraite-souhaitee" type="number" min="50" max="75" value="${params.ageRetraiteSouhaitee || 60}"
                 class="input-field w-20"/>
+              <div class="relative w-28 ml-auto">
+                <input id="info-pension-souhaitee" type="number" min="0" value="${params.pensionSouhaitee || 0}"
+                  class="input-field w-full pr-8"/>
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">€/m</span>
+              </div>
             </div>
             <div class="row-item flex items-center gap-3">
               <span class="text-xs text-gray-500 w-28 flex-shrink-0">Age taux légal</span>
               <input id="info-retraite-legal" type="number" min="50" max="75" value="${params.ageRetraiteTauxLegal || 64}"
                 class="input-field w-20"/>
-            </div>
-            <div class="row-item flex items-center gap-3">
-              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Age taux plein</span>
-              <input id="info-retraite-plein" type="number" min="50" max="75" value="${params.ageRetraiteTauxPlein || 65}"
-                class="input-field w-20"/>
-            </div>
-            <div class="row-item flex items-center gap-3">
-              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Pension légal</span>
-              <div class="relative w-28">
+              <div class="relative w-28 ml-auto">
                 <input id="info-pension-legal" type="number" min="0" value="${params.pensionTauxLegal || 0}"
                   class="input-field w-full pr-8"/>
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">€/m</span>
               </div>
             </div>
             <div class="row-item flex items-center gap-3">
-              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Pension plein</span>
-              <div class="relative w-28">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Age taux plein</span>
+              <input id="info-retraite-plein" type="number" min="50" max="75" value="${params.ageRetraiteTauxPlein || 65}"
+                class="input-field w-20"/>
+              <div class="relative w-28 ml-auto">
                 <input id="info-pension-plein" type="number" min="0" value="${params.pensionTauxPlein || 0}"
                   class="input-field w-full pr-8"/>
                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">€/m</span>
@@ -454,6 +453,7 @@ export function mount(store, navigate) {
   document.getElementById('info-retraite-souhaitee')?.addEventListener('input', (e) => saveParam('ageRetraiteSouhaitee', parseInt(e.target.value) || 60));
   document.getElementById('info-retraite-legal')?.addEventListener('input', (e) => saveParam('ageRetraiteTauxLegal', parseInt(e.target.value) || 64));
   document.getElementById('info-retraite-plein')?.addEventListener('input', (e) => saveParam('ageRetraiteTauxPlein', parseInt(e.target.value) || 65));
+  document.getElementById('info-pension-souhaitee')?.addEventListener('input', (e) => saveParam('pensionSouhaitee', parseInt(e.target.value) || 0));
   document.getElementById('info-pension-legal')?.addEventListener('input', (e) => saveParam('pensionTauxLegal', parseInt(e.target.value) || 0));
   document.getElementById('info-pension-plein')?.addEventListener('input', (e) => saveParam('pensionTauxPlein', parseInt(e.target.value) || 0));
 
