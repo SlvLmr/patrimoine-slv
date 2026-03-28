@@ -148,7 +148,30 @@ function computeChildProjection(enfant, horizonYears, store) {
   }
 
   const snapshots = [];
+  // Remaining months in current year (like parent projection)
+  const currentMonth = new Date().getMonth(); // 0-based
+  const remainingMonths = 12 - currentMonth;
+
   for (let y = 0; y <= horizonYears; y++) {
+    // --- Grow FIRST, then snapshot (so year 0 = end of current year) ---
+    const monthsInPeriod = (y === 0) ? remainingMonths : 12;
+    const periodFraction = monthsInPeriod / 12;
+
+    livretTotal *= (1 + avgLivretRate * periodFraction);
+    for (const k of groupKeys) {
+      const monthlyDca = groups[k].reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+      const rend = groups[k].reduce((s, p) => {
+        const r = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
+        return Math.max(s, r);
+      }, DEFAULT_RENDEMENT);
+      const periodDca = monthlyDca * monthsInPeriod;
+      gVal[k] = gVal[k] * (1 + rend * periodFraction) + periodDca;
+      gApp[k] += periodDca;
+    }
+
+    // Inject donations after growth
+    const donation = donationsByYear[currentYear + y] || 0;
+
     const placTotal = groupKeys.reduce((s, k) => s + gVal[k], 0);
     const totalApports = groupKeys.reduce((s, k) => s + gApp[k], 0);
     const totalGains = placTotal - totalApports;
@@ -164,8 +187,6 @@ function computeChildProjection(enfant, horizonYears, store) {
       netImpot[k] = Math.round(net);
       totalNetImpot += net;
     }
-
-    const donation = donationsByYear[currentYear + y] || 0;
 
     snapshots.push({
       annee: y,
@@ -185,19 +206,6 @@ function computeChildProjection(enfant, horizonYears, store) {
       placementGains: { ...gains },
       placementNetImpot: { ...netImpot },
     });
-
-    // Grow
-    livretTotal *= (1 + avgLivretRate);
-    for (const k of groupKeys) {
-      const monthlyDca = groups[k].reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
-      const rend = groups[k].reduce((s, p) => {
-        const r = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
-        return Math.max(s, r);
-      }, DEFAULT_RENDEMENT);
-      const yearlyDca = monthlyDca * 12;
-      gVal[k] = gVal[k] * (1 + rend) + yearlyDca;
-      gApp[k] += yearlyDca;
-    }
   }
   snapshots.groupKeys = groupKeys;
   return snapshots;

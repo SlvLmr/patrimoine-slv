@@ -1009,17 +1009,9 @@ export function mount(store, navigate) {
     groupKeys.forEach(gk => { dcaDataByGroup[gk] = []; });
 
     snapshots.forEach(s => {
-      const yearDCA = {};
-      groupKeys.forEach(gk => { yearDCA[gk] = 0; });
-
-      placements.forEach(p => {
-        const gk = getPlacementGroupKey(p);
-        const dca = getDcaForYear(p, s.calendarYear);
-        if (yearDCA[gk] !== undefined) yearDCA[gk] += dca;
-      });
-
+      const effectif = s.dcaMensuelEffectif || {};
       groupKeys.forEach(gk => {
-        dcaDataByGroup[gk].push(yearDCA[gk]);
+        dcaDataByGroup[gk].push(effectif[gk] || 0);
       });
     });
 

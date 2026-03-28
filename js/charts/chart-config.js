@@ -4,6 +4,8 @@ const chartInstances = new Map();
 const legendStrikethroughPlugin = {
   id: 'legendStrikethrough',
   afterDraw(chart) {
+    const type = chart.config.type;
+    if (type === 'doughnut' || type === 'pie') return;
     const legend = chart.legend;
     if (!legend || !legend.legendItems) return;
     const ctx = chart.ctx;

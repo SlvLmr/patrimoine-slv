@@ -526,6 +526,10 @@ export function computeProjection(store) {
     const ctoOverflowMonthly = new Array(monthsInPeriod).fill(0);
     const avOverflowMonthly = new Array(monthsInPeriod).fill(0);
 
+    // Track effective monthly DCA per group (after PEA/AV ceiling caps + overflow redistribution)
+    const effectiveDcaByGroup = {};
+    groupKeys.forEach(k => { effectiveDcaByGroup[k] = 0; });
+
     let interetsAnnuels = 0;
     if (!cashedOut) {
     placSims.forEach(ps => {
@@ -569,10 +573,12 @@ export function computeProjection(store) {
                 ps.quantite += wholeShares;
                 ps.totalApports += spent;
                 if (isPEA) peaApportsCumules += spent;
+                effectiveDcaByGroup[ps.groupKey] = (effectiveDcaByGroup[ps.groupKey] || 0) + spent;
                 // Unspent remainder carries over (simplified: lost in sim)
               } else {
                 ps.quantite += dcaThisMonth / ps.prixAction;
                 ps.totalApports += dcaThisMonth;
+                effectiveDcaByGroup[ps.groupKey] = (effectiveDcaByGroup[ps.groupKey] || 0) + dcaThisMonth;
               }
             }
           }
@@ -632,6 +638,7 @@ export function computeProjection(store) {
               ps.value += dcaThisMonth;
               ps.totalApports += dcaThisMonth;
               if (isPEA) peaApportsCumules += dcaThisMonth;
+              effectiveDcaByGroup[ps.groupKey] = (effectiveDcaByGroup[ps.groupKey] || 0) + dcaThisMonth;
             }
           }
           ps.value *= (1 + monthlyRate);
@@ -763,6 +770,7 @@ export function computeProjection(store) {
             if (targetSim) {
               targetSim.value += share;
               targetSim.totalApports += share;
+              effectiveDcaByGroup[gk] = (effectiveDcaByGroup[gk] || 0) + share;
               distributed += share;
             }
           }
@@ -772,6 +780,7 @@ export function computeProjection(store) {
         if (remainder > 0 && needsCTOFallback) {
           ctoOverflow.value += remainder;
           ctoOverflow.totalApports += remainder;
+          effectiveDcaByGroup[ctoOverflow.groupKey] = (effectiveDcaByGroup[ctoOverflow.groupKey] || 0) + remainder;
         }
       }
 
@@ -815,6 +824,7 @@ export function computeProjection(store) {
             if (targetSim) {
               targetSim.value += share;
               targetSim.totalApports += share;
+              effectiveDcaByGroup[gk] = (effectiveDcaByGroup[gk] || 0) + share;
               distributed += share;
             }
           }
@@ -823,6 +833,7 @@ export function computeProjection(store) {
         if (remainder > 0 && needsAVCTOFallback) {
           avOverflow.value += remainder;
           avOverflow.totalApports += remainder;
+          effectiveDcaByGroup[avOverflow.groupKey] = (effectiveDcaByGroup[avOverflow.groupKey] || 0) + remainder;
         }
       }
 
@@ -965,6 +976,12 @@ export function computeProjection(store) {
       detailTaxRates[k] = groupTaxRates[k] || 0;
     });
 
+    // Convert accumulated DCA totals to monthly averages
+    const dcaMensuelEffectif = {};
+    groupKeys.forEach(k => {
+      dcaMensuelEffectif[k] = monthsInPeriod > 0 ? Math.round((effectiveDcaByGroup[k] || 0) / monthsInPeriod) : 0;
+    });
+
     snapshots.push({
       annee: year,
       calendarYear: currentCalendarYear + year,
@@ -975,6 +992,7 @@ export function computeProjection(store) {
       placementById: Object.fromEntries(placSims.filter(ps => ps.id !== '__cto_overflow__').map(ps => [ps.id, Math.round(ps.value)])),
       immobilier: Math.round(immo),
       placementDetail: detail,
+      dcaMensuelEffectif,
       placementApports: detailApports,
       placementGains: detailGains,
       placementTaxes: detailTaxes,
