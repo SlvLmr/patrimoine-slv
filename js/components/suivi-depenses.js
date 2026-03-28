@@ -439,7 +439,7 @@ export function render(store) {
                 const balance = rev - dep;
                 const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
                 return `
-              <tr class="hover:bg-dark-600/30 transition group">
+              <tr class="hover:bg-dark-600/30 transition group cursor-pointer archive-row" data-mois="${a.mois}">
                 <td class="px-4 py-2.5">
                   <span class="text-gray-200 capitalize font-medium">${label}</span>
                 </td>
@@ -571,7 +571,7 @@ export function mount(store, navigate) {
     `;
 
     openModal('Clôturer le mois', body, () => {
-      // Save archive
+      // Save archive — include full operations for later review
       const archives = store.get('archiveDepenses') || [];
       const archiveEntry = {
         mois: monthKey,
@@ -580,7 +580,10 @@ export function mount(store, navigate) {
         count: items.length,
         categories,
         soldeFinalCIC: finalSoldeCIC,
-        soldeFinalTR: finalSoldeTR
+        soldeFinalTR: finalSoldeTR,
+        operations: JSON.parse(JSON.stringify(items)),
+        revenus: JSON.parse(JSON.stringify(revenus)),
+        cochees: [...cocheesThisMonth],
       };
       for (const bank of extraBanks) {
         archiveEntry['soldeFinal_' + bank.id] = extraFinals[bank.id];
@@ -588,10 +591,15 @@ export function mount(store, navigate) {
       archives.push(archiveEntry);
       store.set('archiveDepenses', archives);
 
-      // Set solde mois précédent to final computed soldes
-      const newPrev = { cic: finalSoldeCIC, tr: finalSoldeTR };
+      // Set solde mois précédent — subtract baseSolde to avoid double-counting
+      // (baseSolde is always re-added from actifs on each render)
+      const newPrev = {
+        cic: finalSoldeCIC - baseSoldeCIC,
+        tr: finalSoldeTR - baseSoldeTR,
+      };
       for (const bank of extraBanks) {
-        newPrev[bank.id] = extraFinals[bank.id];
+        const baseExtra = Number(comptesCourants.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
+        newPrev[bank.id] = extraFinals[bank.id] - baseExtra;
       }
       store.set('soldeMoisPrecedent', newPrev);
 
@@ -1205,6 +1213,64 @@ export function mount(store, navigate) {
       const revenus = store.get('suiviRevenus') || [];
       store.set('suiviRevenus', revenus.filter(r => r.id !== id));
       navigate('suivi-depenses');
+    });
+  });
+
+  // Archive row click — show past month details
+  document.querySelectorAll('.archive-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const mois = row.dataset.mois;
+      const archives = store.get('archiveDepenses') || [];
+      const a = archives.find(ar => ar.mois === mois);
+      if (!a) return;
+      const label = new Date(mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      const ops = a.operations || [];
+      const revs = a.revenus || [];
+      const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
+
+      const body = `<div class="space-y-4 max-h-[70vh] overflow-y-auto">
+        <!-- Résumé -->
+        <div class="bg-dark-700/50 rounded-lg p-3 space-y-1 text-sm">
+          <div class="flex justify-between"><span class="text-gray-400">Revenus</span><span class="text-accent-green font-medium">${formatCurrencyCents(a.totalRevenus || 0)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Dépenses</span><span class="text-accent-red font-medium">${formatCurrencyCents(a.total || 0)}</span></div>
+          <div class="border-t border-dark-400/30 my-1"></div>
+          <div class="flex justify-between"><span class="text-gray-400">Balance</span><span class="font-semibold ${(a.totalRevenus - a.total) >= 0 ? 'text-accent-green' : 'text-accent-red'}">${(a.totalRevenus - a.total) >= 0 ? '+' : ''}${formatCurrencyCents((a.totalRevenus || 0) - (a.total || 0))}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.primary}</span><span class="text-gray-200">${a.soldeFinalCIC !== undefined ? formatCurrencyCents(a.soldeFinalCIC) : '—'}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.secondary}</span><span class="text-gray-200">${a.soldeFinalTR !== undefined ? formatCurrencyCents(a.soldeFinalTR) : '—'}</span></div>
+        </div>
+        ${cats.length > 0 ? `<div class="flex flex-wrap gap-1">${cats.map(([cat, val]) => `<span class="text-[10px] px-2 py-1 rounded-lg bg-dark-600/50 text-gray-400">${cat} <span class="text-gray-300 font-medium">${formatCurrencyCents(val)}</span></span>`).join('')}</div>` : ''}
+        ${revs.length > 0 ? `
+        <div>
+          <h4 class="text-xs font-semibold text-accent-green uppercase tracking-wider mb-2">Revenus (${revs.length})</h4>
+          <div class="space-y-1">${revs.map(r => `
+            <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-[10px] text-gray-600">${r.date || ''}</span>
+                <span class="text-gray-300 truncate">${r.description || r.categorie || '—'}</span>
+                <span class="text-[10px] text-gray-500">${r.compte || ''}</span>
+              </div>
+              <span class="text-accent-green font-medium ml-2 whitespace-nowrap">+${formatCurrencyCents(Number(r.montant) || 0)}</span>
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+        ${ops.length > 0 ? `
+        <div>
+          <h4 class="text-xs font-semibold text-accent-red uppercase tracking-wider mb-2">Dépenses (${ops.length})</h4>
+          <div class="space-y-1">${ops.map(o => `
+            <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-[10px] text-gray-600">${o.date || ''}</span>
+                <span class="text-gray-300 truncate">${o.description || '—'}</span>
+                <span class="text-[10px] px-1 py-0.5 rounded bg-dark-600/50 text-gray-500">${o.categorie || ''}</span>
+                <span class="text-[10px] text-gray-600">${o.compte || ''}</span>
+              </div>
+              <span class="text-accent-red font-medium ml-2 whitespace-nowrap">-${formatCurrencyCents(Number(o.montant) || 0)}</span>
+            </div>`).join('')}
+          </div>
+        </div>` : '<p class="text-gray-600 text-sm text-center py-4">Aucune opération sauvegardée pour ce mois</p>'}
+      </div>`;
+
+      openModal(`Détail — ${label}`, body, null);
     });
   });
 }
