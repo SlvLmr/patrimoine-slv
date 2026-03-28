@@ -257,25 +257,26 @@ export function render(store) {
               </defs>
             </svg>
           </div>
-          <!-- Ligne 2 investissements: enveloppes (PEA, CTO, Crypto) -->
-          <div id="ptf-L3C" class="grid grid-cols-${l2Envelopes.length || 1} gap-2">
-            ${l2Envelopes.map(env => `
-            <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-3 group/env" ${env.id === 'pea' ? 'open' : ''}>
+          <!-- Ligne 2 investissements: enveloppes -->
+          <div id="ptf-L3C" class="grid grid-cols-${l2Envelopes.length || 1} gap-1">
+            ${l2Envelopes.map(env => {
+              const envPlacMap = { cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
+              return `
+            <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
               <summary class="cursor-pointer select-none" style="list-style:none">
-                <div class="flex items-center justify-between mb-1">
-                  <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">${env.label}</p>
-                  <svg class="w-3 h-3 text-gray-600 transition-transform group-open/env:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <div class="flex items-center justify-between mb-0.5">
+                  <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
+                  <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/env:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
-                <p class="text-base font-bold text-accent-amber text-center">${fmt(env.total)}</p>
+                <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}</p>
               </summary>
-              ${env.id !== 'pea' ? `<div class="space-y-1 mt-1">${placList(
-                env.id === 'cto' ? ctoPlac : env.id === 'crypto' ? cryptoPlac : otherPlac, 'bg-accent-amber/50'
-              )}</div>` : ''}
-            </details>`).join('')}
+              ${env.id !== 'pea' && envPlacMap[env.id] ? `<div class="space-y-1 mt-1">${placList(envPlacMap[env.id], 'bg-accent-amber/50')}</div>` : ''}
+            </details>`;
+            }).join('')}
           </div>
           ${totalPEA > 0 && l3PEA.length > 0 ? `
           <!-- SVG PEA → Actions + ETF -->
-          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-2">
+          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-1">
             <div id="ptf-svg-L3C-pea" class="hidden lg:block" style="height:30px;">
               <svg id="ptf-svg-L3C-pea-svg" class="w-full" style="height:30px;" fill="none">
                 <defs><filter id="glow-amber3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
@@ -283,16 +284,16 @@ export function render(store) {
             </div>
           </div>
           <!-- Ligne 3 sous PEA: Actions + ETF -->
-          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-2">
-            <div class="grid grid-cols-${l3PEA.length} gap-1.5">
+          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-1">
+            <div class="grid grid-cols-${l3PEA.length} gap-1">
               ${l3PEA.map(sub => `
-              <details id="ptf-card-${sub.id}" class="card-dark rounded-xl p-2.5 group/sub">
+              <details id="ptf-card-${sub.id}" class="card-dark rounded-xl p-1.5 group/sub">
                 <summary class="cursor-pointer select-none" style="list-style:none">
                   <div class="flex items-center justify-between mb-0.5">
-                    <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
-                    <svg class="w-3 h-3 text-gray-600 transition-transform group-open/sub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <p class="text-[7px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
+                    <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/sub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                   </div>
-                  <p class="text-sm font-bold text-accent-amber text-center">${fmt(sub.total)}</p>
+                  <p class="text-xs font-bold text-accent-amber text-center whitespace-nowrap">${fmt(sub.total)}</p>
                 </summary>
                 <div class="space-y-1 mt-1">${placList(sub.items, 'bg-accent-amber/50')}</div>
               </details>`).join('')}
