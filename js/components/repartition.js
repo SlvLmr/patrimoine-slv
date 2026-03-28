@@ -668,6 +668,9 @@ export function mount(store, navigate) {
     }
   }
 
+  // Track excluded donut entries
+  const donutExcluded = new Set();
+
   function updateDonut(snap, gKeys, calYear) {
     const donutYearEl = document.getElementById('rep-donut-year');
     if (donutYearEl) donutYearEl.textContent = `- ${calYear}`;
@@ -703,10 +706,6 @@ export function mount(store, navigate) {
     entries.sort((a, b) => b.value - a.value);
 
     const allEntries = [...entries];
-    const grandTotal = allEntries.reduce((s, e) => s + e.value, 0);
-
-    const canvas = document.getElementById('rep-chart-donut');
-    if (!canvas) return;
 
     // Use distinct colors for individual actions, group colors for the rest
     const DONUT_ACTION_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
@@ -716,13 +715,21 @@ export function mount(store, navigate) {
       return getGroupStyle(e.gk).color;
     });
 
+    // Filter out excluded entries for chart + percentages
+    const activeEntries = allEntries.filter(e => !donutExcluded.has(e.gk));
+    const activeColors = allEntries.map((e, i) => ({ color: colors[i], excluded: donutExcluded.has(e.gk) })).filter(c => !c.excluded).map(c => c.color);
+    const grandTotal = activeEntries.reduce((s, e) => s + e.value, 0);
+
+    const canvas = document.getElementById('rep-chart-donut');
+    if (!canvas) return;
+
     createChart('rep-chart-donut', {
       type: 'doughnut',
       data: {
-        labels: allEntries.map(e => e.gk),
+        labels: activeEntries.map(e => e.gk),
         datasets: [{
-          data: allEntries.map(e => e.value),
-          backgroundColor: colors,
+          data: activeEntries.map(e => e.value),
+          backgroundColor: activeColors,
           borderColor: 'rgba(11, 11, 15, 0.8)',
           borderWidth: 2,
           hoverOffset: 6
@@ -747,20 +754,31 @@ export function mount(store, navigate) {
     const legendEl = document.getElementById('rep-donut-legend');
     if (legendEl) {
       legendEl.innerHTML = allEntries.map((e, i) => {
-        const pct = grandTotal > 0 ? (e.value / grandTotal * 100).toFixed(1) : 0;
+        const excluded = donutExcluded.has(e.gk);
+        const pct = (!excluded && grandTotal > 0) ? (e.value / grandTotal * 100).toFixed(1) : '—';
         return `
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between cursor-pointer select-none donut-legend-row transition hover:opacity-80" data-donut-gk="${e.gk}">
             <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: ${colors[i]}"></div>
-              <span class="text-xs text-gray-400">${e.gk}</span>
+              <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${excluded ? 'opacity-20' : ''}" style="background: ${colors[i]}"></div>
+              <span class="text-xs ${excluded ? 'text-gray-600 line-through' : 'text-gray-400'}">${e.gk}</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-xs text-gray-300 font-medium">${formatCurrency(e.value)}</span>
-              <span class="text-[10px] text-gray-600 w-10 text-right">${pct}%</span>
+              <span class="text-xs ${excluded ? 'text-gray-600 line-through' : 'text-gray-300 font-medium'}">${formatCurrency(e.value)}</span>
+              <span class="text-[10px] ${excluded ? 'text-gray-700' : 'text-gray-600'} w-10 text-right">${excluded ? '' : pct + '%'}</span>
             </div>
           </div>
         `;
       }).join('');
+
+      // Add click handlers for toggling
+      legendEl.querySelectorAll('.donut-legend-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const gk = row.dataset.donutGk;
+          if (donutExcluded.has(gk)) donutExcluded.delete(gk);
+          else donutExcluded.add(gk);
+          updateDonut(snap, gKeys, calYear);
+        });
+      });
     }
   }
 
