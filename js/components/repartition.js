@@ -115,28 +115,14 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-4">
-        <div class="card-dark rounded-2xl p-5 min-w-0 overflow-hidden">
-          <div class="flex items-center gap-2 mb-3">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-            <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Allocation</h2>
-            <span id="rep-donut-year" class="text-sm text-gray-500 ml-1"></span>
-          </div>
-          <div class="relative" style="height: 280px;">
-            <canvas id="rep-chart-donut"></canvas>
-          </div>
-          <div id="rep-donut-legend" class="mt-3 space-y-1 overflow-hidden"></div>
+      <!-- Evolution Chart -->
+      <div class="card-dark rounded-2xl p-5 min-w-0 overflow-hidden">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Evolution</h2>
         </div>
-
-        <div class="card-dark rounded-2xl p-5 min-w-0 overflow-hidden">
-          <div class="flex items-center gap-2 mb-3">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-            <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Evolution</h2>
-          </div>
-          <div class="relative" style="height: 320px;">
-            <canvas id="rep-chart-area"></canvas>
-          </div>
+        <div class="relative" style="height: 320px;">
+          <canvas id="rep-chart-area"></canvas>
         </div>
       </div>
 
@@ -258,11 +244,10 @@ export function mount(store, navigate) {
 
     const totalPlacements = snap.placements || 0;
 
-    try { updateKPI(totalDCA, nbWithDCA, snap, totalPlacements); } catch(e) { console.error('updateKPI error:', e); }
-    try { updateActions(snap); } catch(e) { console.error('updateActions error:', e); }
-    try { updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear); } catch(e) { console.error('updateFlow error:', e); }
-    try { updateDonut(snap, groupKeys, calYear); } catch(e) { console.error('updateDonut error:', e); }
-    try { updateTable(dcaByPlacement, snap, totalPlacements, calYear); } catch(e) { console.error('updateTable error:', e); }
+    updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
+    updateActions(snap);
+    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear);
+    updateTable(dcaByPlacement, snap, totalPlacements, calYear);
   }
 
   function updateKPI(totalDCA, nbWithDCA, snap, totalPlacements) {
@@ -667,124 +652,6 @@ export function mount(store, navigate) {
       topDot.setAttribute('fill', '#c9a76c');
       topDot.setAttribute('opacity', '0.8');
       svg.appendChild(topDot);
-    }
-  }
-
-  // Track excluded donut entries
-  const donutExcluded = new Set();
-
-  function updateDonut(snap, gKeys, calYear) {
-    const donutYearEl = document.getElementById('rep-donut-year');
-    if (donutYearEl) donutYearEl.textContent = `- ${calYear}`;
-
-    const detail = snap.placementDetail || {};
-    const placementById = snap.placementById || {};
-
-    // Build entries: expand "PEA Actions" into individual stocks
-    const entries = [];
-    gKeys.forEach(gk => {
-      const value = detail[gk] || 0;
-      if (value <= 0) return;
-      if (gk === 'PEA Actions') {
-        // Replace group with individual action placements
-        const actionPlacements = placements
-          .filter(p => getPlacementGroupKey(p) === 'PEA Actions')
-          .map(p => ({
-            gk: p.nom || 'Action',
-            value: placementById[p.id] || Number(p.valeur) || Number(p.apport) || 0,
-            isAction: true,
-          }))
-          .filter(e => e.value > 0)
-          .sort((a, b) => b.value - a.value);
-        if (actionPlacements.length) {
-          entries.push(...actionPlacements);
-        } else {
-          entries.push({ gk, value });
-        }
-      } else {
-        entries.push({ gk, value });
-      }
-    });
-    // Also include Épargne and Immobilier in allocation
-    if (snap.epargne > 0) entries.push({ gk: 'Épargne', value: snap.epargne });
-    if (snap.immobilier > 0) entries.push({ gk: 'Immobilier', value: snap.immobilier });
-
-    entries.sort((a, b) => b.value - a.value);
-
-    const allEntries = [...entries];
-
-    // Use distinct colors for individual actions, group colors for the rest
-    const DONUT_ACTION_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6'];
-    let actionIdx = 0;
-    const colors = allEntries.map(e => {
-      if (e.isAction) return DONUT_ACTION_COLORS[actionIdx++ % DONUT_ACTION_COLORS.length];
-      return getGroupStyle(e.gk).color;
-    });
-
-    // Filter out excluded entries for chart + percentages
-    const activeEntries = allEntries.filter(e => !donutExcluded.has(e.gk));
-    const activeColors = allEntries.map((e, i) => ({ color: colors[i], excluded: donutExcluded.has(e.gk) })).filter(c => !c.excluded).map(c => c.color);
-    const grandTotal = activeEntries.reduce((s, e) => s + e.value, 0);
-
-    const canvas = document.getElementById('rep-chart-donut');
-    if (!canvas) return;
-
-    createChart('rep-chart-donut', {
-      type: 'doughnut',
-      data: {
-        labels: activeEntries.map(e => e.gk),
-        datasets: [{
-          data: activeEntries.map(e => e.value),
-          backgroundColor: activeColors,
-          borderColor: 'rgba(11, 11, 15, 0.8)',
-          borderWidth: 2,
-          hoverOffset: 6
-        }]
-      },
-      options: {
-        cutout: '65%',
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(ctx) {
-                const pct = grandTotal > 0 ? (ctx.raw / grandTotal * 100).toFixed(1) : 0;
-                return ` ${ctx.label}: ${formatCurrency(ctx.raw)} (${pct}%)`;
-              }
-            }
-          }
-        }
-      }
-    });
-
-    const legendEl = document.getElementById('rep-donut-legend');
-    if (legendEl) {
-      legendEl.innerHTML = allEntries.map((e, i) => {
-        const excluded = donutExcluded.has(e.gk);
-        const pct = (!excluded && grandTotal > 0) ? (e.value / grandTotal * 100).toFixed(1) : '—';
-        return `
-          <div class="flex items-center justify-between cursor-pointer select-none donut-legend-row transition hover:opacity-80" data-donut-gk="${e.gk}">
-            <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${excluded ? 'opacity-20' : ''}" style="background: ${colors[i]}"></div>
-              <span class="text-xs ${excluded ? 'text-gray-600 line-through' : 'text-gray-400'}">${e.gk}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs ${excluded ? 'text-gray-600 line-through' : 'text-gray-300 font-medium'}">${formatCurrency(e.value)}</span>
-              <span class="text-[10px] ${excluded ? 'text-gray-700' : 'text-gray-600'} w-10 text-right">${excluded ? '' : pct + '%'}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // Add click handlers for toggling
-      legendEl.querySelectorAll('.donut-legend-row').forEach(row => {
-        row.addEventListener('click', () => {
-          const gk = row.dataset.donutGk;
-          if (donutExcluded.has(gk)) donutExcluded.delete(gk);
-          else donutExcluded.add(gk);
-          updateDonut(snap, gKeys, calYear);
-        });
-      });
     }
   }
 
