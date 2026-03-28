@@ -1174,9 +1174,6 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- ═══ SCENARIOS + RENDEMENT ═══ -->
-      ${renderScenarioSection(store)}
-
       <!-- ═══ UNIFIED MEGA BLOCK: Timeline + Patrimoine + Abattements ═══ -->
       <div class="card-dark rounded-3xl border border-purple-500/15 overflow-hidden shadow-2xl shadow-purple-500/5" style="background: linear-gradient(180deg, rgba(88,28,135,0.06) 0%, rgba(15,23,42,0) 40%);">
 
@@ -1442,127 +1439,6 @@ export function mount(store, navigate) {
     const el = document.getElementById('app-content');
     if (el) { el.innerHTML = render(store); mount(store, navigate); }
   }
-
-  // ── Profile selector
-  document.querySelectorAll('.profil-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const profilId = btn.dataset.profil;
-      if (profilId) {
-        saveActiveProfile(store, profilId);
-        refresh();
-      }
-    });
-  });
-
-  // ── Edit profiles modal
-  document.getElementById('btn-edit-profiles')?.addEventListener('click', () => {
-    const profiles = getProfiles(store);
-    openModal('Personnaliser les profils de rendement', getProfileEditHtml(profiles), () => {
-      const updated = JSON.parse(JSON.stringify(profiles));
-      // Save per-field values (immobilier, épargne, inflation)
-      document.querySelectorAll('[data-profil][data-field]').forEach(input => {
-        const key = input.dataset.profil;
-        const field = input.dataset.field;
-        const val = parseFloat(input.value);
-        if (!isNaN(val) && updated[key]) {
-          updated[key][field] = val / 100;
-        }
-      });
-      // Save per-group rendement values
-      document.querySelectorAll('[data-profil][data-group]').forEach(input => {
-        const key = input.dataset.profil;
-        const group = input.dataset.group;
-        const val = parseFloat(input.value);
-        if (!isNaN(val) && updated[key]) {
-          if (!updated[key].rendementGroupes) updated[key].rendementGroupes = {};
-          updated[key].rendementGroupes[group] = val / 100;
-        }
-      });
-      saveProfiles(store, updated);
-      refresh();
-    });
-  });
-
-  // ── Scenario tabs
-  document.querySelectorAll('.scenario-tab').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      if (e.target.closest('.scenario-edit')) return;
-      const scId = btn.dataset.scenarioId;
-      const current = getActiveScenario(store);
-      saveActiveScenario(store, current === scId ? null : scId);
-      refresh();
-    });
-  });
-
-  // ── Scenario edit buttons
-  document.querySelectorAll('.scenario-edit').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const scId = btn.dataset.scenarioId;
-      const scenarios = getScenarios(store);
-      const sc = scenarios.find(s => s.id === scId);
-      if (!sc) return;
-
-      const formHtml = getScenarioFormHtml(sc) + `
-        <div class="mt-4 pt-4 border-t border-dark-400/20">
-          <button id="sc-form-delete" class="btn-delete text-xs px-3 py-1.5 rounded-lg transition">Supprimer ce scénario</button>
-        </div>`;
-      const modal = openModal('Modifier le scénario', formHtml, () => {
-        sc.nom = document.getElementById('sc-form-nom')?.value.trim() || sc.nom;
-        sc.description = document.getElementById('sc-form-desc')?.value.trim() || '';
-        sc.color = document.getElementById('sc-form-color')?.value || 'blue';
-        const rend = parseFloat(document.getElementById('sc-form-rend')?.value);
-        sc.rendementPlacements = !isNaN(rend) ? rend / 100 : undefined;
-        const rendImmo = parseFloat(document.getElementById('sc-form-rend-immo')?.value);
-        sc.rendementImmobilier = !isNaN(rendImmo) ? rendImmo / 100 : undefined;
-        const dcaMult = parseFloat(document.getElementById('sc-form-dca-mult')?.value);
-        sc.dcaMultiplier = !isNaN(dcaMult) ? dcaMult : undefined;
-        const infl = parseFloat(document.getElementById('sc-form-inflation')?.value);
-        sc.extraInflation = !isNaN(infl) ? infl / 100 : undefined;
-        saveScenarios(store, scenarios);
-        refresh();
-      });
-      mountScenarioColorSelector(modal);
-      setTimeout(() => {
-        document.getElementById('sc-form-delete')?.addEventListener('click', () => {
-          if (confirm(`Supprimer le scénario « ${sc.nom} » ?`)) {
-            modal.remove();
-            saveScenarios(store, scenarios.filter(s => s.id !== scId));
-            if (getActiveScenario(store) === scId) saveActiveScenario(store, null);
-            refresh();
-          }
-        });
-      }, 50);
-    });
-  });
-
-  // ── Add scenario
-  document.getElementById('btn-add-scenario')?.addEventListener('click', () => {
-    const modal = openModal('Nouveau scénario', getScenarioFormHtml(), () => {
-      const nom = document.getElementById('sc-form-nom')?.value.trim();
-      if (!nom) return;
-      const color = document.getElementById('sc-form-color')?.value || 'blue';
-      const description = document.getElementById('sc-form-desc')?.value.trim() || '';
-      const rend = parseFloat(document.getElementById('sc-form-rend')?.value);
-      const rendImmo = parseFloat(document.getElementById('sc-form-rend-immo')?.value);
-      const dcaMult = parseFloat(document.getElementById('sc-form-dca-mult')?.value);
-      const infl = parseFloat(document.getElementById('sc-form-inflation')?.value);
-      const newScenario = {
-        id: generateId(),
-        nom, description, color,
-        rendementPlacements: !isNaN(rend) ? rend / 100 : undefined,
-        rendementImmobilier: !isNaN(rendImmo) ? rendImmo / 100 : undefined,
-        dcaMultiplier: !isNaN(dcaMult) ? dcaMult : undefined,
-        extraInflation: !isNaN(infl) ? infl / 100 : undefined,
-      };
-      const scenarios = getScenarios(store);
-      scenarios.push(newScenario);
-      saveScenarios(store, scenarios);
-      saveActiveScenario(store, newScenario.id);
-      refresh();
-    });
-    mountScenarioColorSelector(modal);
-  });
 
   // ── Gauge slider + Patrimoine indicator + Succession comparison
   const gaugeSlider = document.getElementById('hyp-gauges-slider');
