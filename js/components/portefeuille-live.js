@@ -71,7 +71,7 @@ export function render(store) {
     { id: 'pea', label: 'PEA', total: totalPEA },
     { id: 'cto', label: 'CTO', total: totalCTO },
     { id: 'crypto', label: 'Crypto', total: totalCrypto },
-    { id: 'av', label: 'Assurance Vie', total: totalAV },
+    { id: 'av', label: 'Ass. Vie', total: totalAV },
     { id: 'pee', label: 'PEE', total: totalPEE },
     { id: 'otherplac', label: 'Autres', total: totalOtherPlac },
   ].filter(e => ['pea', 'cto', 'crypto', 'av', 'pee'].includes(e.id) || e.total > 0);
