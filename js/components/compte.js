@@ -32,7 +32,7 @@ function renderChildCard(child, index) {
   const totalLivrets = livrets.reduce((s, l) => s + (Number(l.montant) || 0), 0);
 
   return `
-    <div class="p-4 bg-dark-800 rounded-xl border border-dark-400/20 group" data-child-idx="${index}">
+    <div class="row-item p-4 group" data-child-idx="${index}">
       <div class="flex items-center gap-4">
         <div class="relative">
           <label for="child-photo-${index}" class="cursor-pointer block">
@@ -54,15 +54,15 @@ function renderChildCard(child, index) {
         <div class="flex-1 min-w-0">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input type="text" value="${child.prenom || ''}" placeholder="Prénom"
-              class="child-prenom bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition placeholder-gray-600" data-idx="${index}"/>
+              class="child-prenom input-inline placeholder-gray-600" data-idx="${index}"/>
             <div class="flex items-center gap-2">
               <input type="date" value="${child.dateNaissance || ''}"
-                class="child-dob bg-transparent border-b border-dark-400/30 focus:border-accent-green px-0 py-1 text-sm text-gray-200 focus:outline-none transition flex-1" data-idx="${index}"/>
+                class="child-dob input-inline flex-1" data-idx="${index}"/>
               ${age !== null ? `<span class="text-xs text-gray-500 whitespace-nowrap">${age} ans</span>` : ''}
             </div>
           </div>
         </div>
-        <button class="child-delete opacity-0 group-hover:opacity-100 text-red-400/60 hover:text-red-400 p-1.5 transition" data-idx="${index}" title="Supprimer">
+        <button class="child-delete btn-delete p-1.5" data-idx="${index}" title="Supprimer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -164,7 +164,7 @@ export function render(store) {
       </div>
 
       <!-- Mon profil -->
-      <div class="bg-dark-700 rounded-2xl border border-dark-400/30 overflow-hidden">
+      <div class="card-dark rounded-2xl overflow-hidden">
         <div class="px-6 py-4 border-b border-dark-400/20">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Mon profil</h2>
         </div>
@@ -175,33 +175,33 @@ export function render(store) {
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             Identité
           </h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Prénom</label>
+          <div class="space-y-2">
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Prénom</span>
               <input id="info-prenom" type="text" value="${info.prenom || ''}" placeholder="Ton prénom"
-                class="input-field w-full rounded-xl px-4 py-2.5 placeholder-gray-600"/>
+                class="input-inline flex-1 min-w-0 placeholder-gray-600"/>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Nom</label>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Nom</span>
               <input id="info-nom" type="text" value="${info.nom || ''}" placeholder="Ton nom"
-                class="input-field w-full rounded-xl px-4 py-2.5 placeholder-gray-600"/>
+                class="input-inline flex-1 min-w-0 placeholder-gray-600"/>
             </div>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Date de naissance</label>
+          <div class="space-y-2">
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Date de naissance</span>
               <input id="info-dob" type="date" value="${info.dateNaissance || ''}"
-                class="input-field w-full rounded-xl px-4 py-2.5"/>
+                class="input-field flex-1 min-w-0"/>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Téléphone</label>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Téléphone</span>
               <input id="info-tel" type="tel" value="${info.telephone || ''}" placeholder="06 12 34 56 78"
-                class="input-field w-full rounded-xl px-4 py-2.5 placeholder-gray-600"/>
+                class="input-field flex-1 min-w-0 text-left placeholder-gray-600"/>
             </div>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1.5">Email</label>
-            <div class="w-full bg-dark-800/50 border border-dark-400/30 rounded-xl px-4 py-2.5 text-sm text-gray-500">${email || 'Non connecté'}</div>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Email</span>
+              <span class="text-sm text-gray-500 flex-1">${email || 'Non connecté'}</span>
+            </div>
           </div>
         </div>
 
@@ -211,18 +211,17 @@ export function render(store) {
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
             Situation fiscale
           </h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Situation familiale</label>
-              <select id="info-situation"
-                class="input-field w-full rounded-xl px-4 py-2.5">
+          <div class="space-y-2">
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Situation</span>
+              <select id="info-situation" class="input-field flex-1 min-w-0 text-left">
                 ${situationOptions.map(o => `<option value="${o.value}" ${params.situationFamiliale === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
               </select>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Parts fiscales</label>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Parts fiscales</span>
               <input id="info-parts" type="number" step="0.5" min="1" value="${params.nbParts || 1}"
-                class="input-field w-full rounded-xl px-4 py-2.5"/>
+                class="input-field w-20"/>
             </div>
           </div>
         </div>
@@ -233,33 +232,37 @@ export function render(store) {
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Retraite
           </h3>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Age souhaité</label>
+          <div class="space-y-2">
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Age souhaité</span>
               <input id="info-retraite-souhaitee" type="number" min="50" max="75" value="${params.ageRetraiteSouhaitee || 60}"
-                class="input-field w-full rounded-xl px-4 py-2.5"/>
+                class="input-field w-20"/>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Age taux légal</label>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Age taux légal</span>
               <input id="info-retraite-legal" type="number" min="50" max="75" value="${params.ageRetraiteTauxLegal || 64}"
-                class="input-field w-full rounded-xl px-4 py-2.5"/>
+                class="input-field w-20"/>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Age taux plein</label>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Age taux plein</span>
               <input id="info-retraite-plein" type="number" min="50" max="75" value="${params.ageRetraiteTauxPlein || 65}"
-                class="input-field w-full rounded-xl px-4 py-2.5"/>
+                class="input-field w-20"/>
             </div>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Pension taux légal (€/mois)</label>
-              <input id="info-pension-legal" type="number" min="0" value="${params.pensionTauxLegal || 0}"
-                class="input-field w-full rounded-xl px-4 py-2.5"/>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Pension légal</span>
+              <div class="relative w-28">
+                <input id="info-pension-legal" type="number" min="0" value="${params.pensionTauxLegal || 0}"
+                  class="input-field w-full pr-8"/>
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">€/m</span>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Pension taux plein (€/mois)</label>
-              <input id="info-pension-plein" type="number" min="0" value="${params.pensionTauxPlein || 0}"
-                class="input-field w-full rounded-xl px-4 py-2.5"/>
+            <div class="row-item flex items-center gap-3">
+              <span class="text-xs text-gray-500 w-28 flex-shrink-0">Pension plein</span>
+              <div class="relative w-28">
+                <input id="info-pension-plein" type="number" min="0" value="${params.pensionTauxPlein || 0}"
+                  class="input-field w-full pr-8"/>
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">€/m</span>
+              </div>
             </div>
           </div>
         </div>
@@ -372,7 +375,7 @@ export function render(store) {
       </div>
 
       <!-- Famille / Enfants -->
-      <div class="bg-dark-700 rounded-2xl border border-dark-400/30 overflow-hidden">
+      <div class="card-dark rounded-2xl overflow-hidden">
         <div class="px-6 py-4 border-b border-dark-400/20 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Famille</h2>
           <button id="btn-add-child" class="text-xs text-accent-green hover:text-accent-amber transition flex items-center gap-1">
