@@ -608,6 +608,13 @@ export function mount(store, navigate) {
       delete allCochees[monthKey];
       store.set('cicMensuellesCochees', allCochees);
 
+      // Reset TR features (monthly values already baked into soldePrev)
+      const trF = store.get('trFeatures') || {};
+      trF.interets = 0;
+      trF.saveback = 0;
+      trF.roundup = 0;
+      store.set('trFeatures', trF);
+
       navigate('suivi-depenses');
     });
   });
