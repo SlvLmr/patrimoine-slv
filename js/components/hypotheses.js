@@ -346,14 +346,14 @@ function renderCard(item, themes, enfants = []) {
           <button class="hyp-edit p-1.5 rounded-lg hover:bg-dark-600 text-gray-500 hover:text-accent-green transition" data-id="${item.id}" title="Modifier">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           </button>
-          <button class="hyp-delete p-1.5 rounded-lg hover:bg-red-500/10 text-gray-500 hover:text-red-400 transition" data-id="${item.id}" title="Supprimer">
+          <button class="hyp-delete p-1.5 rounded-lg btn-delete transition" data-id="${item.id}" title="Supprimer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </div>
       ${fraisNotaire ? `
       <div class="px-5 pb-4 -mt-1">
-        <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-dark-900/60 border border-amber-500/15">
+        <div class="flex items-center gap-3 px-4 py-3 rounded-lg row-item border border-amber-500/15">
           <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
           </svg>
@@ -480,12 +480,12 @@ function getThemeManagerHtml(themes) {
       ${themes.map((t, i) => {
         const cc = c(t.color);
         return `
-          <div class="flex items-center gap-3 bg-dark-800/50 rounded-lg px-3 py-2.5 group" data-theme-idx="${i}">
+          <div class="flex items-center gap-3 row-item rounded-lg px-3 py-2.5 group" data-theme-idx="${i}">
             <span class="w-4 h-4 rounded-full ${cc.dot} flex-shrink-0"></span>
             <input type="text" value="${t.label}" data-field="label"
               class="tm-label flex-1 bg-transparent border-b border-transparent hover:border-dark-400/50 focus:border-accent-green text-sm text-gray-200 focus:outline-none transition px-0 py-0" data-idx="${i}"/>
             <select data-field="color" data-idx="${i}"
-              class="tm-color bg-dark-900 border border-dark-400/30 rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-accent-green transition">
+              class="tm-color input-field rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-accent-green transition">
               ${ALL_COLORS.map(clr => `<option value="${clr}" ${t.color === clr ? 'selected' : ''}>${clr}</option>`).join('')}
             </select>
             <button class="tm-delete opacity-0 group-hover:opacity-100 text-red-400/40 hover:text-red-400 transition p-1" data-idx="${i}" title="Supprimer">

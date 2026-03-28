@@ -48,7 +48,7 @@ export function buildPlacementFormBody(item) {
       </div>
       <span class="text-gray-500 text-xs">→</span>
       <div class="flex-1">
-        <input type="number" class="cash-inj-amount w-full px-2 py-1.5 bg-dark-800 border border-accent-green/30 rounded text-accent-green text-sm" value="${inj.montant || ''}" placeholder="Montant €" step="100">
+        <input type="number" class="cash-inj-amount w-full input-field text-accent-green" value="${inj.montant || ''}" placeholder="Montant €" step="100">
       </div>
       <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
     </div>
@@ -63,7 +63,7 @@ export function buildPlacementFormBody(item) {
       </div>
       <span class="text-gray-500 text-xs">→</span>
       <div class="flex-1">
-        <input type="number" class="pee-contrib-amount w-full px-2 py-1.5 bg-dark-800 border border-emerald-500/30 rounded text-emerald-400 text-sm" value="${c.montant || ''}" placeholder="Montant annuel €" step="100">
+        <input type="number" class="pee-contrib-amount w-full input-field text-emerald-400" value="${c.montant || ''}" placeholder="Montant annuel €" step="100">
       </div>
       <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
     </div>
@@ -188,7 +188,7 @@ function createPeeContribRow() {
     </div>
     <span class="text-gray-500 text-xs">→</span>
     <div class="flex-1">
-      <input type="number" class="pee-contrib-amount w-full px-2 py-1.5 bg-dark-800 border border-emerald-500/30 rounded text-emerald-400 text-sm" placeholder="Montant annuel €" step="100">
+      <input type="number" class="pee-contrib-amount w-full input-field text-emerald-400" placeholder="Montant annuel €" step="100">
     </div>
     <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
   `;
@@ -271,7 +271,7 @@ export function initPlacementFormListeners(modal) {
         </div>
         <span class="text-gray-500 text-xs">→</span>
         <div class="flex-1">
-          <input type="number" class="cash-inj-amount w-full px-2 py-1.5 bg-dark-800 border border-accent-green/30 rounded text-accent-green text-sm" placeholder="Montant €" step="100">
+          <input type="number" class="cash-inj-amount w-full input-field text-accent-green" placeholder="Montant €" step="100">
         </div>
         <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
       `;

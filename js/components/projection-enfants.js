@@ -289,14 +289,14 @@ export function render(store) {
                 const gk = getChildGroupKey(p);
                 const rend = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
                 const dca = Number(p.dcaMensuel) || 0;
-                return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-blue/40 hover:bg-dark-700/40 transition">
+                return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded row-item hover:border-accent-blue/40 hover:bg-dark-700/40 transition">
                   <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium pe-edit-plac cursor-pointer" data-child-idx="${idx}" data-placement-id="${p.id}" title="${p.nom}">${p.nom}</span>
                   ${dca > 0 ? `<span class="text-[9px] text-gray-600">${dca}\u20ac/m</span>` : ''}
                   <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
                   <input type="number" class="pe-plac-rend input-field w-14 text-center font-medium"
                     value="${(rend * 100).toFixed(1)}" min="-20" max="50" step="0.5" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()">
                   <span class="text-[10px] text-gray-500">%</span>
-                  <button class="pe-del-plac opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
+                  <button class="pe-del-plac btn-delete" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
                 </div>`;
               }).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>'}
             </div>
@@ -311,7 +311,7 @@ export function render(store) {
             <div class="space-y-1">
               ${scenarios.length > 0 ? scenarios.map(sc => {
                 const srcBg = sc.source === 'immo' ? 'bg-accent-green/10 text-accent-green' : sc.source === 'cto' ? 'bg-purple-500/10 text-purple-300' : 'bg-accent-cyan/10 text-accent-cyan';
-                return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-pink-400/40 hover:bg-dark-700/40 transition cursor-pointer pe-edit-scenario" data-child-idx="${idx}" data-scenario-id="${sc.id}">
+                return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded row-item hover:border-pink-400/40 hover:bg-dark-700/40 transition cursor-pointer pe-edit-scenario" data-child-idx="${idx}" data-scenario-id="${sc.id}">
                   <svg class="w-2.5 h-2.5 text-pink-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                   <span class="text-[9px] px-1 py-0.5 rounded-full ${srcBg}">${srcLabels[sc.source] || 'Cash'}</span>
                   <span class="text-gray-500 text-[9px]">\u2192</span>

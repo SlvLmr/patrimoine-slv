@@ -113,7 +113,7 @@ export function render(store) {
                   const dcaMaxOv = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
                   const dcaEff = Math.max(dcaBase, dcaMaxOv);
                   const dcaLabel = dcaEff > 0 ? `<span class="text-[9px] text-gray-600">${dcaEff}€/m${dcaBase === 0 ? ' (prog.)' : ''}</span>` : '';
-                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-pointer placement-row" draggable="true" data-placement-id="${p.id}">
+                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded row-item hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-pointer placement-row" draggable="true" data-placement-id="${p.id}">
                     ${icon}
                     <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
@@ -121,7 +121,7 @@ export function render(store) {
                     <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
                       value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5" onclick="event.stopPropagation()">
                     <span class="text-[10px] text-gray-500">%</span>
-                    <button class="proj-del-plac opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
+                    <button class="proj-del-plac btn-delete" data-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
                 };
                 return `
@@ -190,7 +190,7 @@ export function render(store) {
                 <input type="number" class="overflow-target-pct input-field w-16 text-center" value="${t.pct || 100}" min="1" max="100" step="1">
                 <span class="text-[10px] text-gray-500">%</span>
                 <span class="text-[10px] text-gray-600">${formatCurrency(peaDCA * (t.pct || 100) / 100)}/m</span>
-                <button class="overflow-target-delete text-accent-red/40 hover:text-accent-red text-xs transition" data-idx="${idx}">✕</button>
+                <button class="overflow-target-delete btn-delete" data-idx="${idx}">✕</button>
               </div>`;
               }).join('') : `
               <div class="flex items-center gap-2 text-sm text-gray-500">
@@ -262,7 +262,7 @@ export function render(store) {
                 <input type="number" class="av-overflow-target-pct input-field w-16 text-center" value="${t.pct || 100}" min="1" max="100" step="1">
                 <span class="text-[10px] text-gray-500">%</span>
                 <span class="text-[10px] text-gray-600">${formatCurrency(avDCA * (t.pct || 100) / 100)}/m</span>
-                <button class="av-overflow-target-delete text-accent-red/40 hover:text-accent-red text-xs transition" data-idx="${idx}">✕</button>
+                <button class="av-overflow-target-delete btn-delete" data-idx="${idx}">✕</button>
               </div>`;
               }).join('') : `
               <div class="flex items-center gap-2 text-sm text-gray-500">
@@ -298,7 +298,7 @@ export function render(store) {
                   const sourceBg = t.source === 'heritage' ? 'bg-accent-amber/10 text-accent-amber' : t.source === 'epargne' ? 'bg-accent-cyan/10 text-accent-cyan' : 'bg-purple-500/10 text-purple-300';
                   const freqLabels = { annual: '/an', monthly: '/mois', once: '×1' };
                   const freqLabel = freqLabels[t.frequency] || '×1';
-                  return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-purple-400/40 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
+                  return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded row-item hover:border-purple-400/40 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
                     <svg class="w-2.5 h-2.5 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                     <span class="text-[9px] px-1 py-0.5 rounded-full ${sourceBg}">${sourceLabel}</span>
                     <span class="text-gray-500 text-[9px]">→</span>
@@ -306,7 +306,7 @@ export function render(store) {
                     <span class="text-[9px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
                     <span class="text-[10px] text-gray-500 ml-auto">${t.startYear}</span>
                     ${t.endYear ? `<span class="text-[10px] text-gray-600">→${t.endYear}</span>` : ''}
-                    <button class="proj-del-transfer opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${t.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
+                    <button class="proj-del-transfer btn-delete" data-id="${t.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
                 }).join('') : '<p class="text-center text-gray-600 text-xs py-1">Aucun transfert planifié</p>'}
               </div>
@@ -323,7 +323,7 @@ export function render(store) {
                 ${heritageItems.length > 0 ? heritageItems.map(h => {
                   const isImmo = h.type === 'Immobilier';
                   const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
-                  return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded bg-dark-800/30 border border-dark-400/15 hover:border-accent-amber/40 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
+                  return `<div class="group/card flex items-center gap-1.5 px-2 py-1 rounded row-item hover:border-accent-amber/40 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
                     <svg class="w-2.5 h-2.5 shrink-0 ${isImmo ? 'text-accent-green' : 'text-accent-amber'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       ${isImmo
                         ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>'
@@ -332,7 +332,7 @@ export function render(store) {
                     <span class="text-xs text-gray-200 truncate max-w-[7rem] font-medium" title="${h.nom}">${h.nom}</span>
                     <span class="text-[9px] text-gray-600">${formatCurrency(h.montant)}</span>
                     <span class="text-[10px] text-gray-500 ml-auto">${yearLabel}</span>
-                    <button class="proj-del-heritage opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${h.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
+                    <button class="proj-del-heritage btn-delete" data-id="${h.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
                 }).join('') : '<p class="text-center text-gray-600 text-xs py-1">Aucun héritage</p>'}
               </div>

@@ -118,7 +118,7 @@ export function render(store) {
     return `<div class="space-y-1 p-2">${immobilier.map(i => {
       const pv = (Number(i.valeurActuelle) || 0) - (Number(i.valeurAchat) || 0);
       return `
-        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+        <div class="row-item hover:bg-dark-600/30 transition">
           <div class="flex items-center justify-between">
             <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
             ${pvBadge(pv)}
@@ -160,7 +160,7 @@ export function render(store) {
             const dcaEffective = Math.max(dcaBase, dcaMax);
             const dcaLabel = dcaEffective > 0 ? `${formatCurrency(dcaEffective)}/m${dcaBase === 0 ? ' (programmé)' : ''}` : '';
             return `
-            <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition mb-0.5">
+            <div class="row-item hover:bg-dark-600/30 transition mb-0.5">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1">
                   <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
@@ -188,7 +188,7 @@ export function render(store) {
     return `<div class="space-y-1 p-2">${epargne.map(i => {
       const fillPct = i.plafond ? Math.min(100, (Number(i.solde) / Number(i.plafond)) * 100) : 0;
       return `
-        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+        <div class="row-item hover:bg-dark-600/30 transition">
           <div class="flex items-center justify-between">
             <span class="font-medium text-gray-200 text-xs">${i.nom}</span>
             <span class="font-medium text-accent-amber text-xs">${formatCurrency(i.solde)}</span>
@@ -216,15 +216,15 @@ export function render(store) {
     // KPI row
     const kpiRow = `
       <div class="grid grid-cols-3 gap-1 p-2 pb-1">
-        <div class="bg-dark-800/40 rounded p-1.5 text-center">
+        <div class="row-item p-1.5 text-center">
           <p class="text-[10px] text-gray-500">Dette</p>
           <p class="text-xs font-bold text-accent-red">${formatCurrency(totalDette)}</p>
         </div>
-        <div class="bg-dark-800/40 rounded p-1.5 text-center">
+        <div class="row-item p-1.5 text-center">
           <p class="text-[10px] text-gray-500">Mensualités</p>
           <p class="text-xs font-bold text-gray-200">${formatCurrency(totalMensualites)}</p>
         </div>
-        <div class="bg-dark-800/40 rounded p-1.5 text-center">
+        <div class="row-item p-1.5 text-center">
           <p class="text-[10px] text-gray-500">Endettement</p>
           <p class="text-xs font-bold ${tauxEndettement > 0.35 ? 'text-accent-red' : 'text-accent-green'}">${formatPercent(tauxEndettement)}</p>
         </div>
@@ -234,7 +234,7 @@ export function render(store) {
     return kpiRow + `<div class="space-y-1 p-2">${emprunts.map(e => {
       const paidPct = e.capitalInitial ? Math.min(100, ((Number(e.capitalInitial) - Number(e.capitalRestant)) / Number(e.capitalInitial)) * 100) : 0;
       return `
-        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+        <div class="row-item hover:bg-dark-600/30 transition">
           <div class="flex items-center justify-between">
             <span class="font-medium text-gray-200 text-xs">${e.nom}</span>
             <span class="font-medium text-accent-red text-xs">${formatCurrency(e.capitalRestant)}</span>
@@ -260,7 +260,7 @@ export function render(store) {
   function renderHeritageContent() {
     if (heritageItems.length === 0) return '<p class="px-2 py-1 text-gray-600 text-xs">Aucun héritage prévu.</p>';
     return `<div class="space-y-1 p-2">${heritageItems.map(h => `
-        <div class="bg-dark-800/40 rounded p-2 hover:bg-dark-600/30 transition">
+        <div class="row-item hover:bg-dark-600/30 transition">
           <div class="flex items-center justify-between">
             <span class="font-medium text-gray-200 text-xs">${h.nom}</span>
             <span class="font-medium text-accent-cyan text-xs">${formatCurrency(h.montant)}</span>
