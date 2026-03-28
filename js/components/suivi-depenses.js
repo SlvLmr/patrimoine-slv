@@ -63,6 +63,22 @@ export function render(store) {
   const COMPTES = [bankNames.primary, bankNames.secondary, ...extraBanks.map(b => b.name)];
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
   if (!store.get('suiviRevenus')) store.set('suiviRevenus', []);
+
+  // Migration: fix soldeMoisPrecedent that was saved WITH baseSolde (old bug)
+  const _prev = store.get('soldeMoisPrecedent') || {};
+  if (_prev && !_prev._migrated) {
+    const _actifs = store.get('actifs') || {};
+    const _ccs = _actifs.comptesCourants || [];
+    const _baseCIC = Number(_ccs.find(c => c.id === 'cc-cic')?.solde) || 0;
+    const _baseTR = Number(_ccs.find(c => c.id === 'cc-trade')?.solde) || 0;
+    if (_prev.cic) _prev.cic = Number(_prev.cic) - _baseCIC;
+    if (_prev.tr) _prev.tr = Number(_prev.tr) - _baseTR;
+    for (const bank of (bankNames.extra || [])) {
+      if (_prev[bank.id]) _prev[bank.id] = Number(_prev[bank.id]) - (Number(_ccs.find(c => c.id === 'cc-' + bank.id)?.solde) || 0);
+    }
+    _prev._migrated = true;
+    store.set('soldeMoisPrecedent', _prev);
+  }
   // Init depenses mensuelles from defaults if not present
   if (!store.get('depensesMensuellesCIC')) {
     store.set('depensesMensuellesCIC', JSON.parse(JSON.stringify(DEPENSES_MENSUELLES_CIC)));
@@ -1217,60 +1233,126 @@ export function mount(store, navigate) {
   });
 
   // Archive row click — show past month details
-  document.querySelectorAll('.archive-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const mois = row.dataset.mois;
-      const archives = store.get('archiveDepenses') || [];
-      const a = archives.find(ar => ar.mois === mois);
-      if (!a) return;
-      const label = new Date(mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-      const ops = a.operations || [];
-      const revs = a.revenus || [];
-      const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
+  function showArchiveDetail(mois) {
+    const archives = store.get('archiveDepenses') || [];
+    const a = archives.find(ar => ar.mois === mois);
+    if (!a) return;
+    const label = new Date(mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const ops = a.operations || [];
+    const revs = a.revenus || [];
+    const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
 
-      const body = `<div class="space-y-4 max-h-[70vh] overflow-y-auto">
-        <!-- Résumé -->
-        <div class="bg-dark-700/50 rounded-lg p-3 space-y-1 text-sm">
-          <div class="flex justify-between"><span class="text-gray-400">Revenus</span><span class="text-accent-green font-medium">${formatCurrencyCents(a.totalRevenus || 0)}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Dépenses</span><span class="text-accent-red font-medium">${formatCurrencyCents(a.total || 0)}</span></div>
-          <div class="border-t border-dark-400/30 my-1"></div>
-          <div class="flex justify-between"><span class="text-gray-400">Balance</span><span class="font-semibold ${(a.totalRevenus - a.total) >= 0 ? 'text-accent-green' : 'text-accent-red'}">${(a.totalRevenus - a.total) >= 0 ? '+' : ''}${formatCurrencyCents((a.totalRevenus || 0) - (a.total || 0))}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.primary}</span><span class="text-gray-200">${a.soldeFinalCIC !== undefined ? formatCurrencyCents(a.soldeFinalCIC) : '—'}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.secondary}</span><span class="text-gray-200">${a.soldeFinalTR !== undefined ? formatCurrencyCents(a.soldeFinalTR) : '—'}</span></div>
+    const body = `<div class="space-y-4 max-h-[70vh] overflow-y-auto">
+      <div class="bg-dark-700/50 rounded-lg p-3 space-y-1 text-sm">
+        <div class="flex justify-between"><span class="text-gray-400">Revenus</span><span class="text-accent-green font-medium">${formatCurrencyCents(a.totalRevenus || 0)}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Dépenses</span><span class="text-accent-red font-medium">${formatCurrencyCents(a.total || 0)}</span></div>
+        <div class="border-t border-dark-400/30 my-1"></div>
+        <div class="flex justify-between"><span class="text-gray-400">Balance</span><span class="font-semibold ${(a.totalRevenus - a.total) >= 0 ? 'text-accent-green' : 'text-accent-red'}">${(a.totalRevenus - a.total) >= 0 ? '+' : ''}${formatCurrencyCents((a.totalRevenus || 0) - (a.total || 0))}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.primary}</span><span class="text-gray-200">${a.soldeFinalCIC !== undefined ? formatCurrencyCents(a.soldeFinalCIC) : '—'}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.secondary}</span><span class="text-gray-200">${a.soldeFinalTR !== undefined ? formatCurrencyCents(a.soldeFinalTR) : '—'}</span></div>
+      </div>
+      ${cats.length > 0 ? `<div class="flex flex-wrap gap-1">${cats.map(([cat, val]) => `<span class="text-[10px] px-2 py-1 rounded-lg bg-dark-600/50 text-gray-400">${cat} <span class="text-gray-300 font-medium">${formatCurrencyCents(val)}</span></span>`).join('')}</div>` : ''}
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-semibold text-accent-green uppercase tracking-wider">Revenus (${revs.length})</h4>
+          <button id="arch-add-rev" class="text-[10px] px-2 py-1 rounded-lg bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition">+ Ajouter</button>
         </div>
-        ${cats.length > 0 ? `<div class="flex flex-wrap gap-1">${cats.map(([cat, val]) => `<span class="text-[10px] px-2 py-1 rounded-lg bg-dark-600/50 text-gray-400">${cat} <span class="text-gray-300 font-medium">${formatCurrencyCents(val)}</span></span>`).join('')}</div>` : ''}
-        ${revs.length > 0 ? `
-        <div>
-          <h4 class="text-xs font-semibold text-accent-green uppercase tracking-wider mb-2">Revenus (${revs.length})</h4>
-          <div class="space-y-1">${revs.map(r => `
-            <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="text-[10px] text-gray-600">${r.date || ''}</span>
-                <span class="text-gray-300 truncate">${r.description || r.categorie || '—'}</span>
-                <span class="text-[10px] text-gray-500">${r.compte || ''}</span>
-              </div>
-              <span class="text-accent-green font-medium ml-2 whitespace-nowrap">+${formatCurrencyCents(Number(r.montant) || 0)}</span>
-            </div>`).join('')}
-          </div>
-        </div>` : ''}
-        ${ops.length > 0 ? `
-        <div>
-          <h4 class="text-xs font-semibold text-accent-red uppercase tracking-wider mb-2">Dépenses (${ops.length})</h4>
-          <div class="space-y-1">${ops.map(o => `
-            <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="text-[10px] text-gray-600">${o.date || ''}</span>
-                <span class="text-gray-300 truncate">${o.description || '—'}</span>
-                <span class="text-[10px] px-1 py-0.5 rounded bg-dark-600/50 text-gray-500">${o.categorie || ''}</span>
-                <span class="text-[10px] text-gray-600">${o.compte || ''}</span>
-              </div>
-              <span class="text-accent-red font-medium ml-2 whitespace-nowrap">-${formatCurrencyCents(Number(o.montant) || 0)}</span>
-            </div>`).join('')}
-          </div>
-        </div>` : '<p class="text-gray-600 text-sm text-center py-4">Aucune opération sauvegardée pour ce mois</p>'}
-      </div>`;
+        ${revs.length > 0 ? `<div class="space-y-1">${revs.map(r => `
+          <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-[10px] text-gray-600">${r.date || ''}</span>
+              <span class="text-gray-300 truncate">${r.description || r.categorie || '—'}</span>
+              <span class="text-[10px] text-gray-500">${r.compte || ''}</span>
+            </div>
+            <span class="text-accent-green font-medium ml-2 whitespace-nowrap">+${formatCurrencyCents(Number(r.montant) || 0)}</span>
+          </div>`).join('')}</div>` : '<p class="text-gray-600 text-xs py-1">Aucun revenu</p>'}
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-semibold text-accent-red uppercase tracking-wider">Dépenses (${ops.length})</h4>
+          <button id="arch-add-dep" class="text-[10px] px-2 py-1 rounded-lg bg-accent-red/15 text-accent-red hover:bg-accent-red/25 transition">+ Ajouter</button>
+        </div>
+        ${ops.length > 0 ? `<div class="space-y-1">${ops.map(o => `
+          <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-[10px] text-gray-600">${o.date || ''}</span>
+              <span class="text-gray-300 truncate">${o.description || '—'}</span>
+              <span class="text-[10px] px-1 py-0.5 rounded bg-dark-600/50 text-gray-500">${o.categorie || ''}</span>
+              <span class="text-[10px] text-gray-600">${o.compte || ''}</span>
+            </div>
+            <span class="text-accent-red font-medium ml-2 whitespace-nowrap">-${formatCurrencyCents(Number(o.montant) || 0)}</span>
+          </div>`).join('')}</div>` : '<p class="text-gray-600 text-xs py-1">Aucune opération sauvegardée</p>'}
+      </div>
+    </div>`;
 
-      openModal(`Détail — ${label}`, body, null);
+    const modal = openModal(`Détail — ${label}`, body, null);
+
+    // Add revenue to archive
+    modal.querySelector('#arch-add-rev')?.addEventListener('click', () => {
+      document.getElementById('app-modal')?.remove();
+      const formBody = `
+        ${inputField('date', 'Date', mois + '-01', 'date')}
+        ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Salaire"')}
+        ${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS.map(c => ({ value: c, label: c })))}
+        ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+          <div class="flex gap-3">${COMPTES.map((c, i) => `
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 has-[:checked]:border-green-500 has-[:checked]:bg-green-500/10">
+              <input type="radio" name="compte" value="${c}" ${i === 0 ? 'checked' : ''} class="w-4 h-4 text-green-500 bg-dark-800 border-dark-400">
+              <span class="text-sm text-gray-200">${c}</span>
+            </label>`).join('')}</div>
+        </div>`;
+      openModal('Ajouter un revenu (archive)', formBody, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
+        data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const archs = store.get('archiveDepenses') || [];
+        const ar = archs.find(x => x.mois === mois);
+        if (ar) {
+          if (!ar.revenus) ar.revenus = [];
+          ar.revenus.push(data);
+          store.set('archiveDepenses', archs);
+        }
+        navigate('suivi-depenses');
+      });
     });
+
+    // Add expense to archive
+    modal.querySelector('#arch-add-dep')?.addEventListener('click', () => {
+      document.getElementById('app-modal')?.remove();
+      const catOpts = CATEGORIES.map(c => ({ value: c, label: c }));
+      const formBody = `
+        ${inputField('date', 'Date', mois + '-01', 'date')}
+        ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Courses"')}
+        ${selectField('categorie', 'Catégorie', catOpts)}
+        ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+          <div class="flex gap-3">${COMPTES.map((c, i) => `
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 has-[:checked]:border-red-500 has-[:checked]:bg-red-500/10">
+              <input type="radio" name="compte" value="${c}" ${i === 0 ? 'checked' : ''} class="w-4 h-4 text-red-500 bg-dark-800 border-dark-400">
+              <span class="text-sm text-gray-200">${c}</span>
+            </label>`).join('')}</div>
+        </div>`;
+      openModal('Ajouter une dépense (archive)', formBody, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
+        data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const archs = store.get('archiveDepenses') || [];
+        const ar = archs.find(x => x.mois === mois);
+        if (ar) {
+          if (!ar.operations) ar.operations = [];
+          ar.operations.push(data);
+          ar.count = ar.operations.length;
+          store.set('archiveDepenses', archs);
+        }
+        navigate('suivi-depenses');
+      });
+    });
+  }
+
+  document.querySelectorAll('.archive-row').forEach(row => {
+    row.addEventListener('click', () => showArchiveDetail(row.dataset.mois));
   });
 }
