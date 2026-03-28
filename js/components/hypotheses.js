@@ -240,72 +240,6 @@ function computeScenarioProjection(store, scenario, profileId) {
   return computeProjection(store, overrides);
 }
 
-// ─── Profile selector UI ─────────────────────────────────────────────────────
-
-function renderProfileSelector(store) {
-  const profiles = getProfiles(store);
-  const active = getActiveProfile(store);
-  const profileKeys = Object.keys(profiles);
-  const colors = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
-  const groupOrder = ['PEA ETF', 'PEA Actions', 'Crypto', 'PEE', 'Assurance Vie', 'CTO'];
-
-  return `
-    <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-            </svg>
-          </div>
-          Hypothèse de rendement
-        </h2>
-        <button id="btn-edit-profiles" class="text-[10px] text-gray-500 hover:text-amber-400 transition flex items-center gap-1">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-          Personnaliser
-        </button>
-      </div>
-      <div class="grid grid-cols-3 gap-3">
-        ${profileKeys.map(key => {
-          const p = profiles[key];
-          const isActive = key === active;
-          const clr = colors[key] || 'gray';
-          const icon = p.icon || '';
-          const rg = p.rendementGroupes || {};
-          return `
-          <button class="profil-btn group relative rounded-xl border p-4 transition-all duration-200
-            ${isActive
-              ? `border-${clr}-500/40 bg-${clr}-500/10 shadow-lg shadow-${clr}-500/10`
-              : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-profil="${key}">
-            <div class="text-center mb-3">
-              <span class="text-lg">${icon}</span>
-              <p class="text-sm font-bold ${isActive ? `text-${clr}-400` : 'text-gray-400'} mt-1">${p.label}</p>
-            </div>
-            <div class="space-y-1 text-left">
-              ${groupOrder.map(gk => {
-                const val = rg[gk];
-                return val !== undefined ? `<div class="flex items-center justify-between">
-                  <span class="text-[9px] ${isActive ? 'text-gray-400' : 'text-gray-600'}">${gk}</span>
-                  <span class="text-[10px] font-mono font-medium ${isActive ? 'text-gray-200' : 'text-gray-500'}">${(val * 100).toFixed(1)}%</span>
-                </div>` : '';
-              }).join('')}
-              <div class="h-px bg-dark-400/15 my-1"></div>
-              <div class="flex items-center justify-between">
-                <span class="text-[9px] ${isActive ? 'text-gray-400' : 'text-gray-600'}">Immo</span>
-                <span class="text-[10px] font-mono font-medium ${isActive ? 'text-gray-200' : 'text-gray-500'}">${((p.rendementImmobilier || 0) * 100).toFixed(1)}%</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-[9px] ${isActive ? 'text-gray-400' : 'text-gray-600'}">Inflation</span>
-                <span class="text-[10px] font-mono font-medium ${isActive ? 'text-gray-200' : 'text-gray-500'}">${((p.inflation || 0) * 100).toFixed(1)}%</span>
-              </div>
-            </div>
-            ${isActive ? `<div class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-${clr}-500 flex items-center justify-center shadow-lg"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>` : ''}
-          </button>`;
-        }).join('')}
-      </div>
-    </div>`;
-}
-
 // ─── Scenario selector + comparison table ────────────────────────────────────
 
 function renderScenarioSection(store) {
@@ -409,59 +343,109 @@ function renderScenarioSection(store) {
       <p class="text-[9px] text-gray-600 mt-2 italic">AV et CTO sont exclus de la rente — réservés à la transmission.</p>`;
   } catch(e) { console.error('Comparison table error:', e); }
 
+  // Build profile selector inline
+  const profileKeys = Object.keys(profiles);
+  const profileColors = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
+
   return `
     <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
+      <!-- Two-column layout: Scenarios left, Profiles right -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
+
+        <!-- LEFT: Scénarios de vie -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </div>
+              Scénarios de vie
+            </h2>
+            <button id="btn-add-scenario" class="text-[10px] text-gray-500 hover:text-blue-400 transition flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
+              Ajouter
+            </button>
           </div>
-          Scénarios de vie
-        </h2>
-        <button id="btn-add-scenario" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
-          Ajouter
-        </button>
+          <div class="flex flex-wrap gap-2 mb-3">
+            ${scenarios.map(sc => {
+              const isActive = sc.id === activeId;
+              const scColor = sc.color || 'blue';
+              return `
+              <button class="scenario-tab px-3.5 py-2 rounded-xl text-xs font-medium border transition-all duration-200 flex items-center gap-2
+                ${isActive
+                  ? `border-${scColor}-500/40 bg-${scColor}-500/15 text-${scColor}-400 shadow-lg shadow-${scColor}-500/10`
+                  : 'border-dark-400/20 text-gray-500 hover:border-dark-400/40 hover:text-gray-300'}" data-scenario-id="${sc.id}">
+                <span class="w-2 h-2 rounded-full bg-${scColor}-400"></span>
+                ${sc.nom}
+                <span class="scenario-edit ml-1 p-0.5 rounded hover:bg-dark-600/80 transition cursor-pointer" data-scenario-id="${sc.id}" title="Modifier">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </span>
+              </button>`;
+            }).join('')}
+          </div>
+          ${activeId ? (() => {
+            const sc = scenarios.find(s => s.id === activeId);
+            if (!sc) return '';
+            const badges = [];
+            if (sc.dcaMensuelTotal) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">${sc.dcaMensuelTotal}€/mois</span>`);
+            if (sc.pensionAge) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">Pension ${sc.pensionAge} ans</span>`);
+            if (sc.rachatTrimestres > 0) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">Rachat ${sc.rachatTrimestres} trim.</span>`);
+            return `
+            <div class="rounded-xl border border-dark-400/15 bg-dark-800/30 p-3">
+              <p class="text-[11px] text-gray-400 leading-relaxed">${sc.description || ''}</p>
+              ${badges.length > 0 ? `<div class="flex flex-wrap gap-1.5 mt-2">${badges.join('')}</div>` : ''}
+            </div>`;
+          })() : '<div class="rounded-xl border border-dark-400/10 bg-dark-800/20 p-3"><p class="text-[11px] text-gray-600 italic">Sélectionne un scénario</p></div>'}
+        </div>
+
+        <!-- RIGHT: Hypothèses de rendement -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+              </div>
+              Rendement
+            </h2>
+            <button id="btn-edit-profiles" class="text-[10px] text-gray-500 hover:text-amber-400 transition flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              Personnaliser
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            ${profileKeys.map(key => {
+              const p = profiles[key];
+              const isActive = key === activeProfile;
+              const clr = profileColors[key] || 'gray';
+              const icon = p.icon || '';
+              const rg = p.rendementGroupes || {};
+              // Show a compact summary
+              const avgRend = Object.values(rg);
+              const mainRate = avgRend.length > 0 ? avgRend.reduce((a,b) => a+b, 0) / avgRend.length : 0;
+              return `
+              <button class="profil-btn flex-1 min-w-0 relative rounded-xl border p-3 transition-all duration-200 text-center
+                ${isActive
+                  ? `border-${clr}-500/40 bg-${clr}-500/10 shadow-lg shadow-${clr}-500/10`
+                  : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-profil="${key}">
+                <span class="text-base">${icon}</span>
+                <p class="text-xs font-bold ${isActive ? `text-${clr}-400` : 'text-gray-400'} mt-0.5">${p.label}</p>
+                <p class="text-[9px] ${isActive ? 'text-gray-300' : 'text-gray-600'} mt-1">ETF ${((rg['PEA ETF'] || 0) * 100).toFixed(0)}% · Crypto ${((rg['Crypto'] || 0) * 100).toFixed(0)}%</p>
+                ${isActive ? `<div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-${clr}-500 flex items-center justify-center shadow-lg"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>` : ''}
+              </button>`;
+            }).join('')}
+          </div>
+        </div>
       </div>
 
-      <!-- Scenario tabs -->
-      <div class="flex flex-wrap gap-2 mb-3">
-        ${scenarios.map(sc => {
-          const isActive = sc.id === activeId;
-          const scColor = sc.color || 'blue';
-          return `
-          <button class="scenario-tab px-4 py-2 rounded-xl text-xs font-medium border transition-all duration-200 flex items-center gap-2
-            ${isActive
-              ? `border-${scColor}-500/40 bg-${scColor}-500/15 text-${scColor}-400 shadow-lg shadow-${scColor}-500/10`
-              : 'border-dark-400/20 text-gray-500 hover:border-dark-400/40 hover:text-gray-300'}" data-scenario-id="${sc.id}">
-            <span class="w-2 h-2 rounded-full bg-${scColor}-400"></span>
-            ${sc.nom}
-            <span class="scenario-edit ml-1 p-0.5 rounded hover:bg-dark-600/80 transition cursor-pointer" data-scenario-id="${sc.id}" title="Modifier">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            </span>
-          </button>`;
-        }).join('')}
-      </div>
-
-      <!-- Active scenario details -->
-      ${activeId ? (() => {
-        const sc = scenarios.find(s => s.id === activeId);
-        if (!sc) return '';
-        const badges = [];
-        if (sc.dcaMensuelTotal) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">${sc.dcaMensuelTotal}€/mois investis</span>`);
-        if (sc.pensionAge) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">Pension à ${sc.pensionAge} ans</span>`);
-        if (sc.rachatTrimestres > 0) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">Rachat ${sc.rachatTrimestres} trimestres (~${formatCurrency(sc.coutRachat || 0)})</span>`);
-        return `
-        <div class="rounded-xl border border-dark-400/15 bg-dark-800/30 p-4 mb-3">
-          <p class="text-xs text-gray-400 leading-relaxed">${sc.description || ''}</p>
-          ${badges.length > 0 ? `<div class="flex flex-wrap gap-1.5 mt-2">${badges.join('')}</div>` : ''}
-        </div>`;
-      })() : ''}
+      <!-- Divider -->
+      <div class="h-px bg-gradient-to-r from-transparent via-dark-400/30 to-transparent mb-4"></div>
 
       <!-- Comparison table: 3 profiles as columns -->
-      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2 mb-1 flex items-center gap-2">
+      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
         Tableau comparatif par hypothèse
       </h3>
@@ -1208,10 +1192,7 @@ export function render(store) {
         </div>
       </div>
 
-      <!-- ═══ RENDEMENT PROFILE SELECTOR ═══ -->
-      ${renderProfileSelector(store)}
-
-      <!-- ═══ SCENARIOS ═══ -->
+      <!-- ═══ SCENARIOS + RENDEMENT ═══ -->
       ${renderScenarioSection(store)}
 
       <!-- ═══ UNIFIED MEGA BLOCK: Timeline + Patrimoine + Abattements ═══ -->
