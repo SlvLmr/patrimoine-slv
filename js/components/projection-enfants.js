@@ -319,7 +319,7 @@ export function render(store) {
                   <span class="text-[9px] text-gray-600">${formatCurrency(sc.montant)} ${freqLabels[sc.frequency] || '\u00d71'}</span>
                   <span class="text-[10px] text-gray-500 ml-auto">${sc.year}</span>
                   ${sc.endYear ? `<span class="text-[10px] text-gray-600">\u2192${sc.endYear}</span>` : ''}
-                  <button class="pe-del-scenario opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-child-idx="${idx}" data-scenario-id="${sc.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
+                  <button class="pe-del-scenario btn-delete" data-child-idx="${idx}" data-scenario-id="${sc.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
                 </div>`;
               }).join('') : '<p class="text-center text-gray-600 text-xs py-1">Aucun scénario — les donations de la page Hypothèses apparaissent automatiquement</p>'}
             </div>

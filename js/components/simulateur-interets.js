@@ -216,7 +216,7 @@ export function render() {
             </div>
           </div>
 
-          <div class="p-2.5 rounded-lg bg-dark-800/50 border border-dark-400/30">
+          <div class="info-box">
             <p class="text-xs text-gray-500">Les <span class="text-gray-400 font-medium">intérêts composés</span> génèrent des intérêts sur les intérêts déjà gagnés. Plus la durée est longue, plus l'effet boule de neige est puissant.</p>
           </div>
         </div>
@@ -241,7 +241,7 @@ export function render() {
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Détail par année</h3>
           <div class="overflow-x-auto max-h-72 overflow-y-auto">
             <table class="w-full text-sm">
-              <thead class="sticky top-0 bg-dark-700">
+              <thead class="table-header">
                 <tr class="text-gray-500 text-xs uppercase">
                   <th class="text-left py-2 px-2">Année</th>
                   <th class="text-right py-2 px-2">Capital</th>
@@ -255,7 +255,7 @@ export function render() {
           </div>
         </div>
 
-        <div class="p-3 rounded-xl bg-dark-800/30 border border-dark-400/20">
+        <div class="info-box">
           <p class="text-xs text-gray-600">Simulation indicative. Les rendements passés ne préjugent pas des rendements futurs.</p>
         </div>
       </div>
@@ -467,7 +467,7 @@ function renderTable(r) {
   if (!tbody) return;
 
   tbody.innerHTML = r.annees.map((a, i) => `
-    <tr class="${i % 2 === 0 ? '' : 'bg-dark-800/30'} hover:bg-dark-600/30 transition">
+    <tr class="table-row ${i % 2 === 0 ? '' : 'table-row-alt'}">
       <td class="py-1.5 px-2 text-gray-400">${a.annee === 0 ? 'Début' : 'An ' + a.annee}</td>
       <td class="py-1.5 px-2 text-right font-mono text-emerald-400">${formatCurrency(Math.round(a.capitalNominal))}</td>
       <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrency(Math.round(a.totalVerse))}</td>

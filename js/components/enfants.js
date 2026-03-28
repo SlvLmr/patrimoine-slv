@@ -82,7 +82,7 @@ export function render(store) {
               const partHeritage = patrimoine / Math.max(1, nbEnfants);
 
               return `
-              <div class="bg-dark-800/40 rounded-xl p-4 border border-dark-400/10 hover:border-${color}/30 transition group relative">
+              <div class="card-dark rounded-xl p-4 hover:border-${color}/30 transition group relative">
                 <button class="enfant-delete absolute top-2 right-2 w-5 h-5 rounded-full bg-dark-600/60 text-gray-500 hover:bg-accent-red/20 hover:text-accent-red transition opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs" data-id="${enf.id}">&times;</button>
 
                 <div class="flex items-center gap-3 mb-3">
@@ -213,22 +213,22 @@ export function render(store) {
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+          <div class="row-item p-3 text-center">
             <p class="text-[10px] text-gray-500 uppercase mb-1">Abattement / enfant</p>
             <p class="text-lg font-bold text-accent-green">${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</p>
             <p class="text-[9px] text-gray-600">renouvelable / 15 ans</p>
           </div>
-          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+          <div class="row-item p-3 text-center">
             <p class="text-[10px] text-gray-500 uppercase mb-1">TEPA / enfant</p>
             <p class="text-lg font-bold text-accent-cyan">${formatCurrency(DON_FAMILIAL_TEPA)}</p>
             <p class="text-[9px] text-gray-600">avant 80 ans</p>
           </div>
-          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+          <div class="row-item p-3 text-center">
             <p class="text-[10px] text-gray-500 uppercase mb-1">Total / enfant</p>
             <p class="text-lg font-bold text-accent-amber">${formatCurrency(ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA)}</p>
             <p class="text-[9px] text-gray-600">par cycle</p>
           </div>
-          <div class="bg-dark-800/40 rounded-lg p-3 text-center">
+          <div class="row-item p-3 text-center">
             <p class="text-[10px] text-gray-500 uppercase mb-1">Total famille</p>
             <p class="text-lg font-bold text-white">${formatCurrency((ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA) * nbEnfants)}</p>
             <p class="text-[9px] text-gray-600">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} × ${formatCurrency(ABATTEMENT_PARENT_ENFANT + DON_FAMILIAL_TEPA)}</p>
