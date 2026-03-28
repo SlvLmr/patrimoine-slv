@@ -481,7 +481,7 @@ export function mount(store, navigate) {
           <div class="flex items-center justify-between mb-1.5">
             <div class="flex items-center gap-2">
               <div class="w-2.5 h-2.5 rounded-full" style="background: ${style.color}"></div>
-              <span class="text-sm font-semibold ${style.text}">${gk}</span>
+              <span class="text-sm font-semibold ${style.text} whitespace-nowrap">${gk === 'Assurance Vie' ? 'Ass. Vie' : gk}</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-sm font-bold text-gray-200">${formatCurrency(amount)}</span>
