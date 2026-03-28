@@ -960,6 +960,13 @@ export function mount(store, navigate) {
         plugins: {
           legend: {
             position: 'bottom',
+            onClick: (e, legendItem, legend) => {
+              const idx = legendItem.datasetIndex;
+              const ci = legend.chart;
+              const meta = ci.getDatasetMeta(idx);
+              meta.hidden = meta.hidden === null ? true : !meta.hidden;
+              ci.update();
+            },
             labels: {
               padding: 12,
               usePointStyle: true,
@@ -967,7 +974,24 @@ export function mount(store, navigate) {
               boxWidth: 8,
               boxHeight: 8,
               color: '#e5e7eb',
-              font: { size: 10, family: 'Inter' }
+              font: { size: 10, family: 'Inter' },
+              generateLabels: (chart) => {
+                return chart.data.datasets.map((ds, i) => {
+                  const meta = chart.getDatasetMeta(i);
+                  const hidden = meta.hidden;
+                  return {
+                    text: ds.label,
+                    fillStyle: hidden ? 'transparent' : ds.backgroundColor,
+                    strokeStyle: hidden ? '#555' : ds.borderColor,
+                    lineWidth: hidden ? 1 : ds.borderWidth,
+                    fontColor: hidden ? '#555' : '#e5e7eb',
+                    textDecoration: hidden ? 'line-through' : '',
+                    hidden: false,
+                    datasetIndex: i,
+                    pointStyle: 'circle'
+                  };
+                });
+              }
             }
           }
         }
@@ -1038,6 +1062,13 @@ export function mount(store, navigate) {
         plugins: {
           legend: {
             position: 'bottom',
+            onClick: (e, legendItem, legend) => {
+              const idx = legendItem.datasetIndex;
+              const ci = legend.chart;
+              const meta = ci.getDatasetMeta(idx);
+              meta.hidden = meta.hidden === null ? true : !meta.hidden;
+              ci.update();
+            },
             labels: {
               padding: 12,
               usePointStyle: true,
@@ -1045,7 +1076,24 @@ export function mount(store, navigate) {
               boxWidth: 8,
               boxHeight: 8,
               color: '#e5e7eb',
-              font: { size: 10, family: 'Inter' }
+              font: { size: 10, family: 'Inter' },
+              generateLabels: (chart) => {
+                return chart.data.datasets.map((ds, i) => {
+                  const meta = chart.getDatasetMeta(i);
+                  const hidden = meta.hidden;
+                  return {
+                    text: ds.label,
+                    fillStyle: hidden ? 'transparent' : ds.backgroundColor,
+                    strokeStyle: hidden ? '#555' : ds.borderColor,
+                    lineWidth: hidden ? 1 : ds.borderWidth,
+                    fontColor: hidden ? '#555' : '#e5e7eb',
+                    textDecoration: hidden ? 'line-through' : '',
+                    hidden: false,
+                    datasetIndex: i,
+                    pointStyle: 'circle'
+                  };
+                });
+              }
             }
           }
         }

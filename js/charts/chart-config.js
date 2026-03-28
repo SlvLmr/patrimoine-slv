@@ -1,5 +1,35 @@
 const chartInstances = new Map();
 
+// Plugin to draw strikethrough on hidden legend labels
+const legendStrikethroughPlugin = {
+  id: 'legendStrikethrough',
+  afterDraw(chart) {
+    const legend = chart.legend;
+    if (!legend || !legend.legendItems) return;
+    const ctx = chart.ctx;
+    legend.legendItems.forEach((item, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (!meta.hidden) return;
+      const hitBox = legend.legendHitBoxes[i];
+      if (!hitBox) return;
+      // Draw line through the text area (after the point style)
+      const textX = hitBox.left + 14; // offset past the point style
+      const textEndX = hitBox.left + hitBox.width;
+      const y = hitBox.top + hitBox.height / 2;
+      ctx.save();
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(textX, y);
+      ctx.lineTo(textEndX, y);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+};
+
+Chart.register(legendStrikethroughPlugin);
+
 export const COLORS = {
   immobilier: '#8b6914',
   placements: '#c9a76c',
