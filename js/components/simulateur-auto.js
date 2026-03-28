@@ -329,7 +329,7 @@ export function render() {
           ])}
         </div>
 
-        <div class="p-3 rounded-xl bg-dark-800/30 border border-dark-400/20">
+        <div class="info-box">
           <p class="text-xs text-gray-600">Simulation indicative. Les loyers LOA/LLD réels dépendent du concessionnaire, du modèle et de votre profil. Les coûts d'entretien pour le crédit sont estimatifs.</p>
         </div>
       </div>
@@ -482,7 +482,7 @@ function renderDetailTable(r, inp) {
 
   const row = (label, credit, loa, lld, isCurrency = true) => {
     const fmt = (v) => isCurrency ? formatCurrency(Math.round(v)) : v;
-    return `<tr class="border-b border-dark-400/15 hover:bg-dark-600/20 transition">
+    return `<tr class="table-row">
       <td class="py-2 px-2 text-gray-400 text-xs">${label}</td>
       <td class="py-2 px-2 text-center font-mono text-sm text-blue-400">${fmt(credit)}</td>
       <td class="py-2 px-2 text-center font-mono text-sm text-amber-400">${fmt(loa)}</td>

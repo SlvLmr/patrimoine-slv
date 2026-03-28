@@ -413,7 +413,7 @@ function simInput(id, label, val, unit, min, max, step) {
 function toggleLever(id, label, defaultOn, desc) {
   return `<label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/40 hover:bg-dark-800/60 transition cursor-pointer group">
     <input type="checkbox" id="succ-${id}" ${defaultOn ? 'checked' : ''}
-      class="mt-0.5 w-4 h-4 rounded bg-dark-700 border-dark-400 text-accent-green focus:ring-accent-green/30 cursor-pointer">
+      class="mt-0.5 w-4 h-4 rounded bg-dark-900 border-dark-400 text-accent-green cursor-pointer">
     <div class="flex-1 min-w-0">
       <span class="text-sm text-gray-300 font-medium group-hover:text-gray-100 transition">${label}</span>
       <p class="text-xs text-gray-600 mt-0.5">${desc}</p>
@@ -467,7 +467,7 @@ export function render() {
           </h3>
           ${simInput('succ-age1', 'Âge donateur principal', d.ageDonateur1, 'ans', 25, 95, 1)}
           <label class="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" id="succ-couple" checked class="w-4 h-4 rounded bg-dark-700 border-dark-400 text-accent-green focus:ring-accent-green/30">
+            <input type="checkbox" id="succ-couple" checked class="w-4 h-4 rounded bg-dark-900 border-dark-400 text-accent-green">
             <span class="text-sm text-gray-400">En couple (double les abattements)</span>
           </label>
           <div id="succ-age2-wrap">${simInput('succ-age2', 'Âge conjoint', d.ageDonateur2, 'ans', 25, 95, 1)}</div>
@@ -561,7 +561,7 @@ export function render() {
                       const prev = i > 0 ? BAREME_DONATION[i - 1].limit : 0;
                       const from = formatCurrency(prev);
                       const to = b.limit === Infinity ? '+' : formatCurrency(b.limit);
-                      return `<tr class="border-b border-dark-400/15"><td class="py-1 text-gray-400">${from} → ${to}</td><td class="py-1 text-right text-gray-300">${(b.rate * 100)} %</td></tr>`;
+                      return `<tr class="table-row"><td class="py-1 text-gray-400">${from} → ${to}</td><td class="py-1 text-right text-gray-300">${(b.rate * 100)} %</td></tr>`;
                     }).join('')}
                   </tbody>
                 </table>
@@ -572,7 +572,7 @@ export function render() {
                   <tbody>
                     ${BAREME_USUFRUIT.map(b => {
                       const ageLabel = b.ageMax === Infinity ? '> 90 ans' : '≤ ' + b.ageMax + ' ans';
-                      return `<tr class="border-b border-dark-400/15"><td class="py-1 text-gray-400">${ageLabel}</td><td class="py-1 text-right text-blue-400">${Math.round(b.usufruit * 100)} %</td><td class="py-1 text-right text-amber-400">${Math.round((1 - b.usufruit) * 100)} %</td></tr>`;
+                      return `<tr class="table-row"><td class="py-1 text-gray-400">${ageLabel}</td><td class="py-1 text-right text-blue-400">${Math.round(b.usufruit * 100)} %</td><td class="py-1 text-right text-amber-400">${Math.round((1 - b.usufruit) * 100)} %</td></tr>`;
                     }).join('')}
                   </tbody>
                 </table>
@@ -581,7 +581,7 @@ export function render() {
           </div>
         </div>
 
-        <div class="p-3 rounded-xl bg-dark-800/30 border border-dark-400/20">
+        <div class="info-box">
           <p class="text-xs text-gray-600">Simulation indicative basée sur le droit fiscal français en vigueur. Ne constitue pas un conseil juridique ou fiscal. Consultez un notaire pour votre situation personnelle.</p>
         </div>
       </div>

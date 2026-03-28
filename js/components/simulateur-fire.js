@@ -650,13 +650,13 @@ function renderTable(r) {
 
   tbody.innerHTML = data.map((a, i) => {
     const isFIRE = r.ageFIRE !== null && a.age === r.ageFIRE;
-    const rowClass = isFIRE ? 'bg-orange-500/10' : (i % 2 === 0 ? '' : 'bg-dark-800/30');
+    const rowClass = isFIRE ? 'bg-orange-500/10' : (i % 2 === 0 ? '' : 'table-row-alt');
     const phaseLabel = a.phase === 'retraite'
       ? '<span class="inline-block px-2 py-0.5 text-xs rounded-full bg-amber-500/15 text-amber-400">Retraite</span>'
       : '<span class="inline-block px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-400">Épargne</span>';
 
     return `
-      <tr class="${rowClass} hover:bg-dark-600/30 transition">
+      <tr class="table-row ${rowClass}">
         <td class="py-1.5 px-2 text-gray-400">${currentYear + a.annee}</td>
         <td class="py-1.5 px-2 ${isFIRE ? 'text-orange-400 font-semibold' : 'text-gray-300'}">${a.age} ans${isFIRE ? ' 🔥' : ''}</td>
         <td class="py-1.5 px-2 text-right font-mono ${a.capital >= r.nombreFIRE ? 'text-accent-green' : 'text-gray-300'}">${formatCurrency(Math.round(a.capital))}</td>
