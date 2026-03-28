@@ -18,7 +18,7 @@ import * as SimulateurInterets from './components/simulateur-interets.js';
 import * as SimulateurAuto from './components/simulateur-auto.js';
 import * as SimulateurSalaire from './components/simulateur-salaire.js';
 import * as Strategie from './components/strategie.js?v=20260327a';
-import * as Hypotheses from './components/hypotheses.js?v=20260328f';
+import * as Hypotheses from './components/hypotheses.js?v=20260328d';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
 import * as ProjectionEnfants from './components/projection-enfants.js?v=20260327a';
 
