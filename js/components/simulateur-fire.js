@@ -274,7 +274,7 @@ export function render() {
           ${fireInput('fire-inflation', 'Inflation annuelle', d.inflation, '%', 0, 15, 0.5)}
           ${fireInput('fire-swr', 'Taux de retrait sûr (SWR)', d.tauxRetrait, '%', 1, 10, 0.25)}
 
-          <div class="p-2.5 rounded-lg bg-dark-800/50 border border-dark-400/30">
+          <div class="info-box">
             <p class="text-xs text-gray-500">La <span class="text-gray-400 font-medium">règle des 4 %</span> stipule qu'on peut retirer 4 % de son capital par an sans l'épuiser sur 30+ ans. Un taux plus bas (3-3,5 %) est plus conservateur.</p>
           </div>
         </div>
@@ -314,7 +314,7 @@ export function render() {
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Détail par année</h3>
           <div class="overflow-x-auto max-h-72 overflow-y-auto">
             <table class="w-full text-sm" id="fire-table">
-              <thead class="sticky top-0 bg-dark-700">
+              <thead class="table-header">
                 <tr class="text-gray-500 text-xs uppercase">
                   <th class="text-left py-2 px-2">Année</th>
                   <th class="text-left py-2 px-2">Âge</th>
@@ -329,7 +329,7 @@ export function render() {
         </div>
 
         <!-- Disclaimer -->
-        <div class="p-3 rounded-xl bg-dark-800/30 border border-dark-400/20">
+        <div class="info-box">
           <p class="text-xs text-gray-600">Les résultats sont fournis à titre indicatif. Ils reposent sur des hypothèses simplifiées et ne constituent ni un conseil en investissement, ni une promesse de résultat.</p>
         </div>
       </div>
