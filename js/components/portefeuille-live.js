@@ -223,11 +223,11 @@ export function render(store) {
           <!-- Ligne 3 : CIC + TR | comptes épargne -->
           <div class="grid grid-cols-2 gap-2">
             <!-- Sous Comptes Courants -->
-            <div class="grid grid-cols-${bankCards.length > 3 ? '3' : bankCards.length} gap-1.5">
+            <div class="grid grid-cols-${bankCards.length > 3 ? '3' : bankCards.length} gap-1">
               ${bankCards.map((b, i) => `
-              <div id="ptf-card-bank-${i}" class="card-dark rounded-xl p-2.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold whitespace-nowrap truncate">${b.label}</p>
-                <p class="text-sm font-bold text-indigo-400 text-center">${fmt(b.solde)}</p>
+              <div id="ptf-card-bank-${i}" class="card-dark rounded-xl p-1.5 overflow-hidden">
+                <p class="text-[7px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${b.label}</p>
+                <p class="text-xs font-bold text-indigo-400 text-center whitespace-nowrap">${fmt(b.solde)}</p>
               </div>`).join('')}
             </div>
             <!-- Sous Épargne -->
