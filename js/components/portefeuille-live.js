@@ -305,7 +305,7 @@ export function render(store) {
   `;
 }
 
-function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
+function drawConnectors(svgId, wrapId, cardIds, colors, filterIds, sourceId) {
   const svg = document.getElementById(svgId);
   const wrap = document.getElementById(wrapId);
   if (!svg || !wrap) return;
@@ -319,7 +319,14 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds) {
   const h = parseInt(svg.style.height) || 40;
   svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
-  const mid = w / 2;
+  let mid = w / 2;
+  if (sourceId) {
+    const srcEl = document.getElementById(sourceId);
+    if (srcEl) {
+      const srcRect = srcEl.getBoundingClientRect();
+      mid = srcRect.left + srcRect.width / 2 - wrapRect.left;
+    }
+  }
   const centers = cards.map(card => {
     const r = card.getBoundingClientRect();
     return r.left + r.width / 2 - wrapRect.left;
@@ -498,7 +505,8 @@ export function mount() {
       drawConnectors('ptf-svg-L3C-pea-svg', 'ptf-svg-L3C-pea',
         peaSubCards,
         peaSubCards.map(() => '#c9a76c'),
-        peaSubCards.map(() => 'glow-amber3')
+        peaSubCards.map(() => 'glow-amber3'),
+        'ptf-card-pea'
       );
     }
 
