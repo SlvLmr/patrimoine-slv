@@ -533,6 +533,13 @@ export function mount(store, navigate) {
     openModal('Clôturer le mois', body, () => {
       // Save archive — include full operations for later review
       const archives = store.get('archiveDepenses') || [];
+      // Snapshot all sub-line values for archive review
+      const trFeatsSnap = store.get('trFeatures') || {};
+      const paramsSnap = store.get('parametres') || {};
+      const restInvSnap = store.get('restantInvestissement') || {};
+      const restPeaSnap = store.get('restantPEA') || {};
+      const soldeObligSnap = store.get('soldeObligatoire') || {};
+      const labelsSnap = store.get('customLabels') || {};
       const archiveEntry = {
         mois: monthKey,
         total: totalDepenses,
@@ -544,9 +551,38 @@ export function mount(store, navigate) {
         operations: JSON.parse(JSON.stringify(items)),
         revenus: JSON.parse(JSON.stringify(revenus)),
         cochees: [...cocheesThisMonth],
+        depMensuelles: JSON.parse(JSON.stringify(depMensuelles)),
+        // Sub-line snapshots
+        meta: {
+          soldePrevCIC, soldePrevTR,
+          soldeObligCIC: Number(soldeObligSnap.cic) || 0,
+          restantInvestTR: Number(restInvSnap.tr) || 0,
+          restantPEATR: Number(restPeaSnap.tr) || 0,
+          budgetNDF: paramsSnap.budgetNDF !== undefined ? Number(paramsSnap.budgetNDF) : 789.99,
+          budgetQuotidien: paramsSnap.budgetQuotidien !== undefined ? Number(paramsSnap.budgetQuotidien) : 700,
+          trInterets: Number(trFeatsSnap.interets) || 0,
+          trSaveback: Number(trFeatsSnap.saveback) || 0,
+          trRoundup: Number(trFeatsSnap.roundup) || 0,
+          lblInterets: trFeatsSnap.lblInterets || 'Intérêts (2%/an)',
+          lblSaveback: trFeatsSnap.lblSaveback || 'Saveback 1% → Bitcoin',
+          lblRoundup: trFeatsSnap.lblRoundup || 'Round-up → CTO',
+          lblSoldeDebutCIC: labelsSnap.soldeDebutMois_cic || 'Solde début de mois',
+          lblSoldeDebutTR: labelsSnap.soldeDebutMois_tr || 'Solde début de mois',
+          lblSoldeObligCIC: labelsSnap.soldeObligatoire_cic || 'Solde obligatoire',
+          lblSoldeObligTR: labelsSnap.soldeObligatoire_tr || 'Solde obligatoire fin de mois',
+          lblRestantInvest: labelsSnap.restantInvestissement || '- Restant pour Invest.',
+          lblRestantPEA: labelsSnap.restantPEA || '- Restant pour PEA',
+          lblNDF: labelsSnap.aRecupererNDF || '- Restant NDF',
+          lblEnveloppe: labelsSnap.enveloppeQuotidien || '- Restant pour quotidien',
+          extraPrev: {},
+          extraOblig: {},
+        },
       };
       for (const bank of extraBanks) {
         archiveEntry['soldeFinal_' + bank.id] = extraFinals[bank.id];
+        archiveEntry.meta.extraPrev[bank.id] = Number(soldePrecedent[bank.id]) || 0;
+        const extraObligStore = store.get('soldeObligatoire') || {};
+        archiveEntry.meta.extraOblig[bank.id] = Number(extraObligStore[bank.id]) || 0;
       }
       archives.push(archiveEntry);
       store.set('archiveDepenses', archives);
@@ -1223,35 +1259,82 @@ export function mount(store, navigate) {
       const soldeKey = idx === 0 ? 'soldeFinalCIC' : idx === 1 ? 'soldeFinalTR' : null;
       const solde = soldeKey ? a[soldeKey] : a['soldeFinal_' + (extraBanks.find(b => b.name === bankName)?.id || '')];
       const isPrimary = idx === 0;
+      const isSecondary = idx === 1;
+      const isExtra = idx >= 2;
+      const m = a.meta || {};
+      const extraBankObj = isExtra ? extraBanks.find(b => b.name === bankName) : null;
 
-      // Mensuelles cochées (only for primary bank)
+      // Build sub-lines
+      const subLine = (label, value, color = 'text-gray-400') =>
+        `<div class="flex items-center justify-between px-2 py-0.5 bg-dark-700/40 border-b border-dark-400/10">
+          <span class="text-[10px] text-gray-500">${label}</span>
+          <span class="text-[10px] font-medium ${color}">${formatCurrencyCents(value)}</span>
+        </div>`;
+
+      let subLines = '';
+      if (isPrimary) {
+        subLines = subLine(m.lblSoldeDebutCIC || 'Solde début de mois', m.soldePrevCIC || 0)
+                 + subLine(m.lblSoldeObligCIC || 'Solde obligatoire', m.soldeObligCIC || 0, 'text-amber-400');
+      } else if (isSecondary) {
+        subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', m.soldePrevTR || 0);
+        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + (m.budgetQuotidien || 0);
+        subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
+        subLines += subLine(m.lblRestantInvest || '- Restant pour Invest.', m.restantInvestTR || 0);
+        subLines += subLine(m.lblRestantPEA || '- Restant pour PEA', m.restantPEATR || 0);
+        if (m.budgetNDF) subLines += subLine(m.lblNDF || '- Restant NDF', m.budgetNDF, 'text-purple-400');
+        subLines += subLine(m.lblEnveloppe || '- Restant pour quotidien', m.budgetQuotidien || 0);
+      } else if (isExtra && extraBankObj) {
+        const prevExtra = (m.extraPrev || {})[extraBankObj.id] || 0;
+        const obligExtra = (m.extraOblig || {})[extraBankObj.id] || 0;
+        subLines = subLine('Solde début de mois', prevExtra)
+                 + subLine('Solde obligatoire', obligExtra, 'text-amber-400');
+      }
+
+      // TR features
+      let trFeatHtml = '';
+      if (isSecondary && m.trInterets !== undefined) {
+        trFeatHtml = `
+          <div class="border-t border-dark-400/20 mt-1 pt-0.5">
+            ${subLine(m.lblInterets || 'Intérêts', m.trInterets || 0, 'text-accent-green')}
+            ${subLine(m.lblSaveback || 'Saveback', m.trSaveback || 0, 'text-accent-amber')}
+            ${subLine(m.lblRoundup || 'Round-up', m.trRoundup || 0, 'text-accent-red')}
+          </div>`;
+      }
+
+      // Mensuelles cochées (primary bank)
+      const archDepMensuelles = a.depMensuelles || depMensuelles;
       let mensuellesHtml = '';
-      if (isPrimary && depMensuelles.length > 0 && cochees.length > 0) {
-        const totalCochees = depMensuelles.filter(d => cochees.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+      if (isPrimary && archDepMensuelles.length > 0) {
+        const totalCochees = archDepMensuelles.filter(d => cochees.includes(d.id)).reduce((s, d) => s + d.montant, 0);
         mensuellesHtml = `
           <div class="border-t border-dark-400/20 mt-1 pt-1">
-            <div class="flex items-center justify-between mb-0.5">
-              <span class="text-[10px] text-gray-500 font-medium">Dépenses mensuelles ${cochees.length}/${depMensuelles.length}</span>
+            <div class="flex items-center justify-between mb-0.5 px-1">
+              <span class="text-[10px] text-gray-500 font-medium">Dépenses mensuelles ${cochees.length}/${archDepMensuelles.length}</span>
               <span class="text-[11px] font-medium text-accent-red">${formatCurrencyCents(totalCochees)}</span>
             </div>
-            ${depMensuelles.filter(d => cochees.includes(d.id)).map(d => `
-            <div class="flex items-center justify-between py-px pl-2">
-              <span class="text-[10px] text-gray-500 line-through">${d.nom}</span>
-              <span class="text-[10px] text-gray-600">${formatCurrencyCents(d.montant)}</span>
-            </div>`).join('')}
+            ${archDepMensuelles.map(d => {
+              const checked = cochees.includes(d.id);
+              return `
+              <div class="flex items-center justify-between py-px pl-3 pr-1">
+                <span class="text-[10px] ${checked ? 'text-gray-500 line-through' : 'text-gray-400'}">${d.nom}</span>
+                <span class="text-[10px] text-gray-600">${formatCurrencyCents(d.montant)}</span>
+              </div>`;
+            }).join('')}
           </div>`;
       }
 
       return `
         <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold text-gray-300">${bankName}</span>
             <span class="text-sm font-bold text-gray-100">${solde !== undefined ? formatCurrencyCents(solde) : '—'}</span>
           </div>
-          <div class="space-y-0">
+          ${subLines}
+          <div class="mt-1 space-y-0">
             ${items.map(renderArchiveOp).join('')}
             ${items.length === 0 ? '<p class="text-[10px] text-gray-600 py-1">Aucune opération</p>' : ''}
           </div>
+          ${trFeatHtml}
           ${mensuellesHtml}
         </div>`;
     };
