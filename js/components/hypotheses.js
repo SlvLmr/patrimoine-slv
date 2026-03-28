@@ -343,108 +343,90 @@ function renderScenarioSection(store) {
       <p class="text-[9px] text-gray-600 mt-2 italic">AV et CTO sont exclus de la rente — réservés à la transmission.</p>`;
   } catch(e) { console.error('Comparison table error:', e); }
 
-  // Build profile selector inline
   const profileKeys = Object.keys(profiles);
   const profileColors = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
 
+  // Scenario subtitles
+  const scenarioSubtitles = {
+    reel: 'Invest. actuels · Retraite à 64 ans',
+    ideal: 'Invest. idéaux · Retraite à 64 ans',
+    liberte: 'Retraite à 61 ans'
+  };
+
   return `
     <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
-      <!-- Two-column layout: Scenarios left, Profiles right -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
-
-        <!-- LEFT: Scénarios de vie -->
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
-              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
-                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-              </div>
-              Scénarios de vie
-            </h2>
-            <button id="btn-add-scenario" class="text-[10px] text-gray-500 hover:text-blue-400 transition flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
-              Ajouter
-            </button>
+      <!-- Header row -->
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-amber-500/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
           </div>
-          <div class="flex flex-wrap gap-2 mb-3">
-            ${scenarios.map(sc => {
-              const isActive = sc.id === activeId;
-              const scColor = sc.color || 'blue';
-              return `
-              <button class="scenario-tab px-3.5 py-2 rounded-xl text-xs font-medium border transition-all duration-200 flex items-center gap-2
-                ${isActive
-                  ? `border-${scColor}-500/40 bg-${scColor}-500/15 text-${scColor}-400 shadow-lg shadow-${scColor}-500/10`
-                  : 'border-dark-400/20 text-gray-500 hover:border-dark-400/40 hover:text-gray-300'}" data-scenario-id="${sc.id}">
-                <span class="w-2 h-2 rounded-full bg-${scColor}-400"></span>
-                ${sc.nom}
-                <span class="scenario-edit ml-1 p-0.5 rounded hover:bg-dark-600/80 transition cursor-pointer" data-scenario-id="${sc.id}" title="Modifier">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                </span>
-              </button>`;
-            }).join('')}
-          </div>
-          ${activeId ? (() => {
-            const sc = scenarios.find(s => s.id === activeId);
-            if (!sc) return '';
-            const badges = [];
-            if (sc.dcaMensuelTotal) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">${sc.dcaMensuelTotal}€/mois</span>`);
-            if (sc.pensionAge) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">Pension ${sc.pensionAge} ans</span>`);
-            if (sc.rachatTrimestres > 0) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">Rachat ${sc.rachatTrimestres} trim.</span>`);
-            return `
-            <div class="rounded-xl border border-dark-400/15 bg-dark-800/30 p-3">
-              <p class="text-[11px] text-gray-400 leading-relaxed">${sc.description || ''}</p>
-              ${badges.length > 0 ? `<div class="flex flex-wrap gap-1.5 mt-2">${badges.join('')}</div>` : ''}
-            </div>`;
-          })() : '<div class="rounded-xl border border-dark-400/10 bg-dark-800/20 p-3"><p class="text-[11px] text-gray-600 italic">Sélectionne un scénario</p></div>'}
+          Scénarios & Rendement
+        </h2>
+        <div class="flex items-center gap-2">
+          <button id="btn-edit-profiles" class="text-[10px] text-gray-500 hover:text-amber-400 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Personnaliser
+          </button>
+          <button id="btn-add-scenario" class="text-[10px] text-gray-500 hover:text-blue-400 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
+            Ajouter
+          </button>
         </div>
+      </div>
 
-        <!-- RIGHT: Hypothèses de rendement -->
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
-              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                </svg>
-              </div>
-              Rendement
-            </h2>
-            <button id="btn-edit-profiles" class="text-[10px] text-gray-500 hover:text-amber-400 transition flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-              Personnaliser
-            </button>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            ${profileKeys.map(key => {
-              const p = profiles[key];
-              const isActive = key === activeProfile;
-              const clr = profileColors[key] || 'gray';
-              const icon = p.icon || '';
-              const rg = p.rendementGroupes || {};
-              // Show a compact summary
-              const avgRend = Object.values(rg);
-              const mainRate = avgRend.length > 0 ? avgRend.reduce((a,b) => a+b, 0) / avgRend.length : 0;
-              return `
-              <button class="profil-btn flex-1 min-w-0 relative rounded-xl border p-3 transition-all duration-200 text-center
-                ${isActive
-                  ? `border-${clr}-500/40 bg-${clr}-500/10 shadow-lg shadow-${clr}-500/10`
-                  : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-profil="${key}">
-                <span class="text-base">${icon}</span>
-                <p class="text-xs font-bold ${isActive ? `text-${clr}-400` : 'text-gray-400'} mt-0.5">${p.label}</p>
-                <p class="text-[9px] ${isActive ? 'text-gray-300' : 'text-gray-600'} mt-1">ETF ${((rg['PEA ETF'] || 0) * 100).toFixed(0)}% · Crypto ${((rg['Crypto'] || 0) * 100).toFixed(0)}%</p>
-                ${isActive ? `<div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-${clr}-500 flex items-center justify-center shadow-lg"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>` : ''}
-              </button>`;
-            }).join('')}
-          </div>
-        </div>
+      <!-- 6 cards grid: 3 scenarios + 3 profiles, same size -->
+      <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-5">
+        <!-- Scenarios -->
+        ${scenarios.slice(0, 3).map(sc => {
+          const isActive = sc.id === activeId;
+          const scColor = sc.color || 'blue';
+          const subtitle = scenarioSubtitles[sc.id] || sc.description || '';
+          return `
+          <button class="scenario-tab relative rounded-xl border p-3 transition-all duration-200 text-center flex flex-col items-center justify-center min-h-[90px]
+            ${isActive
+              ? `border-${scColor}-500/40 bg-${scColor}-500/10 shadow-lg shadow-${scColor}-500/10`
+              : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-scenario-id="${sc.id}">
+            <p class="text-xs font-bold ${isActive ? `text-${scColor}-400` : 'text-gray-400'}">${sc.nom}</p>
+            <p class="text-[8px] ${isActive ? 'text-gray-300' : 'text-gray-600'} mt-1 leading-tight">${subtitle}</p>
+            ${isActive ? `<div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-${scColor}-500 flex items-center justify-center shadow-lg"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>` : ''}
+            <span class="scenario-edit absolute top-1 right-1 p-0.5 rounded opacity-0 hover:opacity-100 hover:bg-dark-600/80 transition cursor-pointer" data-scenario-id="${sc.id}" title="Modifier">
+              <svg class="w-2.5 h-2.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </span>
+          </button>`;
+        }).join('')}
+        <!-- Profiles -->
+        ${profileKeys.map(key => {
+          const p = profiles[key];
+          const isActive = key === activeProfile;
+          const clr = profileColors[key] || 'gray';
+          const icon = p.icon || '';
+          const rg = p.rendementGroupes || {};
+          return `
+          <button class="profil-btn relative rounded-xl border p-3 transition-all duration-200 text-center flex flex-col items-center justify-center min-h-[90px]
+            ${isActive
+              ? `border-${clr}-500/40 bg-${clr}-500/10 shadow-lg shadow-${clr}-500/10`
+              : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-profil="${key}">
+            <span class="text-sm leading-none">${icon}</span>
+            <p class="text-xs font-bold ${isActive ? `text-${clr}-400` : 'text-gray-400'} mt-1">${p.label}</p>
+            <p class="text-[8px] ${isActive ? 'text-gray-300' : 'text-gray-600'} mt-1 leading-tight">ETF ${((rg['PEA ETF'] || 0) * 100).toFixed(0)}% · Crypto ${((rg['Crypto'] || 0) * 100).toFixed(0)}%</p>
+            ${isActive ? `<div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-${clr}-500 flex items-center justify-center shadow-lg"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>` : ''}
+          </button>`;
+        }).join('')}
+      </div>
+
+      <!-- Labels row -->
+      <div class="grid grid-cols-6 gap-2 -mt-4 mb-4 hidden sm:grid">
+        <div class="col-span-3 text-center"><span class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold">Scénarios de vie</span></div>
+        <div class="col-span-3 text-center"><span class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold">Hypothèses de rendement</span></div>
       </div>
 
       <!-- Divider -->
       <div class="h-px bg-gradient-to-r from-transparent via-dark-400/30 to-transparent mb-4"></div>
 
-      <!-- Comparison table: 3 profiles as columns -->
+      <!-- Comparison table -->
       <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
         Tableau comparatif par hypothèse
