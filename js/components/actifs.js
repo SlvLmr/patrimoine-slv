@@ -472,7 +472,7 @@ export function mount(store, navigate) {
             </div>
           </div>
           <div class="w-32">
-            <input type="number" class="actu-val w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-right focus:border-accent-blue/50 focus:outline-none" value="${estimated}" step="0.01">
+            <input type="number" class="actu-val input-field w-full" value="${estimated}" step="0.01">
           </div>
         </div>`;
     }).join('');

@@ -153,8 +153,7 @@ function inp(id, label, val, unit, min, max, step) {
         <label for="${id}" class="text-sm text-gray-400">${label}</label>
         <div class="flex items-center gap-1.5">
           <input type="number" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
-            class="w-24 text-right px-2 py-1 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm
-            focus:ring-1 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            class="w-24 input-field [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
           <span class="text-xs text-gray-500 w-12">${unit}</span>
         </div>
       </div>
@@ -387,7 +386,7 @@ function refreshSaveBar() {
   }).join('');
 
   container.innerHTML = `
-    <select id="auto-save-select" class="flex-1 min-w-0 px-2.5 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-sm text-gray-300 focus:ring-1 focus:ring-accent-blue/40 transition">
+    <select id="auto-save-select" class="flex-1 min-w-0 input-field">
       <option value="">Choisir un scénario…</option>${options}
     </select>
     <button id="auto-load-btn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-blue/15 text-accent-blue hover:bg-accent-blue/25 transition disabled:opacity-30" ${saves.length === 0 ? 'disabled' : ''}>Charger</button>

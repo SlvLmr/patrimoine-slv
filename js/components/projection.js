@@ -69,7 +69,7 @@ export function render(store) {
               <div class="flex items-center gap-1">
                 <span class="text-xs text-gray-500">${label}</span>
                 <input type="number" id="${id}" value="${val}" min="${min}" max="${max}" step="${step}"
-                  class="param-input w-14 px-1.5 py-1 text-sm bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
+                  class="param-input input-field w-14 text-center">
                 ${suffix ? `<span class="text-xs text-gray-500">${suffix}</span>` : ''}
               </div>`).join('')}
             </div>
@@ -79,7 +79,7 @@ export function render(store) {
               <div class="flex items-center gap-1">
                 <span class="text-xs text-gray-500">Retraite</span>
                 <input type="number" id="param-retraite" value="${params.ageRetraite || 64}" min="55" max="70" step="1"
-                  class="param-input w-12 px-1 py-1 text-sm bg-dark-800 border border-dark-400/30 rounded text-gray-300 focus:ring-1 focus:ring-accent-blue/30 text-center">
+                  class="param-input input-field w-12 text-center">
               </div>
             </div>
           </div>
@@ -118,7 +118,7 @@ export function render(store) {
                     <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
                     <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
-                    <input type="number" class="param-input plac-rend w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
+                    <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
                       value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5" onclick="event.stopPropagation()">
                     <span class="text-[10px] text-gray-500">%</span>
                     <button class="proj-del-plac opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
@@ -184,10 +184,10 @@ export function render(store) {
                 const catLabel = overflowCategories.find(c => c.value === t.category)?.label || t.category;
                 return `
               <div class="flex items-center gap-2 text-sm overflow-target-row" data-idx="${idx}">
-                <select class="overflow-target-select flex-1 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-amber/30">
+                <select class="overflow-target-select input-field flex-1">
                   ${overflowCategories.map(c => `<option value="${c.value}" ${c.value === t.category ? 'selected' : ''}>${c.label}</option>`).join('')}
                 </select>
-                <input type="number" class="overflow-target-pct w-16 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 text-center focus:ring-1 focus:ring-accent-amber/30" value="${t.pct || 100}" min="1" max="100" step="1">
+                <input type="number" class="overflow-target-pct input-field w-16 text-center" value="${t.pct || 100}" min="1" max="100" step="1">
                 <span class="text-[10px] text-gray-500">%</span>
                 <span class="text-[10px] text-gray-600">${formatCurrency(peaDCA * (t.pct || 100) / 100)}/m</span>
                 <button class="overflow-target-delete text-accent-red/40 hover:text-accent-red text-xs transition" data-idx="${idx}">✕</button>
@@ -256,10 +256,10 @@ export function render(store) {
                 const catLabel = avOverflowCategories.find(c => c.value === t.category)?.label || t.category;
                 return `
               <div class="flex items-center gap-2 text-sm av-overflow-target-row" data-idx="${idx}">
-                <select class="av-overflow-target-select flex-1 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-cyan/30">
+                <select class="av-overflow-target-select input-field flex-1">
                   ${avOverflowCategories.map(c => `<option value="${c.value}" ${c.value === t.category ? 'selected' : ''}>${c.label}</option>`).join('')}
                 </select>
-                <input type="number" class="av-overflow-target-pct w-16 px-2 py-1.5 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 text-center focus:ring-1 focus:ring-accent-cyan/30" value="${t.pct || 100}" min="1" max="100" step="1">
+                <input type="number" class="av-overflow-target-pct input-field w-16 text-center" value="${t.pct || 100}" min="1" max="100" step="1">
                 <span class="text-[10px] text-gray-500">%</span>
                 <span class="text-[10px] text-gray-600">${formatCurrency(avDCA * (t.pct || 100) / 100)}/m</span>
                 <button class="av-overflow-target-delete text-accent-red/40 hover:text-accent-red text-xs transition" data-idx="${idx}">✕</button>
@@ -630,22 +630,22 @@ export function render(store) {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 class="text-sm font-semibold text-accent-amber mb-2">Enveloppes & plafonds</h3>
-              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${enveloppes.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.enveloppes || enveloppes).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-accent-cyan mb-2">Répartition cible & DCA</h3>
-              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${repartition.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.repartition || repartition).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-accent-green mb-2">Moyens supplémentaires</h3>
-              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${moyens.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.moyens || moyens).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-purple-400 mb-2">Objectifs & horizon</h3>
-              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg bg-dark-800/40 border border-dark-400/20 text-sm text-gray-300 leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent-blue/30 whitespace-pre-wrap"
+              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${objectifs.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.objectifs || objectifs).replace(/</g, '&lt;')}</div>
             </div>
           </div>
@@ -755,8 +755,7 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
         </div>
         <input type="number" name="plac-${p.id}" value="${realValue}"
           placeholder="${formatCurrency(projValue).replace(/[^\d\s]/g, '').trim()}"
-          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
-          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          class="input-field w-28 placeholder-gray-700"
           step="1">
       </div>
     `;
@@ -778,32 +777,28 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
         <label class="text-sm text-gray-300 flex-1">Épargne</label>
         <input type="number" name="actu-epargne" value="${existing.epargne !== undefined ? existing.epargne : ''}"
           placeholder="${formatCurrency(snapshot.epargne).replace(/[^\d\s]/g, '').trim()}"
-          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
-          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          class="input-field w-28 placeholder-gray-700"
           step="1">
       </div>
       <div class="flex items-center gap-2">
         <label class="text-sm text-gray-300 flex-1">Immobilier</label>
         <input type="number" name="actu-immobilier" value="${existing.immobilier !== undefined ? existing.immobilier : ''}"
           placeholder="${formatCurrency(snapshot.immobilier).replace(/[^\d\s]/g, '').trim()}"
-          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
-          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          class="input-field w-28 placeholder-gray-700"
           step="1">
       </div>
       <div class="flex items-center gap-2">
         <label class="text-sm text-gray-300 flex-1">Surplus</label>
         <input type="number" name="actu-surplus" value="${existing.surplus !== undefined ? existing.surplus : ''}"
           placeholder="${formatCurrency(snapshot.surplus || 0).replace(/[^\d\s]/g, '').trim()}"
-          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
-          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          class="input-field w-28 placeholder-gray-700"
           step="1">
       </div>
       <div class="flex items-center gap-2">
         <label class="text-sm text-gray-300 flex-1">Donation</label>
         <input type="number" name="actu-donation" value="${existing.donation !== undefined ? existing.donation : ''}"
           placeholder="${formatCurrency(snapshot.donation || 0).replace(/[^\d\s]/g, '').trim()}"
-          class="w-28 px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm text-right
-          focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition placeholder-gray-700"
+          class="input-field w-28 placeholder-gray-700"
           step="1">
       </div>
     </div>
@@ -1318,7 +1313,7 @@ export function mount(store, navigate) {
             </div>
           </div>
           <div class="w-32">
-            <input type="number" class="actu-val w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-right focus:border-accent-blue/50 focus:outline-none" value="${estimated}" step="0.01">
+            <input type="number" class="actu-val input-field w-full" value="${estimated}" step="0.01">
           </div>
         </div>`;
     }).join('');

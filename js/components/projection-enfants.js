@@ -275,7 +275,7 @@ export function render(store) {
           <div class="flex flex-wrap items-center gap-4 mt-3">
             <label class="text-xs text-gray-500">Horizon</label>
             <input type="number" id="pe-horizon" value="${horizonYears}" min="1" max="40" step="1"
-              class="w-16 bg-dark-800 border border-dark-400/50 rounded-lg px-2 py-1.5 text-sm text-gray-200 text-center focus:outline-none focus:border-accent-green transition">
+              class="input-field w-16 text-center">
             <span class="text-xs text-gray-500">ans</span>
           </div>
           <!-- Placements grid -->
@@ -293,7 +293,7 @@ export function render(store) {
                   <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium pe-edit-plac cursor-pointer" data-child-idx="${idx}" data-placement-id="${p.id}" title="${p.nom}">${p.nom}</span>
                   ${dca > 0 ? `<span class="text-[9px] text-gray-600">${dca}\u20ac/m</span>` : ''}
                   <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
-                  <input type="number" class="pe-plac-rend w-14 px-1.5 py-1 text-sm bg-dark-900/60 border border-dark-400/25 rounded text-gray-200 focus:ring-1 focus:ring-accent-blue/30 text-center font-medium"
+                  <input type="number" class="pe-plac-rend input-field w-14 text-center font-medium"
                     value="${(rend * 100).toFixed(1)}" min="-20" max="50" step="0.5" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()">
                   <span class="text-[10px] text-gray-500">%</span>
                   <button class="pe-del-plac opacity-0 group-hover/card:opacity-100 ml-0.5 text-accent-red/50 hover:text-accent-red text-xs transition" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>

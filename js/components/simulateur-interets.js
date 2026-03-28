@@ -134,8 +134,7 @@ function simInput(id, label, defaultVal, unit, min, max, step) {
         <label for="${id}" class="text-sm text-gray-400">${label}</label>
         <div class="flex items-center gap-1.5">
           <input type="number" id="${id}" value="${defaultVal}" min="${min}" max="${max}" step="${step}"
-            class="w-24 text-right px-2 py-1 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm
-            focus:ring-1 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            class="w-24 input-field [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
           <span class="text-xs text-gray-500 w-12">${unit}</span>
         </div>
       </div>
@@ -208,7 +207,7 @@ export function render() {
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <label class="text-sm text-gray-400">Fréquence de composition</label>
-              <select id="ic-frequence" class="px-2.5 py-1 bg-dark-800 border border-dark-400/50 rounded-lg text-sm text-gray-200 focus:ring-1 focus:ring-accent-blue/40 transition">
+              <select id="ic-frequence" class="input-field">
                 <option value="1">Annuelle</option>
                 <option value="4">Trimestrielle</option>
                 <option value="12" selected>Mensuelle</option>
@@ -303,7 +302,7 @@ function refreshSaveBar() {
   }).join('');
 
   container.innerHTML = `
-    <select id="ic-save-select" class="flex-1 min-w-0 px-2.5 py-1.5 bg-dark-800 border border-dark-400/50 rounded-lg text-sm text-gray-300 focus:ring-1 focus:ring-accent-blue/40 transition">
+    <select id="ic-save-select" class="flex-1 min-w-0 input-field">
       <option value="">Choisir un scénario…</option>
       ${options}
     </select>

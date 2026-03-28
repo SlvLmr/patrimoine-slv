@@ -77,7 +77,7 @@ export function render() {
           <div>
             <label class="block text-xs text-gray-500 mb-1">Horaire brut</label>
             <input id="sal-brut-h" type="text" inputmode="decimal" placeholder="0"
-              class="w-full bg-dark-700 border border-dark-400/30 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 outline-none transition" />
+              class="w-full input-field" />
           </div>
           <div>
             <div class="flex items-center gap-2 mb-1">
@@ -85,12 +85,12 @@ export function render() {
               <span id="sal-badge-statut" class="text-[10px] px-1.5 py-0.5 rounded bg-accent-green/15 text-accent-green font-medium">Non-cadre −22%</span>
             </div>
             <input id="sal-brut-m" type="text" inputmode="decimal" placeholder="0"
-              class="w-full bg-dark-700 border border-dark-400/30 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 outline-none transition" />
+              class="w-full input-field" />
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">Annuel brut</label>
             <input id="sal-brut-a" type="text" inputmode="decimal" placeholder="0"
-              class="w-full bg-dark-700 border border-dark-400/30 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 outline-none transition" />
+              class="w-full input-field" />
           </div>
         </div>
       </div>

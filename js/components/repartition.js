@@ -498,7 +498,7 @@ export function mount(store, navigate) {
                   <span class="text-[11px] text-gray-400 truncate">${p.nom}</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <input type="number" class="rep-inline-dca w-16 px-1.5 py-0.5 text-[11px] bg-dark-900/60 border border-dark-400/20 rounded text-gray-200 text-center focus:ring-1 focus:ring-accent-amber/40 focus:border-accent-amber/40 transition"
+                  <input type="number" class="rep-inline-dca input-field w-16 px-1.5 py-0.5 text-[11px] text-center"
                     value="${p.dca}" min="0" step="10" data-dca-id="${p.id}" title="Modifier le DCA mensuel">
                   <span class="text-[10px] text-gray-600">€/m</span>
                   <button class="rep-edit-btn opacity-0 group-hover/item:opacity-100 text-gray-500 hover:text-accent-blue transition" data-edit-id="${p.id}" title="Modifier">
@@ -798,7 +798,7 @@ export function mount(store, navigate) {
             <span class="text-[11px] px-2 py-0.5 rounded-full ${r.style.bg} ${r.style.text}">${r.gk}</span>
           </td>
           <td class="py-1.5 px-2 text-right">
-            <input type="number" class="rep-table-dca w-20 px-1.5 py-1 text-sm bg-dark-900/40 border border-dark-400/20 rounded text-right ${r.dca > 0 ? 'text-accent-amber' : 'text-gray-600'} focus:ring-1 focus:ring-accent-amber/40 transition"
+            <input type="number" class="rep-table-dca input-field w-20 ${r.dca > 0 ? 'text-accent-amber' : 'text-gray-600'}"
               value="${r.dca}" min="0" step="10" data-dca-id="${r.id}">
           </td>
           <td class="py-2 px-2 text-right text-gray-200 font-medium">${formatCurrency(r.value)}</td>

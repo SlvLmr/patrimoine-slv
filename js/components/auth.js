@@ -40,13 +40,13 @@ function renderAuthCard() {
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Email</label>
           <input type="email" id="login-email" required
-            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
+            class="w-full input-field rounded-xl px-4 py-3"
             placeholder="ton@email.com">
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Mot de passe</label>
           <input type="password" id="login-password" required minlength="6"
-            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
+            class="w-full input-field rounded-xl px-4 py-3"
             placeholder="••••••••">
         </div>
         <button type="submit" id="login-btn"
@@ -69,7 +69,7 @@ function renderAuthCard() {
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Email</label>
           <input type="email" id="reset-email" required
-            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
+            class="w-full input-field rounded-xl px-4 py-3"
             placeholder="ton@email.com">
         </div>
         <button type="submit" id="reset-btn"
@@ -91,19 +91,19 @@ function renderAuthCard() {
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Email</label>
           <input type="email" id="register-email" required
-            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
+            class="w-full input-field rounded-xl px-4 py-3"
             placeholder="ton@email.com">
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Mot de passe</label>
           <input type="password" id="register-password" required minlength="6"
-            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
+            class="w-full input-field rounded-xl px-4 py-3"
             placeholder="6 caractères minimum">
         </div>
         <div>
           <label class="block text-sm text-gray-400 mb-1.5">Confirmer le mot de passe</label>
           <input type="password" id="register-password-confirm" required minlength="6"
-            class="w-full bg-dark-800 border border-dark-400/30 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-green/40 focus:border-accent-green/40 transition"
+            class="w-full input-field rounded-xl px-4 py-3"
             placeholder="••••••••">
         </div>
         <button type="submit" id="register-btn"

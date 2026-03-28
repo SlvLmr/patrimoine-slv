@@ -297,7 +297,7 @@ export function mount(store, navigate) {
         ${inputField('montant', 'Montant (€)', '', 'number')}
         <div class="mt-3">
           <label class="block text-xs text-gray-400 mb-1">Type</label>
-          <select id="field-type" class="w-full px-3 py-2 bg-dark-700 border border-dark-400/30 rounded-lg text-sm text-gray-200">
+          <select id="field-type" class="input-field w-full px-3 py-2 text-left">
             <option value="donation">Donation classique (abattement 100 000 €)</option>
             <option value="don_tepa" ${tepaUsed ? 'disabled' : ''}>Don familial TEPA (31 865 €)${tepaUsed ? ' — déjà utilisé' : ''}</option>
           </select>

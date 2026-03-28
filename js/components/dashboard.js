@@ -428,7 +428,7 @@ export function render(store) {
             <div class="flex justify-between items-center py-2.5 border-b border-dark-400/30">
               <span class="text-gray-400 text-sm">${c.nom}</span>
               <input type="number" data-cc-id="${c.id}" value="${Number(c.solde) || 0}" step="0.01"
-                class="w-28 px-2 py-1 text-sm bg-dark-800 border border-dark-400/30 rounded text-right text-indigo-400 font-medium focus:ring-1 focus:ring-indigo-500/30">
+                class="input-field w-28 text-indigo-400 font-medium">
             </div>
           `).join('')}
         </div>

@@ -52,7 +52,7 @@ function checkboxField(name, label, checked = false) {
 }
 
 function montantFields(mensuel, lisse, annuel) {
-  const cls = 'w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition';
+  const cls = 'input-field w-full px-3 py-2.5 text-left';
   return `
     <div class="grid grid-cols-3 gap-3 mb-4">
       <div>

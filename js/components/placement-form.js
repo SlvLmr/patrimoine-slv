@@ -29,11 +29,11 @@ export function buildPlacementFormBody(item) {
   const overridesHtml = overrides.map((o, i) => `
     <div class="flex items-center gap-2 dca-override-row" data-idx="${i}">
       <div class="flex-1">
-        <input type="number" class="dca-ov-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${o.fromYear || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
+        <input type="number" class="dca-ov-year w-full input-field" value="${o.fromYear || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
       </div>
       <span class="text-gray-500 text-xs">→</span>
       <div class="flex-1">
-        <input type="number" class="dca-ov-amount w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${o.dcaMensuel || ''}" placeholder="€/mois" step="10">
+        <input type="number" class="dca-ov-amount w-full input-field" value="${o.dcaMensuel || ''}" placeholder="€/mois" step="10">
       </div>
       <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
     </div>
@@ -44,7 +44,7 @@ export function buildPlacementFormBody(item) {
   const injectionsHtml = injections.map((inj, i) => `
     <div class="flex items-center gap-2 cash-inj-row" data-idx="${i}">
       <div class="flex-1">
-        <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" value="${inj.year || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
+        <input type="number" class="cash-inj-year w-full input-field" value="${inj.year || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
       </div>
       <span class="text-gray-500 text-xs">→</span>
       <div class="flex-1">
@@ -59,7 +59,7 @@ export function buildPlacementFormBody(item) {
   const peeContribsHtml = peeContribs.map((c, i) => `
     <div class="flex items-center gap-2 pee-contrib-row" data-idx="${i}">
       <div class="w-24">
-        <input type="number" class="pee-contrib-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-center" value="${c.year || ''}" min="${currentYear}" max="${currentYear + 50}" step="1">
+        <input type="number" class="pee-contrib-year w-full input-field text-center" value="${c.year || ''}" min="${currentYear}" max="${currentYear + 50}" step="1">
       </div>
       <span class="text-gray-500 text-xs">→</span>
       <div class="flex-1">
@@ -184,7 +184,7 @@ function createPeeContribRow() {
   row.className = 'flex items-center gap-2 pee-contrib-row';
   row.innerHTML = `
     <div class="w-24">
-      <input type="number" class="pee-contrib-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm text-center" value="${currentYear}" min="${currentYear}" max="${currentYear + 50}" step="1">
+      <input type="number" class="pee-contrib-year w-full input-field text-center" value="${currentYear}" min="${currentYear}" max="${currentYear + 50}" step="1">
     </div>
     <span class="text-gray-500 text-xs">→</span>
     <div class="flex-1">
@@ -241,11 +241,11 @@ export function initPlacementFormListeners(modal) {
       row.className = 'flex items-center gap-2 dca-override-row';
       row.innerHTML = `
         <div class="flex-1">
-          <input type="number" class="dca-ov-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
+          <input type="number" class="dca-ov-year w-full input-field" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
         </div>
         <span class="text-gray-500 text-xs">→</span>
         <div class="flex-1">
-          <input type="number" class="dca-ov-amount w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="€/mois" step="10">
+          <input type="number" class="dca-ov-amount w-full input-field" placeholder="€/mois" step="10">
         </div>
         <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
       `;
@@ -267,7 +267,7 @@ export function initPlacementFormListeners(modal) {
       row.className = 'flex items-center gap-2 cash-inj-row';
       row.innerHTML = `
         <div class="flex-1">
-          <input type="number" class="cash-inj-year w-full px-2 py-1.5 bg-dark-800 border border-dark-400/50 rounded text-gray-200 text-sm" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
+          <input type="number" class="cash-inj-year w-full input-field" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
         </div>
         <span class="text-gray-500 text-xs">→</span>
         <div class="flex-1">

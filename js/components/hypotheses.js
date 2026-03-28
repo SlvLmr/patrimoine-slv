@@ -378,19 +378,19 @@ function getFormHtml(themes, item = null, enfants = []) {
       <div>
         <label class="block text-xs text-gray-500 mb-1.5">Titre *</label>
         <input id="hyp-form-titre" type="text" value="${item?.titre || ''}" placeholder="Ex: Donation Sarkozy enfants"
-          class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition placeholder-gray-600"/>
+          class="w-full input-field placeholder-gray-600"/>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-xs text-gray-500 mb-1.5">Année *</label>
           <input id="hyp-form-annee" type="number" min="2000" max="2100" value="${item?.annee || new Date().getFullYear()}"
-            class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition"/>
+            class="w-full input-field"/>
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1.5">Montant estimé</label>
           <div class="relative">
             <input id="hyp-form-montant" type="number" step="100" min="0" value="${item?.montant || ''}" placeholder="Optionnel"
-              class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition pr-7 placeholder-gray-600"/>
+              class="w-full input-field pr-7 placeholder-gray-600"/>
             <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
           </div>
         </div>
@@ -417,7 +417,7 @@ function getFormHtml(themes, item = null, enfants = []) {
       <div id="hyp-form-donation-type-row" class="${isDonationTheme ? '' : 'hidden'}">
         <label class="block text-xs text-gray-500 mb-1.5">Type de donation</label>
         <select id="hyp-form-donation-type"
-          class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
+          class="w-full input-field">
           <option value="abatt_immo" ${(item?.donationType || 'abatt_immo') === 'abatt_immo' ? 'selected' : ''}>Abattement Immobilier — nue-propriété (100 000 \u20ac cumulés)</option>
           <option value="abatt_cash" ${item?.donationType === 'abatt_cash' ? 'selected' : ''}>Abattement Cash (100 000 \u20ac cumulés)</option>
           <option value="abatt_cto" ${item?.donationType === 'abatt_cto' ? 'selected' : ''}>Abattement CTO (100 000 \u20ac cumulés)</option>
@@ -458,7 +458,7 @@ function getFormHtml(themes, item = null, enfants = []) {
       <div id="hyp-form-event-type-row" class="${isEvenementTheme ? '' : 'hidden'}">
         <label class="block text-xs text-gray-500 mb-1.5">Type d'événement</label>
         <select id="hyp-form-event-type"
-          class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition">
+          class="w-full input-field">
           <option value="retraite" ${(item?.eventType || 'retraite') === 'retraite' ? 'selected' : ''}>Retraite</option>
           <option value="projet" ${item?.eventType === 'projet' ? 'selected' : ''}>Projet</option>
           <option value="divers" ${item?.eventType === 'divers' ? 'selected' : ''}>Divers</option>
@@ -467,7 +467,7 @@ function getFormHtml(themes, item = null, enfants = []) {
       <div>
         <label class="block text-xs text-gray-500 mb-1.5">Description</label>
         <textarea id="hyp-form-desc" rows="3" placeholder="Notes, détails, conditions..."
-          class="w-full bg-dark-800 border border-dark-400/50 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-accent-green transition resize-none placeholder-gray-600">${item?.description || ''}</textarea>
+          class="w-full input-field resize-none placeholder-gray-600">${item?.description || ''}</textarea>
       </div>
     </div>`;
 }
@@ -493,7 +493,7 @@ function getThemeManagerHtml(themes) {
             </button>
           </div>`;
       }).join('')}
-      <button id="tm-add" class="w-full flex items-center justify-center gap-2 py-2 text-xs text-gray-500 hover:text-accent-green border border-dashed border-dark-400/30 hover:border-accent-green/40 rounded-lg transition">
+      <button id="tm-add" class="btn-add w-full flex items-center justify-center gap-2 py-2 text-xs">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
         Ajouter un thème
       </button>

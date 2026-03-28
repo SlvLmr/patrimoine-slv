@@ -319,7 +319,7 @@ export function render(store) {
                     <button data-mc-up="${d.id}" class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5">▲</button>
                     <button data-mc-down="${d.id}" class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5">▼</button>
                   </div>
-                  <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-700 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
+                  <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
                   <span class="text-[12px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
