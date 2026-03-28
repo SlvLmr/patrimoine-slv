@@ -71,7 +71,7 @@ export function render() {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
       <!-- Col 1: Saisie brut -->
-      <div class="bg-dark-800 rounded-xl border border-dark-400/20 p-5 space-y-5">
+      <div class="card-dark rounded-2xl p-5 space-y-5">
         <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Salaire brut</h2>
         <div class="space-y-4">
           <div>
@@ -96,7 +96,7 @@ export function render() {
       </div>
 
       <!-- Col 2: Résultat net -->
-      <div class="bg-dark-800 rounded-xl border border-dark-400/20 p-5 space-y-5">
+      <div class="card-dark rounded-2xl p-5 space-y-5">
         <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Salaire net</h2>
         <div class="space-y-4">
           <div>
@@ -115,7 +115,7 @@ export function render() {
       </div>
 
       <!-- Col 3: Paramètres -->
-      <div class="bg-dark-800 rounded-xl border border-dark-400/20 p-5 space-y-5">
+      <div class="card-dark rounded-2xl p-5 space-y-5">
         <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Paramètres</h2>
 
         <!-- Temps de travail -->
@@ -147,13 +147,13 @@ export function render() {
     </div>
 
     <!-- Statut -->
-    <div class="bg-dark-800 rounded-xl border border-dark-400/20 p-5">
+    <div class="card-dark rounded-2xl p-5">
       <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Statut</label>
       <div class="flex justify-around gap-4">${statutRadios}</div>
     </div>
 
     <!-- Net après impôts -->
-    <div class="bg-dark-800 rounded-xl border border-accent-green/20 p-5">
+    <div class="card-dark rounded-2xl border-accent-green/20 p-5">
       <h2 class="text-xs font-semibold text-accent-green uppercase tracking-wider mb-4">Estimation nette après prélèvement à la source</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -168,7 +168,7 @@ export function render() {
     </div>
 
     <!-- Tableau récap -->
-    <div class="bg-dark-800 rounded-xl border border-dark-400/20 p-5">
+    <div class="card-dark rounded-2xl p-5">
       <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Récapitulatif</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
