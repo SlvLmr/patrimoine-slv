@@ -290,7 +290,7 @@ export function render() {
 
           ${creditInput('credit-revenus', 'Revenus mensuels nets du foyer', d.revenusMensuels, '€/mois', 0, 50000, 100)}
 
-          <div class="p-2.5 rounded-lg bg-dark-800/50 border border-dark-400/30">
+          <div class="info-box">
             <p class="text-xs text-gray-500">Le <span class="text-gray-400 font-medium">taux d'endettement</span> recommandé est de <span class="text-gray-400 font-medium">35 % maximum</span> (HCSF). Au-delà, les banques refusent généralement le prêt.</p>
           </div>
         </div>
@@ -328,7 +328,7 @@ export function render() {
           </div>
           <div class="overflow-x-auto max-h-80 overflow-y-auto">
             <table class="w-full text-sm" id="credit-table">
-              <thead class="sticky top-0 bg-dark-700">
+              <thead class="table-header">
                 <tr class="text-gray-500 text-xs uppercase">
                   <th class="text-left py-2 px-2" id="credit-th-period">Année</th>
                   <th class="text-right py-2 px-2">Capital</th>
@@ -344,7 +344,7 @@ export function render() {
         </div>
 
         <!-- Disclaimer -->
-        <div class="p-3 rounded-xl bg-dark-800/30 border border-dark-400/20">
+        <div class="info-box">
           <p class="text-xs text-gray-600">Simulation indicative à titre d'information. Les résultats ne tiennent pas lieu d'offre de prêt. Consultez un professionnel pour une étude personnalisée.</p>
         </div>
       </div>
@@ -731,7 +731,7 @@ function renderTable(r) {
 
   if (currentView === 'annuel') {
     tbody.innerHTML = r.annuel.map((a, i) => `
-      <tr class="${i % 2 === 0 ? '' : 'bg-dark-800/30'} hover:bg-dark-600/30 transition">
+      <tr class="table-row ${i % 2 === 0 ? '' : 'table-row-alt'}">
         <td class="py-1.5 px-2 text-gray-400">An ${a.annee}</td>
         <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrency(Math.round(a.capitalRembourse))}</td>
         <td class="py-1.5 px-2 text-right font-mono text-amber-400">${formatCurrency(Math.round(a.interets))}</td>
@@ -741,7 +741,7 @@ function renderTable(r) {
     `).join('');
   } else {
     tbody.innerHTML = r.echeances.map((e, i) => `
-      <tr class="${i % 2 === 0 ? '' : 'bg-dark-800/30'} hover:bg-dark-600/30 transition">
+      <tr class="table-row ${i % 2 === 0 ? '' : 'table-row-alt'}">
         <td class="py-1.5 px-2 text-gray-400">${e.mois}</td>
         <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrencyCents(e.capital)}</td>
         <td class="py-1.5 px-2 text-right font-mono text-amber-400">${formatCurrencyCents(e.interets)}</td>
