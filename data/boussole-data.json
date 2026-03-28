@@ -1,0 +1,620 @@
+bash
+
+cat /mnt/user-data/outputs/boussole-data.json
+Sortie
+
+{
+  "meta": {
+    "projet": "Boussole Patrimoniale Sylvain",
+    "version": "v9",
+    "date": "2026-03-28",
+    "profil": {
+      "prenom": "Sylvain",
+      "age": 43,
+      "fire_age": 61,
+      "fire_annee": 2044,
+      "enfants": [
+        {
+          "prenom": "Gaspard",
+          "naissance": "mai 2013",
+          "majorite": "mai 2031"
+        },
+        {
+          "prenom": "Agathe",
+          "naissance": "oct. 2015",
+          "majorite": "oct. 2033"
+        }
+      ],
+      "salaire_net_mensuel": 2780,
+      "nb_mois": 13,
+      "prime_annuelle": 800,
+      "salaire_annuel_total": 36940
+    }
+  },
+  "regles_metier": {
+    "rente_base": "PEA + PEE + Bitcoin UNIQUEMENT — AV et CTO exclus (transmission)",
+    "rente_taux": 0.035,
+    "fiscalite": {
+      "PEA": "PS 17,2% sur gains uniquement — 0€ IR après 5 ans",
+      "PEE": "PS 17,2% sur gains uniquement — 0€ IR",
+      "Bitcoin": "Flat Tax 30% sur plus-values (IR 12,8% + PS 17,2%)",
+      "AV": "Abattement 4 600€/an intérêts après 8 ans si rachat partiel"
+    },
+    "note_rentes": "Les rentes affichées sont déjà nettes de taxes",
+    "pension_etat": {
+      "reel_ideal": "64 ans — 3 ans de gap après FIRE à 61 ans",
+      "liberte": "~62 ans — 1 an de gap grâce aux 12 trimestres rachetés"
+    },
+    "cascade_cto": [
+      {
+        "annee": 2027,
+        "montant_mensuel": 80,
+        "evenement": "Ouverture CTO BoursoBank"
+      },
+      {
+        "annee": 2044,
+        "montant_mensuel": 280,
+        "evenement": "AV stoppée → +200€/mois"
+      },
+      {
+        "annee": 2047,
+        "montant_mensuel": 770,
+        "evenement": "PEA plafond 150K → +490€/mois"
+      }
+    ]
+  },
+  "placements_mensuels": {
+    "2026": {
+      "total": 640,
+      "detail": {
+        "PEA_TR": 490,
+        "Bitcoin": 50,
+        "PEE_enfants_TR": 100
+      },
+      "note": "TR alimenté par virement initial — pas de sortie mensuelle CIC pour TR"
+    },
+    "2027_et_apres": {
+      "total": 900,
+      "detail": {
+        "PEA_TR": 490,
+        "AV_Linxea": 200,
+        "CTO_BoursoBank": 80,
+        "Bitcoin": 30,
+        "PEE_enfants_TR": 100
+      }
+    }
+  },
+  "budget": {
+    "salaire_mensuel_reel": 2780,
+    "note": "Hors 13e mois et prime — à traiter séparément",
+    "bonus_annuel": {
+      "mois_13": 2780,
+      "prime": 800,
+      "total": 3580,
+      "affectation_recommandee": {
+        "CTO_BoursoBank": 2000,
+        "Livret_A_frais_notaire": 1600
+      }
+    },
+    "2026": {
+      "sorties_totales": 2807,
+      "detail": {
+        "depenses_fixes_dont_credit_652": 1111,
+        "abonnements": 126,
+        "vie_quotidienne_vacances": 1070,
+        "investissements_CIC": 500
+      },
+      "solde_mensuel": -27,
+      "note": "Livret A absorbe les mois tendus — 13e mois reconstitue"
+    },
+    "2027": {
+      "sorties_totales": 2655,
+      "detail": {
+        "depenses_fixes_sans_credit": 459,
+        "abonnements": 126,
+        "vie_quotidienne_vacances": 1070,
+        "PEA_TR": 490,
+        "AV_Linxea": 200,
+        "CTO_BoursoBank": 80,
+        "Bitcoin": 30,
+        "PEE_enfants": 100,
+        "Livret_A_enfants": 100
+      },
+      "solde_mensuel": 125,
+      "note": "+125€/mois de marge réelle sur salaire seul"
+    }
+  },
+  "hypotheses": {
+    "faible": {
+      "label": "🐻 Faible",
+      "color": "#E74C3C",
+      "taux": {
+        "ETF_pondere_PEA": 0.065,
+        "Air_Liquide": 0.08,
+        "Schneider": 0.08,
+        "Legrand": 0.06,
+        "Bitcoin": 0.0,
+        "PEE": 0.05,
+        "AV": 0.04,
+        "CTO": 0.065
+      },
+      "resultats_61_ans": {
+        "PEA_total": 260000,
+        "AV_61_ans": 138000,
+        "AV_70_ans": 197000,
+        "PEE_net": 89000,
+        "Bitcoin": 6500,
+        "capital_rente_net": 329000,
+        "rente_mensuelle_nette": 960,
+        "total_transmis_par_enfant": 690000
+      },
+      "note": "Décennie perdue (2000–2010) · deux krachs · AV 4%/an"
+    },
+    "modere": {
+      "label": "📊 Modéré",
+      "color": "#2D6A9F",
+      "taux": {
+        "ETF_pondere_PEA": 0.1,
+        "Air_Liquide": 0.12,
+        "Schneider": 0.12,
+        "Legrand": 0.09,
+        "Bitcoin": 0.08,
+        "PEE": 0.07,
+        "AV": 0.065,
+        "CTO": 0.08
+      },
+      "resultats_61_ans": {
+        "PEA_total": 401000,
+        "AV_61_ans": 169000,
+        "AV_70_ans": 297000,
+        "PEE_net": 109000,
+        "Bitcoin": 15000,
+        "capital_rente_net": 473000,
+        "rente_mensuelle_nette": 1380,
+        "total_transmis_par_enfant": 813000
+      },
+      "note": "Taux réels historiques 30 ans — référence de base"
+    },
+    "eleve": {
+      "label": "🚀 Élevé",
+      "color": "#1B4332",
+      "taux": {
+        "ETF_pondere_PEA": 0.125,
+        "Air_Liquide": 0.15,
+        "Schneider": 0.15,
+        "Legrand": 0.12,
+        "Bitcoin": 0.3,
+        "PEE": 0.09,
+        "AV": 0.08,
+        "CTO": 0.125
+      },
+      "resultats_61_ans": {
+        "PEA_total": 556000,
+        "AV_61_ans": 190000,
+        "AV_70_ans": 380000,
+        "PEE_net": 134000,
+        "Bitcoin": 174000,
+        "capital_rente_net": 740000,
+        "rente_mensuelle_nette": 2158,
+        "total_transmis_par_enfant": 1020000
+      },
+      "note": "Décennie 2010–2020 · taux bas + tech · Bitcoin haussier"
+    }
+  },
+  "scenarios": {
+    "reel": {
+      "label": "Réel",
+      "dca_mensuel": 900,
+      "pension_age": 64,
+      "pension_montant_net": 2500,
+      "gap_fire_pension_ans": 3,
+      "donations_vivant": [
+        {
+          "operation": "Nue-propriété maison",
+          "annee": 2027,
+          "total": 132000,
+          "par_enfant": 66000,
+          "droits": 0
+        },
+        {
+          "operation": "Donation CTO",
+          "annee": 2042,
+          "total": 87000,
+          "par_enfant": 43500,
+          "droits": 0
+        },
+        {
+          "operation": "Donation CTO 2e cycle",
+          "annee": 2057,
+          "total": 80000,
+          "par_enfant": 40000,
+          "droits": 0
+        }
+      ],
+      "transmission_deces": [
+        {
+          "enveloppe": "AV Linxea",
+          "total": 297000,
+          "par_enfant": 148600,
+          "droits": 0,
+          "note": "Hors succession"
+        },
+        {
+          "enveloppe": "Maison pleine propriété",
+          "total": 330000,
+          "par_enfant": 165000,
+          "droits": 0,
+          "note": "Usufruit éteint"
+        },
+        {
+          "enveloppe": "PEA + épargne + BTC",
+          "total": 700000,
+          "par_enfant": 350000,
+          "note": "Succession"
+        },
+        {
+          "enveloppe": "Abattement succession 100K x2",
+          "total": -200000,
+          "par_enfant": -100000
+        },
+        {
+          "enveloppe": "Droits succession estimés",
+          "total": -100000,
+          "par_enfant": -50000,
+          "note": "~20% moyen"
+        }
+      ],
+      "total_par_enfant_modere": 813000
+    },
+    "ideal": {
+      "label": "Idéal",
+      "dca_mensuel": 1050,
+      "pension_age": 64,
+      "pension_montant_net": 2500,
+      "gap_fire_pension_ans": 3,
+      "total_par_enfant_modere": 860000,
+      "note": "2e cycle donation CTO possible — AV légèrement > 152 500€/enfant"
+    },
+    "liberte": {
+      "label": "Liberté",
+      "dca_mensuel": 900,
+      "rachat_trimestres": 12,
+      "cout_rachat_net": 46000,
+      "pension_age": 62,
+      "pension_montant_net": 2500,
+      "gap_fire_pension_ans": 1,
+      "capital_preserve_vs_reel": 48000,
+      "total_par_enfant_modere": 813000,
+      "note": "Don Sarkozy papa (31 865€) utilisé pour rachat — cash héritage restant ~8 135€"
+    }
+  },
+  "frise_projections": {
+    "hypothese": "modere",
+    "annees": [
+      {
+        "annee": 2026,
+        "age": 43,
+        "PEA": 11000,
+        "Air_Liquide_actions": 20,
+        "Air_Liquide_cours": 175,
+        "AV": 0,
+        "CTO": 0,
+        "PEE": 3200,
+        "BTC": 0,
+        "total": 11000,
+        "evenement": "Début · Air Liquide nominatif administré ✓"
+      },
+      {
+        "annee": 2027,
+        "age": 44,
+        "PEA": 19000,
+        "Air_Liquide_actions": 22,
+        "Air_Liquide_cours": 196,
+        "AV": 0,
+        "CTO": 0,
+        "PEE": 6600,
+        "BTC": 400,
+        "total": 26000,
+        "evenement": "Crédit terminé · AV + CTO BoursoBank · Nue-prop. 0€"
+      },
+      {
+        "annee": 2034,
+        "age": 51,
+        "PEA": 103000,
+        "Air_Liquide_actions": 28,
+        "Air_Liquide_cours": 433,
+        "AV": 22000,
+        "CTO": 9300,
+        "PEE": 38000,
+        "BTC": 4100,
+        "total": 176000,
+        "evenement": "Gaspard majeur (2031) → ouvrir CTO BoursoBank"
+      },
+      {
+        "annee": 2037,
+        "age": 54,
+        "PEA": 162000,
+        "Air_Liquide_actions": 31,
+        "Air_Liquide_cours": 609,
+        "AV": 94000,
+        "CTO": 55000,
+        "PEE": 57000,
+        "BTC": 6500,
+        "total": 374000,
+        "evenement": "Héritage +60K AV · +40K CTO · +40K Livret A"
+      },
+      {
+        "annee": 2040,
+        "age": 57,
+        "PEA": 244000,
+        "Air_Liquide_actions": 37,
+        "Air_Liquide_cours": 855,
+        "AV": 122000,
+        "CTO": 73000,
+        "PEE": 81000,
+        "BTC": 9400,
+        "total": 529000,
+        "evenement": "Vérifier CTO Gaspard & Agathe · Préparer donation"
+      },
+      {
+        "annee": 2042,
+        "age": 59,
+        "PEA": 314000,
+        "Air_Liquide_actions": 41,
+        "Air_Liquide_cours": 1073,
+        "AV": 144000,
+        "CTO": 87000,
+        "PEE": 99000,
+        "BTC": 12000,
+        "total": 656000,
+        "evenement": "DONATION CTO · 43 500€/enfant · Purge PV · 0€ droits"
+      },
+      {
+        "annee": 2044,
+        "age": 61,
+        "PEA": 402000,
+        "Air_Liquide_actions": 45,
+        "Air_Liquide_cours": 1346,
+        "AV": 169000,
+        "CTO": 104000,
+        "PEE": 120000,
+        "BTC": 15000,
+        "total": 810000,
+        "evenement": "FIRE · Arrêt AV · PEA+PEE activés · Rente ~1 380€/mois nets"
+      },
+      {
+        "annee": 2047,
+        "age": 64,
+        "PEA": 569000,
+        "Air_Liquide_actions": 49,
+        "Air_Liquide_cours": 1891,
+        "AV": 204000,
+        "CTO": 134000,
+        "PEE": 120000,
+        "BTC": 20000,
+        "total": 1047000,
+        "evenement": "PEA plafond → CTO 770€/mois · Pension État à 64 ans"
+      }
+    ],
+    "jalons_cles": [
+      {
+        "annee": 2037,
+        "type": "heritage",
+        "label": "Héritage papa",
+        "color": "#FFD966"
+      },
+      {
+        "annee": 2042,
+        "type": "donation",
+        "label": "Donation CTO",
+        "color": "#7D3C98"
+      },
+      {
+        "annee": 2044,
+        "type": "fire",
+        "label": "FIRE 61 ans",
+        "color": "#2D7A5A"
+      },
+      {
+        "annee": 2047,
+        "type": "rebalance",
+        "label": "Bascule PEA→CTO",
+        "color": "#2D6A9F"
+      }
+    ]
+  },
+  "immobilier": {
+    "valeur_actuelle": 330000,
+    "demembrement": {
+      "age_donation": 44,
+      "coefficient_nue_propriete": 0.4,
+      "valeur_fiscale_totale": 132000,
+      "par_enfant": 66000,
+      "abattement_disponible": 100000,
+      "droits_donation": 0,
+      "frais_notaire": 4730,
+      "economie_vs_succession": 36400,
+      "rechargement_abattement": 2042,
+      "coefficient_valable_jusqua": "51 ans (novembre 2032)"
+    },
+    "vs_sans_demembrement": {
+      "droits_succession_estimes": 36400,
+      "base_valeur_maison_deces": 400000,
+      "droits_par_enfant": 18200
+    }
+  },
+  "enveloppes": {
+    "PEA_TR": {
+      "plafond_versements": 150000,
+      "plafond_atteint_annee": 2047,
+      "ETF": [
+        {
+          "nom": "S&P500",
+          "montant_mensuel": 375,
+          "poids": 0.77,
+          "taux_historique": 0.108,
+          "horizon": "30 ans"
+        },
+        {
+          "nom": "STOXX600",
+          "montant_mensuel": 80,
+          "poids": 0.16,
+          "taux_historique": 0.079,
+          "horizon": "30 ans"
+        },
+        {
+          "nom": "MSCI Emerging Markets",
+          "montant_mensuel": 35,
+          "poids": 0.07,
+          "taux_historique": 0.06,
+          "horizon": "20 ans"
+        }
+      ],
+      "titres_vifs": [
+        {
+          "nom": "Air Liquide",
+          "actions": 20,
+          "PRU": 169,
+          "taux": 0.12,
+          "source": "officiel airliquide.com 20 ans",
+          "nominatif_administre": true,
+          "prime_fidelite": true
+        },
+        {
+          "nom": "Schneider Electric",
+          "actions": 5,
+          "PRU": 254,
+          "taux": 0.12,
+          "note": "prudent — 15,8%/an sur 10 ans"
+        },
+        {
+          "nom": "Legrand",
+          "actions": 4,
+          "PRU": 133.5,
+          "taux": 0.09
+        }
+      ]
+    },
+    "AV_Linxea_Spirit2": {
+      "assureur": "Spirica",
+      "ouverture": "janvier 2027",
+      "versement_mensuel": 200,
+      "clause_beneficiaire": "Gaspard 50% · Agathe 50%",
+      "allocation": {
+        "ETF_MSCI_World": 0.7,
+        "Fonds_Euro": 0.2,
+        "SCPI_Iroko_Zen": 0.1
+      },
+      "abattement_apres_8_ans": 4600,
+      "injection_heritage": {
+        "annee": 2037,
+        "montant": 60000
+      },
+      "arret_versements": {
+        "annee": 2044,
+        "raison": "FIRE — capitalisation pure jusqu'au décès"
+      },
+      "plafond_transmission_0_droits": 152500,
+      "fonds_euro_rendement_2025": 0.0308
+    },
+    "CTO_BoursoBank": {
+      "titulaire": "Sylvain (à son nom)",
+      "raison_boursobank": "Trade Republic ne permet pas la donation de titres avec changement de propriétaire",
+      "ouverture": "janvier 2027",
+      "versement_mensuel_initial": 80,
+      "injection_heritage": {
+        "annee": 2037,
+        "montant": 40000
+      },
+      "CTO_enfants": {
+        "Gaspard": "À ouvrir chez BoursoBank dès mai 2031 (majorité)",
+        "Agathe": "À ouvrir chez BoursoBank dès oct. 2033 (majorité)"
+      },
+      "mecanisme_donation": "Formulaire BoursoBank → transfert titres → CERFA 2735 sur impots.gouv.fr",
+      "purge_PV": true,
+      "frais_donation": 100
+    },
+    "PEE_Amundi": {
+      "versement_annuel": 3000,
+      "taux_hypothese": 0.07,
+      "valeur_brute_2044": 120000,
+      "valeur_nette_2044": 109000,
+      "fiscalite_sortie": "PS 17,2% sur gains uniquement — 0€ IR",
+      "rente_mensuelle_net": 318
+    },
+    "Bitcoin": {
+      "DCA_mensuel_2026": 50,
+      "DCA_mensuel_2027": 30,
+      "taux_modere": 0.08,
+      "valeur_2044_modere": 15000,
+      "valeur_2044_eleve": 174000,
+      "note": "Hypothèse basse conservatrice — trop volatile pour projection fiable"
+    }
+  },
+  "guides_pedagogiques": {
+    "rente": [
+      {
+        "titre": "Ce n'est pas un produit financier",
+        "corps": "Règle de retrait que tu t'appliques. Aucun contrat. 3,5%/an sur PEA+PEE+Bitcoin. Le reste croît à ~10%/an. Liberté totale de moduler."
+      },
+      {
+        "titre": "La règle des 3,5% — pourquoi ça tient",
+        "corps": "En modéré : tu retires ~16 500€/an, le PEA génère ~47 000€. Ton capital grossit malgré les retraits."
+      },
+      {
+        "titre": "Fiscalité à la sortie",
+        "corps": "PEA et PEE : 0€ IR — PS 17,2% sur gains uniquement. Bitcoin : Flat Tax 30% sur plus-values. Montants déjà nets dans la boussole."
+      },
+      {
+        "titre": "Le gap 61→64 ans",
+        "corps": "FIRE à 61 ans. Pension à 64 ans (Réel/Idéal) → 3 ans de gap sur capital. Liberté : pension à ~62 ans → 1 an de gap, ~48 000€ préservé."
+      },
+      {
+        "titre": "Flexibilité totale",
+        "corps": "Ne rien retirer → capital grossit pour les enfants. Stopper CTO pour voyages et plaisirs. La rente est un indicateur, pas un engagement."
+      }
+    ],
+    "nue_propriete": [
+      {
+        "titre": "Le démembrement",
+        "corps": "Tu gardes l'usufruit (habiter, louer). Tu donnes la nue-propriété. À ton décès, usufruit s'éteint → pleine propriété sans droits."
+      },
+      {
+        "titre": "Pourquoi 132K et pas 330K",
+        "corps": "Coefficient 40% (43 ans). Valable jusqu'à 51 ans. Plus tu es jeune, plus la valeur fiscale est basse."
+      },
+      {
+        "titre": "Économie réalisée",
+        "corps": "Sans : ~36 400€ de droits. Avec : 0€. Pour 4 730€ de frais notaire. Plus la maison prend de la valeur, plus l'économie grandit."
+      },
+      {
+        "titre": "Timing 2027",
+        "corps": "Abattement 100K rechargé tous les 15 ans. 2027 → rechargé 2042 (donation CTO). 2030 → rechargé 2045 (rate la CTO)."
+      }
+    ],
+    "assurance_vie": [
+      {
+        "titre": "Enveloppe fiscale",
+        "corps": "Capitalisation sans impôt. Bénéficiaires désignés reçoivent hors succession. Abattement 152 500€/bénéficiaire."
+      },
+      {
+        "titre": "Tu ne peux pas la donner de ton vivant",
+        "corps": "AV transmise uniquement au décès. Dans ta stratégie : AV réservée à la transmission, exclue de la rente."
+      }
+    ],
+    "donation_cto": [
+      {
+        "titre": "La purge de plus-value",
+        "corps": "Tu donnes les titres → PV s'effacent. Sans donation : Flat Tax 30%. Avec : 0%. Économie ~8 000€ sur la donation 2042."
+      },
+      {
+        "titre": "Pourquoi BoursoBank",
+        "corps": "Trade Republic ne permet pas la donation avec changement de propriétaire. BoursoBank gère ça nativement."
+      },
+      {
+        "titre": "Comment ça se passe",
+        "corps": "Formulaire BoursoBank → transfert ETF → CERFA 2735 sur impots.gouv.fr dans le mois. ~100€ de frais."
+      }
+    ]
+  }
+}
