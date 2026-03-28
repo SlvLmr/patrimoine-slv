@@ -10,15 +10,10 @@ const CATEGORIES_REVENUS = [
   'Remboursement', 'Vente', 'Autre'
 ];
 
-const BANK_ICON_PRIMARY = `<svg class="w-8 h-8 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/>
-  </svg>`;
-const BANK_ICON_SECONDARY = `<svg class="w-8 h-8 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
-  </svg>`;
-const BANK_ICON_EXTRA = `<svg class="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/>
-  </svg>`;
+const BANK_ICON_SVG = `<path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/>`;
+const BANK_ICON_PRIMARY = `<svg class="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
+const BANK_ICON_SECONDARY = `<svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
+const BANK_ICON_EXTRA = `<svg class="w-7 h-7 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
 const PENCIL_ICON = `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
 
 function getToday() {
@@ -259,16 +254,14 @@ export function render(store) {
       <div class="grid grid-cols-1 ${extraBanks.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-3">
         <!-- Primary bank -->
         <div class="card-dark rounded-xl overflow-hidden">
-          <div class="px-4 py-3 flex items-center gap-3 border-b border-dark-400/30">
+          <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
             ${BANK_ICON_PRIMARY}
-            <div class="flex-1">
-              <div class="flex items-center gap-1.5">
-                <p class="text-sm text-gray-400">Compte courant ${bankNames.primary}</p>
-                <button data-rename-bank="primary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50" title="Renommer">${PENCIL_ICON}</button>
-              </div>
-              <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(soldeCIC)}</p>
+            <div class="flex items-center gap-1.5 min-w-0">
+              <p class="text-sm text-gray-400 whitespace-nowrap">${bankNames.primary}</p>
+              <button data-rename-bank="primary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
             </div>
-            <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
+            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeCIC)}</p>
+            <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
             <span class="text-xs text-gray-500">${lblSoldeDebutCIC}</span>
@@ -323,16 +316,14 @@ export function render(store) {
 
         <!-- Secondary bank -->
         <div class="card-dark rounded-xl overflow-hidden">
-          <div class="px-4 py-3 flex items-center gap-3 border-b border-dark-400/30">
+          <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
             ${BANK_ICON_SECONDARY}
-            <div class="flex-1">
-              <div class="flex items-center gap-1.5">
-                <p class="text-sm text-gray-400">Compte courant ${bankNames.secondary}</p>
-                <button data-rename-bank="secondary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50" title="Renommer">${PENCIL_ICON}</button>
-              </div>
-              <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(soldeTR)}</p>
+            <div class="flex items-center gap-1.5 min-w-0">
+              <p class="text-sm text-gray-400 whitespace-nowrap">${bankNames.secondary}</p>
+              <button data-rename-bank="secondary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
             </div>
-            <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
+            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeTR)}</p>
+            <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
             <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
@@ -380,16 +371,14 @@ export function render(store) {
         ${extraBankData.map(bank => `
         <!-- Extra bank: ${bank.name} -->
         <div class="card-dark rounded-xl overflow-hidden">
-          <div class="px-4 py-3 flex items-center gap-3 border-b border-dark-400/30">
+          <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
             ${BANK_ICON_EXTRA}
-            <div class="flex-1">
-              <div class="flex items-center gap-1.5">
-                <p class="text-sm text-gray-400">Compte courant ${bank.name}</p>
-                <button data-rename-bank="extra-${bank.id}" class="text-gray-600 hover:text-cyan-400 transition p-0.5 rounded hover:bg-dark-600/50" title="Renommer">${PENCIL_ICON}</button>
-              </div>
-              <p class="text-xl font-bold text-gray-100">${formatCurrencyCents(bank.solde)}</p>
+            <div class="flex items-center gap-1.5 min-w-0">
+              <p class="text-sm text-gray-400 whitespace-nowrap">${bank.name}</p>
+              <button data-rename-bank="extra-${bank.id}" class="text-gray-600 hover:text-cyan-400 transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
             </div>
-            <div class="flex items-center gap-2">
+            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(bank.solde)}</p>
+            <div class="flex items-center gap-2 flex-shrink-0">
               <button data-edit-solde="${bank.ccId}" class="text-xs text-gray-500 hover:text-cyan-400 transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
               <button data-remove-bank="${bank.id}" class="text-xs text-gray-500 hover:text-accent-red transition px-2 py-1 rounded hover:bg-dark-600/50" title="Supprimer cette banque">✕</button>
             </div>

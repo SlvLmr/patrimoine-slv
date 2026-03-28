@@ -15,19 +15,23 @@ export function render(store) {
   const emprunts = store.get('passifs.emprunts') || [];
 
   const liveSoldes = computeLiveSoldes(store);
-  const comptesLive = comptes.map(c => ({
-    nom: c.nom,
-    id: c.id,
-    solde: c.id === 'cc-cic' ? liveSoldes.cic : c.id === 'cc-trade' ? liveSoldes.tr : (Number(c.solde) || 0)
-  }));
+  const extraBanks = bankNames.extra || [];
+  const comptesLive = comptes.map(c => {
+    if (c.id === 'cc-cic') return { ...c, solde: liveSoldes.cic };
+    if (c.id === 'cc-trade') return { ...c, solde: liveSoldes.tr };
+    const extraId = c.id.replace('cc-', '');
+    if (liveSoldes[extraId] !== undefined) return { ...c, solde: liveSoldes[extraId] };
+    return { ...c, solde: Number(c.solde) || 0 };
+  });
 
-  // Split comptes by bank
-  const cicComptes = comptesLive.filter(c => c.id === 'cc-cic');
-  const trComptes = comptesLive.filter(c => c.id === 'cc-trade');
-  const otherComptes = comptesLive.filter(c => c.id !== 'cc-cic' && c.id !== 'cc-trade');
-  const totalCIC = cicComptes.reduce((s, c) => s + c.solde, 0);
-  const totalTR = trComptes.reduce((s, c) => s + c.solde, 0);
-  const totalOther = otherComptes.reduce((s, c) => s + c.solde, 0);
+  // Build bank cards list: CIC, TR, then extra banks
+  const bankCards = [
+    { id: 'cc-cic', label: bankNames.primary, solde: comptesLive.find(c => c.id === 'cc-cic')?.solde || 0 },
+    { id: 'cc-trade', label: bankNames.secondary, solde: comptesLive.find(c => c.id === 'cc-trade')?.solde || 0 },
+    ...extraBanks.map(b => ({
+      id: 'cc-' + b.id, label: b.name, solde: comptesLive.find(c => c.id === 'cc-' + b.id)?.solde || 0
+    }))
+  ];
 
   const totalCC = comptesLive.reduce((s, c) => s + c.solde, 0);
   const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
@@ -219,15 +223,12 @@ export function render(store) {
           <!-- Ligne 3 : CIC + TR | comptes épargne -->
           <div class="grid grid-cols-2 gap-2">
             <!-- Sous Comptes Courants -->
-            <div class="grid grid-cols-2 gap-1.5">
-              <div id="ptf-card-cic" class="card-dark rounded-xl p-2.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold">${bankNames.primary}</p>
-                <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalCIC)}</p>
-              </div>
-              <div id="ptf-card-tr" class="card-dark rounded-xl p-2.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold whitespace-nowrap">${bankNames.secondary}</p>
-                <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalTR)}</p>
-              </div>
+            <div class="grid grid-cols-${bankCards.length > 3 ? '3' : bankCards.length} gap-1.5">
+              ${bankCards.map((b, i) => `
+              <div id="ptf-card-bank-${i}" class="card-dark rounded-xl p-2.5">
+                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold whitespace-nowrap truncate">${b.label}</p>
+                <p class="text-sm font-bold text-indigo-400 text-center">${fmt(b.solde)}</p>
+              </div>`).join('')}
             </div>
             <!-- Sous Épargne -->
             <div class="grid grid-cols-${epargne.length > 2 ? '3' : epargne.length || 1} gap-1.5">
@@ -460,11 +461,12 @@ export function mount() {
       ['glow-indigo2', 'glow-indigo2']
     );
 
-    // Level 3 → 4 Left-Left: Comptes Courants → CIC + Trade Republic
+    // Level 3 → 4 Left-Left: Comptes Courants → bank cards (dynamic)
+    const bankCardIds = [...document.querySelectorAll('[id^="ptf-card-bank-"]')].map(el => el.id);
     drawConnectors('ptf-svg-L3LL-svg', 'ptf-svg-L3LL',
-      ['ptf-card-cic', 'ptf-card-tr'],
-      ['#6366f1', '#6366f1'],
-      ['glow-indigo3a', 'glow-indigo3a']
+      bankCardIds,
+      bankCardIds.map(() => '#6366f1'),
+      bankCardIds.map(() => 'glow-indigo3a')
     );
 
     // Level 3 → 4 Left-Right: Épargne → individual savings accounts
