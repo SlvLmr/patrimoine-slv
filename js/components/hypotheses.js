@@ -433,7 +433,7 @@ let _boussoleData = null;
 async function loadBoussoleData() {
   if (_boussoleData) return _boussoleData;
   try {
-    const resp = await fetch('./data/boussole-data.json');
+    const resp = await fetch('./data/boussole-data.json?v=20260328f');
     _boussoleData = await resp.json();
   } catch (e) { console.error('Boussole data load error:', e); }
   return _boussoleData;
