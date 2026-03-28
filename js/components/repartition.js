@@ -36,6 +36,8 @@ function getGroupStyle(gk) {
 // Get DCA for a given year from a placement
 function getDcaForYear(placement, year) {
   const baseDca = Number(placement.dcaMensuel) || 0;
+  const finAnnee = Number(placement.dcaFinAnnee) || 0;
+  if (finAnnee > 0 && year > finAnnee) return 0;
   const overrides = (placement.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear);
   if (!overrides.length) return baseDca;
   let applicable = baseDca;

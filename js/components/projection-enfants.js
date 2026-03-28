@@ -158,19 +158,37 @@ function computeChildProjection(enfant, horizonYears, store) {
     const periodFraction = monthsInPeriod / 12;
 
     livretTotal *= (1 + avgLivretRate * periodFraction);
+    const calYear = currentYear + y;
     for (const k of groupKeys) {
-      const monthlyDca = groups[k].reduce((s, p) => s + (Number(p.dcaMensuel) || 0), 0);
+      // Compute effective monthly DCA respecting overrides and end year
+      const monthlyDca = groups[k].reduce((s, p) => {
+        const baseDca = Number(p.dcaMensuel) || 0;
+        const finAnnee = Number(p.dcaFinAnnee) || 0;
+        if (finAnnee > 0 && calYear > finAnnee) return s;
+        const overrides = (p.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear);
+        let applicable = baseDca;
+        for (const ov of overrides) {
+          if (ov.fromYear <= calYear) applicable = Number(ov.dcaMensuel) || 0;
+        }
+        return s + applicable;
+      }, 0);
       const rend = groups[k].reduce((s, p) => {
         const r = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
         return Math.max(s, r);
       }, DEFAULT_RENDEMENT);
       const periodDca = monthlyDca * monthsInPeriod;
-      gVal[k] = gVal[k] * (1 + rend * periodFraction) + periodDca;
-      gApp[k] += periodDca;
+      // Cash injections for this year
+      const cashInj = groups[k].reduce((s, p) => {
+        return s + (p.cashInjections || [])
+          .filter(inj => inj.year === calYear)
+          .reduce((ss, inj) => ss + (Number(inj.montant) || 0), 0);
+      }, 0);
+      gVal[k] = gVal[k] * (1 + rend * periodFraction) + periodDca + cashInj;
+      gApp[k] += periodDca + cashInj;
     }
 
     // Inject donations after growth
-    const donation = donationsByYear[currentYear + y] || 0;
+    const donation = donationsByYear[calYear] || 0;
 
     const placTotal = groupKeys.reduce((s, k) => s + gVal[k], 0);
     const totalApports = groupKeys.reduce((s, k) => s + gApp[k], 0);
@@ -556,22 +574,156 @@ function drawCompareChart(enfants, store) {
 // ─── Placement modal ─────────────────────────────────────────────────────────
 
 function buildPlacementForm(item = {}) {
+  const currentYear = new Date().getFullYear();
+  const overrides = item.dcaOverrides || [];
+  const overridesHtml = overrides.map((o, i) => `
+    <div class="flex items-center gap-2 dca-override-row" data-idx="${i}">
+      <div class="flex-1">
+        <input type="number" class="dca-ov-year w-full input-field" value="${o.fromYear || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
+      </div>
+      <span class="text-gray-500 text-xs">→</span>
+      <div class="flex-1">
+        <input type="number" class="dca-ov-amount w-full input-field" value="${o.dcaMensuel || ''}" placeholder="€/mois" step="10">
+      </div>
+      <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+    </div>
+  `).join('');
+
+  const injections = item.cashInjections || [];
+  const injectionsHtml = injections.map((inj, i) => `
+    <div class="flex items-center gap-2 cash-inj-row" data-idx="${i}">
+      <div class="flex-1">
+        <input type="number" class="cash-inj-year w-full input-field" value="${inj.year || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
+      </div>
+      <span class="text-gray-500 text-xs">→</span>
+      <div class="flex-1">
+        <input type="number" class="cash-inj-amount w-full input-field text-accent-green" value="${inj.montant || ''}" placeholder="Montant €" step="100">
+      </div>
+      <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+    </div>
+  `).join('');
+
   return `<div class="space-y-3">
     ${inputField('nom', 'Nom du titre', item.nom || '', 'text', 'placeholder="Ex: MSCI World ETF"')}
     <div class="grid grid-cols-2 gap-3">
       ${selectField('enveloppe', 'Enveloppe', CHILD_ENVELOPPES, item.enveloppe || 'CTO')}
       ${selectField('categorie', 'Catégorie', CHILD_CATEGORIES, item.categorie || 'ETF')}
     </div>
+    ${inputField('isin', 'ISIN / Ticker', item.isin || '', 'text', 'placeholder="Ex: LU1681043599"')}
+    ${inputField('dateOuverture', "Date d'ouverture de l'enveloppe", item.dateOuverture || '', 'date')}
     <div class="grid grid-cols-2 gap-3">
-      ${inputField('quantite', 'Quantité', item.quantite || '', 'number', 'step="0.0001"')}
-      ${inputField('pru', 'PRU (\u20ac)', item.pru || '', 'number', 'step="0.01"')}
+      ${inputField('quantite', 'Quantité', item.quantite || '', 'number', 'step="0.0001" placeholder="Ex: 15.5"')}
+      ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
     </div>
-    <div class="grid grid-cols-2 gap-3">
-      ${inputField('apport', 'Apport total (\u20ac)', item.apport || '', 'number', 'step="1"')}
-      ${inputField('valeur', 'Valeur actuelle (\u20ac)', item.valeur || '', 'number', 'step="1"')}
+    ${inputField('valeur', 'Valeur totale actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
+
+    <div class="mt-2 pt-3 border-t border-dark-400/30">
+      <p class="text-sm font-medium text-gray-300 mb-3">Investissement programmé</p>
+      ${inputField('apport', 'Apport initial (€)', item.apport || '', 'number', 'step="100" placeholder="Capital de départ"')}
+      <div class="grid grid-cols-2 gap-3">
+        ${inputField('dcaMensuel', 'DCA mensuel (€/mois)', item.dcaMensuel || '', 'number', 'step="10" placeholder="Apport mensuel"')}
+        ${inputField('dcaFinAnnee', 'Fin du DCA (année)', item.dcaFinAnnee || '', 'number', `step="1" min="${currentYear}" max="${currentYear + 50}" placeholder="Illimité"`)}
+      </div>
+
+      <div class="mt-2">
+        <label class="block text-xs font-medium text-gray-400 mb-1.5">Modifier le DCA par période</label>
+        <div id="dca-overrides-list" class="space-y-2 mb-2">
+          ${overridesHtml}
+        </div>
+        <button type="button" id="btn-add-dca-override" class="text-xs text-accent-blue hover:text-accent-blue/80 font-medium">+ Ajouter une période</button>
+        <p class="text-xs text-gray-600 mt-1">Ex: À partir de 2030, passer le DCA à 500€/mois</p>
+      </div>
+
+      <div class="mt-3">
+        <label class="block text-xs font-medium text-gray-400 mb-1.5">Apports exceptionnels</label>
+        <div id="cash-injections-list" class="space-y-2 mb-2">
+          ${injectionsHtml}
+        </div>
+        <button type="button" id="btn-add-cash-injection" class="text-xs text-accent-green hover:text-accent-green/80 font-medium">+ Ajouter un apport</button>
+        <p class="text-xs text-gray-600 mt-1">Ex: En 2029, injecter 5 000€ en une fois</p>
+      </div>
     </div>
-    ${inputField('dcaMensuel', 'DCA mensuel (\u20ac/mois)', item.dcaMensuel || '', 'number', 'step="1"')}
   </div>`;
+}
+
+function collectChildDcaOverrides() {
+  const rows = document.querySelectorAll('.dca-override-row');
+  const overrides = [];
+  rows.forEach(row => {
+    const year = parseInt(row.querySelector('.dca-ov-year')?.value);
+    const amount = parseFloat(row.querySelector('.dca-ov-amount')?.value);
+    if (year > 0 && !isNaN(amount)) {
+      overrides.push({ fromYear: year, dcaMensuel: amount });
+    }
+  });
+  return overrides.sort((a, b) => a.fromYear - b.fromYear);
+}
+
+function collectChildCashInjections() {
+  const rows = document.querySelectorAll('.cash-inj-row');
+  const injections = [];
+  rows.forEach(row => {
+    const year = parseInt(row.querySelector('.cash-inj-year')?.value);
+    const montant = parseFloat(row.querySelector('.cash-inj-amount')?.value);
+    if (year > 0 && !isNaN(montant) && montant !== 0) {
+      injections.push({ year, montant });
+    }
+  });
+  return injections.sort((a, b) => a.year - b.year);
+}
+
+function initChildPlacementFormListeners(modal) {
+  const currentYear = new Date().getFullYear();
+
+  // Auto-calc Quantité × PRU = Valeur
+  const qtyInput = modal.querySelector('#field-quantite');
+  const pruInput = modal.querySelector('#field-pru');
+  const valInput = modal.querySelector('#field-valeur');
+  if (qtyInput && pruInput && valInput) {
+    const autoCalc = () => {
+      const q = parseFloat(qtyInput.value) || 0;
+      const p = parseFloat(pruInput.value) || 0;
+      if (q > 0 && p > 0) valInput.value = (q * p).toFixed(2);
+    };
+    qtyInput.addEventListener('input', autoCalc);
+    pruInput.addEventListener('input', autoCalc);
+  }
+
+  // DCA override add/remove
+  modal.querySelector('#btn-add-dca-override')?.addEventListener('click', () => {
+    const list = modal.querySelector('#dca-overrides-list');
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2 dca-override-row';
+    row.innerHTML = `
+      <div class="flex-1"><input type="number" class="dca-ov-year w-full input-field" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1"></div>
+      <span class="text-gray-500 text-xs">→</span>
+      <div class="flex-1"><input type="number" class="dca-ov-amount w-full input-field" placeholder="€/mois" step="10"></div>
+      <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+    `;
+    row.querySelector('.dca-ov-remove').addEventListener('click', () => row.remove());
+    list.appendChild(row);
+  });
+  modal.querySelectorAll('.dca-ov-remove').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.dca-override-row').remove());
+  });
+
+  // Cash injection add/remove
+  modal.querySelector('#btn-add-cash-injection')?.addEventListener('click', () => {
+    const list = modal.querySelector('#cash-injections-list');
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2 cash-inj-row';
+    row.innerHTML = `
+      <div class="flex-1"><input type="number" class="cash-inj-year w-full input-field" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1"></div>
+      <span class="text-gray-500 text-xs">→</span>
+      <div class="flex-1"><input type="number" class="cash-inj-amount w-full input-field text-accent-green" placeholder="Montant €" step="100"></div>
+      <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+    `;
+    row.querySelector('.cash-inj-remove').addEventListener('click', () => row.remove());
+    list.appendChild(row);
+  });
+  modal.querySelectorAll('.cash-inj-remove').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
+  });
 }
 
 // ─── Scenario modal ─────────────────────────────────────────────────────────
@@ -695,8 +847,10 @@ export function mount(store, navigate) {
 
   // Add placement
   document.getElementById('pe-add-plac')?.addEventListener('click', () => {
-    openModal('Ajouter un placement', buildPlacementForm(), () => {
+    const modal = openModal('Ajouter un placement', buildPlacementForm(), () => {
       const data = getFormData(document.getElementById('modal-body'));
+      data.dcaOverrides = collectChildDcaOverrides();
+      data.cashInjections = collectChildCashInjections();
       const enfs = getEnfants(store);
       if (!enfs[idx]) return;
       if (!enfs[idx].placements) enfs[idx].placements = [];
@@ -705,6 +859,7 @@ export function mount(store, navigate) {
       saveEnfants(store, enfs);
       refresh();
     });
+    if (modal) initChildPlacementFormListeners(modal);
   });
 
   // Edit placement (click on name)
@@ -715,11 +870,14 @@ export function mount(store, navigate) {
       const enfs = getEnfants(store);
       const item = (enfs[ci]?.placements || []).find(p => p.id === pid);
       if (!item) return;
-      openModal('Modifier le placement', buildPlacementForm(item), () => {
+      const modal = openModal('Modifier le placement', buildPlacementForm(item), () => {
         Object.assign(item, getFormData(document.getElementById('modal-body')));
+        item.dcaOverrides = collectChildDcaOverrides();
+        item.cashInjections = collectChildCashInjections();
         saveEnfants(store, enfs);
         refresh();
       });
+      if (modal) initChildPlacementFormListeners(modal);
     });
   });
 

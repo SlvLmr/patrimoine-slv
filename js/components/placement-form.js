@@ -85,7 +85,10 @@ export function buildPlacementFormBody(item) {
     <div id="dca-section" class="${isPEE ? 'hidden' : ''} mt-2 pt-3 border-t border-dark-400/30">
       <p class="text-sm font-medium text-gray-300 mb-3">Investissement programmé</p>
       ${inputField('apport', 'Apport initial (€)', item.apport || '', 'number', 'step="100" placeholder="Capital de départ"')}
-      ${inputField('dcaMensuel', 'DCA mensuel (€/mois)', item.dcaMensuel || '', 'number', 'step="10" placeholder="Apport mensuel automatisé"')}
+      <div class="grid grid-cols-2 gap-3">
+        ${inputField('dcaMensuel', 'DCA mensuel (€/mois)', item.dcaMensuel || '', 'number', 'step="10" placeholder="Apport mensuel"')}
+        ${inputField('dcaFinAnnee', 'Fin du DCA (année)', item.dcaFinAnnee || '', 'number', `step="1" min="${currentYear}" max="${currentYear + 50}" placeholder="Illimité"`)}
+      </div>
 
       <div class="mt-2">
         <label class="block text-xs font-medium text-gray-400 mb-1.5">Modifier le DCA par période</label>

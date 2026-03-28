@@ -115,7 +115,11 @@ export function getPlacementGroupKey(p) {
 // Get the applicable DCA for a given year for a placement
 function getDcaForYear(placement, year) {
   const baseDca = Number(placement.dcaMensuel) || 0;
-  const overrides = placement.dcaOverrides || [];
+  // Stop DCA after end year
+  const finAnnee = Number(placement.dcaFinAnnee) || 0;
+  if (finAnnee > 0 && year > finAnnee) return 0;
+
+  const overrides = (placement.dcaOverrides || []).sort((a, b) => a.fromYear - b.fromYear);
   if (!overrides.length) return baseDca;
 
   // Find the most recent override that applies (fromYear <= year)
@@ -495,8 +499,20 @@ export function computeProjection(store) {
         } else if (isSurplusDest) {
           surplus += amount;
         } else {
-          destSim.value += amount;
-          destSim.totalApports += amount;
+          // Respect PEA/AV ceiling on capital transfers
+          const destIsPEA = destSim.groupKey.startsWith('PEA');
+          const destIsAV = destSim.groupKey === 'Assurance Vie';
+          if (destIsPEA) {
+            amount = Math.min(amount, Math.max(0, PEA_PLAFOND - peaApportsCumules));
+          }
+          if (destIsAV) {
+            amount = Math.min(amount, Math.max(0, AV_PLAFOND - getAvTotalValue()));
+          }
+          if (amount > 0) {
+            destSim.value += amount;
+            destSim.totalApports += amount;
+            if (destIsPEA) peaApportsCumules += amount;
+          }
         }
       }
     }
