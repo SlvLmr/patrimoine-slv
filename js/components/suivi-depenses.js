@@ -74,6 +74,24 @@ export function render(store) {
     _prev._migrated = true;
     store.set('soldeMoisPrecedent', _prev);
   }
+
+  // Migration v2: TR features were baked into soldePrev but not reset
+  // → subtract them from soldePrev and zero them out
+  const _prev2 = store.get('soldeMoisPrecedent') || {};
+  if (!_prev2._migratedTR) {
+    const _trF = store.get('trFeatures') || {};
+    const _trInt = Number(_trF.interets) || 0;
+    const _trRnd = Number(_trF.roundup) || 0;
+    if (_trInt || _trRnd) {
+      _prev2.tr = (Number(_prev2.tr) || 0) - _trInt + _trRnd;
+      _trF.interets = 0;
+      _trF.saveback = 0;
+      _trF.roundup = 0;
+      store.set('trFeatures', _trF);
+    }
+    _prev2._migratedTR = true;
+    store.set('soldeMoisPrecedent', _prev2);
+  }
   // Init depenses mensuelles from defaults if not present
   if (!store.get('depensesMensuellesCIC')) {
     store.set('depensesMensuellesCIC', JSON.parse(JSON.stringify(DEPENSES_MENSUELLES_CIC)));
