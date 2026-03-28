@@ -258,11 +258,11 @@ export function mount(store, navigate) {
 
     const totalPlacements = snap.placements || 0;
 
-    updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
-    updateActions(snap);
-    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear);
-    updateDonut(snap, groupKeys, calYear);
-    updateTable(dcaByPlacement, snap, totalPlacements, calYear);
+    try { updateKPI(totalDCA, nbWithDCA, snap, totalPlacements); } catch(e) { console.error('updateKPI error:', e); }
+    try { updateActions(snap); } catch(e) { console.error('updateActions error:', e); }
+    try { updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear); } catch(e) { console.error('updateFlow error:', e); }
+    try { updateDonut(snap, groupKeys, calYear); } catch(e) { console.error('updateDonut error:', e); }
+    try { updateTable(dcaByPlacement, snap, totalPlacements, calYear); } catch(e) { console.error('updateTable error:', e); }
   }
 
   function updateKPI(totalDCA, nbWithDCA, snap, totalPlacements) {
@@ -705,6 +705,10 @@ export function mount(store, navigate) {
         entries.push({ gk, value });
       }
     });
+    // Also include Épargne and Immobilier in allocation
+    if (snap.epargne > 0) entries.push({ gk: 'Épargne', value: snap.epargne });
+    if (snap.immobilier > 0) entries.push({ gk: 'Immobilier', value: snap.immobilier });
+
     entries.sort((a, b) => b.value - a.value);
 
     const allEntries = [...entries];
