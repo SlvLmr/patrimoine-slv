@@ -429,66 +429,21 @@ export function render(store) {
 
       ${archives.length > 0 ? `
       <!-- Archives -->
-      <div class="card-dark rounded-xl">
-        <div class="px-5 py-4">
-          <h2 class="text-sm font-semibold text-gray-400">Archives mensuelles</h2>
-        </div>
-        <!-- Tableau récapitulatif -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-dark-400/30">
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mois</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Revenus</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Dépenses</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Solde ${bankNames.primary}</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Solde ${bankNames.secondary}</th>
-                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ops</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-dark-400/20">
-              ${archives.sort((a, b) => b.mois.localeCompare(a.mois)).map(a => {
-                const label = new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-                const rev = a.totalRevenus || 0;
-                const dep = a.total || 0;
-                const balance = rev - dep;
-                const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
-                return `
-              <tr class="hover:bg-dark-600/30 transition group cursor-pointer archive-row" data-mois="${a.mois}">
-                <td class="px-4 py-2.5">
-                  <span class="text-gray-200 capitalize font-medium">${label}</span>
-                </td>
-                <td class="px-4 py-2.5 text-right">
-                  <span class="text-accent-green font-medium">${formatCurrencyCents(rev)}</span>
-                </td>
-                <td class="px-4 py-2.5 text-right">
-                  <span class="text-accent-red font-medium">${formatCurrencyCents(dep)}</span>
-                </td>
-                <td class="px-4 py-2.5 text-right">
-                  <span class="font-semibold ${balance >= 0 ? 'text-accent-green' : 'text-accent-red'}">${balance >= 0 ? '+' : ''}${formatCurrencyCents(balance)}</span>
-                </td>
-                <td class="px-4 py-2.5 text-right">
-                  <span class="text-gray-300 font-medium">${a.soldeFinalCIC !== undefined ? formatCurrencyCents(a.soldeFinalCIC) : '—'}</span>
-                </td>
-                <td class="px-4 py-2.5 text-right">
-                  <span class="text-gray-300 font-medium">${a.soldeFinalTR !== undefined ? formatCurrencyCents(a.soldeFinalTR) : '—'}</span>
-                </td>
-                <td class="px-4 py-2.5 text-center">
-                  <span class="text-xs text-gray-500">${a.count}</span>
-                </td>
-              </tr>
-              ${cats.length > 0 ? `
-              <tr class="bg-dark-800/30">
-                <td colspan="7" class="px-4 py-1.5">
-                  <div class="flex flex-wrap gap-1">${cats.map(([cat, val]) =>
-                    `<span class="text-[10px] px-1.5 py-0.5 rounded bg-dark-600/50 text-gray-500">${cat} ${formatCurrencyCents(val)}</span>`
-                  ).join('')}</div>
-                </td>
-              </tr>` : ''}`;
-              }).join('')}
-            </tbody>
-          </table>
+      <div class="card-dark rounded-xl px-5 py-4">
+        <h2 class="text-sm font-semibold text-gray-400 mb-3">Archives mensuelles</h2>
+        <div class="space-y-1">
+          ${archives.sort((a, b) => b.mois.localeCompare(a.mois)).map(a => {
+            const label = new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            const balance = (a.totalRevenus || 0) - (a.total || 0);
+            return `
+          <div class="flex items-center justify-between px-4 py-2.5 rounded-lg hover:bg-dark-600/30 transition cursor-pointer archive-row" data-mois="${a.mois}">
+            <span class="text-sm text-gray-200 capitalize font-medium">${label}</span>
+            <div class="flex items-center gap-6">
+              <span class="text-xs font-medium ${balance >= 0 ? 'text-accent-green' : 'text-accent-red'}">${balance >= 0 ? '+' : ''}${formatCurrencyCents(balance)}</span>
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </div>
+          </div>`;
+          }).join('')}
         </div>
       </div>
       ` : ''}
