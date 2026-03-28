@@ -73,16 +73,50 @@ const defaultState = {
     pensionTauxLegal: 0,
     ageRetraiteSouhaitee: 62
   },
-  // Rendement profiles: Faible / Modéré / Élevé
+  // Rendement profiles: Faible / Modéré / Élevé — taux par groupe d'enveloppe
   profilRendement: 'modere',
   profilsRendement: {
-    faible: { label: 'Faible', rendementPlacements: 0.04, rendementImmobilier: 0.01, rendementEpargne: 0.015, inflation: 0.025 },
-    modere: { label: 'Modéré', rendementPlacements: 0.07, rendementImmobilier: 0.02, rendementEpargne: 0.02, inflation: 0.02 },
-    eleve: { label: 'Élevé', rendementPlacements: 0.10, rendementImmobilier: 0.03, rendementEpargne: 0.025, inflation: 0.015 }
+    faible: {
+      label: 'Faible', icon: '🐻',
+      rendementImmobilier: 0.01, rendementEpargne: 0.015, inflation: 0.025,
+      rendementGroupes: {
+        'PEA ETF': 0.065, 'PEA Actions': 0.08, 'Crypto': 0, 'PEE': 0.05, 'Assurance Vie': 0.04, 'CTO': 0.065
+      }
+    },
+    modere: {
+      label: 'Modéré', icon: '📊',
+      rendementImmobilier: 0.02, rendementEpargne: 0.02, inflation: 0.02,
+      rendementGroupes: {
+        'PEA ETF': 0.10, 'PEA Actions': 0.12, 'Crypto': 0.08, 'PEE': 0.07, 'Assurance Vie': 0.065, 'CTO': 0.08
+      }
+    },
+    eleve: {
+      label: 'Élevé', icon: '🚀',
+      rendementImmobilier: 0.03, rendementEpargne: 0.025, inflation: 0.015,
+      rendementGroupes: {
+        'PEA ETF': 0.125, 'PEA Actions': 0.15, 'Crypto': 0.30, 'PEE': 0.09, 'Assurance Vie': 0.08, 'CTO': 0.125
+      }
+    }
   },
   // Scenarios: named configurations with overrides
-  scenarioActif: null,
-  scenarios: []
+  scenarioActif: 'reel',
+  scenarios: [
+    {
+      id: 'reel', nom: 'Réel', color: 'blue',
+      description: '900€/mois investis. Pension État à 64 ans. Gap FIRE→pension : 3 ans.',
+      dcaMensuelTotal: 900, pensionAge: 64, rachatTrimestres: 0
+    },
+    {
+      id: 'ideal', nom: 'Idéal', color: 'emerald',
+      description: '1 050€/mois investis. Même pension à 64 ans. 2e cycle donation CTO possible.',
+      dcaMensuelTotal: 1050, pensionAge: 64, rachatTrimestres: 0
+    },
+    {
+      id: 'liberte', nom: 'Liberté', color: 'amber',
+      description: 'Rachat 12 trimestres (~46 000€). Pension à ~62 ans (taux plein). Gap FIRE→pension : 1 an.',
+      dcaMensuelTotal: 900, pensionAge: 62, rachatTrimestres: 12, coutRachat: 46000
+    }
+  ]
 };
 
 function generateId() {

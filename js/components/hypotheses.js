@@ -148,9 +148,36 @@ function c(color) {
 // ─── Rendement profiles & Scenarios ──────────────────────────────────────────
 
 const DEFAULT_PROFILES = {
-  faible: { label: 'Faible', rendementPlacements: 0.04, rendementImmobilier: 0.01, rendementEpargne: 0.015, inflation: 0.025 },
-  modere: { label: 'Modéré', rendementPlacements: 0.07, rendementImmobilier: 0.02, rendementEpargne: 0.02, inflation: 0.02 },
-  eleve: { label: 'Élevé', rendementPlacements: 0.10, rendementImmobilier: 0.03, rendementEpargne: 0.025, inflation: 0.015 }
+  faible: {
+    label: 'Faible', icon: '🐻',
+    rendementImmobilier: 0.01, rendementEpargne: 0.015, inflation: 0.025,
+    rendementGroupes: { 'PEA ETF': 0.065, 'PEA Actions': 0.08, 'Crypto': 0, 'PEE': 0.05, 'Assurance Vie': 0.04, 'CTO': 0.065 }
+  },
+  modere: {
+    label: 'Modéré', icon: '📊',
+    rendementImmobilier: 0.02, rendementEpargne: 0.02, inflation: 0.02,
+    rendementGroupes: { 'PEA ETF': 0.10, 'PEA Actions': 0.12, 'Crypto': 0.08, 'PEE': 0.07, 'Assurance Vie': 0.065, 'CTO': 0.08 }
+  },
+  eleve: {
+    label: 'Élevé', icon: '🚀',
+    rendementImmobilier: 0.03, rendementEpargne: 0.025, inflation: 0.015,
+    rendementGroupes: { 'PEA ETF': 0.125, 'PEA Actions': 0.15, 'Crypto': 0.30, 'PEE': 0.09, 'Assurance Vie': 0.08, 'CTO': 0.125 }
+  }
+};
+
+const DEFAULT_SCENARIOS = [
+  { id: 'reel', nom: 'Réel', color: 'blue', description: '900€/mois investis. Pension État à 64 ans. Gap FIRE→pension : 3 ans.', dcaMensuelTotal: 900, pensionAge: 64, rachatTrimestres: 0 },
+  { id: 'ideal', nom: 'Idéal', color: 'emerald', description: '1 050€/mois investis. Même pension à 64 ans. 2e cycle donation CTO possible.', dcaMensuelTotal: 1050, pensionAge: 64, rachatTrimestres: 0 },
+  { id: 'liberte', nom: 'Liberté', color: 'amber', description: 'Rachat 12 trimestres (~46 000€). Pension à ~62 ans (taux plein). Gap FIRE→pension : 1 an.', dcaMensuelTotal: 900, pensionAge: 62, rachatTrimestres: 12, coutRachat: 46000 }
+];
+
+const RENDEMENT_GROUP_LABELS = {
+  'PEA ETF': 'PEA ETF',
+  'PEA Actions': 'PEA Actions',
+  'Crypto': 'Crypto',
+  'PEE': 'PEE',
+  'Assurance Vie': 'Assurance Vie',
+  'CTO': 'CTO'
 };
 
 function getProfiles(store) {
@@ -162,7 +189,8 @@ function getActiveProfile(store) {
 }
 
 function getScenarios(store) {
-  return store.get('scenarios') || [];
+  const sc = store.get('scenarios');
+  return (sc && sc.length > 0) ? sc : JSON.parse(JSON.stringify(DEFAULT_SCENARIOS));
 }
 
 function getActiveScenario(store) {
@@ -190,7 +218,7 @@ function profileToOverrides(profiles, profileId) {
   const p = profiles[profileId];
   if (!p) return {};
   return {
-    rendementPlacements: p.rendementPlacements,
+    rendementGroupes: p.rendementGroupes || {},
     rendementImmobilier: p.rendementImmobilier,
     rendementEpargne: p.rendementEpargne,
     inflation: p.inflation
@@ -218,13 +246,8 @@ function renderProfileSelector(store) {
   const profiles = getProfiles(store);
   const active = getActiveProfile(store);
   const profileKeys = Object.keys(profiles);
-
-  const icons = {
-    faible: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>',
-    modere: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>',
-    eleve: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>'
-  };
   const colors = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
+  const groupOrder = ['PEA ETF', 'PEA Actions', 'Crypto', 'PEE', 'Assurance Vie', 'CTO'];
 
   return `
     <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
@@ -232,7 +255,7 @@ function renderProfileSelector(store) {
         <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
           <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
             </svg>
           </div>
           Hypothèse de rendement
@@ -247,21 +270,34 @@ function renderProfileSelector(store) {
           const p = profiles[key];
           const isActive = key === active;
           const clr = colors[key] || 'gray';
+          const icon = p.icon || '';
+          const rg = p.rendementGroupes || {};
           return `
-          <button class="profil-btn group relative rounded-xl border p-4 text-center transition-all duration-200
+          <button class="profil-btn group relative rounded-xl border p-4 transition-all duration-200
             ${isActive
               ? `border-${clr}-500/40 bg-${clr}-500/10 shadow-lg shadow-${clr}-500/10`
               : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-profil="${key}">
-            <div class="flex items-center justify-center mb-2">
-              <div class="w-9 h-9 rounded-xl ${isActive ? `bg-${clr}-500/20 border border-${clr}-500/30` : 'bg-dark-600/50 border border-dark-400/15'} flex items-center justify-center transition">
-                <svg class="w-4.5 h-4.5 ${isActive ? `text-${clr}-400` : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[key] || icons.modere}</svg>
-              </div>
+            <div class="text-center mb-3">
+              <span class="text-lg">${icon}</span>
+              <p class="text-sm font-bold ${isActive ? `text-${clr}-400` : 'text-gray-400'} mt-1">${p.label}</p>
             </div>
-            <p class="text-xs font-bold ${isActive ? `text-${clr}-400` : 'text-gray-400'}">${p.label}</p>
-            <div class="mt-2 space-y-0.5">
-              <p class="text-[10px] ${isActive ? 'text-gray-300' : 'text-gray-600'}">Placements : ${(p.rendementPlacements * 100).toFixed(0)}%</p>
-              <p class="text-[10px] ${isActive ? 'text-gray-300' : 'text-gray-600'}">Immo : ${(p.rendementImmobilier * 100).toFixed(0)}%</p>
-              <p class="text-[10px] ${isActive ? 'text-gray-300' : 'text-gray-600'}">Inflation : ${(p.inflation * 100).toFixed(1)}%</p>
+            <div class="space-y-1 text-left">
+              ${groupOrder.map(gk => {
+                const val = rg[gk];
+                return val !== undefined ? `<div class="flex items-center justify-between">
+                  <span class="text-[9px] ${isActive ? 'text-gray-400' : 'text-gray-600'}">${gk}</span>
+                  <span class="text-[10px] font-mono font-medium ${isActive ? 'text-gray-200' : 'text-gray-500'}">${(val * 100).toFixed(1)}%</span>
+                </div>` : '';
+              }).join('')}
+              <div class="h-px bg-dark-400/15 my-1"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-[9px] ${isActive ? 'text-gray-400' : 'text-gray-600'}">Immo</span>
+                <span class="text-[10px] font-mono font-medium ${isActive ? 'text-gray-200' : 'text-gray-500'}">${((p.rendementImmobilier || 0) * 100).toFixed(1)}%</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[9px] ${isActive ? 'text-gray-400' : 'text-gray-600'}">Inflation</span>
+                <span class="text-[10px] font-mono font-medium ${isActive ? 'text-gray-200' : 'text-gray-500'}">${((p.inflation || 0) * 100).toFixed(1)}%</span>
+              </div>
             </div>
             ${isActive ? `<div class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-${clr}-500 flex items-center justify-center shadow-lg"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>` : ''}
           </button>`;
@@ -270,89 +306,108 @@ function renderProfileSelector(store) {
     </div>`;
 }
 
-// ─── Scenario selector + comparison ──────────────────────────────────────────
+// ─── Scenario selector + comparison table ────────────────────────────────────
 
 function renderScenarioSection(store) {
   const scenarios = getScenarios(store);
   const activeId = getActiveScenario(store);
   const profiles = getProfiles(store);
   const activeProfile = getActiveProfile(store);
+  const params = store.get('parametres') || {};
+  const ageFinAnnee = params.ageFinAnnee || 43;
+  const cfg = getDonationConfig(store);
+  const nbEnfants = (cfg.enfants || []).length || 1;
 
-  if (scenarios.length === 0) {
-    return `
-    <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-          </div>
-          Scénarios de vie
-        </h2>
-        <button id="btn-add-scenario" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
-          Créer un scénario
-        </button>
-      </div>
-      <div class="text-center py-6">
-        <p class="text-gray-500 text-sm">Aucun scénario pour le moment</p>
-        <p class="text-gray-600 text-xs mt-1">Crée des scénarios (Réel, Idéal, Liberté...) pour comparer tes projections</p>
-      </div>
-    </div>`;
-  }
-
-  // Build comparison table
+  // Build comparison table: 3 columns = 3 profiles, for the active scenario
   let comparisonHtml = '';
   try {
-    const projections = {};
-    // Base projection (no scenario overrides)
-    const baseSnaps = computeProjection(store, profileToOverrides(profiles, activeProfile));
-    projections['_base'] = baseSnaps;
-    scenarios.forEach(sc => {
+    const profileKeys = ['faible', 'modere', 'eleve'];
+    const profileColors = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
+    const projByProfile = {};
+    profileKeys.forEach(pk => {
       try {
-        projections[sc.id] = computeScenarioProjection(store, sc, activeProfile);
-      } catch(e) { projections[sc.id] = []; }
+        projByProfile[pk] = computeProjection(store, profileToOverrides(profiles, pk));
+      } catch(e) { projByProfile[pk] = []; }
     });
 
-    // Milestones: 5, 10, 15, 20, 25, 30 years
-    const milestones = [5, 10, 15, 20, 25, 30].filter(m => m <= (baseSnaps.length - 1));
+    // Find the FIRE year snapshot (age 61 = ageFinAnnee + offset)
+    const fireAge = 61;
+    const fireOffset = fireAge - ageFinAnnee;
+    // Find age 70 offset for AV
+    const av70Offset = 70 - ageFinAnnee;
+
+    // Extract key data from each profile projection
+    function extractData(snaps, offset) {
+      const snap = snaps[Math.min(Math.max(0, offset), snaps.length - 1)];
+      if (!snap) return null;
+      const pd = snap.placementDetail || {};
+      const pea = (pd['PEA'] || 0) + (pd['PEA ETF'] || 0) + (pd['PEA Actions'] || 0);
+      const pee = pd['PEE'] || 0;
+      const crypto = pd['Crypto'] || 0;
+      const av = pd['Assurance Vie'] || 0;
+      const cto = pd['CTO'] || 0;
+      // Capital rente = PEA + PEE + Crypto (net PS 17.2% on gains for PEA/PEE, 30% flat for crypto)
+      const capitalRente = pea + pee + crypto;
+      const renteMois = Math.round(capitalRente * 0.035 / 12);
+      return { pea, pee, crypto, av, cto, capitalRente, renteMois, patrimoineNet: snap.patrimoineNet || 0 };
+    }
+
+    const dataByProfile = {};
+    profileKeys.forEach(pk => {
+      dataByProfile[pk] = {
+        fire: extractData(projByProfile[pk], fireOffset),
+        av70: extractData(projByProfile[pk], av70Offset)
+      };
+    });
+
+    const rows = [
+      { label: 'Capital FIRE (61 ans)', key: 'patrimoineNet', source: 'fire', icon: '🏖️' },
+      { label: 'Capital rente (PEA+PEE+Crypto)', key: 'capitalRente', source: 'fire', icon: '💰' },
+      { label: 'Rente nette/mois (3,5%)', key: 'renteMois', source: 'fire', icon: '📈', suffix: '/mois' },
+      { label: 'PEA à 61 ans', key: 'pea', source: 'fire', icon: '📊' },
+      { label: 'Assurance Vie à 61 ans', key: 'av', source: 'fire', icon: '🛡️' },
+      { label: 'AV à 70 ans', key: 'av', source: 'av70', icon: '🛡️' },
+      { label: 'PEE net à 61 ans', key: 'pee', source: 'fire', icon: '🏢' },
+      { label: 'Crypto à 61 ans', key: 'crypto', source: 'fire', icon: '₿' },
+    ];
 
     comparisonHtml = `
       <div class="overflow-x-auto mt-4 -mx-1">
         <table class="w-full text-xs">
           <thead>
             <tr class="border-b border-dark-400/20">
-              <th class="text-left py-2 px-2 text-gray-500 font-medium text-[10px] uppercase tracking-wider">Horizon</th>
-              <th class="text-right py-2 px-2 text-gray-500 font-medium text-[10px] uppercase tracking-wider">Base actuelle</th>
-              ${scenarios.map(sc => `<th class="text-right py-2 px-2 font-medium text-[10px] uppercase tracking-wider ${sc.id === activeId ? 'text-blue-400' : 'text-gray-500'}">${sc.nom}</th>`).join('')}
+              <th class="text-left py-2 px-2 text-gray-500 font-medium text-[10px] uppercase tracking-wider"></th>
+              ${profileKeys.map(pk => {
+                const p = profiles[pk];
+                const clr = profileColors[pk];
+                const isActive = pk === activeProfile;
+                return `<th class="text-right py-2 px-2 font-medium text-[10px] uppercase tracking-wider ${isActive ? `text-${clr}-400` : 'text-gray-500'}">
+                  ${p?.icon || ''} ${p?.label || pk}
+                </th>`;
+              }).join('')}
             </tr>
           </thead>
           <tbody>
-            ${milestones.map(m => {
-              const baseSnap = baseSnaps[m];
-              const baseNet = baseSnap?.patrimoineNet || 0;
-              return `
+            ${rows.map(row => `
               <tr class="border-b border-dark-400/10 hover:bg-dark-700/20 transition">
-                <td class="py-2.5 px-2 text-gray-400 font-medium">+${m} ans</td>
-                <td class="py-2.5 px-2 text-right text-gray-300 tabular-nums font-medium">${formatCurrency(baseNet)}</td>
-                ${scenarios.map(sc => {
-                  const scSnaps = projections[sc.id] || [];
-                  const scSnap = scSnaps[m];
-                  const scNet = scSnap?.patrimoineNet || 0;
-                  const diff = scNet - baseNet;
-                  const diffColor = diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-gray-500';
-                  return `<td class="py-2.5 px-2 text-right">
-                    <span class="text-gray-200 tabular-nums font-medium">${formatCurrency(scNet)}</span>
-                    ${diff !== 0 ? `<br/><span class="text-[9px] ${diffColor} tabular-nums">${diff > 0 ? '+' : ''}${formatCurrency(diff)}</span>` : ''}
+                <td class="py-2.5 px-2 text-gray-400 font-medium whitespace-nowrap">
+                  <span class="mr-1">${row.icon}</span>${row.label}
+                </td>
+                ${profileKeys.map(pk => {
+                  const d = dataByProfile[pk]?.[row.source];
+                  const val = d ? d[row.key] : 0;
+                  const clr = profileColors[pk];
+                  const isActive = pk === activeProfile;
+                  return `<td class="py-2.5 px-2 text-right tabular-nums ${isActive ? `text-${clr}-400 font-bold` : 'text-gray-300 font-medium'}">
+                    ${formatCurrency(val)}${row.suffix || ''}
                   </td>`;
                 }).join('')}
-              </tr>`;
-            }).join('')}
+              </tr>`).join('')}
           </tbody>
         </table>
-      </div>`;
-  } catch(e) { comparisonHtml = ''; }
+      </div>
+      <p class="text-[9px] text-gray-600 mt-2 italic">AV et CTO sont exclus de la rente — réservés à la transmission.</p>`;
+  } catch(e) { console.error('Comparison table error:', e); }
 
   return `
     <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
@@ -383,9 +438,9 @@ function renderScenarioSection(store) {
               : 'border-dark-400/20 text-gray-500 hover:border-dark-400/40 hover:text-gray-300'}" data-scenario-id="${sc.id}">
             <span class="w-2 h-2 rounded-full bg-${scColor}-400"></span>
             ${sc.nom}
-            <button class="scenario-edit ml-1 p-0.5 rounded hover:bg-dark-600/80 transition" data-scenario-id="${sc.id}" title="Modifier">
+            <span class="scenario-edit ml-1 p-0.5 rounded hover:bg-dark-600/80 transition cursor-pointer" data-scenario-id="${sc.id}" title="Modifier">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            </button>
+            </span>
           </button>`;
         }).join('')}
       </div>
@@ -394,16 +449,22 @@ function renderScenarioSection(store) {
       ${activeId ? (() => {
         const sc = scenarios.find(s => s.id === activeId);
         if (!sc) return '';
+        const badges = [];
+        if (sc.dcaMensuelTotal) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">${sc.dcaMensuelTotal}€/mois investis</span>`);
+        if (sc.pensionAge) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">Pension à ${sc.pensionAge} ans</span>`);
+        if (sc.rachatTrimestres > 0) badges.push(`<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">Rachat ${sc.rachatTrimestres} trimestres (~${formatCurrency(sc.coutRachat || 0)})</span>`);
         return `
         <div class="rounded-xl border border-dark-400/15 bg-dark-800/30 p-4 mb-3">
-          <p class="text-xs text-gray-400 leading-relaxed">${sc.description || 'Aucune description'}</p>
-          ${sc.dcaMultiplier !== undefined && sc.dcaMultiplier !== 1 ? `<span class="inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">DCA ×${sc.dcaMultiplier}</span>` : ''}
-          ${sc.rendementPlacements !== undefined ? `<span class="inline-block mt-2 ml-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Rend. ${(sc.rendementPlacements * 100).toFixed(0)}%</span>` : ''}
+          <p class="text-xs text-gray-400 leading-relaxed">${sc.description || ''}</p>
+          ${badges.length > 0 ? `<div class="flex flex-wrap gap-1.5 mt-2">${badges.join('')}</div>` : ''}
         </div>`;
       })() : ''}
 
-      <!-- Comparison table -->
-      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2 mb-1">Comparaison patrimoine net</h3>
+      <!-- Comparison table: 3 profiles as columns -->
+      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2 mb-1 flex items-center gap-2">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        Tableau comparatif par hypothèse
+      </h3>
       ${comparisonHtml}
     </div>`;
 }
@@ -469,33 +530,39 @@ function getScenarioFormHtml(scenario = null) {
 
 function getProfileEditHtml(profiles) {
   const keys = Object.keys(profiles);
+  const groupOrder = ['PEA ETF', 'PEA Actions', 'Crypto', 'PEE', 'Assurance Vie', 'CTO'];
   return `
     <div class="space-y-4">
       ${keys.map(key => {
         const p = profiles[key];
+        const rg = p.rendementGroupes || {};
         return `
         <div class="rounded-xl border border-dark-400/15 bg-dark-800/30 p-4">
-          <h3 class="text-sm font-bold text-gray-200 mb-3">${p.label}</h3>
-          <div class="grid grid-cols-2 gap-3">
+          <h3 class="text-sm font-bold text-gray-200 mb-3">${p.icon || ''} ${p.label}</h3>
+          <p class="text-[10px] text-gray-600 uppercase tracking-wider font-semibold mb-2">Rendement par enveloppe</p>
+          <div class="grid grid-cols-3 gap-2">
+            ${groupOrder.map(gk => `
             <div>
-              <label class="block text-[10px] text-gray-500 mb-1">Rend. placements (%)</label>
-              <input type="number" step="0.5" min="0" max="30" value="${(p.rendementPlacements * 100).toFixed(1)}"
-                class="w-full input-field text-sm" data-profil="${key}" data-field="rendementPlacements"/>
+              <label class="block text-[9px] text-gray-500 mb-0.5">${gk}</label>
+              <input type="number" step="0.5" min="0" max="50" value="${((rg[gk] || 0) * 100).toFixed(1)}"
+                class="w-full input-field text-xs" data-profil="${key}" data-group="${gk}"/>
+            </div>`).join('')}
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-2">
+            <div>
+              <label class="block text-[9px] text-gray-500 mb-0.5">Immobilier</label>
+              <input type="number" step="0.5" min="0" max="20" value="${((p.rendementImmobilier || 0) * 100).toFixed(1)}"
+                class="w-full input-field text-xs" data-profil="${key}" data-field="rendementImmobilier"/>
             </div>
             <div>
-              <label class="block text-[10px] text-gray-500 mb-1">Rend. immobilier (%)</label>
-              <input type="number" step="0.5" min="0" max="20" value="${(p.rendementImmobilier * 100).toFixed(1)}"
-                class="w-full input-field text-sm" data-profil="${key}" data-field="rendementImmobilier"/>
+              <label class="block text-[9px] text-gray-500 mb-0.5">Épargne</label>
+              <input type="number" step="0.1" min="0" max="10" value="${((p.rendementEpargne || 0) * 100).toFixed(1)}"
+                class="w-full input-field text-xs" data-profil="${key}" data-field="rendementEpargne"/>
             </div>
             <div>
-              <label class="block text-[10px] text-gray-500 mb-1">Rend. épargne (%)</label>
-              <input type="number" step="0.1" min="0" max="10" value="${(p.rendementEpargne * 100).toFixed(1)}"
-                class="w-full input-field text-sm" data-profil="${key}" data-field="rendementEpargne"/>
-            </div>
-            <div>
-              <label class="block text-[10px] text-gray-500 mb-1">Inflation (%)</label>
-              <input type="number" step="0.1" min="0" max="10" value="${(p.inflation * 100).toFixed(1)}"
-                class="w-full input-field text-sm" data-profil="${key}" data-field="inflation"/>
+              <label class="block text-[9px] text-gray-500 mb-0.5">Inflation</label>
+              <input type="number" step="0.1" min="0" max="10" value="${((p.inflation || 0) * 100).toFixed(1)}"
+                class="w-full input-field text-xs" data-profil="${key}" data-field="inflation"/>
             </div>
           </div>
         </div>`;
@@ -1429,12 +1496,23 @@ export function mount(store, navigate) {
     const profiles = getProfiles(store);
     openModal('Personnaliser les profils de rendement', getProfileEditHtml(profiles), () => {
       const updated = JSON.parse(JSON.stringify(profiles));
+      // Save per-field values (immobilier, épargne, inflation)
       document.querySelectorAll('[data-profil][data-field]').forEach(input => {
         const key = input.dataset.profil;
         const field = input.dataset.field;
         const val = parseFloat(input.value);
         if (!isNaN(val) && updated[key]) {
           updated[key][field] = val / 100;
+        }
+      });
+      // Save per-group rendement values
+      document.querySelectorAll('[data-profil][data-group]').forEach(input => {
+        const key = input.dataset.profil;
+        const group = input.dataset.group;
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && updated[key]) {
+          if (!updated[key].rendementGroupes) updated[key].rendementGroupes = {};
+          updated[key].rendementGroupes[group] = val / 100;
         }
       });
       saveProfiles(store, updated);

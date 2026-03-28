@@ -177,13 +177,25 @@ export function computeProjection(store, overrides = {}) {
   // Build per-placement simulation state
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjectionsParams = params.cashInjections || {};
-  const overrideRendPlac = overrides.rendementPlacements; // global override for all placements
+  // Per-group rendement overrides from profile (e.g. { 'PEA ETF': 0.10, 'CTO': 0.08, ... })
+  const overrideRendGroupes = overrides.rendementGroupes || {};
+  const overrideRendPlac = overrides.rendementPlacements; // global fallback override
   const placSims = state.actifs.placements.map(p => {
     const gk = getPlacementGroupKey(p);
-    // Priority: scenario override > per-placement override > placement's own rendement > fallback
+    // Determine sub-group for profile matching:
+    // PEA Actions = individual stocks in PEA (Air Liquide, Schneider, Legrand, etc.)
+    // PEA ETF = ETFs in PEA
+    const isPEA = gk.startsWith('PEA');
+    const isAction = isPEA && !p.isin?.startsWith?.('IE') && !p.isin?.startsWith?.('LU') && !p.isin?.startsWith?.('FR001') && (p.isAirLiquide || p.quantite > 0);
+    const profileGroupKey = isPEA ? (isAction ? 'PEA Actions' : 'PEA ETF') : gk;
+    // Priority: per-group profile override > global override > per-placement override > placement's own rendement > fallback
     const defaultRend = params.rendementPlacementsDefaut || 0.05;
     let rend;
-    if (overrideRendPlac !== undefined) {
+    if (overrideRendGroupes[profileGroupKey] !== undefined) {
+      rend = overrideRendGroupes[profileGroupKey];
+    } else if (overrideRendGroupes[gk] !== undefined) {
+      rend = overrideRendGroupes[gk];
+    } else if (overrideRendPlac !== undefined) {
       rend = overrideRendPlac;
     } else if (rendementPlacements[p.id] !== undefined) {
       rend = rendementPlacements[p.id];
