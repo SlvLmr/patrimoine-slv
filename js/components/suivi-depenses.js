@@ -530,7 +530,10 @@ export function mount(store, navigate) {
     const finalSoldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
     const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-    const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR - depTR;
+    const trFeats = store.get('trFeatures') || {};
+    const trInt = Number(trFeats.interets) || 0;
+    const trRnd = Number(trFeats.roundup) || 0;
+    const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR + trInt - depTR - trRnd;
 
     // Extra banks final soldes
     const extraFinals = {};
