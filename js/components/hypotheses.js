@@ -421,8 +421,8 @@ function getFormHtml(themes, item = null, enfants = []) {
           <option value="abatt_immo" ${(item?.donationType || 'abatt_immo') === 'abatt_immo' ? 'selected' : ''}>Abattement Immobilier — nue-propriété (100 000 \u20ac cumulés)</option>
           <option value="abatt_cash" ${item?.donationType === 'abatt_cash' ? 'selected' : ''}>Abattement Cash (100 000 \u20ac cumulés)</option>
           <option value="abatt_cto" ${item?.donationType === 'abatt_cto' ? 'selected' : ''}>Abattement CTO (100 000 \u20ac cumulés)</option>
-          <option value="don_tepa" ${item?.donationType === 'don_tepa' ? 'selected' : ''}>Donation Loi Sarkozy (31 865 \u20ac, < 80 ans)</option>
-          <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Donation Assurance Vie (152 500 \u20ac, < 70 ans)</option>
+          <option value="don_tepa" ${item?.donationType === 'don_tepa' ? 'selected' : ''}>Donation Loi Sarkozy (31 865 \u20ac, renouvelable /15 ans, < 80 ans)</option>
+          <option value="av_donation" ${item?.donationType === 'av_donation' ? 'selected' : ''}>Donation Assurance Vie (152 500 \u20ac au décès, primes < 70 ans)</option>
         </select>
       </div>
       <!-- Child assignment (shown only for donation theme) -->
@@ -662,6 +662,7 @@ function renderChildGauges(enfant, gauges, color) {
           </div>
           <div class="flex items-center justify-between mt-1">
             <p class="text-[10px] font-medium ${gauges.abattRestant > 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(gauges.abattRestant)} restant</p>
+            <p class="text-[9px] text-gray-600">Renouvelable tous les 15 ans</p>
           </div>
           ${abattDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(abattDroits)}</p>` : ''}
         </div>
@@ -680,6 +681,7 @@ function renderChildGauges(enfant, gauges, color) {
           </div>
           <div class="flex items-center justify-between mt-1">
             <p class="text-[10px] font-medium ${gauges.isTepaAvailable ? 'text-cyan-400' : 'text-gray-500'}">${formatCurrency(gauges.tepaRestant)} disponible ${gauges.isTepaAvailable ? '' : '<span class="text-red-400/70">(donateur > 80 ans)</span>'}</p>
+            <p class="text-[9px] text-gray-600">Renouvelable tous les 15 ans</p>
           </div>
           ${tepaDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(tepaDroits)}</p>` : ''}
         </div>
@@ -689,7 +691,7 @@ function renderChildGauges(enfant, gauges, color) {
           <div class="flex items-center justify-between text-xs mb-1.5">
             <span class="text-gray-300 flex items-center gap-1.5 font-medium">
               <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              Donation Assurance Vie
+              Donation Assurance Vie <span class="text-[9px] text-gray-500 font-normal ml-1">(au décès)</span>
             </span>
             <span class="text-gray-400 font-mono text-[11px]">${formatCurrency(gauges.avUtilise)} / ${formatCurrency(AV_ABATTEMENT_PAR_BENEFICIAIRE)}</span>
           </div>
@@ -697,7 +699,8 @@ function renderChildGauges(enfant, gauges, color) {
             <div class="h-full rounded-full transition-all duration-500 ${gauges.avPct >= 100 ? 'bg-gradient-to-r from-red-500 to-red-400' : gauges.avPct >= 50 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-purple-500 to-purple-400'}" style="width: ${Math.min(100, gauges.avPct)}%"></div>
           </div>
           <div class="flex items-center justify-between mt-1">
-            <p class="text-[10px] font-medium ${gauges.isAVAvailable ? 'text-purple-400' : 'text-gray-500'}">${formatCurrency(gauges.avRestant)} disponible ${gauges.isAVAvailable ? '' : '<span class="text-red-400/70">(donateur > 70 ans)</span>'}</p>
+            <p class="text-[10px] font-medium ${gauges.isAVAvailable ? 'text-purple-400' : 'text-gray-500'}">${formatCurrency(gauges.avRestant)} disponible</p>
+            <p class="text-[9px] text-gray-600">Primes versées avant 70 ans</p>
           </div>
           ${avDroits > 0 ? `<p class="text-[9px] text-red-400/70 mt-0.5">Droits sur excédent : ${formatCurrency(avDroits)} (prélèvement spécifique AV)</p>` : ''}
         </div>
