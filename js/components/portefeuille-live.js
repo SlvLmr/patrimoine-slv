@@ -276,28 +276,24 @@ export function render(store) {
           </div>
           ${totalPEA > 0 && l3PEA.length > 0 ? `
           <!-- SVG PEA → Actions + ETF -->
-          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-1">
-            <div id="ptf-svg-L3C-pea" class="hidden lg:block" style="height:30px;">
-              <svg id="ptf-svg-L3C-pea-svg" class="w-full" style="height:30px;" fill="none">
-                <defs><filter id="glow-amber3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
-              </svg>
-            </div>
+          <div id="ptf-svg-L3C-pea" class="hidden lg:block" style="height:30px;">
+            <svg id="ptf-svg-L3C-pea-svg" class="w-full" style="height:30px;" fill="none">
+              <defs><filter id="glow-amber3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
+            </svg>
           </div>
-          <!-- Ligne 3 sous PEA: Actions + ETF -->
-          <div class="grid grid-cols-${l2Envelopes.length || 1} gap-1">
-            <div class="grid grid-cols-${l3PEA.length} gap-1">
-              ${l3PEA.map(sub => `
-              <details id="ptf-card-${sub.id}" class="card-dark rounded-xl p-1.5 group/sub">
-                <summary class="cursor-pointer select-none" style="list-style:none">
-                  <div class="flex items-center justify-between mb-0.5">
-                    <p class="text-[7px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
-                    <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/sub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                  </div>
-                  <p class="text-xs font-bold text-accent-amber text-center whitespace-nowrap">${fmt(sub.total)}</p>
-                </summary>
-                <div class="space-y-1 mt-1">${placList(sub.items, 'bg-accent-amber/50')}</div>
-              </details>`).join('')}
-            </div>
+          <!-- Ligne 3 sous PEA: Actions + ETF (full width) -->
+          <div class="grid grid-cols-${l3PEA.length} gap-1">
+            ${l3PEA.map(sub => `
+            <details id="ptf-card-${sub.id}" class="card-dark rounded-xl p-2 group/sub">
+              <summary class="cursor-pointer select-none" style="list-style:none">
+                <div class="flex items-center justify-between mb-0.5">
+                  <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
+                  <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/sub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <p class="text-sm font-bold text-accent-amber text-center">${fmt(sub.total)}</p>
+              </summary>
+              <div class="space-y-1 mt-1">${placList(sub.items, 'bg-accent-amber/50')}</div>
+            </details>`).join('')}
           </div>` : ''}
         </div>
 
