@@ -142,8 +142,9 @@ export function render(store) {
   const aRecupererNDF = budgetNDF - ndfTR;
   const sommeARecuperer = 39.99 + ndfTR;
 
-  // Solde obligatoire TR = sum of restant invest + restant PEA + NDF values
-  const soldeObligTR = restantInvestTR + restantPEATR + sommeARecuperer + aRecupererNDF;
+  // Solde obligatoire TR = restant invest + restant PEA + budget quotidien
+  const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 700);
+  const soldeObligTR = restantInvestTR + restantPEATR + budgetQuotidien;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -162,7 +163,6 @@ export function render(store) {
   const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   // Enveloppe restante pour quotidien = budget quotidien - (dépenses rouges + virements sortants TR)
-  const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 700);
   const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
@@ -1302,7 +1302,7 @@ export function mount(store, navigate) {
                  + subLine(m.lblSoldeObligCIC || 'Solde obligatoire', m.soldeObligCIC || 0, 'text-amber-400');
       } else if (isSecondary) {
         subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', m.soldePrevTR || 0);
-        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + (m.budgetQuotidien || 0);
+        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetQuotidien || 0);
         subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
         subLines += subLine(m.lblRestantInvest || '- Restant pour Invest.', m.restantInvestTR || 0);
         subLines += subLine(m.lblRestantPEA || '- Restant pour PEA', m.restantPEATR || 0);
