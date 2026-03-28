@@ -1,4 +1,5 @@
 import { formatCurrency, openModal, computeProjection, getPlacementGroupKey } from '../utils.js?v=6';
+import { createChart, destroyChart, legendStrikethroughPlugin } from '../charts/chart-config.js';
 
 // ============================================================================
 // HYPOTHÈSES — Plan théorique éditable
@@ -254,7 +255,7 @@ function renderScenarioSection(store) {
 
   // Build comparison table: 3 columns = 3 profiles, for the active scenario
   let comparisonHtml = '';
-  try {
+  try { throw 0; // Comparison table now uses boussole-data.json — see fillComparisonTable()
     const profileKeys = ['faible', 'modere', 'eleve'];
     const profileColors = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
     const projByProfile = {};
@@ -423,15 +424,377 @@ function renderScenarioSection(store) {
         <div class="col-span-3 text-center"><span class="text-[9px] text-gray-600 uppercase tracking-widest font-semibold">Hypothèses de rendement</span></div>
       </div>
 
-      <!-- Divider -->
-      <div class="h-px bg-gradient-to-r from-transparent via-dark-400/30 to-transparent mb-4"></div>
+    </div>`;
+}
 
-      <!-- Comparison table -->
-      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-        Tableau comparatif par hypothèse
-      </h3>
-      ${comparisonHtml}
+// ─── Boussole data loader ───────────────────────────────────────────────────
+
+let _boussoleData = null;
+async function loadBoussoleData() {
+  if (_boussoleData) return _boussoleData;
+  try {
+    const resp = await fetch('./data/boussole-data.json');
+    _boussoleData = await resp.json();
+  } catch (e) { console.error('Boussole data load error:', e); }
+  return _boussoleData;
+}
+
+// ─── Projection chart (Chart.js) ────────────────────────────────────────────
+
+function buildProjectionChart(store, boussole, activeProfileKey) {
+  const canvas = document.getElementById('hyp-proj-chart');
+  if (!canvas) return;
+
+  const profiles = getProfiles(store);
+  const overrides = profileToOverrides(profiles, activeProfileKey);
+  let snapshots = [];
+  try { snapshots = computeProjection(store, overrides); } catch (e) { /* no data */ }
+
+  const currentYear = new Date().getFullYear();
+  const startYear = 2026;
+  const endYear = 2047;
+
+  let labels = [];
+  let peaData = [], avData = [], ctoData = [], peeData = [], btcData = [];
+
+  const hasStoreData = snapshots.length > 0 && snapshots.some(s => (s.placements || 0) > 100);
+
+  if (hasStoreData) {
+    for (let y = startYear; y <= endYear; y++) {
+      const offset = y - currentYear;
+      if (offset < 0 || offset >= snapshots.length) continue;
+      const snap = snapshots[offset];
+      labels.push(y);
+      const pd = snap.placementDetail || {};
+      peaData.push(Math.round((pd['PEA'] || 0) + (pd['PEA ETF'] || 0) + (pd['PEA Actions'] || 0) + (pd['PEA Autre'] || 0)));
+      avData.push(Math.round(pd['Assurance Vie'] || 0));
+      ctoData.push(Math.round(pd['CTO'] || 0));
+      peeData.push(Math.round(pd['PEE'] || 0));
+      btcData.push(Math.round(pd['Crypto'] || 0));
+    }
+  } else if (boussole.frise_projections?.annees) {
+    // Fallback: use JSON frise data (modéré reference)
+    boussole.frise_projections.annees.forEach(f => {
+      if (f.annee < startYear || f.annee > endYear) return;
+      labels.push(f.annee);
+      peaData.push(f.PEA || 0);
+      avData.push(f.AV || 0);
+      ctoData.push(f.CTO || 0);
+      peeData.push(f.PEE || 0);
+      btcData.push(f.BTC || 0);
+    });
+  }
+
+  if (labels.length === 0) return;
+
+  // Profile label
+  const profileLabel = document.getElementById('hyp-proj-profile-label');
+  if (profileLabel) {
+    const p = profiles[activeProfileKey];
+    profileLabel.textContent = `${p?.icon || ''} ${p?.label || activeProfileKey}${hasStoreData ? '' : ' (réf. boussole)'}`;
+  }
+
+  // Jalons annotations
+  const jalons = boussole.frise_projections?.jalons_cles || [];
+  const annotations = {};
+  jalons.forEach((j, i) => {
+    if (j.annee < startYear || j.annee > endYear) return;
+    annotations[`j${i}`] = {
+      type: 'line',
+      xMin: String(j.annee),
+      xMax: String(j.annee),
+      borderColor: j.color + '88',
+      borderWidth: 2,
+      borderDash: [6, 3],
+      label: {
+        display: true,
+        content: j.label,
+        position: i % 2 === 0 ? 'start' : 'end',
+        backgroundColor: 'rgba(26,26,34,0.95)',
+        color: j.color,
+        font: { size: 10, family: 'Inter', weight: '600' },
+        padding: { top: 3, bottom: 3, left: 6, right: 6 },
+        borderRadius: 6
+      }
+    };
+  });
+
+  destroyChart('hyp-proj-chart');
+  createChart('hyp-proj-chart', {
+    type: 'line',
+    data: {
+      labels: labels.map(String),
+      datasets: [
+        { label: 'PEA', data: peaData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5 },
+        { label: 'Assurance Vie', data: avData, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5 },
+        { label: 'CTO', data: ctoData, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5 },
+        { label: 'PEE', data: peeData, borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5 },
+        { label: 'Bitcoin', data: btcData, borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5 },
+      ]
+    },
+    options: {
+      interaction: { intersect: false, mode: 'index' },
+      scales: {
+        x: { grid: { color: 'rgba(72,72,82,0.2)' }, ticks: { color: '#7a7a88', font: { size: 10, family: 'Inter' }, maxRotation: 0 } },
+        y: { grid: { color: 'rgba(72,72,82,0.2)' }, ticks: { color: '#7a7a88', font: { size: 10, family: 'Inter' }, callback: v => v >= 1000 ? `${Math.round(v / 1000)}K` : v }, beginAtZero: true }
+      },
+      plugins: {
+        annotation: { annotations },
+        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#e5e7eb', font: { size: 11, family: 'Inter' } } }
+      }
+    },
+    plugins: [legendStrikethroughPlugin]
+  });
+}
+
+// ─── Comparison table from boussole-data.json ───────────────────────────────
+
+function fillComparisonTable(boussole, activeProfile) {
+  const container = document.getElementById('hyp-comparison-body');
+  if (!container || !boussole?.hypotheses) return;
+
+  const hyp = boussole.hypotheses;
+  const keys = ['faible', 'modere', 'eleve'];
+  const colorMap = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
+
+  const rows = [
+    { label: 'PEA total', key: 'PEA_total', icon: '📊' },
+    { label: 'PEE net', key: 'PEE_net', icon: '🏢' },
+    { label: 'Bitcoin', key: 'Bitcoin', icon: '₿' },
+    { label: 'Capital rente (PEA+PEE+BTC)', key: 'capital_rente_net', icon: '💰', highlight: true },
+    { label: 'Rente nette/mois (3,5%)', key: 'rente_mensuelle_nette', icon: '📈', suffix: '/mois', highlight: true },
+    { label: 'AV à 61 ans', key: 'AV_61_ans', icon: '🛡️' },
+    { label: 'AV à 70 ans', key: 'AV_70_ans', icon: '🛡️' },
+    { label: 'Transmis par enfant', key: 'total_transmis_par_enfant', icon: '🎁', highlight: true },
+  ];
+
+  container.innerHTML = `
+    <div class="overflow-x-auto -mx-1">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="border-b border-dark-400/20">
+            <th class="text-left py-2.5 px-2 text-gray-500 font-medium text-[10px] uppercase tracking-wider"></th>
+            ${keys.map(k => {
+              const p = hyp[k];
+              const clr = colorMap[k];
+              const isActive = k === activeProfile;
+              return `<th class="text-right py-2.5 px-3 font-medium text-[10px] uppercase tracking-wider ${isActive ? `text-${clr}-400` : 'text-gray-500'}">
+                ${p.label}${isActive ? ' ✓' : ''}
+              </th>`;
+            }).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr class="border-b border-dark-400/10 ${row.highlight ? 'bg-dark-700/20' : ''} hover:bg-dark-700/30 transition">
+              <td class="py-2.5 px-2 text-gray-400 font-medium whitespace-nowrap">
+                <span class="mr-1.5">${row.icon}</span>${row.label}
+              </td>
+              ${keys.map(k => {
+                const d = hyp[k].resultats_61_ans;
+                const val = d?.[row.key] || 0;
+                const clr = colorMap[k];
+                const isActive = k === activeProfile;
+                return `<td class="py-2.5 px-3 text-right tabular-nums ${isActive ? `text-${clr}-400 font-bold` : 'text-gray-300 font-medium'} ${row.highlight ? 'text-sm' : ''}">
+                  ${formatCurrency(val)}${row.suffix || ''}
+                </td>`;
+              }).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-3 space-y-0.5">
+      ${keys.map(k => `<p class="text-[9px] text-gray-600 italic">${hyp[k].label} : ${hyp[k].note}</p>`).join('')}
+    </div>
+    <p class="text-[9px] text-gray-500 mt-2 font-medium">Rente 3,5 % sur PEA + PEE + Bitcoin uniquement — AV et CTO exclus (réservés transmission). Montants nets de taxes.</p>`;
+}
+
+// ─── Transmission section from boussole-data.json ───────────────────────────
+
+let _transmissionTab = null;
+
+function fillTransmissionSection(boussole, store) {
+  const container = document.getElementById('hyp-transmission-body');
+  if (!container || !boussole?.scenarios) return;
+
+  const scenarios = boussole.scenarios;
+  const scenarioKeys = ['reel', 'ideal', 'liberte'];
+  const activeKey = _transmissionTab || getActiveScenario(store) || 'reel';
+  const colorMap = { reel: 'blue', ideal: 'emerald', liberte: 'amber' };
+
+  const tabsHtml = scenarioKeys.map(k => {
+    const sc = scenarios[k];
+    const isActive = k === activeKey;
+    const clr = colorMap[k];
+    return `<button class="hyp-tr-tab px-4 py-2 rounded-lg text-xs font-semibold transition-all
+      ${isActive ? `bg-${clr}-500/15 text-${clr}-400 border border-${clr}-500/30` : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-dark-400/30'}" data-sc="${k}">
+      ${sc.label}
+    </button>`;
+  }).join('');
+
+  const sc = scenarios[activeKey];
+  const clr = colorMap[activeKey];
+  let contentHtml = '';
+
+  // Pension info badges
+  contentHtml += `
+    <div class="flex flex-wrap gap-2 mb-4">
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-800/40 border border-dark-400/10">
+        <span class="text-[10px] text-gray-500">DCA</span>
+        <span class="text-xs font-bold text-${clr}-400">${formatCurrency(sc.dca_mensuel)}/mois</span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-800/40 border border-dark-400/10">
+        <span class="text-[10px] text-gray-500">Pension État</span>
+        <span class="text-xs font-bold text-${clr}-400">${sc.pension_age} ans</span>
+        ${sc.pension_montant_net ? `<span class="text-[10px] text-gray-400">(${formatCurrency(sc.pension_montant_net)}/mois)</span>` : ''}
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-800/40 border border-dark-400/10">
+        <span class="text-[10px] text-gray-500">Gap FIRE→pension</span>
+        <span class="text-xs font-bold text-${clr}-400">${sc.gap_fire_pension_ans} an${sc.gap_fire_pension_ans > 1 ? 's' : ''}</span>
+      </div>
+      ${sc.rachat_trimestres ? `
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+        <span class="text-[10px] text-gray-500">Rachat</span>
+        <span class="text-xs font-bold text-amber-400">${sc.rachat_trimestres} trim. (${formatCurrency(sc.cout_rachat_net)})</span>
+      </div>` : ''}
+    </div>`;
+
+  // Donations du vivant
+  if (sc.donations_vivant?.length) {
+    contentHtml += `
+      <h4 class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">Donations du vivant</h4>
+      <div class="space-y-2 mb-4">
+        ${sc.donations_vivant.map(d => `
+          <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-dark-800/30 border border-dark-400/10">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-bold tabular-nums text-gray-300">${d.annee}</span>
+              <span class="text-xs text-gray-400">${d.operation}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-purple-400 tabular-nums">${formatCurrency(d.total)}</span>
+              <span class="text-[10px] text-gray-600">(${formatCurrency(d.par_enfant)}/enf.)</span>
+              ${d.droits === 0 ? '<span class="text-[9px] text-emerald-400 font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/10">0€ droits</span>' : ''}
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Transmission au décès
+  if (sc.transmission_deces?.length) {
+    contentHtml += `
+      <h4 class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2">Au décès</h4>
+      <div class="space-y-2 mb-4">
+        ${sc.transmission_deces.map(t => {
+          const isNeg = t.total < 0;
+          return `
+          <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-dark-800/30 border border-dark-400/10">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-xs text-gray-400 truncate">${t.enveloppe}</span>
+              ${t.note ? `<span class="text-[9px] text-gray-600 hidden sm:inline">${t.note}</span>` : ''}
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="text-xs font-bold ${isNeg ? 'text-red-400' : 'text-gray-300'} tabular-nums">${isNeg ? '' : '+'}${formatCurrency(t.total)}</span>
+              <span class="text-[10px] text-gray-600">(${formatCurrency(t.par_enfant)}/enf.)</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // Total par enfant
+  if (sc.total_par_enfant_modere) {
+    contentHtml += `
+      <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-gradient-to-r from-dark-700 via-dark-600 to-dark-700 border border-dark-400/20">
+        <span class="text-sm font-bold text-gray-200">Total transmis par enfant <span class="text-[10px] text-gray-500 font-normal">(hyp. modérée)</span></span>
+        <span class="text-lg font-black text-emerald-400 tabular-nums">${formatCurrency(sc.total_par_enfant_modere)}</span>
+      </div>`;
+  }
+
+  if (sc.note) {
+    contentHtml += `<p class="text-[10px] text-gray-500 mt-3 italic">${sc.note}</p>`;
+  }
+
+  container.innerHTML = `
+    <div class="flex gap-2 mb-4">${tabsHtml}</div>
+    <div>${contentHtml}</div>`;
+
+  // Mount tab clicks
+  container.querySelectorAll('.hyp-tr-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _transmissionTab = btn.dataset.sc;
+      fillTransmissionSection(boussole, store);
+    });
+  });
+}
+
+// ─── Budget section from boussole-data.json ─────────────────────────────────
+
+function fillBudgetSection(boussole) {
+  const container = document.getElementById('hyp-budget-body');
+  if (!container || !boussole?.budget) return;
+
+  const b = boussole.budget;
+  const b2026 = b['2026'];
+  const b2027 = b['2027'];
+
+  const budgetLabels = {
+    depenses_fixes_dont_credit_652: 'Dépenses fixes (dont crédit 652€)',
+    depenses_fixes_sans_credit: 'Dépenses fixes (hors crédit)',
+    abonnements: 'Abonnements',
+    vie_quotidienne_vacances: 'Vie quotidienne & vacances',
+    investissements_CIC: 'Investissements CIC',
+    PEA_TR: 'PEA Trade Republic',
+    AV_Linxea: 'AV Linxea Spirit 2',
+    CTO_BoursoBank: 'CTO BoursoBank',
+    Bitcoin: 'Bitcoin',
+    PEE_enfants: 'PEE Amundi',
+    PEE_enfants_TR: 'PEE Amundi',
+    Livret_A_enfants: 'Livret A enfants'
+  };
+
+  function renderBudgetCard(data, year, color) {
+    return `
+      <div class="rounded-xl border border-${color}-500/20 p-4 bg-${color}-500/5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-bold text-${color}-400">${year}</span>
+          <span class="text-xs px-2.5 py-1 rounded-full font-bold tabular-nums
+            ${data.solde_mensuel >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}">
+            ${data.solde_mensuel >= 0 ? '+' : ''}${data.solde_mensuel}€/mois
+          </span>
+        </div>
+        <div class="space-y-1.5">
+          ${Object.entries(data.detail).map(([k, v]) => `
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-400">${budgetLabels[k] || k.replace(/_/g, ' ')}</span>
+              <span class="text-gray-300 tabular-nums font-medium">${formatCurrency(v)}</span>
+            </div>`).join('')}
+        </div>
+        <div class="h-px bg-dark-400/20 my-2.5"></div>
+        <div class="flex justify-between text-xs font-bold">
+          <span class="text-gray-300">Sorties totales</span>
+          <span class="text-${color}-400 tabular-nums">${formatCurrency(data.sorties_totales)}</span>
+        </div>
+        <p class="text-[9px] text-gray-600 mt-2.5 italic">${data.note}</p>
+      </div>`;
+  }
+
+  container.innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      ${renderBudgetCard(b2026, '2026', 'blue')}
+      ${renderBudgetCard(b2027, '2027', 'emerald')}
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+      <div class="px-3 py-2.5 rounded-lg bg-dark-800/30 border border-dark-400/10 flex items-center justify-between">
+        <span class="text-[10px] text-gray-500">Salaire net mensuel</span>
+        <span class="text-xs font-bold text-gray-300 tabular-nums">${formatCurrency(b.salaire_mensuel_reel)}</span>
+      </div>
+      <div class="px-3 py-2.5 rounded-lg bg-dark-800/30 border border-dark-400/10">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] text-gray-500">Bonus annuel (13e + prime)</span>
+          <span class="text-xs font-bold text-gray-300 tabular-nums">${formatCurrency(b.bonus_annuel.total)}</span>
+        </div>
+        <div class="text-[9px] text-gray-600 mt-1">→ CTO ${formatCurrency(b.bonus_annuel.affectation_recommandee.CTO_BoursoBank)} · Livret A ${formatCurrency(b.bonus_annuel.affectation_recommandee.Livret_A_frais_notaire)}</div>
+      </div>
     </div>`;
 }
 
@@ -1177,6 +1540,55 @@ export function render(store) {
       <!-- ═══ SCENARIOS + RENDEMENT ═══ -->
       ${renderScenarioSection(store)}
 
+      <!-- ═══ PROJECTION CHART ═══ -->
+      <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-emerald-500/20 flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            </div>
+            Projection 2026 → 2047
+          </h2>
+          <span id="hyp-proj-profile-label" class="text-[10px] text-gray-500 bg-dark-800/50 px-2.5 py-1 rounded-lg border border-dark-400/15"></span>
+        </div>
+        <div class="relative" style="height:380px">
+          <canvas id="hyp-proj-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- ═══ COMPARISON TABLE ═══ -->
+      <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500/20 to-amber-500/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </div>
+          <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider">Comparatif à 61 ans — 3 hypothèses</h2>
+        </div>
+        <div id="hyp-comparison-body" class="text-center text-gray-600 text-xs py-6">Chargement…</div>
+      </div>
+
+      <!-- ═══ TRANSMISSION ═══ -->
+      <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+          </div>
+          <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider">Transmission par scénario</h2>
+        </div>
+        <div id="hyp-transmission-body" class="text-center text-gray-600 text-xs py-6">Chargement…</div>
+      </div>
+
+      <!-- ═══ BUDGET ═══ -->
+      <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          </div>
+          <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider">Budget 2026 vs 2027</h2>
+        </div>
+        <div id="hyp-budget-body" class="text-center text-gray-600 text-xs py-6">Chargement…</div>
+      </div>
+
       <!-- ═══ UNIFIED MEGA BLOCK: Timeline + Patrimoine + Abattements ═══ -->
       <div class="card-dark rounded-3xl border border-purple-500/15 overflow-hidden shadow-2xl shadow-purple-500/5" style="background: linear-gradient(180deg, rgba(88,28,135,0.06) 0%, rgba(15,23,42,0) 40%);">
 
@@ -1865,6 +2277,17 @@ export function mount(store, navigate) {
         if (list) { list.innerHTML = getThemeManagerHtml(lt); mountThemeManagerEvents(lt); }
       });
     }
+  });
+
+  // ── Load boussole data and fill dynamic sections
+  loadBoussoleData().then(boussole => {
+    if (!boussole) return;
+    const activeProfile = getActiveProfile(store);
+    buildProjectionChart(store, boussole, activeProfile);
+    fillComparisonTable(boussole, activeProfile);
+    _transmissionTab = null; // reset to follow scenario selector
+    fillTransmissionSection(boussole, store);
+    fillBudgetSection(boussole);
   });
 }
 
