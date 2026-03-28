@@ -150,11 +150,11 @@ export function computeProjection(store) {
   let eparRendTotal = 0, eparWeightTotal = 0;
   state.actifs.epargne.forEach(e => {
     const sol = Number(e.solde) || 0;
-    const taux = params.rendementEpargne || Number(e.tauxInteret) || 0.02;
+    const taux = Number(e.tauxInteret) || 0.02;
     eparRendTotal += taux * sol;
     eparWeightTotal += sol;
   });
-  const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : (params.rendementEpargne || 0.02);
+  const rendEpar = eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : 0.02;
 
   // Actualisations: real values entered by user for past years
   const actualisations = params.actualisations || {};
@@ -226,7 +226,7 @@ export function computeProjection(store) {
   });
   const defaultRendPlac = params.rendementPlacementsDefaut || 0.05;
   categoryRendements.cto = catGroups.cto.length > 0 ? catGroups.cto.reduce((a, b) => a + b, 0) / catGroups.cto.length : defaultRendPlac;
-  categoryRendements.av = catGroups.av.length > 0 ? catGroups.av.reduce((a, b) => a + b, 0) / catGroups.av.length : (params.rendementEpargne || 0.02);
+  categoryRendements.av = catGroups.av.length > 0 ? catGroups.av.reduce((a, b) => a + b, 0) / catGroups.av.length : 0.02;
   categoryRendements.bitcoin = catGroups.bitcoin.length > 0 ? catGroups.bitcoin.reduce((a, b) => a + b, 0) / catGroups.bitcoin.length : defaultRendPlac;
   categoryRendements.epargne = rendEpar;
 

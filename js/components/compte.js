@@ -282,15 +282,10 @@ export function render(store) {
             <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
               <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
               Immobilier
-              <span class="text-[10px] text-gray-500 ml-2 flex items-center gap-1">Rdt
-                <input id="param-rend-immo-inline" type="number" step="0.1" min="0" max="50" value="${((params.rendementImmobilier || 0.02) * 100).toFixed(1)}"
-                  class="w-12 bg-dark-900 border border-dark-400/50 rounded px-1 py-0.5 text-[11px] text-gray-300 text-center focus:outline-none focus:border-accent-green transition"/>
-                %
-              </span>
             </h4>
             <div class="space-y-2">
               ${immobilier.map(i => `
-              <div class="flex items-center gap-3 bg-dark-800/50 rounded-lg px-4 py-2.5">
+              <div class="flex items-center gap-3 bg-dark-800/50 rounded-lg px-4 py-2.5 group/immo">
                 <input type="text" value="${i.nom}"
                   data-immo-nom-id="${i.id}"
                   class="immo-nom bg-transparent border-b border-transparent hover:border-dark-400/50 focus:border-accent-green text-sm text-gray-300 flex-1 min-w-0 truncate focus:outline-none transition px-0 py-0"/>
@@ -300,7 +295,7 @@ export function render(store) {
                     class="asset-val w-full bg-dark-900 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 text-right focus:outline-none focus:border-accent-green transition pr-7"/>
                   <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
                 </div>
-                <button data-del-immo-inline="${i.id}" class="text-red-400/40 hover:text-red-400 transition ml-1" title="Supprimer">
+                <button data-del-immo-inline="${i.id}" class="opacity-0 group-hover/immo:opacity-100 text-red-400/40 hover:text-red-400 transition ml-1" title="Supprimer">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>`).join('')}
@@ -316,15 +311,10 @@ export function render(store) {
             <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
               <svg class="w-4 h-4 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
               Épargne
-              <span class="text-[10px] text-gray-500 ml-2 flex items-center gap-1">Rdt
-                <input id="param-rend-epargne-inline" type="number" step="0.1" min="0" max="50" value="${((params.rendementEpargne || 0.02) * 100).toFixed(1)}"
-                  class="w-12 bg-dark-900 border border-dark-400/50 rounded px-1 py-0.5 text-[11px] text-gray-300 text-center focus:outline-none focus:border-accent-amber transition"/>
-                %
-              </span>
             </h4>
             <div class="space-y-2">
               ${epargne.map(e => `
-              <div class="flex items-center gap-3 bg-dark-800/50 rounded-lg px-4 py-2.5">
+              <div class="flex items-center gap-3 bg-dark-800/50 rounded-lg px-4 py-2.5 group/epar">
                 <input type="text" value="${e.nom}"
                   data-epar-nom-id="${e.id}"
                   class="epar-nom bg-transparent border-b border-transparent hover:border-dark-400/50 focus:border-accent-amber text-sm text-gray-300 flex-1 min-w-0 truncate focus:outline-none transition px-0 py-0"/>
@@ -340,7 +330,7 @@ export function render(store) {
                     class="epar-taux w-full bg-dark-900 border border-dark-400/50 rounded-lg px-2 py-1.5 text-xs text-gray-200 text-right focus:outline-none focus:border-accent-amber transition pr-5"/>
                   <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
                 </div>
-                <button data-del-epar-inline="${e.id}" class="text-red-400/40 hover:text-red-400 transition ml-1" title="Supprimer">
+                <button data-del-epar-inline="${e.id}" class="opacity-0 group-hover/epar:opacity-100 text-red-400/40 hover:text-red-400 transition ml-1" title="Supprimer">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>`).join('')}
@@ -555,8 +545,6 @@ export function mount(store, navigate) {
 
   // Financial parameters (percentages → stored as decimals)
   document.getElementById('param-inflation')?.addEventListener('input', (e) => saveParam('inflationRate', (parseFloat(e.target.value) || 0) / 100));
-  document.getElementById('param-rend-immo-inline')?.addEventListener('input', (e) => saveParam('rendementImmobilier', (parseFloat(e.target.value) || 0) / 100));
-  document.getElementById('param-rend-epargne-inline')?.addEventListener('input', (e) => saveParam('rendementEpargne', (parseFloat(e.target.value) || 0) / 100));
   // Tax rates
   document.getElementById('param-pfu')?.addEventListener('input', (e) => saveParam('tauxPFU', (parseFloat(e.target.value) || 0) / 100));
   document.getElementById('param-ps')?.addEventListener('input', (e) => saveParam('tauxPS', (parseFloat(e.target.value) || 0) / 100));
