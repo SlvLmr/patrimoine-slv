@@ -88,17 +88,17 @@ function renderChildCard(child, index) {
               ${livrets.map((l, li) => `
                 <div class="flex items-center gap-3 bg-dark-900/50 rounded-lg px-3 py-2 group/livret">
                   <div class="flex-1 min-w-0">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                    <div class="flex items-center gap-2">
                       <input type="text" value="${l.nom || ''}" placeholder="Nom du livret"
-                        class="livret-nom bg-transparent border-b border-transparent hover:border-dark-400/50 focus:border-accent-green text-xs text-gray-300 focus:outline-none transition px-0 py-0.5"
+                        class="livret-nom flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-dark-400/50 focus:border-accent-green text-xs text-gray-300 uppercase font-semibold focus:outline-none transition px-0 py-0.5"
                         data-child-idx="${index}" data-livret-idx="${li}"/>
-                      <div class="relative">
+                      <div class="relative w-28 flex-shrink-0">
                         <input type="number" step="100" min="0" value="${Number(l.montant) || 0}"
                           class="livret-montant w-full bg-dark-800 border border-dark-400/30 rounded-lg px-2 py-1.5 text-xs text-gray-200 text-right focus:outline-none focus:border-accent-green transition pr-5"
                           data-child-idx="${index}" data-livret-idx="${li}"/>
                         <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">\u20ac</span>
                       </div>
-                      <div class="relative">
+                      <div class="relative w-16 flex-shrink-0">
                         <input type="number" step="0.1" min="0" max="100" value="${Number(l.taux) || 0}"
                           class="livret-taux w-full bg-dark-800 border border-dark-400/30 rounded-lg px-2 py-1.5 text-xs text-gray-200 text-right focus:outline-none focus:border-accent-green transition pr-5"
                           data-child-idx="${index}" data-livret-idx="${li}"/>
@@ -328,11 +328,17 @@ export function render(store) {
                 <input type="text" value="${e.nom}"
                   data-epar-nom-id="${e.id}"
                   class="epar-nom bg-transparent border-b border-transparent hover:border-dark-400/50 focus:border-accent-amber text-sm text-gray-300 flex-1 min-w-0 truncate focus:outline-none transition px-0 py-0"/>
-                <div class="relative w-36">
+                <div class="relative w-28">
                   <input type="number" step="0.01" min="0" value="${Number(e.solde) || 0}"
                     data-epargne-id="${e.id}" data-field="solde"
-                    class="asset-val w-full bg-dark-900 border border-dark-400/50 rounded-lg px-3 py-2 text-sm text-gray-200 text-right focus:outline-none focus:border-accent-amber transition pr-7"/>
-                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-500">\u20ac</span>
+                    class="asset-val w-full bg-dark-900 border border-dark-400/50 rounded-lg px-2 py-1.5 text-xs text-gray-200 text-right focus:outline-none focus:border-accent-amber transition pr-5"/>
+                  <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">\u20ac</span>
+                </div>
+                <div class="relative w-16 flex-shrink-0">
+                  <input type="number" step="0.1" min="0" max="100" value="${((Number(e.tauxInteret) || 0) * 100).toFixed(1)}"
+                    data-epar-taux-id="${e.id}"
+                    class="epar-taux w-full bg-dark-900 border border-dark-400/50 rounded-lg px-2 py-1.5 text-xs text-gray-200 text-right focus:outline-none focus:border-accent-amber transition pr-5"/>
+                  <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
                 </div>
                 <button data-del-epar-inline="${e.id}" class="text-red-400/40 hover:text-red-400 transition ml-1" title="Supprimer">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -490,6 +496,16 @@ export function mount(store, navigate) {
         store.updateItem('actifs.immobilier', id, { nom: val });
         showSaved();
       }
+    });
+  });
+
+  // Inline taux editing for épargne
+  document.querySelectorAll('[data-epar-taux-id]').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const id = e.target.dataset.eparTauxId;
+      const val = (parseFloat(e.target.value) || 0) / 100;
+      store.updateItem('actifs.epargne', id, { tauxInteret: val });
+      showSaved();
     });
   });
 
