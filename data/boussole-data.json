@@ -154,6 +154,18 @@
       "pension_age": 64,
       "pension_montant_net": 2500,
       "gap_fire_pension_ans": 3,
+      "donations_vivant": [
+        { "operation": "Nue-propriété maison", "annee": 2027, "total": 132000, "par_enfant": 66000, "droits": 0 },
+        { "operation": "Donation CTO", "annee": 2042, "total": 110000, "par_enfant": 55000, "droits": 0 },
+        { "operation": "Donation CTO 2e cycle", "annee": 2057, "total": 100000, "par_enfant": 50000, "droits": 0 }
+      ],
+      "transmission_deces": [
+        { "enveloppe": "AV Linxea", "total": 320000, "par_enfant": 160000, "droits": 0, "note": "Hors succession — légèrement > 152 500€/enf." },
+        { "enveloppe": "Maison pleine propriété", "total": 330000, "par_enfant": 165000, "droits": 0, "note": "Usufruit éteint" },
+        { "enveloppe": "PEA + épargne + BTC", "total": 820000, "par_enfant": 410000, "note": "Succession — DCA +150€/mois vs Réel" },
+        { "enveloppe": "Abattement succession 100K x2", "total": -200000, "par_enfant": -100000 },
+        { "enveloppe": "Droits succession estimés", "total": -124000, "par_enfant": -62000, "note": "~20% moyen" }
+      ],
       "total_par_enfant_modere": 860000,
       "note": "2e cycle donation CTO possible — AV légèrement > 152 500€/enfant"
     },
@@ -166,6 +178,18 @@
       "pension_montant_net": 2500,
       "gap_fire_pension_ans": 1,
       "capital_preserve_vs_reel": 48000,
+      "donations_vivant": [
+        { "operation": "Nue-propriété maison", "annee": 2027, "total": 132000, "par_enfant": 66000, "droits": 0 },
+        { "operation": "Donation CTO", "annee": 2042, "total": 87000, "par_enfant": 43500, "droits": 0 },
+        { "operation": "Donation CTO 2e cycle", "annee": 2057, "total": 80000, "par_enfant": 40000, "droits": 0 }
+      ],
+      "transmission_deces": [
+        { "enveloppe": "AV Linxea", "total": 297000, "par_enfant": 148600, "droits": 0, "note": "Hors succession" },
+        { "enveloppe": "Maison pleine propriété", "total": 330000, "par_enfant": 165000, "droits": 0, "note": "Usufruit éteint" },
+        { "enveloppe": "PEA + épargne + BTC", "total": 700000, "par_enfant": 350000, "note": "Succession" },
+        { "enveloppe": "Abattement succession 100K x2", "total": -200000, "par_enfant": -100000 },
+        { "enveloppe": "Droits succession estimés", "total": -100000, "par_enfant": -50000, "note": "~20% moyen" }
+      ],
       "total_par_enfant_modere": 813000,
       "note": "Don Sarkozy papa (31 865€) utilisé pour rachat — cash héritage restant ~8 135€"
     }
