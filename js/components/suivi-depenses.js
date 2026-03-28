@@ -1182,118 +1182,101 @@ export function mount(store, navigate) {
     const a = archives.find(ar => ar.mois === mois);
     if (!a) return;
     const label = new Date(mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    const ops = a.operations || [];
-    const revs = a.revenus || [];
-    const cats = Object.entries(a.categories || {}).sort((x, y) => y[1] - x[1]);
+    const allOps = (a.operations || []).map(o => ({ ...o, type: 'depense' }));
+    const allRevs = (a.revenus || []).map(r => ({ ...r, type: 'revenu' }));
+    const allItems = [...allRevs, ...allOps].sort((x, y) => (y.date || '').localeCompare(x.date || ''));
+    const cochees = a.cochees || [];
+    const depMensuelles = store.get('depensesMensuellesCIC') || [];
 
-    const body = `<div class="space-y-4 max-h-[70vh] overflow-y-auto">
-      <div class="bg-dark-700/50 rounded-lg p-3 space-y-1 text-sm">
-        <div class="flex justify-between"><span class="text-gray-400">Revenus</span><span class="text-accent-green font-medium">${formatCurrencyCents(a.totalRevenus || 0)}</span></div>
-        <div class="flex justify-between"><span class="text-gray-400">Dépenses</span><span class="text-accent-red font-medium">${formatCurrencyCents(a.total || 0)}</span></div>
-        <div class="border-t border-dark-400/30 my-1"></div>
-        <div class="flex justify-between"><span class="text-gray-400">Balance</span><span class="font-semibold ${(a.totalRevenus - a.total) >= 0 ? 'text-accent-green' : 'text-accent-red'}">${(a.totalRevenus - a.total) >= 0 ? '+' : ''}${formatCurrencyCents((a.totalRevenus || 0) - (a.total || 0))}</span></div>
-        <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.primary}</span><span class="text-gray-200">${a.soldeFinalCIC !== undefined ? formatCurrencyCents(a.soldeFinalCIC) : '—'}</span></div>
-        <div class="flex justify-between"><span class="text-gray-400">Solde ${bankNames.secondary}</span><span class="text-gray-200">${a.soldeFinalTR !== undefined ? formatCurrencyCents(a.soldeFinalTR) : '—'}</span></div>
-      </div>
-      ${cats.length > 0 ? `<div class="flex flex-wrap gap-1">${cats.map(([cat, val]) => `<span class="text-[10px] px-2 py-1 rounded-lg bg-dark-600/50 text-gray-400">${cat} <span class="text-gray-300 font-medium">${formatCurrencyCents(val)}</span></span>`).join('')}</div>` : ''}
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="text-xs font-semibold text-accent-green uppercase tracking-wider">Revenus (${revs.length})</h4>
-          <button id="arch-add-rev" class="text-[10px] px-2 py-1 rounded-lg bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition">+ Ajouter</button>
-        </div>
-        ${revs.length > 0 ? `<div class="space-y-1">${revs.map(r => `
-          <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="text-[10px] text-gray-600">${r.date || ''}</span>
-              <span class="text-gray-300 truncate">${r.description || r.categorie || '—'}</span>
-              <span class="text-[10px] text-gray-500">${r.compte || ''}</span>
-            </div>
-            <span class="text-accent-green font-medium ml-2 whitespace-nowrap">+${formatCurrencyCents(Number(r.montant) || 0)}</span>
-          </div>`).join('')}</div>` : '<p class="text-gray-600 text-xs py-1">Aucun revenu</p>'}
-      </div>
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <h4 class="text-xs font-semibold text-accent-red uppercase tracking-wider">Dépenses (${ops.length})</h4>
-          <button id="arch-add-dep" class="text-[10px] px-2 py-1 rounded-lg bg-accent-red/15 text-accent-red hover:bg-accent-red/25 transition">+ Ajouter</button>
-        </div>
-        ${ops.length > 0 ? `<div class="space-y-1">${ops.map(o => `
-          <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-dark-700/30 text-sm">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="text-[10px] text-gray-600">${o.date || ''}</span>
-              <span class="text-gray-300 truncate">${o.description || '—'}</span>
-              <span class="text-[10px] px-1 py-0.5 rounded bg-dark-600/50 text-gray-500">${o.categorie || ''}</span>
-              <span class="text-[10px] text-gray-600">${o.compte || ''}</span>
-            </div>
-            <span class="text-accent-red font-medium ml-2 whitespace-nowrap">-${formatCurrencyCents(Number(o.montant) || 0)}</span>
-          </div>`).join('')}</div>` : '<p class="text-gray-600 text-xs py-1">Aucune opération sauvegardée</p>'}
-      </div>
-    </div>`;
-
-    const modal = openModal(`Détail — ${label}`, body, null);
-
-    // Add revenue to archive
-    modal.querySelector('#arch-add-rev')?.addEventListener('click', () => {
-      document.getElementById('app-modal')?.remove();
-      const formBody = `
-        ${inputField('date', 'Date', mois + '-01', 'date')}
-        ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Salaire"')}
-        ${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS.map(c => ({ value: c, label: c })))}
-        ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
-          <div class="flex gap-3">${COMPTES.map((c, i) => `
-            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 has-[:checked]:border-green-500 has-[:checked]:bg-green-500/10">
-              <input type="radio" name="compte" value="${c}" ${i === 0 ? 'checked' : ''} class="w-4 h-4 text-green-500 bg-dark-800 border-dark-400">
-              <span class="text-sm text-gray-200">${c}</span>
-            </label>`).join('')}</div>
-        </div>`;
-      openModal('Ajouter un revenu (archive)', formBody, () => {
-        const data = getFormData(document.getElementById('modal-body'));
-        data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
-        data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        const archs = store.get('archiveDepenses') || [];
-        const ar = archs.find(x => x.mois === mois);
-        if (ar) {
-          if (!ar.revenus) ar.revenus = [];
-          ar.revenus.push(data);
-          store.set('archiveDepenses', archs);
-        }
-        navigate('suivi-depenses');
-      });
+    // Group by bank
+    const bankGroups = {};
+    COMPTES.forEach(c => { bankGroups[c] = []; });
+    allItems.forEach(item => {
+      const c = item.compte || COMPTES[0];
+      if (!bankGroups[c]) bankGroups[c] = [];
+      bankGroups[c].push(item);
     });
 
-    // Add expense to archive
-    modal.querySelector('#arch-add-dep')?.addEventListener('click', () => {
-      document.getElementById('app-modal')?.remove();
-      const catOpts = CATEGORIES.map(c => ({ value: c, label: c }));
-      const formBody = `
-        ${inputField('date', 'Date', mois + '-01', 'date')}
-        ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Courses"')}
-        ${selectField('categorie', 'Catégorie', catOpts)}
-        ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
-          <div class="flex gap-3">${COMPTES.map((c, i) => `
-            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 has-[:checked]:border-red-500 has-[:checked]:bg-red-500/10">
-              <input type="radio" name="compte" value="${c}" ${i === 0 ? 'checked' : ''} class="w-4 h-4 text-red-500 bg-dark-800 border-dark-400">
-              <span class="text-sm text-gray-200">${c}</span>
-            </label>`).join('')}</div>
+    const renderArchiveOp = (op) => {
+      const isRev = op.type === 'revenu';
+      const isVirement = !isRev && (op.categorie || '') === 'Virement';
+      const isNDF = !isRev && (op.categorie || '') === 'NDF';
+      const color = isRev ? 'text-green-500' : isVirement ? 'text-accent-amber' : isNDF ? 'text-purple-400' : 'text-accent-red';
+      const icon = isRev
+        ? `<svg class="w-3 h-3 ${color} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
+        : `<svg class="w-3 h-3 ${color} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
+      const sign = isRev ? '+' : '-';
+      return `
+        <div class="flex items-center justify-between py-px">
+          <div class="flex items-center gap-1.5 min-w-0">
+            ${icon}
+            <span class="text-[10px] text-gray-600 w-12 flex-shrink-0">${(op.date || '').slice(5)}</span>
+            <span class="text-[12px] text-gray-200 truncate">${op.description || '—'}</span>
+            ${op.categorie ? `<span class="text-[9px] text-gray-600 flex-shrink-0">${op.categorie}</span>` : ''}
+          </div>
+          <span class="text-[12px] font-medium ${color} ml-2 whitespace-nowrap">${sign}${formatCurrencyCents(Number(op.montant) || 0)}</span>
         </div>`;
-      openModal('Ajouter une dépense (archive)', formBody, () => {
-        const data = getFormData(document.getElementById('modal-body'));
-        data.compte = document.querySelector('input[name="compte"]:checked')?.value || COMPTES[0];
-        data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        const archs = store.get('archiveDepenses') || [];
-        const ar = archs.find(x => x.mois === mois);
-        if (ar) {
-          if (!ar.operations) ar.operations = [];
-          ar.operations.push(data);
-          ar.count = ar.operations.length;
-          store.set('archiveDepenses', archs);
-        }
-        navigate('suivi-depenses');
-      });
-    });
+    };
+
+    const renderBankCol = (bankName, idx) => {
+      const items = bankGroups[bankName] || [];
+      const soldeKey = idx === 0 ? 'soldeFinalCIC' : idx === 1 ? 'soldeFinalTR' : null;
+      const solde = soldeKey ? a[soldeKey] : a['soldeFinal_' + (extraBanks.find(b => b.name === bankName)?.id || '')];
+      const isPrimary = idx === 0;
+
+      // Mensuelles cochées (only for primary bank)
+      let mensuellesHtml = '';
+      if (isPrimary && depMensuelles.length > 0 && cochees.length > 0) {
+        const totalCochees = depMensuelles.filter(d => cochees.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+        mensuellesHtml = `
+          <div class="border-t border-dark-400/20 mt-1 pt-1">
+            <div class="flex items-center justify-between mb-0.5">
+              <span class="text-[10px] text-gray-500 font-medium">Dépenses mensuelles ${cochees.length}/${depMensuelles.length}</span>
+              <span class="text-[11px] font-medium text-accent-red">${formatCurrencyCents(totalCochees)}</span>
+            </div>
+            ${depMensuelles.filter(d => cochees.includes(d.id)).map(d => `
+            <div class="flex items-center justify-between py-px pl-2">
+              <span class="text-[10px] text-gray-500 line-through">${d.nom}</span>
+              <span class="text-[10px] text-gray-600">${formatCurrencyCents(d.montant)}</span>
+            </div>`).join('')}
+          </div>`;
+      }
+
+      return `
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-300">${bankName}</span>
+            <span class="text-sm font-bold text-gray-100">${solde !== undefined ? formatCurrencyCents(solde) : '—'}</span>
+          </div>
+          <div class="space-y-0">
+            ${items.map(renderArchiveOp).join('')}
+            ${items.length === 0 ? '<p class="text-[10px] text-gray-600 py-1">Aucune opération</p>' : ''}
+          </div>
+          ${mensuellesHtml}
+        </div>`;
+    };
+
+    // Custom wide modal (bypass openModal which is max-w-lg)
+    const existing = document.getElementById('app-modal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'app-modal';
+    modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-dark-400/50 flex flex-col">
+        <div class="px-6 py-4 border-b border-dark-400/50 flex items-center justify-between flex-shrink-0">
+          <h3 class="text-lg font-semibold text-gray-100 capitalize">${label}</h3>
+          <button id="modal-close-x" class="text-gray-400 hover:text-gray-100 transition text-2xl leading-none px-1">&times;</button>
+        </div>
+        <div class="overflow-x-auto overflow-y-auto flex-1 p-5">
+          <div class="grid grid-cols-${COMPTES.length} gap-5" style="min-width: ${COMPTES.length * 280}px;">
+            ${COMPTES.map((c, i) => renderBankCol(c, i)).join('')}
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#modal-close-x').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
   }
 
   document.querySelectorAll('.archive-row').forEach(row => {
