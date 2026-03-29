@@ -3,18 +3,18 @@ import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as fireba
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as RevenusDepenses from './components/revenus-depenses.js?v=20260329g';
-import * as Projection from './components/projection.js?v=20260329r';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20260329g';
+import * as Projection from './components/projection.js?v=20260329s';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20260329h';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
-import * as Compte from './components/compte.js?v=20260329g';
+import * as Compte from './components/compte.js?v=20260329h';
 import * as Repartition from './components/repartition.js?v=20260329s';
-import * as SimulateurFire from './components/simulateur-fire.js?v=20260329a';
-import * as SimulateurCredit from './components/simulateur-credit.js';
-import * as SimulateurInterets from './components/simulateur-interets.js';
-import * as SimulateurAuto from './components/simulateur-auto.js';
-import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260329a';
-import * as Hypotheses from './components/hypotheses.js?v=20260329a';
-import * as SimulateurSuccession from './components/simulateur-succession.js';
+import * as SimulateurFire from './components/simulateur-fire.js?v=20260329b';
+import * as SimulateurCredit from './components/simulateur-credit.js?v=20260329a';
+import * as SimulateurInterets from './components/simulateur-interets.js?v=20260329a';
+import * as SimulateurAuto from './components/simulateur-auto.js?v=20260329a';
+import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260329b';
+import * as Hypotheses from './components/hypotheses.js?v=20260329b';
+import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260329a';
 import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
 
 // Auto-configure Google Drive Client ID

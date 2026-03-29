@@ -245,9 +245,9 @@ export function render(store) {
 
   return `
     <div class="space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-sky-500/20 flex items-center justify-center">
               <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
@@ -257,15 +257,15 @@ export function render(store) {
           </h2>
           <p class="text-gray-500 text-sm mt-1">Suivi de tes opérations bancaires au quotidien</p>
         </div>
-        <div class="flex items-center gap-3">
-          <button id="btn-archive-month" class="px-4 py-2 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-sm rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button id="btn-archive-month" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-xs sm:text-sm rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
             Clôturer le mois
           </button>
-          <button id="btn-add-revenu" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un revenu</button>
-          <button id="btn-add-expense" class="px-4 py-2 bg-gradient-to-r from-accent-red to-accent-red text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une dépense</button>
-          <button id="btn-add-virement" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un virement</button>
-          <button id="btn-add-ndf" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter une NDF</button>
+          <button id="btn-add-revenu" class="px-2.5 sm:px-3 py-1.5 bg-accent-green/20 text-accent-green text-xs sm:text-sm rounded-lg hover:bg-accent-green/30 transition font-medium">+ Revenu</button>
+          <button id="btn-add-expense" class="px-2.5 sm:px-3 py-1.5 bg-accent-red/20 text-accent-red text-xs sm:text-sm rounded-lg hover:bg-accent-red/30 transition font-medium">+ Dépense</button>
+          <button id="btn-add-virement" class="px-2.5 sm:px-3 py-1.5 bg-accent-amber/20 text-accent-amber text-xs sm:text-sm rounded-lg hover:bg-accent-amber/30 transition font-medium">+ Virement</button>
+          <button id="btn-add-ndf" class="px-2.5 sm:px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs sm:text-sm rounded-lg hover:bg-purple-500/30 transition font-medium">+ NDF</button>
         </div>
       </div>
 

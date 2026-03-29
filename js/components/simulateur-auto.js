@@ -205,7 +205,7 @@ export function render() {
       <div class="lg:col-span-5 space-y-4">
 
         <!-- Véhicule -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h.01M16 17h.01M2 9h20M5 17h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             Véhicule & général
@@ -217,7 +217,7 @@ export function render() {
         </div>
 
         <!-- Crédit -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-blue-500"></span>
             Crédit classique
@@ -232,7 +232,7 @@ export function render() {
         </div>
 
         <!-- LOA -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-amber-500"></span>
             LOA (Location avec Option d'Achat)
@@ -248,7 +248,7 @@ export function render() {
         </div>
 
         <!-- LLD -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-pink-500"></span>
             LLD (Location Longue Durée)
@@ -267,13 +267,13 @@ export function render() {
       <div class="lg:col-span-7 space-y-4">
 
         <!-- Winner card -->
-        <div id="auto-winner" class="card-dark rounded-2xl p-5"></div>
+        <div id="auto-winner" class="card-dark rounded-2xl p-3 sm:p-5"></div>
 
         <!-- Comparison cards -->
         <div id="auto-compare" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
 
         <!-- Differences table -->
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Comparatif détaillé</h3>
           <div class="overflow-x-auto">
             <table class="w-full text-sm" id="auto-detail-table">
@@ -291,7 +291,7 @@ export function render() {
         </div>
 
         <!-- Chart -->
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Coût cumulé dans le temps</h3>
           <div class="h-80">
             <canvas id="auto-chart"></canvas>

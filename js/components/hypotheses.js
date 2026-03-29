@@ -354,7 +354,7 @@ function renderScenarioSection(store) {
   };
 
   return `
-    <div class="card-dark rounded-2xl border border-dark-400/15 p-5">
+    <div class="card-dark rounded-2xl border border-dark-400/15 p-3 sm:p-5">
       <!-- Header row -->
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2.5">
@@ -465,7 +465,7 @@ function getScenarioFormHtml(scenario = null) {
       </div>
       <div class="h-px bg-dark-400/20"></div>
       <p class="text-[10px] text-gray-600 uppercase tracking-wider font-semibold">Ajustements (optionnel — laisse vide pour utiliser tes données actuelles)</p>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs text-gray-500 mb-1.5">Rendement placements (%)</label>
           <input id="sc-form-rend" type="number" step="0.5" min="0" max="30" value="${scenario?.rendementPlacements !== undefined ? (scenario.rendementPlacements * 100).toFixed(1) : ''}" placeholder="Profil actif"
@@ -477,7 +477,7 @@ function getScenarioFormHtml(scenario = null) {
             class="w-full input-field placeholder-gray-600"/>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs text-gray-500 mb-1.5">Multiplicateur DCA</label>
           <input id="sc-form-dca-mult" type="number" step="0.1" min="0" max="10" value="${scenario?.dcaMultiplier ?? ''}" placeholder="1.0 = inchangé"
@@ -506,7 +506,7 @@ function getProfileEditHtml(profiles) {
         <div class="rounded-xl border border-dark-400/15 bg-dark-800/30 p-4">
           <h3 class="text-sm font-bold text-gray-200 mb-3">${p.icon || ''} ${p.label}</h3>
           <p class="text-[10px] text-gray-600 uppercase tracking-wider font-semibold mb-2">Rendement par enveloppe</p>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
             ${groupOrder.map(gk => `
             <div>
               <label class="block text-[9px] text-gray-500 mb-0.5">${gk}</label>
@@ -514,7 +514,7 @@ function getProfileEditHtml(profiles) {
                 class="w-full input-field text-xs" data-profil="${key}" data-group="${gk}"/>
             </div>`).join('')}
           </div>
-          <div class="grid grid-cols-3 gap-2 mt-2">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
             <div>
               <label class="block text-[9px] text-gray-500 mb-0.5">Immobilier</label>
               <input type="number" step="0.5" min="0" max="20" value="${((p.rendementImmobilier || 0) * 100).toFixed(1)}"
@@ -771,7 +771,7 @@ function getFormHtml(themes, item = null, enfants = []) {
         <input id="hyp-form-titre" type="text" value="${item?.titre || ''}" placeholder="Ex: Donation Sarkozy enfants"
           class="w-full input-field placeholder-gray-600"/>
       </div>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs text-gray-500 mb-1.5">Année *</label>
           <input id="hyp-form-annee" type="number" min="2000" max="2100" value="${item?.annee || new Date().getFullYear()}"
@@ -1167,7 +1167,7 @@ export function render(store) {
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btn-add-hyp" class="px-4 py-2 rounded-xl text-xs font-medium bg-gradient-to-r from-accent-green to-accent-blue text-white hover:opacity-90 transition flex items-center gap-1.5 shadow-lg shadow-gray-500/10">
+          <button id="btn-add-hyp" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-green/20 text-accent-green hover:bg-accent-green/30 transition flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
             Ajouter
           </button>

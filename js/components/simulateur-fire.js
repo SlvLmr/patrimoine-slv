@@ -273,7 +273,7 @@ export function render() {
       <div class="lg:col-span-5 space-y-4">
 
         <!-- Situation actuelle -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             Situation actuelle
@@ -287,7 +287,7 @@ export function render() {
         </div>
 
         <!-- Hypothèses -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             Hypothèses
@@ -303,7 +303,7 @@ export function render() {
         </div>
 
         <!-- Retraite -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Phase FIRE (retraite anticipée)
@@ -316,7 +316,7 @@ export function render() {
         </div>
 
         <!-- Revenus passifs détaillés -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             Revenus passifs détaillés
@@ -341,7 +341,7 @@ export function render() {
         </div>
 
         <!-- Chart -->
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Évolution du capital</h3>
           <div class="h-80">
             <canvas id="fire-chart"></canvas>
@@ -349,7 +349,7 @@ export function render() {
         </div>
 
         <!-- Breakdown table -->
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Détail par année</h3>
           <div class="overflow-x-auto max-h-72 overflow-y-auto">
             <table class="w-full text-sm" id="fire-table">
@@ -501,11 +501,11 @@ function renderResults(r) {
 
   container.innerHTML = `
     <!-- FIRE Number -->
-    <div class="card-dark rounded-2xl p-4 col-span-2 sm:col-span-3 bg-gradient-to-r from-orange-500/5 to-amber-500/5 border border-orange-500/10">
+    <div class="card-dark rounded-2xl p-3 sm:p-4 col-span-2 sm:col-span-3 bg-gradient-to-r from-orange-500/5 to-amber-500/5 border border-orange-500/10">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wider">Nombre FIRE</p>
-          <p class="text-2xl font-bold text-orange-400 mt-1">${formatCurrency(r.nombreFIRE)}</p>
+          <p class="text-xl sm:text-2xl font-bold text-orange-400 mt-1">${formatCurrency(r.nombreFIRE)}</p>
           <p class="text-xs text-gray-500 mt-1">Capital nécessaire pour vivre de tes rentes</p>
         </div>
         <div class="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center">
@@ -533,7 +533,7 @@ function renderResults(r) {
 
     ${r.totalRevenusPassifsDetailles > 0 ? `
     <!-- Revenus passifs détaillés -->
-    <div class="card-dark rounded-2xl p-4 col-span-2 sm:col-span-3 border border-amber-500/10">
+    <div class="card-dark rounded-2xl p-3 sm:p-4 col-span-2 sm:col-span-3 border border-amber-500/10">
       <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Revenus passifs détaillés</p>
       <p class="text-lg font-bold text-amber-400">${formatCurrency(r.totalRevenusPassifsDetailles)}/an</p>
       <p class="text-xs text-gray-500 mt-1">
@@ -547,9 +547,9 @@ function renderResults(r) {
 
 function metricCard(label, value, colorClass, sub) {
   return `
-    <div class="card-dark rounded-2xl p-4">
+    <div class="card-dark rounded-2xl p-3 sm:p-4">
       <p class="text-xs text-gray-500 uppercase tracking-wider">${label}</p>
-      <p class="text-lg font-bold ${colorClass} mt-1">${value}</p>
+      <p class="text-base sm:text-lg font-bold ${colorClass} mt-1">${value}</p>
       ${sub ? `<p class="text-xs text-gray-600 mt-0.5">${sub}</p>` : ''}
     </div>
   `;

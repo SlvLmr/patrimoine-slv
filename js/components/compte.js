@@ -157,7 +157,7 @@ export function render(store) {
           <input type="file" id="photo-upload" accept="image/*" class="hidden"/>
         </div>
         <div>
-          <h1 class="text-2xl font-bold text-gray-100">${info.prenom || info.nom ? `${info.prenom} ${info.nom}`.trim() : 'Mon compte'}</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-100">${info.prenom || info.nom ? `${info.prenom} ${info.nom}`.trim() : 'Mon compte'}</h1>
           <p class="text-sm text-gray-500">${email}</p>
           ${age !== null ? `<p class="text-xs text-gray-600 mt-0.5">${age} ans</p>` : ''}
         </div>
@@ -165,12 +165,12 @@ export function render(store) {
 
       <!-- Mon profil -->
       <div class="card-dark rounded-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-dark-400/20">
+        <div class="px-4 sm:px-6 py-4 border-b border-dark-400/20">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Mon profil</h2>
         </div>
 
         <!-- Identité -->
-        <div class="p-6 space-y-4 border-b border-dark-400/15">
+        <div class="p-4 sm:p-6 space-y-4 border-b border-dark-400/15">
           <h3 class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             Identité
@@ -206,7 +206,7 @@ export function render(store) {
         </div>
 
         <!-- Situation fiscale -->
-        <div class="p-6 space-y-4 border-b border-dark-400/15">
+        <div class="p-4 sm:p-6 space-y-4 border-b border-dark-400/15">
           <h3 class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
             Situation fiscale
@@ -227,7 +227,7 @@ export function render(store) {
         </div>
 
         <!-- Retraite -->
-        <div class="p-6 space-y-4 border-b border-dark-400/15">
+        <div class="p-4 sm:p-6 space-y-4 border-b border-dark-400/15">
           <h3 class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Retraite
@@ -267,7 +267,7 @@ export function render(store) {
         </div>
 
         <!-- Valeurs patrimoniales -->
-        <div class="p-6 space-y-5 border-b border-dark-400/15">
+        <div class="p-4 sm:p-6 space-y-5 border-b border-dark-400/15">
           <div>
             <h3 class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
@@ -350,14 +350,14 @@ export function render(store) {
 
         <!-- Paramètres avancés -->
         <details>
-          <summary class="px-6 py-4 cursor-pointer select-none flex items-center justify-between">
+          <summary class="px-4 sm:px-6 py-4 cursor-pointer select-none flex items-center justify-between">
             <h3 class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               Paramètres avancés
             </h3>
             <svg class="w-4 h-4 text-gray-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </summary>
-          <div class="px-6 pb-6 space-y-6 border-t border-dark-400/15 pt-4">
+          <div class="px-4 sm:px-6 pb-6 space-y-6 border-t border-dark-400/15 pt-4">
             <div>
               <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Rendements & Fiscalité</h4>
               <div class="flex flex-wrap items-end gap-3">
@@ -383,7 +383,7 @@ export function render(store) {
 
       <!-- Famille / Enfants -->
       <div class="card-dark rounded-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-dark-400/20 flex items-center justify-between">
+        <div class="px-4 sm:px-6 py-4 border-b border-dark-400/20 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Famille</h2>
           <button id="btn-add-child" class="btn-add w-auto px-3 py-1">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -392,7 +392,7 @@ export function render(store) {
             Ajouter un enfant
           </button>
         </div>
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           ${enfants.length === 0
             ? `<p class="text-sm text-gray-600 text-center py-4">Aucun enfant ajouté</p>`
             : `<div id="children-list" class="space-y-3">${enfants.map((c, i) => renderChildCard(c, i)).join('')}</div>`

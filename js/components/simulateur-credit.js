@@ -256,7 +256,7 @@ export function render() {
       <div class="lg:col-span-5 space-y-4">
 
         <!-- Projet -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
             Le projet
@@ -268,7 +268,7 @@ export function render() {
         </div>
 
         <!-- Crédit -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             Le crédit
@@ -282,7 +282,7 @@ export function render() {
         </div>
 
         <!-- Revenus -->
-        <div class="card-dark rounded-2xl p-5 space-y-4">
+        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Capacité d'emprunt
@@ -304,7 +304,7 @@ export function render() {
         </div>
 
         <!-- Charts -->
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-3 sm:p-5">
           <div class="flex items-center gap-3 mb-4">
             <button id="credit-tab-amort" class="text-sm font-medium px-3 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 transition">Amortissement</button>
             <button id="credit-tab-repartition" class="text-sm font-medium px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-300 transition">Répartition</button>
@@ -318,7 +318,7 @@ export function render() {
         </div>
 
         <!-- Amortization table -->
-        <div class="card-dark rounded-2xl p-5">
+        <div class="card-dark rounded-2xl p-3 sm:p-5">
           <div class="flex items-center justify-between mb-3">
             <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Tableau d'amortissement</h3>
             <div class="flex items-center gap-2">
@@ -537,11 +537,11 @@ function renderResults(r, inputs) {
 
   container.innerHTML = `
     <!-- Mensualité -->
-    <div class="card-dark rounded-2xl p-4 col-span-2 sm:col-span-3 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 border border-blue-500/10">
+    <div class="card-dark rounded-2xl p-3 sm:p-4 col-span-2 sm:col-span-3 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 border border-blue-500/10">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wider">Mensualité totale</p>
-          <p class="text-2xl font-bold text-blue-400 mt-1">${formatCurrencyCents(r.mensualiteTotale)}<span class="text-sm text-gray-500 font-normal"> /mois</span></p>
+          <p class="text-xl sm:text-2xl font-bold text-blue-400 mt-1">${formatCurrencyCents(r.mensualiteTotale)}<span class="text-sm text-gray-500 font-normal"> /mois</span></p>
           <p class="text-xs text-gray-500 mt-1">dont ${formatCurrencyCents(r.mensualiteHorsAssurance)} crédit + ${formatCurrencyCents(r.assuranceMensuelle)} assurance</p>
         </div>
         <div class="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
@@ -584,9 +584,9 @@ function renderResults(r, inputs) {
 
 function metricCard(label, value, colorClass, sub) {
   return `
-    <div class="card-dark rounded-2xl p-4">
+    <div class="card-dark rounded-2xl p-3 sm:p-4">
       <p class="text-xs text-gray-500 uppercase tracking-wider">${label}</p>
-      <p class="text-lg font-bold ${colorClass} mt-1">${value}</p>
+      <p class="text-base sm:text-lg font-bold ${colorClass} mt-1">${value}</p>
       ${sub ? `<p class="text-xs text-gray-600 mt-0.5">${sub}</p>` : ''}
     </div>
   `;

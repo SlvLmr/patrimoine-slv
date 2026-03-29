@@ -43,7 +43,7 @@ export function render(store) {
     <div class="max-w-6xl mx-auto space-y-6">
 
       <!-- FAMILLE -->
-      <div class="card-dark rounded-xl p-5">
+      <div class="card-dark rounded-xl p-3 sm:p-5">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-9 h-9 rounded-xl bg-accent-purple/20 flex items-center justify-center">
             <svg class="w-5 h-5 text-accent-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +54,7 @@ export function render(store) {
             <h1 class="text-lg font-bold text-gray-100">Famille</h1>
             <p class="text-xs text-gray-500">${ageDonateur} ans · Patrimoine net : ${formatCurrency(patrimoine)}</p>
           </div>
-          <button id="btn-add-enfant" class="ml-auto px-3 py-1.5 bg-accent-purple text-dark-900 text-xs font-bold rounded-lg hover:opacity-90 transition flex items-center gap-1.5">
+          <button id="btn-add-enfant" class="ml-auto px-3 py-1.5 bg-accent-purple/20 text-purple-400 text-xs font-medium rounded-lg hover:bg-accent-purple/30 transition flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
             Ajouter un enfant
           </button>
@@ -162,7 +162,7 @@ export function render(store) {
                       </svg>
                     </div>
                     <span class="text-sm font-bold text-gray-200 flex-1">Épargne</span>
-                    <button class="btn-add-livret px-2 py-1 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-[10px] rounded hover:opacity-90 transition font-medium" data-enfant-id="${enf.id}" data-prenom="${enf.prenom || ''}">+ Ajouter</button>
+                    <button class="btn-add-livret px-2.5 py-1 bg-accent-green/20 text-accent-green text-[10px] rounded-lg hover:bg-accent-green/30 transition font-medium" data-enfant-id="${enf.id}" data-prenom="${enf.prenom || ''}">+ Ajouter</button>
                   </div>
                   ${(() => {
                     const livrets = enf.livrets || [];
@@ -199,7 +199,7 @@ export function render(store) {
 
       ${nbEnfants > 0 ? `
       <!-- CAPACITÉ GLOBALE DE TRANSMISSION -->
-      <div class="card-dark rounded-xl p-5">
+      <div class="card-dark rounded-xl p-3 sm:p-5">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-8 h-8 rounded-lg bg-accent-green/20 flex items-center justify-center">
             <svg class="w-4 h-4 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,7 +212,7 @@ export function render(store) {
           </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div class="row-item p-3 text-center">
             <p class="text-[10px] text-gray-500 uppercase mb-1">Abattement / enfant</p>
             <p class="text-lg font-bold text-accent-green">${formatCurrency(ABATTEMENT_PARENT_ENFANT)}</p>

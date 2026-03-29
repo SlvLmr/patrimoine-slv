@@ -215,7 +215,7 @@ export function render(store) {
   function renderEmpruntContent() {
     // KPI row
     const kpiRow = `
-      <div class="grid grid-cols-3 gap-1 p-2 pb-1">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 p-2 pb-1">
         <div class="row-item p-1.5 text-center">
           <p class="text-[10px] text-gray-500">Dette</p>
           <p class="text-xs font-bold text-accent-red">${formatCurrency(totalDette)}</p>
@@ -291,10 +291,9 @@ export function render(store) {
   const renderColumn = (s) => {
     const isEnvelope = s.key.startsWith('plac-');
     const collapseByDefault = isEnvelope && (s.envKey === 'PEA' || s.envKey === 'CTO');
-    const btnColorClass = s.key === 'emprunts' ? 'from-accent-red to-accent-red text-white'
-      : s.key === 'heritage' ? 'from-accent-cyan to-accent-cyan text-dark-900'
-      : isEnvelope ? `from-${s.color} to-${s.color} text-dark-900`
-      : 'from-accent-green to-accent-amber text-dark-900';
+    const btnStyle = s.key === 'emprunts' ? 'bg-accent-red/20 text-accent-red hover:bg-accent-red/30'
+      : s.key === 'heritage' ? 'bg-accent-cyan/20 text-accent-cyan hover:bg-accent-cyan/30'
+      : 'bg-accent-green/20 text-accent-green hover:bg-accent-green/30';
     return `
     <details ${collapseByDefault ? '' : 'open'} class="card-dark rounded-xl overflow-hidden flex flex-col group/block">
       <summary class="px-3 py-2.5 border-b border-dark-400/30 cursor-pointer select-none" style="list-style:none">
@@ -312,7 +311,7 @@ export function render(store) {
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm font-bold text-${s.key === 'emprunts' ? 'accent-red' : s.color}">${formatCurrency(s.total)}</span>
-          <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${btnColorClass} text-[10px] rounded hover:opacity-90 transition font-medium" onclick="event.stopPropagation(); event.preventDefault();">+ Ajouter</button>
+          <button id="${s.btnId}" class="px-2.5 py-1 ${btnStyle} text-[10px] rounded-lg transition font-medium" onclick="event.stopPropagation(); event.preventDefault();">+ Ajouter</button>
         </div>
       </summary>
       <div class="flex-1 overflow-y-auto">
@@ -329,7 +328,9 @@ export function render(store) {
   const row3 = [fixedSections.emprunts, fixedSections.heritage];
 
   const addPlacBtn = envelopeSections.length === 0
-    ? `<div class="flex justify-center"><button id="btn-add-plac" class="px-4 py-2 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-sm rounded-lg hover:opacity-90 transition font-medium">+ Ajouter un placement</button></div>`
+    ? `<div class="flex justify-center"><button id="btn-add-plac" class="flex items-center gap-2 px-4 py-2 bg-accent-green/20 text-accent-green text-sm rounded-xl hover:bg-accent-green/30 transition font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              Ajouter un placement</button></div>`
     : `<div class="flex items-center justify-between">
         <button id="btn-actu-rapide" class="flex items-center gap-1.5 px-3 py-1.5 bg-dark-600 text-gray-300 text-xs rounded hover:bg-dark-500 transition font-medium">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -340,7 +341,7 @@ export function render(store) {
 
   return `
     <div class="space-y-4">
-      <h1 class="text-2xl font-bold text-gray-100">Actifs et passifs</h1>
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-100">Actifs et passifs</h1>
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
         ${row1.map(renderColumn).join('')}

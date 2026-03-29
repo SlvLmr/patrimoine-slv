@@ -46,15 +46,15 @@ function renderProjTabs(store) {
   const prenom = (userInfo.prenom || '').trim() || 'Moi';
 
   return `
-    <div class="flex gap-1 bg-dark-800/50 rounded-xl p-1 border border-dark-400/15 mb-6">
-      <button class="proj-tab flex-1 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150
+    <div class="flex gap-1 bg-dark-800/50 rounded-xl p-1 border border-dark-400/15 mb-6 overflow-x-auto">
+      <button class="proj-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 whitespace-nowrap
         ${'moi' === activeTab ? 'bg-dark-600 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300 hover:bg-dark-700/30'
       }" data-proj-tab="moi">
         <svg class="inline w-3.5 h-3.5 mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         ${prenom}
       </button>
       ${enfants.map((e, i) => `
-      <button class="proj-tab flex-1 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150
+      <button class="proj-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150 whitespace-nowrap
         ${'child-' + i === activeTab ? 'bg-dark-600 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300 hover:bg-dark-700/30'
       }" data-proj-tab="child-${i}">
         <span class="inline-block w-2 h-2 rounded-full mr-1.5" style="background:${CHILD_COLORS[i % CHILD_COLORS.length]}"></span>
@@ -77,7 +77,7 @@ export function render(store) {
     return `
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-500/20 flex items-center justify-center">
             <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -128,7 +128,7 @@ export function render(store) {
   return `
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-500/20 flex items-center justify-center">
             <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -300,11 +300,11 @@ export function render(store) {
 
             return `
           <div class="mt-2 p-3 rounded-xl bg-dark-800/30 border border-dark-400/15">
-            <div class="flex items-center gap-2 mb-2">
-              <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <svg class="w-3.5 h-3.5 text-accent-amber shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
               <span class="text-sm font-semibold text-gray-300">Quand le PEA est plein</span>
-              <span class="text-[10px] text-gray-500 ml-1">→ rediriger ${formatCurrency(peaDCA)}/mois vers :</span>
-              <span class="text-[10px] ${peaRestant <= 0 ? 'text-accent-red' : 'text-gray-600'} ml-auto">${peaRestant <= 0 ? 'PEA déjà plein' : `Plein dans ~${moisRestant} mois`} (versé : ${formatCurrency(peaApports)} / 150 000 €)</span>
+              <span class="text-[10px] text-gray-500 ml-1 hidden sm:inline">→ rediriger ${formatCurrency(peaDCA)}/mois vers :</span>
+              <span class="text-[10px] ${peaRestant <= 0 ? 'text-accent-red' : 'text-gray-600'} sm:ml-auto">${peaRestant <= 0 ? 'PEA déjà plein' : `Plein dans ~${moisRestant} mois`} (versé : ${formatCurrency(peaApports)} / 150 000 €)</span>
             </div>
             <div class="space-y-1.5" id="pea-overflow-targets">
               ${hasTargets ? overflowTargets.map((t, idx) => {
@@ -374,11 +374,11 @@ export function render(store) {
 
             return `
           <div class="mt-2 p-3 rounded-xl bg-dark-800/30 border border-dark-400/15">
-            <div class="flex items-center gap-2 mb-2">
-              <svg class="w-3.5 h-3.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+              <svg class="w-3.5 h-3.5 text-accent-cyan shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
               <span class="text-sm font-semibold text-gray-300">Quand l'Assurance Vie est pleine</span>
-              <span class="text-[10px] text-gray-500 ml-1">→ rediriger ${formatCurrency(avDCA)}/mois vers :</span>
-              <span class="text-[10px] ${avRestant <= 0 ? 'text-accent-red' : 'text-gray-600'} ml-auto">${avRestant <= 0 ? 'AV déjà pleine' : `Pleine dans ~${moisRestantAV} mois`} (versé : ${formatCurrency(avApports)} / 300 000 €)</span>
+              <span class="text-[10px] text-gray-500 ml-1 hidden sm:inline">→ rediriger ${formatCurrency(avDCA)}/mois vers :</span>
+              <span class="text-[10px] ${avRestant <= 0 ? 'text-accent-red' : 'text-gray-600'} sm:ml-auto">${avRestant <= 0 ? 'AV déjà pleine' : `Pleine dans ~${moisRestantAV} mois`} (versé : ${formatCurrency(avApports)} / 300 000 €)</span>
             </div>
             <div class="space-y-1.5" id="av-overflow-targets">
               ${hasAVTargets ? avOverflowTargets.map((t, idx) => {
@@ -469,7 +469,7 @@ export function render(store) {
           </div>
 
           <!-- Actions -->
-          <div class="flex justify-end">
+          <div class="flex flex-wrap justify-end">
             <button id="btn-update-projection" class="px-5 py-2 text-sm font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 rounded hover:opacity-90 transition">
               Recalculer
             </button>
@@ -484,8 +484,8 @@ export function render(store) {
         const firstImmo = first?.immobilier || 0;
         const firstFin = first?.totalLiquiditesNettes || 0;
         return `
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card-dark rounded-xl p-5 kpi-card">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="card-dark rounded-xl p-4 sm:p-5 kpi-card">
           <p class="text-sm text-gray-400 mb-2">${first?.label || 'Fin ' + new Date().getFullYear()}</p>
           <p class="text-2xl font-bold text-gray-200">${formatCurrency(firstNet)}</p>
           <div class="flex gap-3 mt-2 text-xs text-gray-500">
@@ -504,7 +504,7 @@ export function render(store) {
           const evolPct = firstNet ? evol / Math.abs(firstNet) : 0;
           const glows = ['glow-blue', 'glow-green', 'glow-blue'];
           return `
-        <div class="card-dark rounded-xl p-5 kpi-card ${glows[i]}">
+        <div class="card-dark rounded-xl p-4 sm:p-5 kpi-card ${glows[i]}">
           <p class="text-sm text-gray-400 mb-2">Fin ${targetCalYear} <span class="text-gray-600">(+${targetYr} ans)</span></p>
           <p class="text-2xl font-bold gradient-text">${formatCurrency(net)}</p>
           <div class="flex gap-3 mt-2 text-xs">
@@ -537,10 +537,10 @@ export function render(store) {
       })()}
 
       <!-- Charts -->
-      <div class="card-dark rounded-xl p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-200">Répartition des actifs dans le temps</h2>
-          <div class="flex items-center gap-2">
+      <div class="card-dark rounded-xl p-3 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h2 class="text-base sm:text-lg font-semibold text-gray-200">Répartition des actifs dans le temps</h2>
+          <div class="flex flex-wrap items-center gap-2">
             <div class="flex items-center gap-1 px-2 py-1 rounded bg-red-500/8 border border-red-500/25">
               <svg class="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
               <span class="text-xs text-red-400 font-medium">Cash out</span>
@@ -574,10 +574,10 @@ export function render(store) {
           </div>
         </div>
         <div class="relative">
-          <div id="chart-slide-0" class="h-80">
+          <div id="chart-slide-0" class="h-64 sm:h-80">
             <canvas id="chart-repartition-temps"></canvas>
           </div>
-          <div id="chart-slide-1" class="h-80 hidden">
+          <div id="chart-slide-1" class="h-64 sm:h-80 hidden">
             <canvas id="chart-repartition-stacked"></canvas>
           </div>
           <!-- Navigation arrows -->
@@ -597,8 +597,8 @@ export function render(store) {
 
       <!-- Detailed Table -->
       <div class="card-dark rounded-xl overflow-hidden">
-        <div class="p-5 border-b border-dark-400/30">
-          <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
+        <div class="p-3 sm:p-5 border-b border-dark-400/30">
+          <h2 class="text-base sm:text-lg font-semibold text-gray-200">Détail année par année</h2>
           <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5 ans: 31,4% · PEA &gt;5 ans: 17,2% · AV &lt;8 ans: 31,4% · AV &gt;8 ans: 24,7% · CTO/Crypto: 31,4% · PEE: 17,2%</p>
         </div>
         <div class="overflow-x-auto">
@@ -719,20 +719,20 @@ export function render(store) {
 
         return `
       <details class="card-dark rounded-xl group">
-        <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
-          <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"/></svg>
-            <h2 class="text-lg font-semibold text-gray-200">Synth\u00e8se fiscale</h2>
-            <span class="text-[10px] text-gray-600 italic">Fin ${fiscalSnap.calendarYear} \u00b7 \u00c2ge ${fiscalSnap.age}</span>
+        <summary class="flex items-center justify-between px-3 sm:px-5 py-3 cursor-pointer select-none">
+          <div class="flex items-center gap-2 min-w-0">
+            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"/></svg>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-200">Synth\u00e8se fiscale</h2>
+            <span class="text-[10px] text-gray-600 italic hidden sm:inline">Fin ${fiscalSnap.calendarYear} \u00b7 \u00c2ge ${fiscalSnap.age}</span>
           </div>
-          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-5 pb-5">
+        <div class="px-3 sm:px-5 pb-5">
           <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm min-w-[600px]">
               <thead class="bg-dark-800/50 text-gray-500 text-[10px] uppercase tracking-wider">
                 <tr>
-                  <th class="px-3 py-2 text-left">Enveloppe</th>
+                  <th class="px-2 sm:px-3 py-2 text-left">Enveloppe</th>
                   <th class="px-3 py-2 text-right">Valeur</th>
                   <th class="px-3 py-2 text-right">Apports</th>
                   <th class="px-3 py-2 text-right">Plus-value</th>
@@ -846,14 +846,14 @@ export function render(store) {
 
         return `
       <details class="card-dark rounded-xl group">
-        <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
-          <div class="flex items-center gap-2">
-            <h2 class="text-lg font-semibold text-gray-200">Ma stratégie d'investissement</h2>
-            <span class="text-[10px] text-gray-600 italic">Cliquer pour modifier</span>
+        <summary class="flex items-center justify-between px-3 sm:px-5 py-3 cursor-pointer select-none">
+          <div class="flex items-center gap-2 min-w-0">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-200">Ma stratégie d'investissement</h2>
+            <span class="text-[10px] text-gray-600 italic hidden sm:inline">Cliquer pour modifier</span>
           </div>
-          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-5 pb-5 space-y-4">
+        <div class="px-3 sm:px-5 pb-5 space-y-4">
           <div class="flex justify-end mb-2">
             <button id="strat-refresh" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Régénérer depuis les données actuelles">
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -863,22 +863,22 @@ export function render(store) {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 class="text-sm font-semibold text-accent-amber mb-2">Enveloppes & plafonds</h3>
-              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
+              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${enveloppes.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.enveloppes || enveloppes).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-accent-cyan mb-2">Répartition cible & DCA</h3>
-              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
+              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${repartition.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.repartition || repartition).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-accent-green mb-2">Moyens supplémentaires</h3>
-              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
+              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${moyens.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.moyens || moyens).replace(/</g, '&lt;')}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-purple-400 mb-2">Objectifs & horizon</h3>
-              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[120px] p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
+              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${objectifs.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.objectifs || objectifs).replace(/</g, '&lt;')}</div>
             </div>
           </div>
@@ -888,11 +888,11 @@ export function render(store) {
 
       <!-- Formules de calcul -->
       <details class="card-dark rounded-xl group">
-        <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
-          <h2 class="text-lg font-semibold text-gray-200">Comment sont calculées les projections</h2>
-          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <summary class="flex items-center justify-between px-3 sm:px-5 py-3 cursor-pointer select-none">
+          <h2 class="text-base sm:text-lg font-semibold text-gray-200">Comment sont calculées les projections</h2>
+          <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-5 pb-5 space-y-4 text-sm text-gray-400 leading-relaxed">
+        <div class="px-3 sm:px-5 pb-5 space-y-4 text-sm text-gray-400 leading-relaxed">
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
