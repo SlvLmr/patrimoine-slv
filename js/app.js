@@ -42,7 +42,6 @@ function showToast(message, type = 'error', duration = 8000) {
 }
 
 const routes = {
-  heritage: Heritage,
   'revenus-depenses': RevenusDepenses,
   'suivi-depenses': SuiviDepenses,
   'portefeuille-live': PortefeuilleLive,
