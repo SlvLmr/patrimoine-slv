@@ -1284,8 +1284,58 @@ export function mount(store, navigate) {
       hidden: true
     });
 
-    // Retirement milestones as vertical annotations
+    // Scenario bands (pessimistic / base / optimistic)
     const params = store.get('parametres');
+    const scenarioSpread = (params.scenarioSpread ?? 2) / 100; // default ±2%
+
+    if (scenarioSpread > 0) {
+      const pessimisticSnapshots = computeProjection(store, { rendementSpread: -scenarioSpread });
+      const optimisticSnapshots = computeProjection(store, { rendementSpread: +scenarioSpread });
+
+      // "Faible" (pessimistic) - thin dashed gray line
+      datasets.push({
+        label: 'Faible',
+        data: pessimisticSnapshots.map(s => s.patrimoineNet),
+        borderColor: 'rgba(156,163,175,0.5)',
+        backgroundColor: 'transparent',
+        fill: false,
+        tension: 0.45,
+        pointRadius: 0,
+        borderWidth: 1,
+        borderDash: [4, 3],
+        order: 10
+      });
+
+      // "Moyen" (base) - solid gray line
+      datasets.push({
+        label: 'Moyen',
+        data: snapshots.map(s => s.patrimoineNet),
+        borderColor: 'rgba(156,163,175,0.7)',
+        backgroundColor: 'transparent',
+        fill: false,
+        tension: 0.45,
+        pointRadius: 0,
+        borderWidth: 2,
+        order: 9
+      });
+
+      // "Élevé" (optimistic) - thin dashed gray line, filled to "Faible"
+      const faibleIdx = datasets.length - 2; // index of the "Faible" dataset
+      datasets.push({
+        label: '\u00c9lev\u00e9',
+        data: optimisticSnapshots.map(s => s.patrimoineNet),
+        borderColor: 'rgba(156,163,175,0.5)',
+        backgroundColor: 'rgba(156,163,175,0.08)',
+        fill: { target: faibleIdx, above: 'rgba(156,163,175,0.08)', below: 'rgba(156,163,175,0.08)' },
+        tension: 0.45,
+        pointRadius: 0,
+        borderWidth: 1,
+        borderDash: [4, 3],
+        order: 10
+      });
+    }
+
+    // Retirement milestones as vertical annotations
     const currentYear = new Date().getFullYear();
     const ageFinAnnee = params.ageFinAnnee || 43;
 
