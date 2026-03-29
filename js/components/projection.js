@@ -1333,13 +1333,12 @@ export function mount(store, navigate) {
       });
 
       // "Élevé" (optimistic) - thin dashed gray line, filled to "Faible"
-      const faibleIdx = datasets.length - 2; // index of the "Faible" dataset
       datasets.push({
         label: '\u00c9lev\u00e9',
         data: optimisticSnapshots.map(s => s.patrimoineNet),
         borderColor: 'rgba(156,163,175,0.5)',
         backgroundColor: 'rgba(156,163,175,0.08)',
-        fill: { target: faibleIdx, above: 'rgba(156,163,175,0.08)', below: 'rgba(156,163,175,0.08)' },
+        fill: { target: '-2', above: 'rgba(156,163,175,0.08)', below: 'rgba(156,163,175,0.08)' },
         tension: 0.45,
         pointRadius: 0,
         borderWidth: 1,
