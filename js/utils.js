@@ -771,7 +771,6 @@ export function computeProjection(store, overrides = {}) {
           ps.totalGains = ps.value - ps.totalApports;
         });
         // Redirect excess to AV overflow targets
-        const categoryToGroupKey = { cto: 'CTO', av: 'Assurance Vie', bitcoin: 'Crypto' };
         let distributed = 0;
         for (const target of avOverflowTargets) {
           if (target.category === 'av') continue; // avoid circular
@@ -784,8 +783,7 @@ export function computeProjection(store, overrides = {}) {
             donation += share;
             distributed += share;
           } else {
-            const gk = categoryToGroupKey[target.category];
-            const targetSim = gk ? placSims.find(ps => ps.groupKey === gk && ps.id !== '__av_overflow__') : null;
+            const targetSim = findSimByCategory(target.category, '__av_overflow__');
             if (targetSim) {
               targetSim.value += share;
               targetSim.totalApports += share;
@@ -804,7 +802,14 @@ export function computeProjection(store, overrides = {}) {
     // PEA overflow: distribute to configured category targets (or fallback CTO)
     {
       // Map categories to target placement sims
-      const categoryToGroupKey = { cto: 'CTO', av: 'Assurance Vie', bitcoin: 'Crypto' };
+      function findSimByCategory(cat, excludeId) {
+        if (cat === 'cto') return placSims.find(ps => ps.groupKey.startsWith('CTO') && ps.id !== (excludeId || ''));
+        if (cat === 'cto_tr') return placSims.find(ps => ps.groupKey === 'CTO TR');
+        if (cat === 'cto_bb') return placSims.find(ps => ps.groupKey === 'CTO BB');
+        if (cat === 'av') return placSims.find(ps => ps.groupKey === 'Assurance Vie');
+        if (cat === 'bitcoin') return placSims.find(ps => ps.groupKey === 'Crypto');
+        return null;
+      }
 
       // Distribute overflow to user-configured category targets
       for (let m = 0; m < monthsInPeriod; m++) {
@@ -823,8 +828,8 @@ export function computeProjection(store, overrides = {}) {
             distributed += share;
           } else {
             // Find first placement matching the category group key
-            const gk = categoryToGroupKey[target.category];
-            const targetSim = gk ? placSims.find(ps => ps.groupKey === gk) : null;
+            const targetSim = findSimByCategory(target.category);
+            const gk = targetSim?.groupKey;
             if (targetSim) {
               targetSim.value += share;
               targetSim.totalApports += share;

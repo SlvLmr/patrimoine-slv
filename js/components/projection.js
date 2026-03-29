@@ -250,7 +250,9 @@ export function render(store) {
 
             // Category options for overflow targets
             const overflowCategories = [
-              { value: 'cto', label: 'CTO' },
+              { value: 'cto', label: 'CTO (tous)' },
+              { value: 'cto_tr', label: 'CTO TR' },
+              { value: 'cto_bb', label: 'CTO BB' },
               { value: 'av', label: 'Assurance Vie' },
               { value: 'bitcoin', label: 'Bitcoin' },
               { value: 'epargne', label: 'Épargne' },
@@ -326,7 +328,9 @@ export function render(store) {
 
             // Category options for AV overflow targets
             const avOverflowCategories = [
-              { value: 'cto', label: 'CTO' },
+              { value: 'cto', label: 'CTO (tous)' },
+              { value: 'cto_tr', label: 'CTO TR' },
+              { value: 'cto_bb', label: 'CTO BB' },
               { value: 'bitcoin', label: 'Bitcoin' },
               { value: 'epargne', label: 'Épargne' },
               { value: 'donation', label: 'Donation' },
