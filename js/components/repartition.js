@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData } from '../utils.js?v=5';
+import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData } from '../utils.js?v=6';
 import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 
@@ -9,6 +9,8 @@ const GROUP_COLORS = {
   'PEA Autre': { color: '#eab308', bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/30' },
   'Assurance Vie': { color: '#06b6d4', bg: 'bg-cyan-500/15', text: 'text-cyan-400', border: 'border-cyan-500/30' },
   'CTO': { color: '#a855f7', bg: 'bg-purple-500/15', text: 'text-purple-400', border: 'border-purple-500/30' },
+  'CTO TR': { color: '#a855f7', bg: 'bg-purple-500/15', text: 'text-purple-400', border: 'border-purple-500/30' },
+  'CTO BB': { color: '#c084fc', bg: 'bg-violet-500/15', text: 'text-violet-400', border: 'border-violet-500/30' },
   'Crypto': { color: '#f97316', bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/30' },
   'PEE': { color: '#14b8a6', bg: 'bg-teal-500/15', text: 'text-teal-400', border: 'border-teal-500/30' },
   'PER': { color: '#ec4899', bg: 'bg-pink-500/15', text: 'text-pink-400', border: 'border-pink-500/30' },
@@ -106,19 +108,21 @@ export function render(store) {
           </div>
           <div id="rep-flow" class="space-y-0 flex-1 flex flex-col"></div>
         </div>
-        <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
-          <div class="flex items-center gap-2 mb-3 flex-shrink-0">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
+        <div class="flex flex-col gap-4">
+          <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
+            <div class="flex items-center gap-2 mb-3 flex-shrink-0">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
+            </div>
+            <div id="rep-actions-list" class="space-y-2 overflow-y-auto"></div>
           </div>
-          <div id="rep-actions-list" class="space-y-2 flex-1 overflow-y-auto"></div>
-        </div>
-        <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
-          <div class="flex items-center gap-2 mb-3 flex-shrink-0">
-            <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mon PEE</h3>
+          <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
+            <div class="flex items-center gap-2 mb-3 flex-shrink-0">
+              <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mon PEE</h3>
+            </div>
+            <div id="rep-pee-list" class="space-y-2 overflow-y-auto"></div>
           </div>
-          <div id="rep-pee-list" class="space-y-2 flex-1 overflow-y-auto"></div>
         </div>
       </div>
 
@@ -552,11 +556,11 @@ export function mount(store, navigate) {
           <div class="space-y-1">
             ${placementsInGroup.map(p => `
               <div class="flex items-center justify-between group/item hover:bg-dark-700/40 rounded px-1.5 py-0.5 -mx-1.5 transition cursor-pointer" data-edit-placement="${p.id}">
-                <div class="flex items-center gap-1.5 min-w-0">
-                  <span class="text-[11px] text-gray-400 truncate">${p.nom}</span>
+                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span class="text-[11px] text-gray-400 truncate" title="${p.nom}">${p.nom}</span>
                 </div>
-                <div class="flex items-center gap-1.5">
-                  <input type="number" class="rep-inline-dca input-field w-16 px-1.5 py-0.5 text-[11px] text-center"
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <input type="number" class="rep-inline-dca input-field w-14 px-1 py-0.5 text-[11px] text-center"
                     value="${p.dca}" min="0" step="10" data-dca-id="${p.id}" title="Modifier le DCA mensuel">
                   <span class="text-[10px] text-gray-600">€/m</span>
                   <button class="rep-edit-btn opacity-0 group-hover/item:opacity-100 text-gray-500 hover:text-accent-blue transition" data-edit-id="${p.id}" title="Modifier">

@@ -512,6 +512,16 @@ input[type="number"] {
   display: block;
 }
 
+/* Left-aligned tooltip for cells near left edge */
+.proj-tip-left > .proj-tip {
+  left: 0;
+  transform: none;
+}
+.proj-tip-left > .proj-tip::after {
+  left: 24px;
+  transform: none;
+}
+
 /* Hide default details marker for custom summaries */
 summary[style*="list-style:none"]::-webkit-details-marker {
   display: none;

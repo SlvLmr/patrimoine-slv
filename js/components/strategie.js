@@ -1,4 +1,4 @@
-import { formatCurrency, computeProjection } from '../utils.js?v=5';
+import { formatCurrency, computeProjection } from '../utils.js?v=6';
 
 // ============================================================================
 // STRATEGIE PATRIMONIALE — Plan complet Sylvain

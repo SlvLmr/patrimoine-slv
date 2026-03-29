@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=5';
+import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=6';
 import { createChart, VIVID_PALETTE, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ============================================================================
@@ -483,15 +483,16 @@ function renderTable(snapshots, groupKeys) {
               const isFiveYear = s.annee > 0 && s.annee % 5 === 0;
               const bt = isFiveYear ? 'border-t-2 border-t-dark-300/40' : '';
               const rowClass = s.annee === 0 ? 'bg-accent-blue/5' : '';
-              const placCell = (k, extra) => {
+              const placCell = (k, extra, idx) => {
                 const val = s.placementDetail[k] || 0;
                 const ap = s.placementApports[k] || 0;
                 const ga = s.placementGains[k] || 0;
                 const tx = s.placementTaxes?.[k] || 0;
                 const rate = s.placementTaxRates?.[k] || 0;
                 const rateStr = rate > 0 ? ` <span class="text-gray-500">(${Math.round(rate * 100)}%)</span>` : '';
+                const tipAlign = idx <= 1 ? 'proj-tip-left' : '';
                 const tip = val > 0 ? `<div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(ap)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Gains</span><span class="${ga >= 0 ? 'text-accent-green' : 'text-red-400'}">${ga >= 0 ? '+' : ''}${formatCurrency(ga)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts${rateStr}</span><span class="text-red-400">-${formatCurrency(tx)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(val - tx)}</span></div></div>` : '';
-                return `<td class="px-1 py-0.5 text-center text-gray-200 ${bt} ${extra} ${val > 0 ? 'proj-tip-wrap' : ''}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500">${formatCurrency(ap)}</div>${tip}` : `<span class="text-gray-600">${formatCurrency(0)}</span>`}</td>`;
+                return `<td class="px-1 py-0.5 text-center text-gray-200 ${bt} ${extra} ${val > 0 ? `proj-tip-wrap ${tipAlign}` : ''}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500">${formatCurrency(ap)}</div>${tip}` : `<span class="text-gray-600">${formatCurrency(0)}</span>`}</td>`;
               };
               return `
             <tr class="hover:bg-dark-600/30 transition ${rowClass} text-[11px] group/row">
@@ -504,7 +505,7 @@ function renderTable(snapshots, groupKeys) {
               </td>
               <td class="px-0 py-1 text-center text-gray-500 ${bt}">${s.annee + 1}</td>
               <td class="px-0 py-1 text-center text-gray-400 border-r-2 border-dark-300/40 ${bt}">${s.age !== null ? s.age : '–'}</td>
-              ${groupKeys.map((k, i) => placCell(k, i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '')).join('')}
+              ${groupKeys.map((k, i) => placCell(k, i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '', i)).join('')}
               <td class="px-1 py-0.5 text-center text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
               <td class="px-1 py-0.5 text-center font-semibold ${bt} ${s.totalGains >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${s.totalGains >= 0 ? '+' : ''}${formatCurrency(s.totalGains)}</td>
               <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 ${bt} proj-tip-wrap">${formatCurrency(s.totalNetImpot)}<div class="text-[8px] text-gray-500">${formatCurrency(s.totalApports)}</div><div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Placements</span><span class="text-gray-200">${formatCurrency(s.placements)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(s.totalApports)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts</span><span class="text-red-400">-${formatCurrency(s.totalTaxes)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(s.totalNetImpot)}</span></div></div></td>

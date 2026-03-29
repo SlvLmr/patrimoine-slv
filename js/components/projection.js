@@ -1,9 +1,9 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=5';
+import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=6';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 import { openHeritageModal } from './heritage.js?v=5';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260329h';
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329h';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260329l';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329l';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -83,6 +83,8 @@ export function render(store) {
     'PEA Actions': 'text-accent-amber',
     'Assurance Vie': 'text-accent-cyan',
     'CTO': 'text-accent-blue',
+    'CTO TR': 'text-accent-blue',
+    'CTO BB': 'text-purple-400',
     'PER': 'text-accent-green',
     'Crypto': 'text-accent-amber',
     'PEE': 'text-emerald-400',
@@ -162,6 +164,8 @@ export function render(store) {
                   'Assurance Vie': '<svg class="w-2.5 h-2.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
                   'PEE': '<svg class="w-2.5 h-2.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
                   'CTO': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>',
+                  'CTO TR': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>',
+                  'CTO BB': '<svg class="w-2.5 h-2.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>',
                 };
                 const defaultIcon = '<svg class="w-2.5 h-2.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
                 const stockColors = {
@@ -379,10 +383,10 @@ export function render(store) {
               </div>
               <div class="space-y-1">
                 ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
-                  const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_epargne__': 'Epargne', 'surplus': 'Surplus', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
+                  const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_epargne__': 'Epargne', 'surplus': 'Surplus', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
                   const destPlacement = placements.find(p => p.id === t.destinationId);
                   const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
-                  const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'surplus': 'Surplus', 'heritage': 'Héritage', '__donation__': 'Donation' };
+                  const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'surplus': 'Surplus', 'heritage': 'Héritage', '__donation__': 'Donation' };
                   const sourceLabel = catSrcNames[t.source] || t.source;
                   const sourceBg = t.source === 'heritage' ? 'bg-accent-amber/10 text-accent-amber' : t.source === 'epargne' ? 'bg-accent-cyan/10 text-accent-cyan' : 'bg-purple-500/10 text-purple-300';
                   const freqLabels = { annual: '/an', monthly: '/mois', once: '×1' };
@@ -555,12 +559,7 @@ export function render(store) {
                 <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
                 <th class="w-[28px] px-0 py-1.5 text-center">An</th>
                 <th class="w-[32px] px-0 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
-                <th class="px-1 py-1.5 text-center">Actions (PEA)</th>
-                <th class="px-1 py-1.5 text-center">ETF (PEA)</th>
-                <th class="px-1 py-1.5 text-center">Bitcoin</th>
-                <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">CTO</th>
-                <th class="px-1 py-1.5 text-center">AV</th>
-                <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">PEE</th>
+                ${groupKeys.map((gk, i) => `<th class="px-1 py-1.5 text-center ${i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : ''}">${gk}</th>`).join('')}
                 <th class="px-1 py-1.5 text-center font-semibold text-gray-400">Apports</th>
                 <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
                 <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
@@ -605,12 +604,7 @@ export function render(store) {
                 </td>
                 <td class="px-0 py-1 text-center text-gray-500 ${bt}">${s.annee + 1}</td>
                 <td class="px-0 py-1 text-center border-r-2 border-dark-300/40 ${bt} ${isRetirement ? 'text-accent-amber font-bold' : 'text-gray-200'}">${s.age}</td>
-                ${placCell('PEA Actions')}
-                ${placCell('PEA ETF')}
-                ${placCell('Crypto')}
-                ${placCell('CTO', 'border-r-2 border-dark-300/40')}
-                ${placCell('Assurance Vie')}
-                ${placCell('PEE', 'border-r-2 border-dark-300/40')}
+                ${groupKeys.map((gk, i) => placCell(gk, i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '')).join('')}
                 <td class="px-1 py-0.5 text-center text-[11px] text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-[11px] ${bt} ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[11px] ${bt} proj-tip-wrap">${formatCurrency(s.cashApresImpot)}<div class="text-[8px] text-gray-500 leading-tight">${formatCurrency(s.totalApports)}</div><div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Placements</span><span class="text-gray-200">${formatCurrency(s.placements)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(s.totalApports)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts</span><span class="text-red-400">-${formatCurrency(s.totalTaxes)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(s.cashApresImpot)}</span></div></div></td>
@@ -663,7 +657,7 @@ export function render(store) {
           const lines = [];
           if (envSet.has('PEA')) lines.push(`PEA : plafond 150 000 € (versé ${formatCurrency(peaApports)}) — gains exonérés d'IR après 5 ans`);
           if (envSet.has('AV') || allPlac.some(p => (p.enveloppe || p.type || '').includes('AV'))) lines.push('Assurance Vie : pas de plafond, fiscalité avantageuse après 8 ans');
-          if (envSet.has('CTO') || allPlac.some(p => getPlacementGroupKey(p) === 'CTO')) lines.push('CTO : pas de plafond, flat tax 31,4% sur les plus-values');
+          if (envSet.has('CTO') || allPlac.some(p => getPlacementGroupKey(p).startsWith('CTO'))) lines.push('CTO : pas de plafond, flat tax 31,4% sur les plus-values');
           if (envSet.has('PEE')) lines.push('PEE : abondement employeur, bloqué 5 ans');
           if (envSet.has('PER')) lines.push('PER : déductible du revenu imposable, bloqué jusqu\'à la retraite');
           if (envSet.has('Crypto') || allPlac.some(p => getPlacementGroupKey(p) === 'Crypto')) lines.push('Crypto : flat tax 31,4% sur les plus-values réalisées');
@@ -964,7 +958,9 @@ function openTransferModal(store, navigate, editItem = null) {
   // Include CTO overflow (virtual placement for PEA ceiling overflow)
   const sourceOptions = [
     { value: '__cat_pea__', label: 'PEA' },
-    { value: '__cat_cto__', label: 'CTO' },
+    { value: '__cat_cto__', label: 'CTO (tous)' },
+    { value: '__cat_cto_tr__', label: 'CTO TR' },
+    { value: '__cat_cto_bb__', label: 'CTO BB' },
     { value: '__cat_bitcoin__', label: 'Bitcoin' },
     { value: '__cat_av__', label: 'Assurance Vie' },
     { value: '__cat_pee__', label: 'PEE' },
@@ -976,7 +972,9 @@ function openTransferModal(store, navigate, editItem = null) {
 
   const destOptions = [
     { value: '__cat_pea__', label: 'PEA' },
-    { value: '__cat_cto__', label: 'CTO' },
+    { value: '__cat_cto__', label: 'CTO (tous)' },
+    { value: '__cat_cto_tr__', label: 'CTO TR' },
+    { value: '__cat_cto_bb__', label: 'CTO BB' },
     { value: '__cat_bitcoin__', label: 'Bitcoin' },
     { value: '__cat_av__', label: 'Assurance Vie' },
     { value: '__cat_epargne__', label: 'Epargne' },

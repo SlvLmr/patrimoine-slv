@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, computeProjection } from '../utils.js?v=5';
+import { formatCurrency, formatPercent, computeProjection } from '../utils.js?v=6';
 import { createChart, COLORS, PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient } from '../charts/chart-config.js';
 
 // Generate financial advisor timeline events from projection snapshots

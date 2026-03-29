@@ -107,7 +107,12 @@ export function getPlacementGroupKey(p) {
     return 'PEA Autre';
   }
   if (env === 'AV') return 'Assurance Vie';
-  if (env === 'CTO') return 'CTO';
+  if (env === 'CTO') {
+    const nom = (p.nom || '').toUpperCase();
+    if (nom.includes('BB')) return 'CTO BB';
+    if (nom.includes('TR')) return 'CTO TR';
+    return 'CTO';
+  }
   if (env === 'PEE') return 'PEE';
   if (env === 'Livrets') return 'Livrets';
   return env; // PER, Crypto, Autre
@@ -246,7 +251,7 @@ export function computeProjection(store, overrides = {}) {
   const categoryRendements = {};
   const catGroups = { cto: [], av: [], bitcoin: [] };
   placSims.forEach(ps => {
-    if (ps.groupKey === 'CTO') catGroups.cto.push(ps.rendement);
+    if (ps.groupKey.startsWith('CTO')) catGroups.cto.push(ps.rendement);
     else if (ps.groupKey === 'Assurance Vie') catGroups.av.push(ps.rendement);
     else if (ps.groupKey === 'Crypto') catGroups.bitcoin.push(ps.rendement);
   });
@@ -457,7 +462,7 @@ export function computeProjection(store, overrides = {}) {
       // Resolve category-level destination IDs to actual placements
       let destSim = null;
       if (!isDonation && !isEpargne && !isSurplusDest) {
-        const catMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie' };
+        const catMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie' };
         const catGroupKey = catMap[transfer.destinationId];
         if (catGroupKey) {
           if (catGroupKey === 'PEA') {
@@ -465,7 +470,11 @@ export function computeProjection(store, overrides = {}) {
           } else if (catGroupKey === 'Assurance Vie') {
             destSim = placSims.find(ps => ps.groupKey === 'Assurance Vie');
           } else if (catGroupKey === 'CTO') {
-            destSim = placSims.find(ps => ps.groupKey === 'CTO');
+            destSim = placSims.find(ps => ps.groupKey.startsWith('CTO'));
+          } else if (catGroupKey === 'CTO TR') {
+            destSim = placSims.find(ps => ps.groupKey === 'CTO TR');
+          } else if (catGroupKey === 'CTO BB') {
+            destSim = placSims.find(ps => ps.groupKey === 'CTO BB');
           } else if (catGroupKey === 'Crypto') {
             destSim = placSims.find(ps => ps.groupKey === 'Crypto');
           }
@@ -496,9 +505,9 @@ export function computeProjection(store, overrides = {}) {
         donation -= amount;
       } else if (transfer.source?.startsWith('__cat_')) {
         // Category-level source: debit from matching placements
-        const srcCatMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE' };
+        const srcCatMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE' };
         const srcGroupKey = srcCatMap[transfer.source];
-        const srcSims = srcGroupKey ? placSims.filter(ps => srcGroupKey === 'PEA' ? ps.groupKey.startsWith('PEA') : ps.groupKey === srcGroupKey) : [];
+        const srcSims = srcGroupKey ? placSims.filter(ps => srcGroupKey === 'PEA' ? ps.groupKey.startsWith('PEA') : srcGroupKey === 'CTO' ? ps.groupKey.startsWith('CTO') : ps.groupKey === srcGroupKey) : [];
         const totalAvailable = srcSims.reduce((sum, ps) => sum + Math.max(0, ps.value), 0);
         amount = Math.min(amount, totalAvailable);
         let remaining = amount;
