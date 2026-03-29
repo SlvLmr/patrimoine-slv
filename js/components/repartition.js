@@ -93,7 +93,7 @@ export function render(store) {
           <span class="text-[10px] text-gray-600">${currentYear}</span>
           <span class="text-[10px] text-gray-600">${currentYear + years}</span>
         </div>
-        <div id="rep-kpi" class="grid grid-cols-3 gap-3 mt-4"></div>
+        <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
       </div>
 
       <!-- Flow + Actions + PEE -->

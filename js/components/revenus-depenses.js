@@ -54,7 +54,7 @@ function checkboxField(name, label, checked = false) {
 function montantFields(mensuel, lisse, annuel) {
   const cls = 'input-field w-full px-3 py-2.5 text-left';
   return `
-    <div class="grid grid-cols-3 gap-3 mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
       <div>
         <label class="block text-sm font-medium text-gray-300 mb-1.5">Mensuel (€)</label>
         <input type="number" id="field-valMensuel" value="${mensuel}" step="any" class="${cls}">

@@ -586,10 +586,10 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-5 border-b border-dark-400/30">
           <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
-          <p class="text-[10px] text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5 ans: 31,4% · PEA &gt;5 ans: 17,2% · AV &lt;8 ans: 31,4% · AV &gt;8 ans: 24,7% · CTO/Crypto: 31,4% · PEE: 17,2%</p>
+          <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5 ans: 31,4% · PEA &gt;5 ans: 17,2% · AV &lt;8 ans: 31,4% · AV &gt;8 ans: 24,7% · CTO/Crypto: 31,4% · PEE: 17,2%</p>
         </div>
-        <div>
-          <table class="w-full text-sm table-fixed">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm table-fixed min-w-[800px]">
             <thead class="bg-dark-800/50 text-gray-500 text-[10px] whitespace-nowrap">
               <tr>
                 <th class="w-[72px] px-1 py-1.5 text-center">Année</th>

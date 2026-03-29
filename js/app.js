@@ -114,6 +114,14 @@ const navItems = [
 let appStarted = false;
 
 function navigate(page) {
+  // Close mobile sidebar on navigation
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+    sidebar.classList.add('-translate-x-full');
+    overlay?.classList.add('hidden');
+  }
+
   const current = window.location.hash.slice(1);
   if (page && page === current) {
     // Same page — re-render directly

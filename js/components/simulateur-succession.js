@@ -513,7 +513,7 @@ export function render() {
       <div class="lg:col-span-7 space-y-4">
 
         <!-- Big comparison -->
-        <div id="succ-hero" class="grid grid-cols-3 gap-3"></div>
+        <div id="succ-hero" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
 
         <!-- Levers impact -->
         <div class="card-dark rounded-2xl p-5">
