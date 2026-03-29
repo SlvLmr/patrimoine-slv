@@ -326,6 +326,190 @@ export function render(store) {
         </div>
       </div>
 
+      <!-- Diversification Score Widget -->
+      ${(() => {
+        // Collect all valued items
+        const placements = state.actifs.placements || [];
+        const immobilier = state.actifs.immobilier || [];
+        const epargne = state.actifs.epargne || [];
+
+        // Build per-envelope totals (placements by enveloppe + immobilier + epargne)
+        const envelopeTotals = {};
+        placements.forEach(p => {
+          const env = p.enveloppe || p.type || 'Autre';
+          const val = Number(p.valeur) || Number(p.apport) || 0;
+          envelopeTotals[env] = (envelopeTotals[env] || 0) + val;
+        });
+        if (immoTotal > 0) envelopeTotals['Immobilier'] = immoTotal;
+        if (eparTotal > 0) envelopeTotals['Epargne'] = eparTotal;
+
+        const totalAll = Object.values(envelopeTotals).reduce((s, v) => s + v, 0);
+
+        // Build per-placement totals (individual lines)
+        const allPlacements = [];
+        placements.forEach(p => {
+          const val = Number(p.valeur) || Number(p.apport) || 0;
+          if (val > 0) allPlacements.push({ nom: p.nom || 'Sans nom', val });
+        });
+        immobilier.forEach(i => {
+          const val = Number(i.valeurActuelle) || 0;
+          if (val > 0) allPlacements.push({ nom: i.nom || 'Bien immo', val });
+        });
+        epargne.forEach(e => {
+          const val = Number(e.solde) || 0;
+          if (val > 0) allPlacements.push({ nom: e.nom || 'Epargne', val });
+        });
+
+        // Build asset class set from placement categories + immobilier + epargne
+        const assetClasses = new Set();
+        placements.forEach(p => {
+          const cat = p.categorie || '';
+          const env = (p.enveloppe || p.type || '').toLowerCase();
+          const val = Number(p.valeur) || Number(p.apport) || 0;
+          if (val <= 0) return;
+          if (cat === 'ETF') assetClasses.add('ETF');
+          else if (cat === 'Action') assetClasses.add('Actions');
+          else if (cat === 'Obligation' || cat === 'OPCVM') assetClasses.add('Obligations');
+          else if (cat === 'SCPI') assetClasses.add('Immobilier');
+          else if (cat === 'Crypto' || env === 'crypto') assetClasses.add('Crypto');
+          else if (env === 'livrets') assetClasses.add('Epargne');
+          else if (val > 0) assetClasses.add('Autre');
+        });
+        if (immoTotal > 0) assetClasses.add('Immobilier');
+        if (eparTotal > 0) assetClasses.add('Epargne');
+
+        // Envelope count (distinct envelopes with value > 0)
+        const envelopeCount = Object.keys(envelopeTotals).filter(k => envelopeTotals[k] > 0).length;
+
+        // --- SCORING ---
+        let scoreEnvConcentration = 30;
+        let scorePlacConcentration = 30;
+        let scoreAssetDiversity = 0;
+        let scoreEnvCount = 0;
+
+        // 1) Envelope concentration (max 30)
+        let maxEnvPct = 0;
+        let maxEnvName = '';
+        if (totalAll > 0) {
+          Object.entries(envelopeTotals).forEach(([env, val]) => {
+            const pct = val / totalAll;
+            if (pct > maxEnvPct) { maxEnvPct = pct; maxEnvName = env; }
+          });
+          if (maxEnvPct > 0.6) scoreEnvConcentration = Math.round(30 * (1 - (maxEnvPct - 0.6) / 0.4));
+          else if (maxEnvPct > 0.4) scoreEnvConcentration = Math.round(30 * (0.7 + 0.3 * (1 - (maxEnvPct - 0.4) / 0.2)));
+          else scoreEnvConcentration = 30;
+        } else {
+          scoreEnvConcentration = 0;
+        }
+        scoreEnvConcentration = Math.max(0, Math.min(30, scoreEnvConcentration));
+
+        // 2) Single placement concentration (max 30)
+        let maxPlacPct = 0;
+        let maxPlacName = '';
+        if (totalAll > 0 && allPlacements.length > 0) {
+          allPlacements.forEach(p => {
+            const pct = p.val / totalAll;
+            if (pct > maxPlacPct) { maxPlacPct = pct; maxPlacName = p.nom; }
+          });
+          if (maxPlacPct > 0.5) scorePlacConcentration = Math.round(30 * (1 - (maxPlacPct - 0.5) / 0.5));
+          else if (maxPlacPct > 0.25) scorePlacConcentration = Math.round(30 * (0.6 + 0.4 * (1 - (maxPlacPct - 0.25) / 0.25)));
+          else scorePlacConcentration = 30;
+        } else {
+          scorePlacConcentration = 0;
+        }
+        scorePlacConcentration = Math.max(0, Math.min(30, scorePlacConcentration));
+
+        // 3) Asset class diversity (max 25) — 6 possible types
+        const numClasses = assetClasses.size;
+        if (numClasses >= 5) scoreAssetDiversity = 25;
+        else if (numClasses === 4) scoreAssetDiversity = 20;
+        else if (numClasses === 3) scoreAssetDiversity = 15;
+        else if (numClasses === 2) scoreAssetDiversity = 10;
+        else if (numClasses === 1) scoreAssetDiversity = 5;
+        else scoreAssetDiversity = 0;
+
+        // 4) Envelope count (max 15)
+        if (envelopeCount >= 4) scoreEnvCount = 15;
+        else if (envelopeCount === 3) scoreEnvCount = 12;
+        else if (envelopeCount === 2) scoreEnvCount = 8;
+        else if (envelopeCount === 1) scoreEnvCount = 4;
+        else scoreEnvCount = 0;
+
+        const totalScore = scoreEnvConcentration + scorePlacConcentration + scoreAssetDiversity + scoreEnvCount;
+
+        const scoreColor = totalScore > 70 ? 'text-emerald-400' : totalScore >= 40 ? 'text-amber-400' : 'text-red-400';
+        const barColor = totalScore > 70 ? 'bg-emerald-500' : totalScore >= 40 ? 'bg-amber-500' : 'bg-red-500';
+        const ringColor = totalScore > 70 ? '#10b981' : totalScore >= 40 ? '#f59e0b' : '#ef4444';
+        const ringPct = totalAll > 0 ? totalScore : 0;
+
+        // Insights
+        const insights = [];
+        if (totalAll > 0) {
+          if (maxEnvPct > 0.4) {
+            insights.push('Concentration ' + maxEnvName + ' : ' + formatPercent(maxEnvPct));
+          }
+          if (maxPlacPct > 0.25 && allPlacements.length > 1) {
+            insights.push((maxPlacName.length > 20 ? maxPlacName.slice(0, 20) + '...' : maxPlacName) + ' : ' + formatPercent(maxPlacPct) + ' du total');
+          }
+          if (envelopeCount >= 3) {
+            insights.push('Diversification enveloppes : bonne (' + envelopeCount + ')');
+          } else if (envelopeCount === 2) {
+            insights.push('Diversification enveloppes : correcte (' + envelopeCount + ')');
+          } else {
+            insights.push('Diversification enveloppes : a ameliorer');
+          }
+          if (numClasses >= 4) {
+            insights.push('Classes d\'actifs : bien diversifie (' + numClasses + ' types)');
+          } else if (numClasses <= 2 && numClasses > 0) {
+            insights.push('Classes d\'actifs : peu diversifie (' + numClasses + ' type' + (numClasses > 1 ? 's' : '') + ')');
+          }
+        }
+        // Keep max 3
+        const displayInsights = insights.slice(0, 3);
+
+        // SVG ring params
+        const radius = 40;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (ringPct / 100) * circumference;
+
+        return totalAll > 0 ? `
+      <div class="card-dark rounded-xl p-5 shadow-lg shadow-gray-500/20">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-gray-500/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">Score de diversification</h2>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="relative flex-shrink-0">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="${radius}" fill="none" stroke="#374151" stroke-width="8"/>
+              <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${ringColor}" stroke-width="8"
+                stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+                transform="rotate(-90 50 50)" style="transition: stroke-dashoffset 0.5s ease"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="${scoreColor} text-2xl font-bold">${totalScore}</span>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">
+              <span>Concentration enveloppe</span><span class="text-right text-gray-400">${scoreEnvConcentration}/30</span>
+              <span>Concentration placement</span><span class="text-right text-gray-400">${scorePlacConcentration}/30</span>
+              <span>Classes d'actifs</span><span class="text-right text-gray-400">${scoreAssetDiversity}/25</span>
+              <span>Nb enveloppes</span><span class="text-right text-gray-400">${scoreEnvCount}/15</span>
+            </div>
+            ${displayInsights.length > 0 ? `
+            <div class="space-y-1 border-t border-dark-400/30 pt-2">
+              ${displayInsights.map(i => `<p class="text-xs text-gray-500">${i}</p>`).join('')}
+            </div>` : ''}
+          </div>
+        </div>
+      </div>` : '';
+      })()}
+
       <!-- Placement breakdown (updated by slider) -->
       <div id="dash-placement-breakdown" class="card-dark rounded-xl p-5" style="display:none">
         <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Detail des placements projetes</h3>

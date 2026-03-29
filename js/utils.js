@@ -208,6 +208,12 @@ export function computeProjection(store, overrides = {}) {
     } else {
       rend = Number(p.rendement) || defaultRend;
     }
+    // Annual fees (frais annuels) reduce the effective rendement
+    const fraisAnnuels = Number(p.fraisAnnuels) || 0;
+    const fraisRate = fraisAnnuels / 100; // convert percentage to decimal
+    // Apply scenario spread (additive shift to all rendements for pessimistic/optimistic scenarios)
+    const rendSpread = overrides.rendementSpread || 0;
+    const rendAfterFees = rend - fraisRate + rendSpread;
     // Cash injections: placement-level (actifs) takes priority, fallback to parametres
     const placInj = p.cashInjections || [];
     const paramInj = cashInjectionsParams[p.id] || [];
@@ -224,7 +230,9 @@ export function computeProjection(store, overrides = {}) {
     nom: p.nom || '',
     value: initialValue,
     apportInitial: Number(p.apport) || initialValue, // real money invested (for PEA ceiling)
-    rendement: rend,
+    rendement: rendAfterFees,
+    rendementBrut: rend,
+    fraisRate: fraisRate,
     enveloppe,
     envelopeAgeAtStart,
     dcaMensuel: Number(p.dcaMensuel) || 0,
@@ -401,6 +409,7 @@ export function computeProjection(store, overrides = {}) {
   // Helper: compute total current value of all AV placements (for value-based ceiling)
   const getAvTotalValue = () => placSims.filter(p => p.groupKey === 'Assurance Vie').reduce((sum, p) => sum + p.value, 0);
   let cumulInterets = 0;
+  let fraisCumules = 0;
   const PFU_RATE = params.tauxPFU || 0.314;  // Prélèvement Forfaitaire Unique: 14.2% IR + 17.2% PS
   const PS_RATE = params.tauxPS || 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
   const AV_IR_AFTER8 = params.tauxAVIR || 0.075; // AV après 8 ans: 7.5% IR (hors abattement)
@@ -774,6 +783,11 @@ export function computeProjection(store, overrides = {}) {
       const apportsThisPeriod = ps.totalApports - prevApports;
       ps.totalGains = ps.value - ps.totalApports;
       interetsAnnuels += ps.value - prevValue - apportsThisPeriod;
+      // Estimate fees impact: approximate cost of annual fees on average value over the period
+      if (ps.fraisRate > 0) {
+        const avgValue = (prevValue + ps.value) / 2;
+        fraisCumules += avgValue * ps.fraisRate * (monthsInPeriod / 12);
+      }
     });
 
     // AV value cap: if total AV value exceeds 300K (from growth), cap at 300K
@@ -1094,6 +1108,7 @@ export function computeProjection(store, overrides = {}) {
       heritage: Math.round(heritage),
       interetsAnnuels: Math.round(Math.max(0, interetsAnnuels)),
       interetsCumules: Math.round(cumulInterets),
+      fraisCumules: Math.round(fraisCumules),
       totalApports: Math.round(totalApports),
       totalTaxes: Math.round(Math.max(0, totalTaxes)),
       cashApresImpot: finalCashApresImpot,

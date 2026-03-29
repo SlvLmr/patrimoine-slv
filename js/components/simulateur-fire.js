@@ -18,6 +18,9 @@ const DEFAULTS = {
   tauxRetrait: 4,
   depensesRetraite: 2000,
   revenusPassifsRetraite: 0,
+  dividendesAnnuels: 0,
+  loyersNetsAnnuels: 0,
+  interetsLivretsAnnuels: 0,
   ageRetraiteLegale: 64,
   pensionMensuelle: 0,
 };
@@ -25,7 +28,9 @@ const DEFAULTS = {
 const FIELD_IDS = [
   'fire-age', 'fire-capital', 'fire-revenus', 'fire-depenses', 'fire-epargne',
   'fire-rendement', 'fire-inflation', 'fire-swr',
-  'fire-depenses-retraite', 'fire-revenus-passifs', 'fire-age-retraite-legale', 'fire-pension',
+  'fire-depenses-retraite', 'fire-revenus-passifs',
+  'fire-dividendes', 'fire-loyers', 'fire-interets',
+  'fire-age-retraite-legale', 'fire-pension',
 ];
 
 // ─── Save / Load helpers ─────────────────────────────────────────────────────
@@ -71,6 +76,9 @@ function applyInputs(values) {
     'fire-swr': values.tauxRetrait,
     'fire-depenses-retraite': values.depensesRetraite,
     'fire-revenus-passifs': values.revenusPassifsRetraite,
+    'fire-dividendes': values.dividendesAnnuels,
+    'fire-loyers': values.loyersNetsAnnuels,
+    'fire-interets': values.interetsLivretsAnnuels,
     'fire-age-retraite-legale': values.ageRetraiteLegale,
     'fire-pension': values.pensionMensuelle,
   };
@@ -94,6 +102,9 @@ function getInputs() {
     tauxRetrait: v('fire-swr'),
     depensesRetraite: v('fire-depenses-retraite'),
     revenusPassifsRetraite: v('fire-revenus-passifs'),
+    dividendesAnnuels: v('fire-dividendes'),
+    loyersNetsAnnuels: v('fire-loyers'),
+    interetsLivretsAnnuels: v('fire-interets'),
     ageRetraiteLegale: v('fire-age-retraite-legale'),
     pensionMensuelle: v('fire-pension'),
   };
@@ -104,6 +115,7 @@ function compute(inputs) {
     age, capitalActuel, epargneMensuelle,
     rendementAnnuel, inflation, tauxRetrait,
     depensesRetraite, revenusPassifsRetraite,
+    dividendesAnnuels, loyersNetsAnnuels, interetsLivretsAnnuels,
     revenusMensuelNets, depensesMensuelles,
     ageRetraiteLegale, pensionMensuelle,
   } = inputs;
@@ -113,11 +125,17 @@ function compute(inputs) {
   const depensesAnnuellesRetraite = depensesRetraite * 12;
   const revenusPassifsAnnuels = revenusPassifsRetraite * 12;
 
+  // Revenus passifs détaillés (annuels)
+  const totalRevenusPassifsDetailles = (dividendesAnnuels || 0) + (loyersNetsAnnuels || 0) + (interetsLivretsAnnuels || 0);
+
   // Besoin net annuel (ce qu'il faut couvrir avec le capital)
-  const besoinNetAnnuel = Math.max(depensesAnnuellesRetraite - revenusPassifsAnnuels, 0);
+  const besoinNetAnnuel = Math.max(depensesAnnuellesRetraite - revenusPassifsAnnuels - totalRevenusPassifsDetailles, 0);
 
   // Nombre FIRE = besoin net annuel / taux de retrait
   const nombreFIRE = tauxRetrait > 0 ? besoinNetAnnuel / (tauxRetrait / 100) : Infinity;
+
+  // Capital réduit grâce aux revenus passifs détaillés
+  const capitalReduitParRevenusPassifs = tauxRetrait > 0 ? totalRevenusPassifsDetailles / (tauxRetrait / 100) : 0;
 
   // Taux d'épargne
   const tauxEpargne = revenusMensuelNets > 0 ? epargneMensuelle / revenusMensuelNets : 0;
@@ -197,6 +215,11 @@ function compute(inputs) {
     dureeVieCapital,
     besoinNetAnnuel,
     annees,
+    dividendesAnnuels: dividendesAnnuels || 0,
+    loyersNetsAnnuels: loyersNetsAnnuels || 0,
+    interetsLivretsAnnuels: interetsLivretsAnnuels || 0,
+    totalRevenusPassifsDetailles,
+    capitalReduitParRevenusPassifs,
   };
 }
 
@@ -290,6 +313,22 @@ export function render() {
           ${fireInput('fire-revenus-passifs', 'Revenus passifs (loyers, dividendes...)', d.revenusPassifsRetraite, '€/mois', 0, 50000, 100)}
           ${fireInput('fire-age-retraite-legale', 'Âge retraite légale (pension)', d.ageRetraiteLegale, 'ans', 55, 70, 1)}
           ${fireInput('fire-pension', 'Pension retraite estimée', d.pensionMensuelle, '€/mois', 0, 10000, 100)}
+        </div>
+
+        <!-- Revenus passifs détaillés -->
+        <div class="card-dark rounded-2xl p-5 space-y-4">
+          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Revenus passifs détaillés
+          </h3>
+
+          ${fireInput('fire-dividendes', 'Dividendes', d.dividendesAnnuels, '€/an', 0, 200000, 100)}
+          ${fireInput('fire-loyers', 'Loyers nets', d.loyersNetsAnnuels, '€/an', 0, 200000, 100)}
+          ${fireInput('fire-interets', 'Intérêts livrets', d.interetsLivretsAnnuels, '€/an', 0, 50000, 50)}
+
+          <div class="info-box">
+            <p class="text-xs text-gray-500">Ces revenus passifs annuels viennent <span class="text-gray-400 font-medium">en complément</span> des revenus passifs mensuels ci-dessus. Ils réduisent le capital FIRE nécessaire.</p>
+          </div>
         </div>
       </div>
 
@@ -491,6 +530,18 @@ function renderResults(r) {
 
     <!-- Durée de vie du capital -->
     ${metricCard('Durée du capital', r.dureeVieCapital !== null ? (r.dureeVieCapital >= 50 ? '50+ ans' : r.dureeVieCapital + ' ans') : '—', r.dureeVieCapital !== null && r.dureeVieCapital >= 30 ? 'text-accent-green' : 'text-accent-amber', 'Après le FIRE')}
+
+    ${r.totalRevenusPassifsDetailles > 0 ? `
+    <!-- Revenus passifs détaillés -->
+    <div class="card-dark rounded-2xl p-4 col-span-2 sm:col-span-3 border border-amber-500/10">
+      <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Revenus passifs détaillés</p>
+      <p class="text-lg font-bold text-amber-400">${formatCurrency(r.totalRevenusPassifsDetailles)}/an</p>
+      <p class="text-xs text-gray-500 mt-1">
+        Dividendes ${formatCurrency(r.dividendesAnnuels)} + Loyers ${formatCurrency(r.loyersNetsAnnuels)} + Intérêts ${formatCurrency(r.interetsLivretsAnnuels)}
+      </p>
+      <p class="text-xs text-accent-green mt-2">Capital nécessaire réduit de ${formatCurrency(r.capitalReduitParRevenusPassifs)} grâce aux revenus passifs</p>
+    </div>
+    ` : ''}
   `;
 }
 

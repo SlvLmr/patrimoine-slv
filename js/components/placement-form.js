@@ -81,6 +81,7 @@ export function buildPlacementFormBody(item) {
       ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
     </div>
     ${inputField('valeur', 'Valeur totale actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
+    ${inputField('fraisAnnuels', 'Frais annuels (%)', item.fraisAnnuels || '', 'number', 'step="0.01" min="0" max="10" placeholder="Ex: 0.25"')}
 
     <!-- DCA section (non-PEE) -->
     <div id="dca-section" class="${isPEE ? 'hidden' : ''} mt-2 pt-3 border-t border-dark-400/30">

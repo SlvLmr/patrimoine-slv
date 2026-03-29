@@ -175,6 +175,16 @@ export function render(store) {
                   class="param-input input-field w-12 text-center">
               </div>
             </div>
+            <div class="w-px h-4 bg-dark-400/30 hidden sm:block"></div>
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+              <div class="flex items-center gap-1">
+                <span class="text-xs text-gray-500">Scénarios</span>
+                <input type="number" id="param-scenario-spread" value="${params.scenarioSpread ?? 2}" min="0" max="10" step="0.5"
+                  class="param-input input-field w-14 text-center">
+                <span class="text-xs text-gray-500">%</span>
+              </div>
+            </div>
           </div>
 
           <!-- Row 2: Placements as compact grid -->
@@ -656,6 +666,107 @@ export function render(store) {
           </table>
         </div>
       </div>
+
+      <!-- Synthèse fiscale — collapsible -->
+      ${(() => {
+        const fiscalSnap = snapshots[snapshots.length - 1];
+        if (!fiscalSnap || groupKeys.length === 0) return '';
+
+        const PFU = params.tauxPFU || 0.314;
+        const PS = params.tauxPS || 0.172;
+        const AV_IR = params.tauxAVIR || 0.075;
+        const AV_ABAT = 4600;
+
+        // Build fiscal rows from snapshot data
+        const fiscalRows = groupKeys.map(gk => {
+          const valeur = fiscalSnap.placementDetail[gk] || 0;
+          const apports = fiscalSnap.placementApports[gk] || 0;
+          const gains = fiscalSnap.placementGains[gk] || 0;
+          const impot = fiscalSnap.placementTaxes?.[gk] || 0;
+          const rate = fiscalSnap.placementTaxRates?.[gk] || 0;
+          if (valeur === 0 && apports === 0) return null;
+
+          // Determine regime label
+          let regime = '';
+          const gkLow = gk.toLowerCase();
+          if (gkLow.includes('pea')) {
+            regime = rate <= PS + 0.01 ? 'PS seul (17,2%)' : 'PFU (30%)';
+          } else if (gkLow.includes('assurance') || gkLow === 'av') {
+            regime = rate <= (PS + AV_IR + 0.01) && rate > PS + 0.01
+              ? 'PS + IR 7,5% (abat. 4 600\u00a0\u20ac)'
+              : rate <= PS + 0.01 ? 'PS seul (17,2%)' : 'PFU (30%)';
+          } else if (gkLow.includes('pee')) {
+            regime = 'PS seul (17,2%)';
+          } else if (gkLow.includes('livret') || gkLow.includes('épargne')) {
+            regime = 'Exon\u00e9r\u00e9';
+          } else {
+            regime = 'PFU (30%)';
+          }
+
+          const net = valeur - impot;
+          return { gk, valeur, apports, gains, regime, impot, net };
+        }).filter(Boolean);
+
+        // Totals
+        const totVal = fiscalRows.reduce((s, r) => s + r.valeur, 0);
+        const totAp = fiscalRows.reduce((s, r) => s + r.apports, 0);
+        const totGains = fiscalRows.reduce((s, r) => s + r.gains, 0);
+        const totImpot = fiscalRows.reduce((s, r) => s + r.impot, 0);
+        const totNet = fiscalRows.reduce((s, r) => s + r.net, 0);
+
+        return `
+      <details class="card-dark rounded-xl group">
+        <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"/></svg>
+            <h2 class="text-lg font-semibold text-gray-200">Synth\u00e8se fiscale</h2>
+            <span class="text-[10px] text-gray-600 italic">Fin ${fiscalSnap.calendarYear} \u00b7 \u00c2ge ${fiscalSnap.age}</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-5 pb-5">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-dark-800/50 text-gray-500 text-[10px] uppercase tracking-wider">
+                <tr>
+                  <th class="px-3 py-2 text-left">Enveloppe</th>
+                  <th class="px-3 py-2 text-right">Valeur</th>
+                  <th class="px-3 py-2 text-right">Apports</th>
+                  <th class="px-3 py-2 text-right">Plus-value</th>
+                  <th class="px-3 py-2 text-center">R\u00e9gime fiscal</th>
+                  <th class="px-3 py-2 text-right">Imp\u00f4t estim\u00e9</th>
+                  <th class="px-3 py-2 text-right">Net apr\u00e8s imp\u00f4t</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark-400/20">
+                ${fiscalRows.map(r => `
+                <tr class="hover:bg-dark-600/30 transition">
+                  <td class="px-3 py-2 text-gray-200 font-medium text-[12px]">${r.gk}</td>
+                  <td class="px-3 py-2 text-right text-gray-200 text-[12px]">${formatCurrency(r.valeur)}</td>
+                  <td class="px-3 py-2 text-right text-gray-400 text-[12px]">${formatCurrency(r.apports)}</td>
+                  <td class="px-3 py-2 text-right text-[12px] ${r.gains >= 0 ? 'text-gray-300' : 'text-red-400'}">${r.gains >= 0 ? '+' : ''}${formatCurrency(r.gains)}</td>
+                  <td class="px-3 py-2 text-center text-[11px] text-gray-500">${r.regime}</td>
+                  <td class="px-3 py-2 text-right text-red-400/80 text-[12px]">-${formatCurrency(r.impot)}</td>
+                  <td class="px-3 py-2 text-right text-gray-200 font-semibold text-[12px]">${formatCurrency(r.net)}</td>
+                </tr>`).join('')}
+              </tbody>
+              <tfoot class="border-t-2 border-dark-300/40">
+                <tr class="font-semibold">
+                  <td class="px-3 py-2.5 text-gray-300 uppercase text-[11px] tracking-wider">Total</td>
+                  <td class="px-3 py-2.5 text-right text-gray-200 text-[12px]">${formatCurrency(totVal)}</td>
+                  <td class="px-3 py-2.5 text-right text-gray-400 text-[12px]">${formatCurrency(totAp)}</td>
+                  <td class="px-3 py-2.5 text-right text-[12px] ${totGains >= 0 ? 'text-gray-300' : 'text-red-400'}">${totGains >= 0 ? '+' : ''}${formatCurrency(totGains)}</td>
+                  <td class="px-3 py-2.5 text-center text-gray-600 text-[11px]">\u2014</td>
+                  <td class="px-3 py-2.5 text-right text-red-400 text-[12px]">-${formatCurrency(totImpot)}</td>
+                  <td class="px-3 py-2.5 text-right text-gray-100 text-[13px]">${formatCurrency(totNet)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="text-[10px] text-gray-600 mt-3">Estimation bas\u00e9e sur les r\u00e8gles fiscales en vigueur. PFU\u00a0=\u00a030% (IR 12,8% + PS 17,2%). AV &gt;8\u00a0ans\u00a0: abattement de 4\u00a0600\u00a0\u20ac (c\u00e9libataire) sur les gains avant IR \u00e0 7,5%. Livrets r\u00e9glement\u00e9s exon\u00e9r\u00e9s.</p>
+        </div>
+      </details>`;
+      })()}
 
       <!-- Stratégie d'investissement — éditable -->
       ${(() => {
@@ -1407,6 +1518,9 @@ export function mount(store, navigate) {
 
     const cashOutVal = document.getElementById('param-cashout-year')?.value;
     store.set('parametres.cashOutYear', cashOutVal ? parseInt(cashOutVal) : null);
+
+    // Scenario spread
+    store.set('parametres.scenarioSpread', parseFloat(document.getElementById('param-scenario-spread')?.value) || 2);
 
     navigate('projection');
   });
