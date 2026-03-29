@@ -389,6 +389,15 @@ export function computeProjection(store, overrides = {}) {
       peaApportsCumules += ps.apportInitial;
     }
   });
+  // Helper: find a placement sim by overflow category
+  function findSimByCategory(cat, excludeId) {
+    if (cat === 'cto') return placSims.find(ps => ps.groupKey.startsWith('CTO') && ps.id !== (excludeId || ''));
+    if (cat === 'cto_tr') return placSims.find(ps => ps.groupKey === 'CTO TR');
+    if (cat === 'cto_bb') return placSims.find(ps => ps.groupKey === 'CTO BB');
+    if (cat === 'av') return placSims.find(ps => ps.groupKey === 'Assurance Vie');
+    if (cat === 'bitcoin') return placSims.find(ps => ps.groupKey === 'Crypto');
+    return null;
+  }
   // Helper: compute total current value of all AV placements (for value-based ceiling)
   const getAvTotalValue = () => placSims.filter(p => p.groupKey === 'Assurance Vie').reduce((sum, p) => sum + p.value, 0);
   let cumulInterets = 0;
@@ -801,16 +810,6 @@ export function computeProjection(store, overrides = {}) {
 
     // PEA overflow: distribute to configured category targets (or fallback CTO)
     {
-      // Map categories to target placement sims
-      function findSimByCategory(cat, excludeId) {
-        if (cat === 'cto') return placSims.find(ps => ps.groupKey.startsWith('CTO') && ps.id !== (excludeId || ''));
-        if (cat === 'cto_tr') return placSims.find(ps => ps.groupKey === 'CTO TR');
-        if (cat === 'cto_bb') return placSims.find(ps => ps.groupKey === 'CTO BB');
-        if (cat === 'av') return placSims.find(ps => ps.groupKey === 'Assurance Vie');
-        if (cat === 'bitcoin') return placSims.find(ps => ps.groupKey === 'Crypto');
-        return null;
-      }
-
       // Distribute overflow to user-configured category targets
       for (let m = 0; m < monthsInPeriod; m++) {
         if (ctoOverflowMonthly[m] <= 0) continue;
