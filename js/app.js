@@ -4,7 +4,7 @@ import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as Heritage from './components/heritage.js';
 import * as RevenusDepenses from './components/revenus-depenses.js';
-import * as Projection from './components/projection.js?v=20260329e';
+import * as Projection from './components/projection.js?v=20260329f';
 import * as Fiscalite from './components/fiscalite.js';
 import * as SuiviDepenses from './components/suivi-depenses.js';
 import * as PortefeuilleLive from './components/portefeuille-live.js';

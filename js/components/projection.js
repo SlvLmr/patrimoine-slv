@@ -176,7 +176,7 @@ export function render(store) {
                   const stockColor = Object.entries(stockColors).find(([k]) => nomLower.includes(k));
                   let icon = groupIcons[gk] || defaultIcon;
                   if (stockColor) {
-                    icon = icon.replace(/text-[\w-]+/, stockColor[1]);
+                    icon = icon.replace(/text-(?:accent-\w+|amber-\d+|emerald-\d+|sky-\d+|gray-\d+)/, stockColor[1]);
                   }
                   const dcaBase = Number(p.dcaMensuel) || 0;
                   const dcaMaxOv = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
@@ -189,7 +189,7 @@ export function render(store) {
                       <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                     </svg>
                     ${icon}
-                    <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
+                    <span class="text-sm ${stockColor ? stockColor[1] : 'text-gray-200'} truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
                     <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
                     <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
