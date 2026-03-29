@@ -7,6 +7,7 @@ export const ENVELOPPES = [
   { value: 'PEE', label: 'PEE (Épargne entreprise)' },
   { value: 'PER', label: 'PER' },
   { value: 'Crypto', label: 'Crypto' },
+  { value: 'Livrets', label: 'Livrets (épargne)' },
   { value: 'Autre', label: 'Autre' }
 ];
 

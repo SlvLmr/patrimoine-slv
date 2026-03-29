@@ -109,6 +109,7 @@ export function getPlacementGroupKey(p) {
   if (env === 'AV') return 'Assurance Vie';
   if (env === 'CTO') return 'CTO';
   if (env === 'PEE') return 'PEE';
+  if (env === 'Livrets') return 'Livrets';
   return env; // PER, Crypto, Autre
 }
 

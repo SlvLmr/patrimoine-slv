@@ -86,6 +86,7 @@ export function render(store) {
     'PER': 'text-accent-green',
     'Crypto': 'text-accent-amber',
     'PEE': 'text-emerald-400',
+    'Livrets': 'text-sky-300',
     'Autre': 'text-gray-400'
   };
   const defaultGroupColor = 'text-accent-green';
