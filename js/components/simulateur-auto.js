@@ -433,7 +433,7 @@ function renderWinner(r) {
     <div class="flex items-center justify-between">
       <div>
         <p class="text-xs text-gray-500 uppercase tracking-wider">Option la plus économique</p>
-        <p class="text-xl font-bold text-${c}-400 mt-1">${best.label}</p>
+        <p class="text-lg sm:text-xl font-bold text-${c}-400 mt-1">${best.label}</p>
         <p class="text-sm text-gray-400 mt-1">Coût net : <span class="font-semibold text-gray-200">${formatCurrency(Math.round(best.coutTotal))}</span> sur ${r.mois} mois</p>
         ${economy > 0 ? `<p class="text-xs text-accent-green mt-1">Économie de ${formatCurrency(Math.round(economy))} vs la pire option</p>` : ''}
       </div>

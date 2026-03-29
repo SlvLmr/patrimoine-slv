@@ -345,7 +345,7 @@ function renderResults(r) {
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wider">Capital final</p>
-          <p class="text-2xl font-bold text-emerald-400 mt-1">${formatCurrency(Math.round(r.capitalFinal))}</p>
+          <p class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">${formatCurrency(Math.round(r.capitalFinal))}</p>
           <p class="text-xs text-gray-500 mt-1">soit ${formatCurrency(Math.round(r.capitalFinalReel))} en euros constants (après inflation)</p>
         </div>
         <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
