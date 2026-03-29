@@ -221,6 +221,7 @@ export function computeProjection(store, overrides = {}) {
     return {
     groupKey: gk,
     id: p.id,
+    nom: p.nom || '',
     value: initialValue,
     apportInitial: Number(p.apport) || initialValue, // real money invested (for PEA ceiling)
     rendement: rend,
@@ -262,8 +263,9 @@ export function computeProjection(store, overrides = {}) {
   categoryRendements.epargne = rendEpar;
 
   const rendCTO = categoryRendements.cto;
+  const firstCtoGk = placSims.find(ps => ps.groupKey.startsWith('CTO'))?.groupKey || 'CTO';
   const ctoOverflow = {
-    groupKey: 'CTO',
+    groupKey: firstCtoGk,
     id: '__cto_overflow__',
     value: 0,
     rendement: rendCTO,
@@ -285,7 +287,7 @@ export function computeProjection(store, overrides = {}) {
   const avOverflowTargets = params.avOverflowTargets || [];
   const rendAVFallback = categoryRendements.cto;
   const avOverflow = {
-    groupKey: 'CTO',
+    groupKey: firstCtoGk,
     id: '__av_overflow__',
     value: 0,
     rendement: rendAVFallback,
@@ -302,10 +304,15 @@ export function computeProjection(store, overrides = {}) {
     placSims.push(avOverflow);
   }
 
-  // Discover unique group keys from placements
+  // Discover unique group keys from placements with custom sort order
   const groupKeysSet = new Set();
   placSims.forEach(ps => groupKeysSet.add(ps.groupKey));
-  const groupKeys = [...groupKeysSet].sort();
+  const GROUP_KEY_ORDER = ['PEA Actions', 'PEA ETF', 'PEA Autre', 'CTO TR', 'CTO BB', 'CTO', 'Crypto', 'Assurance Vie', 'PEE', 'PER', 'Livrets'];
+  const groupKeys = [...groupKeysSet].sort((a, b) => {
+    const ia = GROUP_KEY_ORDER.indexOf(a);
+    const ib = GROUP_KEY_ORDER.indexOf(b);
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+  });
 
   let emprunts = state.passifs.emprunts.map(e => ({
     capitalRestant: Number(e.capitalRestant) || 0,
@@ -507,7 +514,11 @@ export function computeProjection(store, overrides = {}) {
         // Category-level source: debit from matching placements
         const srcCatMap = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Crypto', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE' };
         const srcGroupKey = srcCatMap[transfer.source];
-        const srcSims = srcGroupKey ? placSims.filter(ps => srcGroupKey === 'PEA' ? ps.groupKey.startsWith('PEA') : srcGroupKey === 'CTO' ? ps.groupKey.startsWith('CTO') : ps.groupKey === srcGroupKey) : [];
+        const srcSims = srcGroupKey ? placSims.filter(ps => {
+          if (srcGroupKey === 'PEA') return ps.groupKey.startsWith('PEA');
+          if (srcGroupKey === 'CTO') return ps.groupKey.startsWith('CTO');
+          return ps.groupKey === srcGroupKey;
+        }) : [];
         const totalAvailable = srcSims.reduce((sum, ps) => sum + Math.max(0, ps.value), 0);
         amount = Math.min(amount, totalAvailable);
         let remaining = amount;

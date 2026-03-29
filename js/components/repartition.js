@@ -506,8 +506,20 @@ export function mount(store, navigate) {
     const flowEl = document.getElementById('rep-flow');
     if (!flowEl) return;
 
+    // Merge CTO sub-groups (CTO TR, CTO BB, CTO) into single "CTO" for display
+    const mergedDcaByGroup = {};
+    for (const [gk, v] of Object.entries(dcaByGroup)) {
+      if (gk.startsWith('CTO')) {
+        mergedDcaByGroup['CTO'] = (mergedDcaByGroup['CTO'] || 0) + v;
+      } else {
+        mergedDcaByGroup[gk] = (mergedDcaByGroup[gk] || 0) + v;
+      }
+    }
+    // Also remap dcaByPlacement group keys for CTO
+    const mergedDcaByPlacement = dcaByPlacement.map(p => p.gk.startsWith('CTO') ? { ...p, gk: 'CTO' } : p);
+
     // Sort groups by DCA amount descending
-    const sortedGroups = Object.entries(dcaByGroup)
+    const sortedGroups = Object.entries(mergedDcaByGroup)
       .filter(([, v]) => v > 0)
       .sort((a, b) => b[1] - a[1]);
 
@@ -536,7 +548,7 @@ export function mount(store, navigate) {
     const destCardsHTML = sortedGroups.map(([gk, amount]) => {
       const style = getGroupStyle(gk);
       const pct = totalDCA > 0 ? (amount / totalDCA * 100).toFixed(1) : 0;
-      const placementsInGroup = dcaByPlacement.filter(p => p.gk === gk && p.dca > 0);
+      const placementsInGroup = mergedDcaByPlacement.filter(p => p.gk === gk && p.dca > 0);
 
       return `
         <div id="rep-flow-card-${gk.replace(/\s+/g, '-')}" class="card-dark rounded-xl p-3 ${style.border} border hover:border-opacity-60 transition">

@@ -2,8 +2,8 @@ import { formatCurrency, formatPercent, computeProjection, inputField, selectFie
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 import { openHeritageModal } from './heritage.js?v=5';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260329l';
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329l';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260329m';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329m';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
