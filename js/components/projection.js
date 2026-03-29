@@ -182,7 +182,12 @@ export function render(store) {
                   const dcaMaxOv = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
                   const dcaEff = Math.max(dcaBase, dcaMaxOv);
                   const dcaLabel = dcaEff > 0 ? `<span class="text-[9px] text-gray-600">${dcaEff}€/m${dcaBase === 0 ? ' (prog.)' : ''}</span>` : '';
-                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded row-item hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-pointer placement-row" draggable="true" data-placement-id="${p.id}">
+                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded row-item hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-grab active:cursor-grabbing placement-row" draggable="true" data-placement-id="${p.id}">
+                    <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+                      <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                      <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+                    </svg>
                     ${icon}
                     <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
@@ -199,6 +204,21 @@ export function render(store) {
             </div>`;
               })()}
           </div>
+
+          <!-- Row 2a: Livrets d'épargne -->
+          ${(() => {
+            const epargne = store.get('actifs.epargne') || [];
+            if (epargne.length === 0) return '';
+            const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
+            return `
+          <div class="mt-1">
+            <div class="flex items-center gap-1.5 mb-1">
+              <svg class="w-3 h-3 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Livrets d'épargne</span>
+              <span class="text-base font-bold text-sky-300 ml-1">${formatCurrency(totalEpargne)}</span>
+            </div>
+          </div>`;
+          })()}
 
           <!-- Row 2b: PEA overflow redirection -->
           ${(() => {
