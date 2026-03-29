@@ -36,13 +36,13 @@ export const COLORS = {
   revenus: '#c9a76c',
   depenses: '#ff4757',
   primary: '#c9a76c',
-  secondary: '#b8976c',
+  secondary: '#9b7cb8',
   grid: 'rgba(72, 72, 82, 0.25)',
   gridText: '#7a7a88',
   actions: '#dbb88a',
   etf: '#c9a76c',
   crypto: '#f59e0b',
-  obligations: '#a08553'
+  obligations: '#6b8aae'
 };
 
 // Warm gradient pairs for charts
@@ -58,8 +58,8 @@ export const GRADIENT_PAIRS = [
 ];
 
 export const PALETTE = [
-  '#c9a76c', '#dbb88a', '#b8976c', '#a08553', '#e8d5b0',
-  '#d4b07a', '#f59e0b', '#c4985a', '#8b7355', '#d9c4a0'
+  '#c9a76c', '#dbb88a', '#9b7cb8', '#6b8aae', '#e8d5b0',
+  '#5ea3a3', '#f59e0b', '#c4985a', '#8b7355', '#d9c4a0'
 ];
 
 // Vivid, high-contrast palette for multi-line charts (no green/red)

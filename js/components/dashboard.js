@@ -649,7 +649,7 @@ export function mount(store, navigate) {
     const labels = [];
     const gradColors = [];
     const gradientPairsMap = [
-      ['#8b6914', '#b8976c'],
+      ['#8b6914', '#c9a76c'],
       ['#c9a76c', '#dbb88a'],
       ['#e8d5b0', '#f5edd8'],
       ['#6366f1', '#818cf8'],

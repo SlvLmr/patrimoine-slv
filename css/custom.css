@@ -146,7 +146,7 @@ input[type="number"] {
 /* Dark card glass effect */
 .card-dark {
   background:
-    linear-gradient(135deg, rgba(201, 167, 108, 0.02) 0%, transparent 40%, rgba(139, 92, 246, 0.02) 100%),
+    linear-gradient(135deg, rgba(201, 167, 108, 0.02) 0%, transparent 40%, rgba(155, 124, 184, 0.02) 100%),
     #1c1c26;
   border: 1px solid rgba(42, 42, 52, 0.5);
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -288,25 +288,25 @@ input[type="number"] {
   background-clip: text;
 }
 
-/* Glow effects */
+/* Glow effects — unified gray halos */
 .glow-green {
-  box-shadow: 0 0 20px rgba(201, 167, 108, 0.15);
+  box-shadow: 0 0 20px rgba(150, 150, 160, 0.12);
 }
 
 .glow-blue {
-  box-shadow: 0 0 20px rgba(160, 133, 83, 0.15);
+  box-shadow: 0 0 20px rgba(150, 150, 160, 0.12);
 }
 
 .glow-purple {
-  box-shadow: 0 0 20px rgba(184, 151, 108, 0.15);
+  box-shadow: 0 0 20px rgba(150, 150, 160, 0.12);
 }
 
 .glow-red {
-  box-shadow: 0 0 20px rgba(255, 71, 87, 0.1);
+  box-shadow: 0 0 20px rgba(150, 150, 160, 0.12);
 }
 
 .chart-glow {
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.12), 0 0 60px rgba(249, 115, 22, 0.08), 0 0 90px rgba(168, 85, 247, 0.06);
+  box-shadow: 0 0 30px rgba(150, 150, 160, 0.10), 0 0 60px rgba(150, 150, 160, 0.06);
 }
 
 /* KPI card hover effect */
@@ -320,7 +320,7 @@ input[type="number"] {
 
 /* Heritage net worth display */
 .net-worth-display {
-  background: linear-gradient(135deg, rgba(201, 167, 108, 0.1), rgba(160, 133, 83, 0.1));
+  background: linear-gradient(135deg, rgba(201, 167, 108, 0.1), rgba(107, 138, 174, 0.1));
   border: 1px solid rgba(201, 167, 108, 0.2);
 }
 
@@ -414,9 +414,9 @@ input[type="number"] {
 /* Logo halo effect */
 .logo-halo {
   box-shadow:
-    0 0 12px rgba(201, 167, 108, 0.4),
-    0 0 30px rgba(201, 167, 108, 0.2),
-    0 0 50px rgba(219, 184, 138, 0.1);
+    0 0 12px rgba(150, 150, 160, 0.3),
+    0 0 30px rgba(150, 150, 160, 0.15),
+    0 0 50px rgba(150, 150, 160, 0.08);
   animation: logoHaloPulse 3s ease-in-out infinite;
 }
 
@@ -431,15 +431,15 @@ input[type="number"] {
 @keyframes logoHaloPulse {
   0%, 100% {
     box-shadow:
-      0 0 12px rgba(201, 167, 108, 0.4),
-      0 0 30px rgba(201, 167, 108, 0.2),
-      0 0 50px rgba(219, 184, 138, 0.1);
+      0 0 12px rgba(150, 150, 160, 0.3),
+      0 0 30px rgba(150, 150, 160, 0.15),
+      0 0 50px rgba(150, 150, 160, 0.08);
   }
   50% {
     box-shadow:
-      0 0 18px rgba(201, 167, 108, 0.6),
-      0 0 40px rgba(201, 167, 108, 0.3),
-      0 0 70px rgba(219, 184, 138, 0.15);
+      0 0 18px rgba(150, 150, 160, 0.45),
+      0 0 40px rgba(150, 150, 160, 0.2),
+      0 0 70px rgba(150, 150, 160, 0.1);
   }
 }
 
@@ -549,9 +549,9 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 .hyp-timeline-glow {
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(201, 167, 108, 0.15) 20%,
-    rgba(167, 139, 250, 0.2) 50%,
-    rgba(96, 165, 250, 0.15) 80%,
+    rgba(150, 150, 160, 0.12) 20%,
+    rgba(150, 150, 160, 0.15) 50%,
+    rgba(150, 150, 160, 0.12) 80%,
     transparent 100%
   );
   filter: blur(3px);
