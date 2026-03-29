@@ -297,32 +297,51 @@ export function render(store, { embedded = false } = {}) {
       ${embedded ? '' : renderHeader(enfants)}
       ${embedded ? '' : tabs}
 
-      <!-- Parameters -->
-      <details open class="card-dark rounded-xl border border-dark-400/15 overflow-hidden">
-        <summary class="px-5 py-3 cursor-pointer flex items-center justify-between hover:bg-dark-700/30 transition select-none">
-          <span class="text-sm font-semibold text-gray-200">Paramètres</span>
-          <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      <!-- Parameters — collapsible -->
+      <details class="card-dark rounded-xl group">
+        <summary class="flex items-center justify-between px-4 py-2 cursor-pointer select-none">
+          <div class="flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Paramètres</h2>
+          </div>
+          <svg class="w-3.5 h-3.5 text-gray-600 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-5 pb-4 space-y-3 border-t border-dark-400/15">
+        <div class="px-4 pb-3 space-y-2.5">
           <!-- Horizon -->
-          <div class="flex flex-wrap items-center gap-4 mt-3">
-            <label class="text-xs text-gray-500">Horizon</label>
-            <input type="number" id="pe-horizon" value="${horizonYears}" min="1" max="40" step="1"
-              class="input-field w-16 text-center">
-            <span class="text-xs text-gray-500">ans</span>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              <div class="flex items-center gap-1">
+                <span class="text-xs text-gray-500">Horizon</span>
+                <input type="number" id="pe-horizon" value="${horizonYears}" min="1" max="40" step="1"
+                  class="param-input input-field w-14 text-center">
+                <span class="text-xs text-gray-500">ans</span>
+              </div>
+            </div>
           </div>
           <!-- Placements grid -->
           <div>
             <div class="flex items-center gap-1.5 mb-1">
-              <span class="text-xs font-bold text-gray-300 uppercase tracking-wide">Placements</span>
-              <button id="pe-add-plac" class="ml-2 w-7 h-7 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-lg font-bold" data-child-idx="${idx}" title="Ajouter">+</button>
+              <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Placements</span>
+              <button id="pe-add-plac" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-xl font-bold shadow-sm shadow-accent-green/20" data-child-idx="${idx}" title="Ajouter">+</button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
               ${placements.length > 0 ? placements.map(p => {
                 const gk = getChildGroupKey(p);
                 const rend = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
                 const dca = Number(p.dcaMensuel) || 0;
+                const groupIcons = {
+                  'ETF (CTO)': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>',
+                  'Actions (CTO)': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+                  'ETF (PEA)': '<svg class="w-2.5 h-2.5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
+                  'Actions (PEA)': '<svg class="w-2.5 h-2.5 text-accent-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+                  'Bitcoin': '<svg class="w-2.5 h-2.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+                  'Assurance Vie': '<svg class="w-2.5 h-2.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+                };
+                const icon = groupIcons[gk] || '<svg class="w-2.5 h-2.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
                 return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded row-item hover:border-accent-blue/40 hover:bg-dark-700/40 transition">
+                  ${icon}
                   <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium pe-edit-plac cursor-pointer" data-child-idx="${idx}" data-placement-id="${p.id}" title="${p.nom}">${p.nom}</span>
                   ${dca > 0 ? `<span class="text-[9px] text-gray-600">${dca}\u20ac/m</span>` : ''}
                   <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
@@ -331,15 +350,15 @@ export function render(store, { embedded = false } = {}) {
                   <span class="text-[10px] text-gray-500">%</span>
                   <button class="pe-del-plac btn-delete" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
                 </div>`;
-              }).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>'}
+              }).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement \u2014 cliquez sur + pour en ajouter</p>'}
             </div>
           </div>
           <!-- Scénarios de donation -->
           <div>
             <div class="flex items-center gap-1.5 mb-1">
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-              <span class="text-xs font-bold text-gray-300 uppercase tracking-wide">Scénarios de donation</span>
-              <button id="pe-add-scenario" class="ml-2 w-7 h-7 flex items-center justify-center rounded-lg bg-pink-500/25 text-pink-400 hover:bg-pink-500/40 transition text-lg font-bold" data-child-idx="${idx}" title="Ajouter un scénario">+</button>
+              <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Sc\u00e9narios de donation</span>
+              <button id="pe-add-scenario" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-pink-500/25 text-pink-400 hover:bg-pink-500/40 transition text-xl font-bold shadow-sm shadow-pink-500/20" data-child-idx="${idx}" title="Ajouter un sc\u00e9nario">+</button>
             </div>
             <div class="space-y-1">
               ${scenarios.length > 0 ? scenarios.map(sc => {

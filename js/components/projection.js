@@ -28,20 +28,16 @@ function renderProjTabs(store) {
         <span class="inline-block w-2 h-2 rounded-full mr-1.5" style="background:${CHILD_COLORS[i % CHILD_COLORS.length]}"></span>
         ${e.prenom || 'Enfant ' + (i + 1)}${childAge(e.dateNaissance) !== null ? ' \u00b7 ' + childAge(e.dateNaissance) + ' ans' : ''}
       </button>`).join('')}
-      ${enfants.length >= 2 ? `
-      <button class="proj-tab flex-1 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150
-        ${'compare' === activeTab ? 'bg-dark-600 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300 hover:bg-dark-700/30'
-      }" data-proj-tab="compare">Comparatif</button>` : ''}
     </div>`;
 }
 
 export function render(store) {
   const activeTab = store.get('_projTab') || 'moi';
 
-  // Child or compare tab → delegate to projection-enfants
-  if (activeTab.startsWith('child-') || activeTab === 'compare') {
+  // Child tab → delegate to projection-enfants
+  if (activeTab.startsWith('child-')) {
     // Sync _peActiveTab so projection-enfants renders the right child
-    const peTab = activeTab === 'compare' ? 'compare' : activeTab.replace('child-', '');
+    const peTab = activeTab.replace('child-', '');
     store.set('_peActiveTab', peTab);
     const childContent = ProjectionEnfants.render(store, { embedded: true });
     // Strip the header and internal tabs from projection-enfants output,
@@ -1020,8 +1016,8 @@ export function mount(store, navigate) {
 
   const activeTab = store.get('_projTab') || 'moi';
 
-  // If child/compare tab, delegate mount to projection-enfants
-  if (activeTab.startsWith('child-') || activeTab === 'compare') {
+  // If child tab, delegate mount to projection-enfants
+  if (activeTab.startsWith('child-')) {
     ProjectionEnfants.mount(store, navigate, { embedded: true });
     return;
   }
