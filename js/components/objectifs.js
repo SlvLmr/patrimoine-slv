@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=6';
+import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=7';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=6';
+import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=7';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 import { openHeritageModal } from './heritage.js?v=5';

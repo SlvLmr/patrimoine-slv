@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, openModal, getFormData, inputField } from '../utils.js?v=6';
+import { formatCurrency, formatPercent, openModal, getFormData, inputField } from '../utils.js?v=7';
 
 export function render(store) {
   const emprunts = store.get('passifs.emprunts');
