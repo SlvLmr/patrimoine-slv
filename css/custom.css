@@ -364,7 +364,7 @@ input[type="number"] {
 
 /* Logo gradient gold → lilac */
 .logo-gradient-text {
-  background: linear-gradient(90deg, #9b8ab8, #a8919f, #b8a088, #c9a76c);
+  background: linear-gradient(90deg, #8b5cf6, #a855f7, #c084fc, #d4a053, #c9a76c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -404,7 +404,7 @@ input[type="number"] {
 }
 
 .logo-bar-left {
-  background: linear-gradient(90deg, transparent, #9b8ab8);
+  background: linear-gradient(90deg, transparent, #8b5cf6);
 }
 
 .logo-bar-right {
@@ -421,8 +421,7 @@ input[type="number"] {
 }
 
 .logo-text-halo {
-  text-shadow: 0 0 20px rgba(155, 138, 184, 0.25), 0 0 20px rgba(201, 167, 108, 0.25);
-  filter: drop-shadow(0 0 8px rgba(175, 150, 140, 0.15));
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.12), 0 0 10px rgba(201, 167, 108, 0.1);
 }
 
 .logo-symbol {
@@ -446,16 +445,16 @@ input[type="number"] {
 
 /* Logo heartbeat glow */
 .logo-heartbeat {
-  animation: logoHeartbeat 1.8s ease-in-out infinite;
+  animation: logoHeartbeat 4s ease-in-out infinite;
 }
 
 @keyframes logoHeartbeat {
-  0%   { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
-  14%  { filter: drop-shadow(0 0 18px rgba(219, 184, 138, 0.7)) brightness(1.35); }
-  28%  { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
-  42%  { filter: drop-shadow(0 0 12px rgba(219, 184, 138, 0.45)) brightness(1.2); }
-  56%  { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
-  100% { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.1)) brightness(1); }
+  0%   { filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.05)) brightness(1); }
+  15%  { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.25)) brightness(1.1); }
+  30%  { filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.05)) brightness(1); }
+  45%  { filter: drop-shadow(0 0 6px rgba(201, 167, 108, 0.15)) brightness(1.06); }
+  60%  { filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.05)) brightness(1); }
+  100% { filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.05)) brightness(1); }
 }
 
 /* Drag-and-drop placement cards */
