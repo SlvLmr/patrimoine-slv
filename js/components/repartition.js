@@ -94,8 +94,8 @@ export function render(store) {
         <div id="rep-kpi" class="grid grid-cols-3 gap-3 mt-4"></div>
       </div>
 
-      <!-- Flow + Actions -->
-      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-stretch">
+      <!-- Flow + Actions + PEE -->
+      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
         <div class="card-dark rounded-2xl p-5 flex flex-col">
           <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <div class="flex items-center gap-2">
@@ -112,6 +112,13 @@ export function render(store) {
             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
           </div>
           <div id="rep-actions-list" class="space-y-2 flex-1 overflow-y-auto"></div>
+        </div>
+        <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
+          <div class="flex items-center gap-2 mb-3 flex-shrink-0">
+            <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mon PEE</h3>
+          </div>
+          <div id="rep-pee-list" class="space-y-2 flex-1 overflow-y-auto"></div>
         </div>
       </div>
 
@@ -246,6 +253,7 @@ export function mount(store, navigate) {
 
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
     updateActions(snap);
+    updatePEE(snap, calYear);
     updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear);
     updateTable(dcaByPlacement, snap, totalPlacements, calYear);
   }
@@ -432,6 +440,62 @@ export function mount(store, navigate) {
       topDot.setAttribute('opacity', '0.8');
       svg.appendChild(topDot);
     }
+  }
+
+  function updatePEE(snap, calYear) {
+    const listEl = document.getElementById('rep-pee-list');
+    if (!listEl) return;
+
+    const peePlacements = placements.filter(p => (p.enveloppe || p.type) === 'PEE');
+    if (!peePlacements.length) {
+      listEl.innerHTML = '<p class="text-xs text-gray-600 text-center py-4">Aucun placement PEE</p>';
+      return;
+    }
+
+    const peeStyle = { color: '#14b8a6', text: 'text-teal-400', border: 'border-teal-500/30', bg: 'bg-teal-500/10' };
+    const totalPEE = peePlacements.reduce((s, p) => s + (snap.placementById?.[p.id] || Number(p.valeur) || 0), 0);
+    const totalApport = peePlacements.reduce((s, p) => s + (Number(p.apport) || Number(p.valeur) || 0), 0);
+
+    // Annual contributions for current year
+    const annualContrib = peePlacements.reduce((s, p) => {
+      const contribs = p.peeContributions || [];
+      const thisYear = contribs.find(c => c.year === calYear);
+      return s + (thisYear ? Number(thisYear.montant) || 0 : 0);
+    }, 0);
+
+    const headerHTML = `
+      <div class="flex justify-center mb-2">
+        <div class="card-dark rounded-lg px-3 py-1.5 text-center inline-block border border-teal-500/20">
+          <p class="text-[9px] text-gray-500 uppercase tracking-widest">Valorisation</p>
+          <p class="text-base font-extrabold text-teal-400">${formatCurrency(totalPEE)}</p>
+        </div>
+      </div>
+    `;
+
+    const cardsHTML = peePlacements.map(p => {
+      const val = snap.placementById?.[p.id] || Number(p.valeur) || 0;
+      const apport = Number(p.apport) || Number(p.valeur) || 0;
+      const contribs = p.peeContributions || [];
+      const thisYearContrib = contribs.find(c => c.year === calYear);
+      const annuel = thisYearContrib ? Number(thisYearContrib.montant) || 0 : 0;
+      return `
+        <div class="card-dark rounded-xl px-3 py-2 ${peeStyle.border} border transition hover:border-opacity-60">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <div class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${peeStyle.color}"></div>
+              <span class="text-xs font-semibold ${peeStyle.text} truncate">${p.nom || 'PEE'}</span>
+            </div>
+            ${annuel > 0 ? `<span class="text-[10px] text-teal-400/70">${formatCurrency(annuel)}/an</span>` : ''}
+          </div>
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-bold text-gray-200">${formatCurrency(apport)}</p>
+            <p class="text-[10px] text-gray-500">valorisé ${formatCurrency(val)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.innerHTML = headerHTML + cardsHTML;
   }
 
   function updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear) {
