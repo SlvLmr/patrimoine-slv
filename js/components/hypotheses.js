@@ -1152,7 +1152,7 @@ export function render(store) {
   const firstSnap = snapshotsData[0] || { immobilier: 0, placementsHorsAV: 0, assuranceVie: 0, epargne: 0, patrimoineNet: 0 };
 
   return `
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">

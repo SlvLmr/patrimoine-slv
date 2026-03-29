@@ -22,7 +22,7 @@ import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js?v=2026
 // Auto-configure Google Drive Client ID
 setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
 import * as Strategie from './components/strategie.js?v=20260327a';
-import * as Hypotheses from './components/hypotheses.js?v=20260328h';
+import * as Hypotheses from './components/hypotheses.js?v=20260329a';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
 // ProjectionEnfants is now embedded in Projection via unified tabs
 
