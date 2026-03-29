@@ -3,11 +3,11 @@ import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as fireba
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as RevenusDepenses from './components/revenus-depenses.js?v=20260329g';
-import * as Projection from './components/projection.js?v=20260329q';
+import * as Projection from './components/projection.js?v=20260329r';
 import * as SuiviDepenses from './components/suivi-depenses.js?v=20260329g';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Compte from './components/compte.js?v=20260329g';
-import * as Repartition from './components/repartition.js?v=20260329r';
+import * as Repartition from './components/repartition.js?v=20260329s';
 import * as SimulateurFire from './components/simulateur-fire.js?v=20260329a';
 import * as SimulateurCredit from './components/simulateur-credit.js';
 import * as SimulateurInterets from './components/simulateur-interets.js';

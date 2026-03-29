@@ -211,9 +211,7 @@ export function computeProjection(store, overrides = {}) {
     // Annual fees (frais annuels) reduce the effective rendement
     const fraisAnnuels = Number(p.fraisAnnuels) || 0;
     const fraisRate = fraisAnnuels / 100; // convert percentage to decimal
-    // Apply scenario spread (additive shift to all rendements for pessimistic/optimistic scenarios)
-    const rendSpread = overrides.rendementSpread || 0;
-    const rendAfterFees = rend - fraisRate + rendSpread;
+    const rendAfterFees = rend - fraisRate;
     // Cash injections: placement-level (actifs) takes priority, fallback to parametres
     const placInj = p.cashInjections || [];
     const paramInj = cashInjectionsParams[p.id] || [];

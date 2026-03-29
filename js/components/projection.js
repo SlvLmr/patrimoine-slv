@@ -1,6 +1,6 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=9';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=6';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=7';
 import * as ProjectionEnfants from './projection-enfants.js?v=20260329m';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
@@ -173,16 +173,6 @@ export function render(store) {
                 <span class="text-xs text-gray-500">Retraite</span>
                 <input type="number" id="param-retraite" value="${params.ageRetraite || 64}" min="55" max="70" step="1"
                   class="param-input input-field w-12 text-center">
-              </div>
-            </div>
-            <div class="w-px h-4 bg-dark-400/30 hidden sm:block"></div>
-            <div class="flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
-              <div class="flex items-center gap-1">
-                <span class="text-xs text-gray-500">Scénarios</span>
-                <input type="number" id="param-scenario-spread" value="${params.scenarioSpread ?? 2}" min="0" max="10" step="0.5"
-                  class="param-input input-field w-14 text-center">
-                <span class="text-xs text-gray-500">%</span>
               </div>
             </div>
           </div>
@@ -1297,57 +1287,8 @@ export function mount(store, navigate) {
       hidden: true
     });
 
-    // Scenario bands (pessimistic / base / optimistic)
-    const params = store.get('parametres');
-    const scenarioSpread = (params.scenarioSpread ?? 2) / 100; // default ±2%
-
-    if (scenarioSpread > 0) {
-      const pessimisticSnapshots = computeProjection(store, { rendementSpread: -scenarioSpread });
-      const optimisticSnapshots = computeProjection(store, { rendementSpread: +scenarioSpread });
-
-      // "Faible" (pessimistic) - thin dashed gray line
-      datasets.push({
-        label: 'Faible',
-        data: pessimisticSnapshots.map(s => s.patrimoineNet),
-        borderColor: 'rgba(156,163,175,0.5)',
-        backgroundColor: 'transparent',
-        fill: false,
-        tension: 0.45,
-        pointRadius: 0,
-        borderWidth: 1,
-        borderDash: [4, 3],
-        order: 10
-      });
-
-      // "Moyen" (base) - solid gray line
-      datasets.push({
-        label: 'Moyen',
-        data: snapshots.map(s => s.patrimoineNet),
-        borderColor: 'rgba(156,163,175,0.7)',
-        backgroundColor: 'transparent',
-        fill: false,
-        tension: 0.45,
-        pointRadius: 0,
-        borderWidth: 2,
-        order: 9
-      });
-
-      // "Élevé" (optimistic) - thin dashed gray line, filled to "Faible"
-      datasets.push({
-        label: '\u00c9lev\u00e9',
-        data: optimisticSnapshots.map(s => s.patrimoineNet),
-        borderColor: 'rgba(156,163,175,0.5)',
-        backgroundColor: 'rgba(156,163,175,0.08)',
-        fill: { target: '-2', above: 'rgba(156,163,175,0.08)', below: 'rgba(156,163,175,0.08)' },
-        tension: 0.45,
-        pointRadius: 0,
-        borderWidth: 1,
-        borderDash: [4, 3],
-        order: 10
-      });
-    }
-
     // Retirement milestones as vertical annotations
+    const params = store.get('parametres');
     const currentYear = new Date().getFullYear();
     const ageFinAnnee = params.ageFinAnnee || 43;
 
@@ -1580,9 +1521,6 @@ export function mount(store, navigate) {
 
     const cashOutVal = document.getElementById('param-cashout-year')?.value;
     store.set('parametres.cashOutYear', cashOutVal ? parseInt(cashOutVal) : null);
-
-    // Scenario spread
-    store.set('parametres.scenarioSpread', parseFloat(document.getElementById('param-scenario-spread')?.value) || 2);
 
     navigate('projection');
   });
