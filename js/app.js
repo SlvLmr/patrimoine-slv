@@ -17,6 +17,7 @@ import * as SimulateurCredit from './components/simulateur-credit.js';
 import * as SimulateurInterets from './components/simulateur-interets.js';
 import * as SimulateurAuto from './components/simulateur-auto.js';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260329a';
+import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js';
 import * as Strategie from './components/strategie.js?v=20260327a';
 import * as Hypotheses from './components/hypotheses.js?v=20260328h';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
@@ -576,16 +577,42 @@ function showConfirmModal({ title, message, icon, confirmLabel = 'Confirmer', co
   modal.addEventListener('click', (e) => { if (e.target === modal) closeChoiceModal(); });
 }
 
-function exportLocal() {
+async function exportLocal() {
   const data = store.exportData();
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
   const profile = store.getActiveProfile();
-  a.download = `patrimoine-${profile.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const filename = `patrimoine-${profile.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`;
+
+  // If Google Drive is not configured, prompt for Client ID once
+  if (!isGdriveConfigured()) {
+    const clientId = prompt('Pour exporter vers Google Drive, entre ton Client ID OAuth Google.\n\n(Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID)\n\nLaisse vide pour télécharger en local.');
+    if (clientId && clientId.trim()) {
+      setClientId(clientId.trim());
+    } else {
+      // Fallback: local download
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+  }
+
+  // Save to Google Drive
+  try {
+    showToast('Export vers Google Drive en cours...', 'info', 3000);
+    await saveToDrive(data, filename);
+    showToast('Exporté sur Google Drive ✓', 'success', 4000);
+  } catch (err) {
+    console.error('Google Drive export error:', err);
+    showToast('Erreur Drive : ' + err.message + ' — Téléchargement local à la place', 'error', 6000);
+    // Fallback: local download
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
 }
 
 function importLocal() {
