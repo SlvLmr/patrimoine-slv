@@ -1,7 +1,7 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=9';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=7';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260329m';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260329n';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -35,7 +35,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329m';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329n';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 

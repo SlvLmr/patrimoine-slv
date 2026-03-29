@@ -582,7 +582,7 @@ function drawChildChart(enfant, horizonYears, store) {
   datasets.push({ label: 'Livrets', data: snapshots.map(s => s.livrets), borderColor: livretColor, backgroundColor: createVerticalGradient(ctx, livretColor, 0.15, 0.02), fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 });
 
   const palette = ['#3b82f6', '#a855f7', '#06b6d4', '#ec4899', '#f97316'];
-  (snapshots.groupKeys || []).forEach((k, ki) => {
+  (snapshots.groupKeys || []).filter(k => k !== 'Livrets').forEach((k, ki) => {
     const hasData = snapshots.some(s => (s.placementDetail[k] || 0) > 0);
     if (!hasData) return;
     const color = palette[ki % palette.length];
