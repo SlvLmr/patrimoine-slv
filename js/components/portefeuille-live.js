@@ -98,7 +98,7 @@ export function render(store) {
   return `
     <div class="space-y-0">
       <div class="mb-4">
-        <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-blue-500/20 flex items-center justify-center">
             <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
@@ -111,11 +111,11 @@ export function render(store) {
 
       <!-- LEVEL 1 — Patrimoine net -->
       <div class="flex justify-center">
-        <div class="card-dark rounded-2xl px-6 py-3 text-center inline-block">
+        <div class="card-dark rounded-2xl px-4 sm:px-6 py-3 text-center inline-block">
           <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Patrimoine net</p>
-          <p class="text-3xl font-extrabold text-accent-amber tracking-tight">${fmt(patrimoineNet)}</p>
+          <p class="text-2xl sm:text-3xl font-extrabold text-accent-amber tracking-tight">${fmt(patrimoineNet)}</p>
           ${totalDette > 0 ? `
-          <div class="flex items-center justify-center gap-4 mt-1">
+          <div class="flex items-center justify-center gap-3 sm:gap-4 mt-1">
             <span class="text-[10px] text-gray-500">Actifs <span class="text-gray-300 font-medium">${fmt(totalActifs)}</span></span>
             <span class="text-[10px] text-gray-500">Dettes <span class="text-red-400 font-medium">−${fmt(totalDette)}</span></span>
           </div>` : ''}
@@ -134,46 +134,46 @@ export function render(store) {
       </div>
 
       <!-- LEVEL 2 — Liquidités + Investissements + Immobilier -->
-      <div id="ptf-L2" class="grid grid-cols-1 lg:grid-cols-[4fr_6fr_2fr] gap-3">
+      <div id="ptf-L2" class="grid grid-cols-3 lg:grid-cols-[4fr_6fr_2fr] gap-2 sm:gap-3">
 
         <!-- Liquidités -->
-        <div id="ptf-card-liq" class="card-dark rounded-2xl p-3">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-6 h-6 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="ptf-card-liq" class="card-dark rounded-xl sm:rounded-2xl p-2 sm:p-3">
+          <div class="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+            <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-500 uppercase tracking-wider font-bold">Liquidités</p>
+            <p class="text-[10px] sm:text-sm text-gray-500 uppercase tracking-wider font-bold">Liquidités</p>
           </div>
-          <p class="text-xl font-bold text-indigo-400 mb-1 text-center">${fmt(totalLiquidites)}</p>
+          <p class="text-base sm:text-xl font-bold text-indigo-400 mb-1 text-center">${fmt(totalLiquidites)}</p>
         </div>
 
         <!-- Investissements -->
-        <div id="ptf-card-inv" class="card-dark rounded-2xl p-3">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-6 h-6 rounded-lg bg-accent-amber/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3 h-3 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="ptf-card-inv" class="card-dark rounded-xl sm:rounded-2xl p-2 sm:p-3">
+          <div class="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+            <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-accent-amber/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
               </svg>
             </div>
-            <p class="text-sm text-gray-500 uppercase tracking-wider font-bold">Investissements</p>
+            <p class="text-[10px] sm:text-sm text-gray-500 uppercase tracking-wider font-bold">Invest.</p>
           </div>
-          <p class="text-xl font-bold text-accent-amber mb-1 text-center">${fmt(totalPlac)}</p>
+          <p class="text-base sm:text-xl font-bold text-accent-amber mb-1 text-center">${fmt(totalPlac)}</p>
         </div>
 
         <!-- Immobilier (compact, includes details) -->
-        <div id="ptf-card-immo" class="card-dark rounded-2xl p-3">
-          <div class="flex items-center gap-2 mb-1">
-            <div class="w-5 h-5 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-2.5 h-2.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="ptf-card-immo" class="card-dark rounded-xl sm:rounded-2xl p-2 sm:p-3">
+          <div class="flex items-center gap-1 sm:gap-2 mb-1">
+            <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
             </div>
-            <p class="text-xs text-gray-500 uppercase tracking-wider font-bold">Immobilier</p>
+            <p class="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider font-bold">Immo.</p>
           </div>
-          <p class="text-lg font-bold text-amber-500 mb-1 text-center">${fmt(totalImmo)}</p>
-          <div class="space-y-1 mt-1 border-t border-dark-400/20 pt-1">
+          <p class="text-sm sm:text-lg font-bold text-amber-500 mb-1 text-center">${fmt(totalImmo)}</p>
+          <div class="hidden sm:block space-y-1 mt-1 border-t border-dark-400/20 pt-1">
             ${immobilier.length > 0 ? immobilier.map(i => `
             <div class="flex items-center justify-center gap-1.5">
                 <div class="w-1 h-1 rounded-full bg-amber-500/50 flex-shrink-0"></div>
@@ -184,7 +184,7 @@ export function render(store) {
       </div>
 
       <!-- SVG Level 2 → 3 -->
-      <div class="grid grid-cols-1 lg:grid-cols-[4fr_6fr_2fr] gap-3">
+      <div class="hidden lg:grid lg:grid-cols-[4fr_6fr_2fr] gap-3">
 
         <!-- Left branch: Liquidités → Comptes Courants + Épargne → détails -->
         <div>
@@ -301,6 +301,117 @@ export function render(store) {
         <div></div>
 
       </div>
+
+      <!-- MOBILE DETAIL VIEW — replaces the tree structure on small screens -->
+      <div class="lg:hidden space-y-2 mt-3">
+
+        <!-- Liquidités detail -->
+        <details class="card-dark rounded-xl overflow-hidden group/mob">
+          <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-lg bg-indigo-500/15 flex items-center justify-center">
+                <svg class="w-2.5 h-2.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+              </div>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Liquidités</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-indigo-400">${fmt(totalLiquidites)}</span>
+              <svg class="w-3 h-3 text-gray-600 transition-transform group-open/mob:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
+          <div class="px-3 pb-3 space-y-2">
+            <div class="flex items-center justify-between text-xs text-gray-500 border-b border-dark-400/20 pb-1.5">
+              <span>Comptes courants</span>
+              <span class="text-indigo-400 font-medium">${fmt(totalCC)}</span>
+            </div>
+            ${bankCards.map(b => `
+            <div class="flex items-center justify-between pl-3">
+              <span class="text-[10px] text-gray-500">${b.label}</span>
+              <span class="text-[10px] text-gray-300 font-medium">${fmt(b.solde)}</span>
+            </div>`).join('')}
+            <div class="flex items-center justify-between text-xs text-gray-500 border-t border-dark-400/20 pt-1.5">
+              <span>Épargne</span>
+              <span class="text-indigo-400 font-medium">${fmt(totalEpargne)}</span>
+            </div>
+            ${epargne.map(e => `
+            <div class="flex items-center justify-between pl-3">
+              <span class="text-[10px] text-gray-500">${e.nom}</span>
+              <span class="text-[10px] text-gray-300 font-medium">${fmt(Number(e.solde) || 0)}</span>
+            </div>`).join('')}
+          </div>
+        </details>
+
+        <!-- Investissements detail -->
+        <details class="card-dark rounded-xl overflow-hidden group/inv">
+          <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-lg bg-accent-amber/15 flex items-center justify-center">
+                <svg class="w-2.5 h-2.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              </div>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Investissements</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-accent-amber">${fmt(totalPlac)}</span>
+              <svg class="w-3 h-3 text-gray-600 transition-transform group-open/inv:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
+          <div class="px-3 pb-3 space-y-1.5">
+            ${l2Envelopes.map(env => {
+              const envPlacMap = { pea: peaPlac, cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
+              const items = env.id === 'pea' ? [...peaActions, ...peaETF, ...peaOther] : (envPlacMap[env.id] || []);
+              return `
+            <div class="border-b border-dark-400/15 pb-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-500 font-medium">${env.label}</span>
+                <span class="text-accent-amber font-bold">${fmt(env.total)}</span>
+              </div>
+              ${items.length > 0 ? items.map(p => `
+              <div class="flex items-center justify-between pl-3 mt-0.5">
+                <span class="text-[10px] text-gray-500 truncate mr-2">${p.nom}</span>
+                <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(Number(p.valeur) || Number(p.apport) || 0)}</span>
+              </div>`).join('') : ''}
+            </div>`;
+            }).join('')}
+          </div>
+        </details>
+
+        <!-- Immobilier detail (only if items) -->
+        ${immobilier.length > 0 ? `
+        <details class="card-dark rounded-xl overflow-hidden group/imm">
+          <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-lg bg-amber-700/15 flex items-center justify-center">
+                <svg class="w-2.5 h-2.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              </div>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Immobilier</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-amber-500">${fmt(totalImmo)}</span>
+              <svg class="w-3 h-3 text-gray-600 transition-transform group-open/imm:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
+          <div class="px-3 pb-3 space-y-1">
+            ${immobilier.map(i => `
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-gray-500">${i.nom}</span>
+              <span class="text-[10px] text-gray-300 font-medium">${fmt(Number(i.valeurActuelle) || 0)}</span>
+            </div>`).join('')}
+          </div>
+        </details>` : ''}
+
+        ${totalDette > 0 ? `
+        <!-- Dettes -->
+        <div class="card-dark rounded-xl px-3 py-2.5 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-lg bg-red-500/15 flex items-center justify-center">
+              <svg class="w-2.5 h-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+            </div>
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Dettes</span>
+          </div>
+          <span class="text-sm font-bold text-red-400">−${fmt(totalDette)}</span>
+        </div>` : ''}
+      </div>
+
     </div>
   `;
 }
