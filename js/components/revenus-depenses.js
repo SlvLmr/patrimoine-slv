@@ -147,6 +147,8 @@ function renderDepenseBlock(g) {
             </div>
           </summary>
           ${g.items.length > 0 ? `
+          <div class="overflow-x-auto">
+          <div class="min-w-[360px]">
           <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
             <span class="text-[10px] text-gray-500 uppercase tracking-wider">Poste</span>
             <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Mensuel</span>
@@ -174,7 +176,7 @@ function renderDepenseBlock(g) {
               <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
               <span class="text-xs text-right whitespace-nowrap ${d.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
               <span class="text-xs text-right whitespace-nowrap ${d.frequence === 'Annuel' ? 'text-gray-100 font-medium' : 'text-gray-400'}">${formatCurrencyCents(annuel)}</span>
-              <button data-del-dep="${d.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
+              <button data-del-dep="${d.id}" class="lg:opacity-0 lg:group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
             </div>`;
             }).join('')}
           </div>
@@ -184,6 +186,8 @@ function renderDepenseBlock(g) {
             <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(g.total)}</span>
             <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(g.total * 12)}</span>
             <span></span>
+          </div>
+          </div>
           </div>
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucune dépense.</p>'}
         </details>`;
@@ -335,6 +339,8 @@ export function render(store) {
             </div>
           </summary>
           ${revenus.length > 0 ? `
+          <div class="overflow-x-auto">
+          <div class="min-w-[360px]">
           <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1 border-b border-dark-400/30">
             <span class="text-[10px] text-gray-500 uppercase tracking-wider">Source</span>
             <span class="text-[10px] text-gray-500 uppercase tracking-wider text-right">Mensuel</span>
@@ -362,7 +368,7 @@ export function render(store) {
               <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
               <span class="text-xs text-right whitespace-nowrap ${r.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
               <span class="text-xs text-right whitespace-nowrap ${r.frequence === 'Annuel' ? 'text-gray-100 font-medium' : 'text-gray-400'}">${formatCurrencyCents(annuel)}</span>
-              <button data-del-rev="${r.id}" class="opacity-0 group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
+              <button data-del-rev="${r.id}" class="lg:opacity-0 lg:group-hover/row:opacity-100 text-accent-red/60 hover:text-accent-red text-[10px] font-medium transition text-right" onclick="event.stopPropagation()">✕</button>
             </div>`;
             }).join('')}
           </div>
@@ -372,6 +378,8 @@ export function render(store) {
             <span class="text-xs font-bold text-accent-amber text-right">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0))}</span>
             <span class="text-xs font-bold text-gray-100 text-right">${formatCurrencyCents(revenus.filter(r => !r.informatif).reduce((s, r) => s + getMensuelLisse(r), 0) * 12)}</span>
             <span></span>
+          </div>
+          </div>
           </div>
           ` : '<p class="px-4 py-3 text-gray-600 text-xs">Aucun revenu.</p>'}
         </details>

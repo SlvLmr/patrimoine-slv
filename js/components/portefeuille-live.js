@@ -229,10 +229,10 @@ export function render(store) {
           <!-- Ligne 3 : CIC + TR | comptes épargne -->
           <div class="grid grid-cols-2 gap-2">
             <!-- Sous Comptes Courants -->
-            <div class="grid grid-cols-${bankCards.length > 3 ? '3' : bankCards.length} gap-1">
+            <div class="grid grid-cols-${Math.min(bankCards.length, 2)} sm:grid-cols-${bankCards.length > 3 ? '3' : bankCards.length} gap-1">
               ${bankCards.map((b, i) => `
               <div id="ptf-card-bank-${i}" class="card-dark rounded-xl p-1.5 overflow-hidden">
-                <p class="text-[7px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${b.label}</p>
+                <p class="text-[9px] sm:text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${b.label}</p>
                 <p class="text-xs font-bold text-indigo-400 text-center whitespace-nowrap">${fmt(b.solde)}</p>
               </div>`).join('')}
             </div>
@@ -258,7 +258,7 @@ export function render(store) {
             </svg>
           </div>
           <!-- Ligne 2 investissements: enveloppes -->
-          <div id="ptf-L3C" class="grid grid-cols-${l2Envelopes.length || 1} gap-1">
+          <div id="ptf-L3C" class="grid grid-cols-${Math.min(l2Envelopes.length, 2) || 1} sm:grid-cols-${Math.min(l2Envelopes.length, 3) || 1} lg:grid-cols-${l2Envelopes.length || 1} gap-1">
             ${l2Envelopes.map(env => {
               const envPlacMap = { cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
               return `
