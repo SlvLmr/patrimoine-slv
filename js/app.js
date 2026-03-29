@@ -20,9 +20,7 @@ import * as SimulateurSalaire from './components/simulateur-salaire.js?v=2026032
 import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
 
 // Auto-configure Google Drive Client ID
-if (!isGdriveConfigured()) {
-  setClientId('594473713679-bke6lpnl2nq1dr4gc6u1javo5fodgfi3.apps.googleusercontent.com');
-}
+setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
 import * as Strategie from './components/strategie.js?v=20260327a';
 import * as Hypotheses from './components/hypotheses.js?v=20260328h';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
