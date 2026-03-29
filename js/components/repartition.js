@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData } from '../utils.js?v=7';
+import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData } from '../utils.js?v=8';
 import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 

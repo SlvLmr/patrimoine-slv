@@ -41,6 +41,39 @@ function showToast(message, type = 'error', duration = 8000) {
   if (duration > 0) setTimeout(() => toast.remove(), duration);
 }
 
+// Custom prompt modal (replaces native prompt())
+function promptModal(title, defaultValue, onConfirm) {
+  const existing = document.getElementById('app-prompt-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'app-prompt-modal';
+  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-sm border border-dark-400/50">
+      <div class="p-5 border-b border-dark-400/50">
+        <h3 class="text-base font-semibold text-gray-100">${title}</h3>
+      </div>
+      <div class="p-5">
+        <input id="prompt-input" type="text" value="${(defaultValue || '').replace(/"/g, '&quot;')}"
+          class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-accent-green/50 focus:outline-none transition" autofocus />
+      </div>
+      <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3">
+        <button id="prompt-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
+        <button id="prompt-confirm" class="px-5 py-2 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm">Confirmer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const input = modal.querySelector('#prompt-input');
+  input.focus();
+  input.select();
+  const close = () => modal.remove();
+  const confirm = () => { const v = input.value; close(); if (v && v.trim()) onConfirm(v.trim()); };
+  modal.querySelector('#prompt-cancel').addEventListener('click', close);
+  modal.querySelector('#prompt-confirm').addEventListener('click', confirm);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirm(); } });
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+}
+
 const routes = {
   'revenus-depenses': RevenusDepenses,
   'suivi-depenses': SuiviDepenses,
@@ -366,24 +399,22 @@ function initProfileSwitcher() {
     // Rename profile
     dropdown.querySelector('#btn-rename-profile')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      const newName = prompt('Nouveau nom du profil :', active.name);
-      if (newName && newName.trim()) {
-        store.renameProfile(active.id, newName.trim());
-        dropdown.remove();
+      dropdown.remove();
+      promptModal('Renommer le profil', active.name, (newName) => {
+        store.renameProfile(active.id, newName);
         updateProfileDisplay();
-      }
+      });
     });
 
     // New profile
     dropdown.querySelector('#btn-new-profile')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      const name = prompt('Nom du nouveau profil :');
-      if (name && name.trim()) {
-        const id = store.createProfile(name.trim());
+      dropdown.remove();
+      promptModal('Nom du nouveau profil', '', (name) => {
+        const id = store.createProfile(name);
         store.switchProfile(id);
-        dropdown.remove();
         renderPage();
-      }
+      });
     });
 
     // Export

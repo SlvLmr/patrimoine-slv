@@ -419,7 +419,7 @@ export function computeProjection(store, overrides = {}) {
       return envelopeAge >= 5 ? PS_RATE : PFU_RATE;
     }
     if (isAV) {
-      // AV: after 8 years → PS 17.2% + 7.5% IR (simplified, ignoring abatement for now)
+      // AV: after 8 years → PS 17.2% + 7.5% IR (with abattement applied separately)
       // before 8 years → PFU 31.4%
       return envelopeAge >= 8 ? (PS_RATE + AV_IR_AFTER8) : PFU_RATE;
     }
@@ -429,6 +429,17 @@ export function computeProjection(store, overrides = {}) {
     }
     // CTO, Crypto, PER, Autre → PFU 31.4%
     return PFU_RATE;
+  }
+
+  // Compute AV tax with abattement (€4,600 single / €9,200 couple)
+  function computeAVTax(gains, envelopeAge) {
+    if (gains <= 0) return gains * PFU_RATE; // no gains, no special treatment
+    if (envelopeAge < 8) return gains * PFU_RATE;
+    // After 8 years: PS on all gains + IR only on gains above abattement
+    const ps = gains * PS_RATE;
+    const gainsAfterAbattement = Math.max(0, gains - AV_ABATTEMENT);
+    const ir = gainsAfterAbattement * AV_IR_AFTER8;
+    return ps + ir;
   }
 
   const cashOutYear = params.cashOutYear ? Number(params.cashOutYear) : null;
@@ -912,9 +923,9 @@ export function computeProjection(store, overrides = {}) {
     }
     } // end if (!cashedOut)
 
-    // Interest on épargne/héritage
-    interetsAnnuels += epar * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
-    if (heritage > 0) interetsAnnuels += heritage * rendEpar * periodFraction / (1 + rendEpar * periodFraction);
+    // Interest on épargne/héritage (compound interest)
+    interetsAnnuels += epar * (Math.pow(1 + rendEpar, periodFraction) - 1);
+    if (heritage > 0) interetsAnnuels += heritage * (Math.pow(1 + rendEpar, periodFraction) - 1);
 
     cumulInterets += Math.max(0, interetsAnnuels);
 
@@ -941,16 +952,34 @@ export function computeProjection(store, overrides = {}) {
     let totalGainsAllPlacements = 0;
     const groupTaxes = {};
     const groupTaxRates = {};
+    // Accumulate AV gains across all AV placements for shared abattement
+    let totalAVGains = 0;
+    placSims.forEach(ps => {
+      if (ps.groupKey === 'Assurance Vie') totalAVGains += Math.max(0, ps.totalGains);
+    });
+    let avAbattementRemaining = AV_ABATTEMENT;
+
     placSims.forEach(ps => {
       const gains = Math.max(0, ps.totalGains);
-      const taxRate = getPlacementTaxRate(ps, year);
-      const tax = gains * taxRate;
+      let tax;
+      if (ps.groupKey === 'Assurance Vie' && (ps.envelopeAgeAtStart + year) >= 8) {
+        // AV after 8 years: apply shared abattement proportionally
+        const avShare = totalAVGains > 0 ? gains / totalAVGains : 0;
+        const abattementForThis = Math.min(gains, avAbattementRemaining * avShare);
+        tax = computeAVTax(gains, ps.envelopeAgeAtStart + year);
+        // Recalc with proportional abattement
+        const ps_tax = gains * PS_RATE;
+        const ir_tax = Math.max(0, gains - abattementForThis) * AV_IR_AFTER8;
+        tax = ps_tax + ir_tax;
+      } else {
+        const taxRate = getPlacementTaxRate(ps, year);
+        tax = gains * taxRate;
+      }
       totalTaxes += tax;
       totalApports += ps.totalApports;
       totalGainsAllPlacements += gains;
-      // Accumulate per group
       groupTaxes[ps.groupKey] = (groupTaxes[ps.groupKey] || 0) + tax;
-      groupTaxRates[ps.groupKey] = taxRate; // last one wins (same rate per group)
+      groupTaxRates[ps.groupKey] = getPlacementTaxRate(ps, year);
     });
 
     // Aggregate placement values, apports and gains by group

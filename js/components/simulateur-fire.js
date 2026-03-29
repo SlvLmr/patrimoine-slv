@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, parseNumberInput } from '../utils.js?v=7';
+import { formatCurrency, formatPercent, parseNumberInput } from '../utils.js?v=8';
 import { createChart, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ─── FIRE Simulator ─────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ function compute(inputs) {
     ageRetraiteLegale, pensionMensuelle,
   } = inputs;
 
-  const rendementReel = (rendementAnnuel - inflation) / 100;
+  const rendementReel = (1 + rendementAnnuel / 100) / (1 + inflation / 100) - 1;
   const rendementMensuelReel = Math.pow(1 + rendementReel, 1 / 12) - 1;
   const depensesAnnuellesRetraite = depensesRetraite * 12;
   const revenusPassifsAnnuels = revenusPassifsRetraite * 12;

@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput } from '../utils.js?v=7';
+import { formatCurrency, parseNumberInput } from '../utils.js?v=8';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur d'Intérêts Composés ─────────────────────────────────────────
@@ -72,7 +72,7 @@ function compute(inputs) {
   const { capitalInitial, versementMensuel, duree, tauxAnnuel, inflation, frequenceComposition } = inputs;
 
   const tauxPeriodique = (tauxAnnuel / 100) / frequenceComposition;
-  const tauxReelAnnuel = (tauxAnnuel - inflation) / 100;
+  const tauxReelAnnuel = (1 + tauxAnnuel / 100) / (1 + inflation / 100) - 1;
   const versementParPeriode = versementMensuel * (12 / frequenceComposition);
   const totalPeriodes = duree * frequenceComposition;
 
