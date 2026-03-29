@@ -224,6 +224,7 @@ export function mount(store, navigate) {
   }
 
   function updateForYear(yearIdx) {
+    try {
     const snap = snapshots[yearIdx];
     if (!snap) return;
 
@@ -271,14 +272,12 @@ export function mount(store, navigate) {
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
     updateActions(snap);
     updatePEE(snap, calYear);
-    try {
-      updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA, totalChildrenDCA);
-    } catch (e) {
-      console.error('updateFlow error:', e);
-      const flowEl = document.getElementById('rep-flow');
-      if (flowEl) flowEl.innerHTML = `<p class="text-red-400 text-sm p-4">Erreur: ${e.message}</p>`;
-    }
+    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA, totalChildrenDCA);
     updateTable(dcaByPlacement, snap, totalPlacements, calYear);
+    } catch (err) {
+      console.error('updateForYear error:', err);
+      document.getElementById('rep-flow').innerHTML = `<pre class="text-red-400 text-xs p-4 whitespace-pre-wrap">${err.stack || err.message}</pre>`;
+    }
   }
 
   function updateKPI(totalDCA, nbWithDCA, snap, totalPlacements) {

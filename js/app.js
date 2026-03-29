@@ -11,7 +11,7 @@ import * as PortefeuilleLive from './components/portefeuille-live.js';
 
 import * as Compte from './components/compte.js?v=20260329g';
 import * as Objectifs from './components/objectifs.js';
-import * as Repartition from './components/repartition.js?v=20260329p';
+import * as Repartition from './components/repartition.js?v=20260329q';
 import * as SimulateurFire from './components/simulateur-fire.js';
 import * as SimulateurCredit from './components/simulateur-credit.js';
 import * as SimulateurInterets from './components/simulateur-interets.js';
