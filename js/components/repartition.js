@@ -271,7 +271,13 @@ export function mount(store, navigate) {
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
     updateActions(snap);
     updatePEE(snap, calYear);
-    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA, totalChildrenDCA);
+    try {
+      updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA, totalChildrenDCA);
+    } catch (e) {
+      console.error('updateFlow error:', e);
+      const flowEl = document.getElementById('rep-flow');
+      if (flowEl) flowEl.innerHTML = `<p class="text-red-400 text-sm p-4">Erreur: ${e.message}</p>`;
+    }
     updateTable(dcaByPlacement, snap, totalPlacements, calYear);
   }
 
