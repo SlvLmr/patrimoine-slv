@@ -2,8 +2,69 @@ import { formatCurrency, formatPercent, computeProjection, inputField, selectFie
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 import { openHeritageModal } from './heritage.js?v=5';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260329a';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329a';
+
+// ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
+
+function renderProjTabs(store) {
+  const activeTab = store.get('_projTab') || 'moi';
+  const enfants = getEnfants(store);
+  const userInfo = store.getAll().userInfo || {};
+  const prenom = (userInfo.prenom || '').trim() || 'Moi';
+
+  return `
+    <div class="flex gap-1 bg-dark-800/50 rounded-xl p-1 border border-dark-400/15 mb-6">
+      <button class="proj-tab flex-1 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150
+        ${'moi' === activeTab ? 'bg-dark-600 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300 hover:bg-dark-700/30'
+      }" data-proj-tab="moi">
+        <svg class="inline w-3.5 h-3.5 mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        ${prenom}
+      </button>
+      ${enfants.map((e, i) => `
+      <button class="proj-tab flex-1 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150
+        ${'child-' + i === activeTab ? 'bg-dark-600 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300 hover:bg-dark-700/30'
+      }" data-proj-tab="child-${i}">
+        <span class="inline-block w-2 h-2 rounded-full mr-1.5" style="background:${CHILD_COLORS[i % CHILD_COLORS.length]}"></span>
+        ${e.prenom || 'Enfant ' + (i + 1)}${childAge(e.dateNaissance) !== null ? ' \u00b7 ' + childAge(e.dateNaissance) + ' ans' : ''}
+      </button>`).join('')}
+      ${enfants.length >= 2 ? `
+      <button class="proj-tab flex-1 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-150
+        ${'compare' === activeTab ? 'bg-dark-600 text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-300 hover:bg-dark-700/30'
+      }" data-proj-tab="compare">Comparatif</button>` : ''}
+    </div>`;
+}
 
 export function render(store) {
+  const activeTab = store.get('_projTab') || 'moi';
+
+  // Child or compare tab → delegate to projection-enfants
+  if (activeTab.startsWith('child-') || activeTab === 'compare') {
+    // Sync _peActiveTab so projection-enfants renders the right child
+    const peTab = activeTab === 'compare' ? 'compare' : activeTab.replace('child-', '');
+    store.set('_peActiveTab', peTab);
+    const childContent = ProjectionEnfants.render(store, { embedded: true });
+    // Strip the header and internal tabs from projection-enfants output,
+    // replace with our unified header + tabs
+    return `
+    <div class="space-y-6">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          Projection
+        </h2>
+        <p class="text-gray-500 text-sm mt-1">Simule l\u2019\u00e9volution de ton patrimoine dans le temps</p>
+      </div>
+      ${renderProjTabs(store)}
+      <div id="proj-child-content">${childContent}</div>
+    </div>`;
+  }
+
+  // "Moi" tab → original projection content
   const params = store.get('parametres');
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
@@ -46,6 +107,7 @@ export function render(store) {
         </h2>
         <p class="text-gray-500 text-sm mt-1">Simule l'évolution de ton patrimoine dans le temps</p>
       </div>
+      ${renderProjTabs(store)}
 
       <!-- Parameters — collapsible -->
       <details class="card-dark rounded-xl group">
@@ -947,6 +1009,24 @@ function openTransferModal(store, navigate, editItem = null) {
 }
 
 export function mount(store, navigate) {
+  // ── Unified tab clicks
+  document.querySelectorAll('.proj-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      store.set('_projTab', btn.dataset.projTab);
+      const el = document.getElementById('app-content');
+      if (el) { el.innerHTML = render(store); mount(store, navigate); }
+    });
+  });
+
+  const activeTab = store.get('_projTab') || 'moi';
+
+  // If child/compare tab, delegate mount to projection-enfants
+  if (activeTab.startsWith('child-') || activeTab === 'compare') {
+    ProjectionEnfants.mount(store, navigate, { embedded: true });
+    return;
+  }
+
+  // ── "Moi" tab: original projection mount
   const snapshots = computeProjection(store);
   const groupKeys = snapshots.groupKeys || [];
   const labels = snapshots.map(s => s.label);

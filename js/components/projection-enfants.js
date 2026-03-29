@@ -231,12 +231,17 @@ function computeChildProjection(enfant, horizonYears, store) {
 
 // ─── Render ──────────────────────────────────────────────────────────────────
 
-export function render(store) {
+// Helpers exported for projection.js unified page
+export { getEnfants, childAge, CHILD_COLORS };
+
+export function render(store, { embedded = false } = {}) {
   const enfants = getEnfants(store);
   const activeTab = store.get('_peActiveTab') || '0';
 
   if (enfants.length === 0) {
-    return `<div class="space-y-6">
+    return embedded
+      ? '<p class="text-gray-500 text-sm text-center py-8">Ajoutez des enfants dans la page Compte pour commencer.</p>'
+      : `<div class="space-y-6">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center">
           <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -269,7 +274,9 @@ export function render(store) {
     </div>`;
 
   if (activeTab === 'compare') {
-    return `<div class="space-y-6">${renderHeader(enfants)}${tabs}${renderComparatif(enfants, store)}</div>`;
+    return embedded
+      ? `<div class="space-y-6">${renderComparatif(enfants, store)}</div>`
+      : `<div class="space-y-6">${renderHeader(enfants)}${tabs}${renderComparatif(enfants, store)}</div>`;
   }
 
   const horizonYears = Number(enf.horizonYears) || 20;
@@ -287,8 +294,8 @@ export function render(store) {
 
   return `
     <div class="space-y-6">
-      ${renderHeader(enfants)}
-      ${tabs}
+      ${embedded ? '' : renderHeader(enfants)}
+      ${embedded ? '' : tabs}
 
       <!-- Parameters -->
       <details open class="card-dark rounded-xl border border-dark-400/15 overflow-hidden">
@@ -777,21 +784,22 @@ function openScenarioModal(store, childIdx, editItem, refresh) {
 
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
-export function mount(store, navigate) {
+export function mount(store, navigate, { embedded = false } = {}) {
   const enfants = getEnfants(store);
   const activeTab = store.get('_peActiveTab') || '0';
   const idx = activeTab === 'compare' ? -1 : (parseInt(activeTab) || 0);
   const enf = enfants[idx] || enfants[0];
 
   function refresh() {
-    const el = document.getElementById('app-content');
-    if (el) { el.innerHTML = render(store); mount(store, navigate); }
+    navigate('projection');
   }
 
-  // Tabs
-  document.querySelectorAll('.pe-tab').forEach(btn => {
-    btn.addEventListener('click', () => { store.set('_peActiveTab', btn.dataset.tab); refresh(); });
-  });
+  // Internal tabs (only when NOT embedded — parent handles tabs)
+  if (!embedded) {
+    document.querySelectorAll('.pe-tab').forEach(btn => {
+      btn.addEventListener('click', () => { store.set('_peActiveTab', btn.dataset.tab); refresh(); });
+    });
+  }
 
   // Chart
   if (activeTab === 'compare') {
