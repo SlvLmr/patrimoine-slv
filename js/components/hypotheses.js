@@ -1023,7 +1023,7 @@ function renderChildGauges(enfant, gauges, color) {
   const totalDroits = abattDroits + tepaDroits + avDroits;
 
   return `
-    <div class="bg-dark-800/30 rounded-2xl p-5 border border-dark-400/10 backdrop-blur-sm">
+    <div class="bg-dark-800/30 rounded-2xl p-3 sm:p-5 border border-dark-400/10 backdrop-blur-sm">
       <div class="flex items-center gap-3 mb-4">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-${color}/20 to-${color}/10 border border-${color}/20 flex items-center justify-center text-sm font-bold text-${color} shadow-lg shadow-gray-500/5">
           ${(enfant.prenom || '?')[0].toUpperCase()}
