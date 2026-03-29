@@ -313,12 +313,13 @@ export function render(store) {
               ${depMensuelles.map((d, idx) => {
                 const checked = cocheesThisMonth.includes(d.id);
                 return `
-              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/mc">
+              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/mc cursor-grab active:cursor-grabbing mc-drag-row" draggable="true" data-drag-mc-id="${d.id}">
                 <div class="flex items-center gap-2 min-w-0">
-                  <div class="flex flex-col gap-0.5 flex-shrink-0">
-                    <button data-mc-up="${d.id}" class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5">▲</button>
-                    <button data-mc-down="${d.id}" class="text-gray-600 hover:text-gray-200 active:text-accent-amber leading-none text-[10px] px-0.5">▼</button>
-                  </div>
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+                    <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                    <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+                  </svg>
                   <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
                   <span class="text-[12px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
                 </div>
@@ -990,33 +991,36 @@ export function mount(store, navigate) {
     });
   });
 
-  // Move monthly expense up
-  document.querySelectorAll('[data-mc-up]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.mcUp;
-      const list = store.get('depensesMensuellesCIC') || [];
-      const idx = list.findIndex(d => d.id === id);
-      if (idx > 0) {
-        [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]];
+  // Drag-and-drop reorder monthly expenses
+  {
+    let draggedMcId = null;
+    document.querySelectorAll('.mc-drag-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => {
+        draggedMcId = row.dataset.dragMcId;
+        row.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', () => {
+        row.style.opacity = '';
+        document.querySelectorAll('.mc-drag-row').forEach(r => r.classList.remove('drag-over'));
+      });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const targetId = row.dataset.dragMcId;
+        if (!draggedMcId || draggedMcId === targetId) return;
+        const list = store.get('depensesMensuellesCIC') || [];
+        const fromIdx = list.findIndex(d => d.id === draggedMcId);
+        const toIdx = list.findIndex(d => d.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = list.splice(fromIdx, 1);
+        list.splice(toIdx, 0, moved);
         store.set('depensesMensuellesCIC', list);
         navigate('suivi-depenses');
-      }
+      });
     });
-  });
-
-  // Move monthly expense down
-  document.querySelectorAll('[data-mc-down]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.mcDown;
-      const list = store.get('depensesMensuellesCIC') || [];
-      const idx = list.findIndex(d => d.id === id);
-      if (idx >= 0 && idx < list.length - 1) {
-        [list[idx], list[idx + 1]] = [list[idx + 1], list[idx]];
-        store.set('depensesMensuellesCIC', list);
-        navigate('suivi-depenses');
-      }
-    });
-  });
+  }
 
   // Delete monthly expense
   document.querySelectorAll('[data-mc-del]').forEach(btn => {

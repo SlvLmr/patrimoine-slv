@@ -284,6 +284,13 @@ export function mount(store, navigate) {
       .filter(p => (p.categorie || '') === 'Action' && Number(p.quantite) > 0 && Number(p.pru) > 0)
       .map((p, i) => {
         const projectedValue = snap.placementById?.[p.id] || Number(p.valeur) || (Number(p.quantite) * Number(p.pru));
+        const nomLower = (p.nom || '').toLowerCase();
+        const STOCK_COLORS = {
+          'air liquide': { color: '#3b82f6', text: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
+          'schneider':   { color: '#10b981', text: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10' },
+          'legrand':     { color: '#f59e0b', text: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10' },
+        };
+        const stockMatch = Object.entries(STOCK_COLORS).find(([k]) => nomLower.includes(k));
         return {
           id: p.id,
           nom: p.nom || 'Action',
@@ -291,7 +298,7 @@ export function mount(store, navigate) {
           pru: Number(p.pru),
           valeur: projectedValue,
           enveloppe: p.enveloppe || '',
-          style: ACTION_CARD_COLORS[i % ACTION_CARD_COLORS.length],
+          style: stockMatch ? stockMatch[1] : ACTION_CARD_COLORS[i % ACTION_CARD_COLORS.length],
         };
       })
       .sort((a, b) => b.valeur - a.valeur);

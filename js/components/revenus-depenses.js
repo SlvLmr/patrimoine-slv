@@ -161,12 +161,13 @@ function renderDepenseBlock(g) {
               const lisse = getMensuelLisse(d);
               const annuel = lisse * 12;
               return `
-            <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer" data-edit-dep="${d.id}" data-dep-type="${g.key}">
+            <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-grab active:cursor-grabbing dep-drag-row" draggable="true" data-edit-dep="${d.id}" data-dep-type="${g.key}" data-drag-dep-id="${d.id}">
               <div class="flex items-center gap-2 min-w-0">
-                <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
-                  <button data-move-dep-up="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
-                  <button data-move-dep-down="${d.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
-                </div>
+                <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+                  <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                  <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+                </svg>
                 <p class="text-xs text-gray-200 truncate">${d.nom}</p>
                 <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · An' : ''}</p>
               </div>
@@ -348,12 +349,13 @@ export function render(store) {
               const lisse = getMensuelLisse(r);
               const annuel = lisse * 12;
               return `
-            <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-pointer ${r.informatif ? 'opacity-50' : ''}" data-edit-rev="${r.id}">
+            <div class="grid grid-cols-[1fr_5.5rem_5.5rem_5.5rem_1.2rem] items-center px-4 py-1.5 hover:bg-dark-600/30 transition group/row cursor-grab active:cursor-grabbing rev-drag-row ${r.informatif ? 'opacity-50' : ''}" draggable="true" data-edit-rev="${r.id}" data-drag-rev-id="${r.id}">
               <div class="flex items-center gap-2 min-w-0">
-                <div class="flex flex-col gap-0.5 opacity-0 group-hover/row:opacity-100 transition flex-shrink-0">
-                  <button data-move-rev-up="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▲</button>
-                  <button data-move-rev-down="${r.id}" class="text-gray-500 hover:text-gray-300 leading-none text-[10px]" onclick="event.stopPropagation()">▼</button>
-                </div>
+                <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+                  <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                  <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+                </svg>
                 <p class="text-xs text-gray-200 truncate">${r.nom}</p>
                 <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${r.type || 'Autre'}${r.frequence === 'Annuel' ? ' · An' : ''}${r.informatif ? ' · Info' : ''}</p>
               </div>
@@ -955,34 +957,36 @@ export function mount(store, navigate) {
     });
   });
 
-  // Move revenu up/down
-  content.querySelectorAll('[data-move-rev-up]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.moveRevUp;
-      const revenus = store.get('revenus');
-      const idx = revenus.findIndex(r => r.id === id);
-      if (idx > 0) {
-        [revenus[idx - 1], revenus[idx]] = [revenus[idx], revenus[idx - 1]];
+  // Drag-and-drop reorder revenus
+  {
+    let draggedRevId = null;
+    content.querySelectorAll('.rev-drag-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => {
+        draggedRevId = row.dataset.dragRevId;
+        row.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', () => {
+        row.style.opacity = '';
+        content.querySelectorAll('.rev-drag-row').forEach(r => r.classList.remove('drag-over'));
+      });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const targetId = row.dataset.dragRevId;
+        if (!draggedRevId || draggedRevId === targetId) return;
+        const revenus = store.get('revenus');
+        const fromIdx = revenus.findIndex(r => r.id === draggedRevId);
+        const toIdx = revenus.findIndex(r => r.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = revenus.splice(fromIdx, 1);
+        revenus.splice(toIdx, 0, moved);
         store.set('revenus', revenus);
         navigate('revenus-depenses');
-      }
+      });
     });
-  });
-
-  content.querySelectorAll('[data-move-rev-down]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.moveRevDown;
-      const revenus = store.get('revenus');
-      const idx = revenus.findIndex(r => r.id === id);
-      if (idx >= 0 && idx < revenus.length - 1) {
-        [revenus[idx], revenus[idx + 1]] = [revenus[idx + 1], revenus[idx]];
-        store.set('revenus', revenus);
-        navigate('revenus-depenses');
-      }
-    });
-  });
+  }
 
   content.querySelectorAll('[data-del-rev]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1061,49 +1065,36 @@ export function mount(store, navigate) {
     });
   });
 
-  // Move depense up/down
-  content.querySelectorAll('[data-move-dep-up]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.moveDepUp;
-      const depenses = store.get('depenses');
-      const idx = depenses.findIndex(d => d.id === id);
-      if (idx <= 0) return;
-      // Swap within same type group
-      const item = depenses[idx];
-      const type = item.typeDepense || 'Fixe';
-      // Find previous item of same type
-      for (let i = idx - 1; i >= 0; i--) {
-        if ((depenses[i].typeDepense || 'Fixe') === type) {
-          [depenses[i], depenses[idx]] = [depenses[idx], depenses[i]];
-          break;
-        }
-      }
-      store.set('depenses', depenses);
-      navigate('revenus-depenses');
+  // Drag-and-drop reorder depenses
+  {
+    let draggedDepId = null;
+    content.querySelectorAll('.dep-drag-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => {
+        draggedDepId = row.dataset.dragDepId;
+        row.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', () => {
+        row.style.opacity = '';
+        content.querySelectorAll('.dep-drag-row').forEach(r => r.classList.remove('drag-over'));
+      });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const targetId = row.dataset.dragDepId;
+        if (!draggedDepId || draggedDepId === targetId) return;
+        const depenses = store.get('depenses');
+        const fromIdx = depenses.findIndex(d => d.id === draggedDepId);
+        const toIdx = depenses.findIndex(d => d.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = depenses.splice(fromIdx, 1);
+        depenses.splice(toIdx, 0, moved);
+        store.set('depenses', depenses);
+        navigate('revenus-depenses');
+      });
     });
-  });
-
-  content.querySelectorAll('[data-move-dep-down]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.moveDepDown;
-      const depenses = store.get('depenses');
-      const idx = depenses.findIndex(d => d.id === id);
-      if (idx < 0 || idx >= depenses.length - 1) return;
-      const item = depenses[idx];
-      const type = item.typeDepense || 'Fixe';
-      // Find next item of same type
-      for (let i = idx + 1; i < depenses.length; i++) {
-        if ((depenses[i].typeDepense || 'Fixe') === type) {
-          [depenses[i], depenses[idx]] = [depenses[idx], depenses[i]];
-          break;
-        }
-      }
-      store.set('depenses', depenses);
-      navigate('revenus-depenses');
-    });
-  });
+  }
 
   content.querySelectorAll('[data-del-dep]').forEach(btn => {
     btn.addEventListener('click', () => {

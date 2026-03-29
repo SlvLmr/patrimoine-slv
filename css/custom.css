@@ -466,7 +466,10 @@ input[type="number"] {
   cursor: grabbing;
 }
 
-.placement-row.drag-over {
+.placement-row.drag-over,
+.dep-drag-row.drag-over,
+.rev-drag-row.drag-over,
+.mc-drag-row.drag-over {
   border-color: rgba(96, 165, 250, 0.6) !important;
   background: rgba(96, 165, 250, 0.08) !important;
 }
