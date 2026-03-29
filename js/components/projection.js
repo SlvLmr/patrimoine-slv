@@ -1,8 +1,40 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=7';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
-import { openHeritageModal } from './heritage.js?v=5';
 import * as ProjectionEnfants from './projection-enfants.js?v=20260329m';
+
+function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
+  const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
+  const body = `
+    ${inputField('nom', 'Nom / Description', editItem?.nom || '', 'text', 'placeholder="Ex: Maison familiale, Assurance-vie maman..."')}
+    ${selectField('type', 'Type', [
+      { value: 'Immobilier', label: 'Immobilier' },
+      { value: 'Liquidité', label: 'Liquidité' }
+    ], editItem?.type || 'Immobilier')}
+    ${inputField('montant', 'Montant estimé (€)', editItem?.montant || '', 'number', 'min="0" step="1000" placeholder="150000"')}
+    ${inputField('provenance', 'Provenance (personne)', editItem?.provenance || '', 'text', 'placeholder="Ex: Parents, Grand-mère..."')}
+    ${inputField('dateInjection', 'Date estimée d\'injection', editItem?.dateInjection || '', 'date')}
+    <div class="mb-4">
+      <label for="field-description" class="block text-sm font-medium text-gray-300 mb-1.5">Notes (optionnel)</label>
+      <textarea name="description" id="field-description" rows="2"
+        class="input-field w-full px-3 py-2.5 text-left placeholder-gray-600"
+        placeholder="Détails supplémentaires...">${editItem?.description || ''}</textarea>
+    </div>
+  `;
+  openModal(title, body, () => {
+    const modal = document.getElementById('app-modal');
+    const data = getFormData(modal.querySelector('#modal-body'));
+    const desc = modal.querySelector('#field-description')?.value || '';
+    data.description = desc;
+    if (!data.nom || !data.montant) return;
+    if (editItem) {
+      store.updateItem('heritage', editItem.id, data);
+    } else {
+      store.addItem('heritage', data);
+    }
+    navigate(targetPage);
+  });
+}
 import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329m';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
