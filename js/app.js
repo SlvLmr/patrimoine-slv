@@ -9,7 +9,7 @@ import * as Fiscalite from './components/fiscalite.js';
 import * as SuiviDepenses from './components/suivi-depenses.js';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 
-import * as Compte from './components/compte.js?v=20260329c';
+import * as Compte from './components/compte.js?v=20260329f';
 import * as Objectifs from './components/objectifs.js';
 import * as Repartition from './components/repartition.js';
 import * as SimulateurFire from './components/simulateur-fire.js';
