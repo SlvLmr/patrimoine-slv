@@ -311,7 +311,7 @@ export function render(store) {
           <svg class="w-4 h-4 text-gray-500 transition-transform group-open/block:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-sm font-bold ${s.key === 'emprunts' ? 'text-accent-red' : 'text-gray-200'}">${formatCurrency(s.total)}</span>
+          <span class="text-sm font-bold text-${s.key === 'emprunts' ? 'accent-red' : s.color}">${formatCurrency(s.total)}</span>
           <button id="${s.btnId}" class="px-2 py-1 bg-gradient-to-r ${btnColorClass} text-[10px] rounded hover:opacity-90 transition font-medium" onclick="event.stopPropagation(); event.preventDefault();">+ Ajouter</button>
         </div>
       </summary>
