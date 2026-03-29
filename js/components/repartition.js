@@ -188,6 +188,7 @@ export function mount(store, navigate) {
   const currentYear = new Date().getFullYear();
   let groupKeys = snapshots.groupKeys || [];
   const ageFinAnnee = params.ageFinAnnee || 43;
+  const CHILD_FLOW_COLORS = ['#a855f7', '#06b6d4', '#f59e0b', '#ec4899'];
 
   function refresh() {
     snapshots = computeProjection(store);
@@ -224,7 +225,6 @@ export function mount(store, navigate) {
   }
 
   function updateForYear(yearIdx) {
-    try {
     const snap = snapshots[yearIdx];
     if (!snap) return;
 
@@ -274,10 +274,6 @@ export function mount(store, navigate) {
     updatePEE(snap, calYear);
     updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA, totalChildrenDCA);
     updateTable(dcaByPlacement, snap, totalPlacements, calYear);
-    } catch (err) {
-      console.error('updateForYear error:', err);
-      document.getElementById('rep-flow').innerHTML = `<pre class="text-red-400 text-xs p-4 whitespace-pre-wrap">${err.stack || err.message}</pre>`;
-    }
   }
 
   function updateKPI(totalDCA, nbWithDCA, snap, totalPlacements) {
@@ -519,8 +515,6 @@ export function mount(store, navigate) {
 
     listEl.innerHTML = headerHTML + cardsHTML;
   }
-
-  const CHILD_FLOW_COLORS = ['#a855f7', '#06b6d4', '#f59e0b', '#ec4899'];
 
   function updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA = [], totalChildrenDCA = 0) {
     const flowEl = document.getElementById('rep-flow');
