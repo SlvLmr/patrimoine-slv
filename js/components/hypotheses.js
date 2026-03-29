@@ -708,7 +708,7 @@ function renderCard(item, themes, enfants = []) {
 
   return `
     <div id="hyp-${item.id}" class="group rounded-xl border ${cc.border} ${cc.bg} transition-all duration-200 hover:shadow-lg overflow-hidden">
-      <div class="px-5 py-4 flex items-start gap-4">
+      <div class="px-3 py-3 sm:px-5 sm:py-4 flex items-start gap-4">
         <!-- Theme icon -->
         <div class="flex-shrink-0 w-12 h-12 rounded-xl ${cc.bg} border ${cc.border} flex items-center justify-center">
           <svg class="w-6 h-6 ${cc.text}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -720,8 +720,8 @@ function renderCard(item, themes, enfants = []) {
         <div class="flex-1 min-w-0">
           <!-- Row 1: Year + Amount — big hero numbers -->
           <div class="flex items-baseline gap-4 mb-2">
-            <span class="text-2xl font-black text-white">${item.annee}</span>
-            ${item.montant ? `<span class="text-2xl font-black ${cc.text}">${formatCurrency(item.montant)}</span>` : ''}
+            <span class="text-xl sm:text-2xl font-black text-white">${item.annee}</span>
+            ${item.montant ? `<span class="text-xl sm:text-2xl font-black ${cc.text}">${formatCurrency(item.montant)}</span>` : ''}
           </div>
           <!-- Row 2: Title + badges -->
           <div class="flex items-center gap-2 flex-wrap">
@@ -743,7 +743,7 @@ function renderCard(item, themes, enfants = []) {
         </div>
       </div>
       ${fraisNotaire ? `
-      <div class="px-5 pb-4 -mt-1">
+      <div class="px-3 pb-3 sm:px-5 sm:pb-4 -mt-1">
         <div class="flex items-center gap-3 px-4 py-3 rounded-lg row-item border border-amber-500/15">
           <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
@@ -1255,7 +1255,7 @@ export function render(store) {
                 <p class="text-sm font-bold text-gray-200">Sans optimisation</p>
                 <p class="text-[10px] text-gray-500" id="hyp-droits-detail">${nbEnfants} enfant${nbEnfants > 1 ? 's' : ''} — abattement ${formatCurrency(ABATTEMENT_PARENT_ENFANT)} chacun</p>
               </div>
-              <p class="text-xl font-bold text-red-400 tabular-nums flex-shrink-0" id="hyp-droits-bruts">0 \u20ac</p>
+              <p class="text-lg sm:text-xl font-bold text-red-400 tabular-nums flex-shrink-0" id="hyp-droits-bruts">0 \u20ac</p>
             </div>
             <div class="rounded-xl border border-emerald-500/15 px-4 py-3 bg-emerald-500/5 flex items-center gap-3">
               <div class="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -1265,7 +1265,7 @@ export function render(store) {
                 <p class="text-sm font-bold text-gray-200">Avec votre stratégie</p>
                 <p class="text-[10px] text-gray-500" id="hyp-droits-opti-detail">Ajoute des donations pour réduire les droits</p>
               </div>
-              <p class="text-xl font-bold text-emerald-400 tabular-nums flex-shrink-0" id="hyp-droits-opti">0 \u20ac</p>
+              <p class="text-lg sm:text-xl font-bold text-emerald-400 tabular-nums flex-shrink-0" id="hyp-droits-opti">0 \u20ac</p>
             </div>
           </div>
         </div>
