@@ -189,7 +189,7 @@ export function render(store) {
                       <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                     </svg>
                     ${icon}
-                    <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
+                    <span class="text-[11px] text-gray-200 whitespace-nowrap font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
                     <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
                     <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
