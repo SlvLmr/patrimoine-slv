@@ -253,12 +253,25 @@ export function mount(store, navigate) {
       dcaByGroup[p.gk] += p.dca;
     });
 
+    // Children DCA
+    const donationConfig = store.get('donationConfig') || {};
+    const enfants = donationConfig.enfants || [];
+    const childrenDCA = enfants.map((enf, idx) => {
+      const childPlacements = (enf.placements || []).map(p => ({
+        ...p,
+        dca: getDcaForYear(p, calYear)
+      }));
+      const totalChildDCA = childPlacements.reduce((s, p) => s + p.dca, 0);
+      return { enf, idx, placements: childPlacements, totalDCA: totalChildDCA };
+    }).filter(c => c.totalDCA > 0);
+    const totalChildrenDCA = childrenDCA.reduce((s, c) => s + c.totalDCA, 0);
+
     const totalPlacements = snap.placements || 0;
 
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
     updateActions(snap);
     updatePEE(snap, calYear);
-    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear);
+    updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA, totalChildrenDCA);
     updateTable(dcaByPlacement, snap, totalPlacements, calYear);
   }
 
@@ -502,7 +515,9 @@ export function mount(store, navigate) {
     listEl.innerHTML = headerHTML + cardsHTML;
   }
 
-  function updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear) {
+  const CHILD_FLOW_COLORS = ['#a855f7', '#06b6d4', '#f59e0b', '#ec4899'];
+
+  function updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA = [], totalChildrenDCA = 0) {
     const flowEl = document.getElementById('rep-flow');
     if (!flowEl) return;
 
@@ -524,11 +539,13 @@ export function mount(store, navigate) {
       .sort((a, b) => b[1] - a[1]);
 
     // Source card
+    const grandTotal = totalDCA + totalChildrenDCA;
     const sourceHTML = `
       <div class="flex justify-center mb-2">
         <div class="card-dark rounded-xl px-5 py-3 text-center inline-block border border-accent-amber/20">
           <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Investissement mensuel total</p>
-          <p class="text-2xl font-extrabold text-accent-amber">${formatCurrency(totalDCA)}</p>
+          <p class="text-2xl font-extrabold text-accent-amber">${formatCurrency(grandTotal)}</p>
+          ${totalChildrenDCA > 0 ? `<p class="text-[10px] text-gray-500 mt-0.5">${formatCurrency(totalDCA)} moi · ${formatCurrency(totalChildrenDCA)} enfants</p>` : ''}
         </div>
       </div>
     `;
@@ -600,10 +617,55 @@ export function mount(store, navigate) {
       </div>
     ` : '';
 
+    // Children DCA cards
+    const childrenCardsHTML = childrenDCA.length > 0 ? `
+      <div class="mt-4 pt-4 border-t border-dark-400/20">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">DCA Enfants</span>
+          <span class="text-xs font-bold text-gray-300 ml-auto">${formatCurrency(totalChildrenDCA)}/mois</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 ${childrenDCA.length >= 3 ? 'lg:grid-cols-3' : ''} gap-2">
+          ${childrenDCA.map(c => {
+            const color = CHILD_FLOW_COLORS[c.idx % CHILD_FLOW_COLORS.length];
+            const pct = grandTotal > 0 ? (c.totalDCA / grandTotal * 100).toFixed(1) : 0;
+            return `
+            <div class="card-dark rounded-xl p-3 border hover:border-opacity-60 transition" style="border-color: ${color}30">
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full" style="background: ${color}"></div>
+                  <span class="text-sm font-semibold" style="color: ${color}">${c.enf.prenom || 'Enfant ' + (c.idx + 1)}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-gray-200">${formatCurrency(c.totalDCA)}</span>
+                  <span class="text-[10px] text-gray-500">${pct}%</span>
+                </div>
+              </div>
+              <div class="w-full h-1.5 bg-dark-600 rounded-full overflow-hidden mb-2">
+                <div class="h-full rounded-full transition-all duration-500" style="width: ${pct}%; background: ${color}"></div>
+              </div>
+              <div class="space-y-1">
+                ${c.placements.filter(p => p.dca > 0).map(p => `
+                  <div class="flex items-center justify-between px-1.5 py-0.5 -mx-1.5">
+                    <span class="text-[11px] text-gray-400 truncate flex-1" title="${p.nom}">${p.nom}</span>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                      <span class="text-[11px] text-gray-300 font-medium">${p.dca}</span>
+                      <span class="text-[10px] text-gray-600">€/m</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    ` : '';
+
     flowEl.innerHTML = (totalDCA > 0 ? sourceHTML + connectorHTML : '') + `
       <div id="rep-flow-cards" class="grid grid-cols-1 sm:grid-cols-2 ${sortedGroups.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2 flex-1">
         ${destCardsHTML}
       </div>
+      ${childrenCardsHTML}
       ${emptyGroupHTML}
     `;
 
