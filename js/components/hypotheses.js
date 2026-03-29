@@ -106,17 +106,17 @@ function estimerFraisNotaire(montant, theme, donationType) {
 
 // Color mapping for Tailwind classes
 const COLOR_MAP = {
-  emerald: { dot: 'bg-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', ring: 'ring-emerald-400/30', glow: 'shadow-emerald-500/20', line: '#34d399' },
-  amber:   { dot: 'bg-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/30',   text: 'text-amber-400',   ring: 'ring-amber-400/30',   glow: 'shadow-amber-500/20',   line: '#fbbf24' },
-  purple:  { dot: 'bg-purple-400',  bg: 'bg-purple-500/10',  border: 'border-purple-500/30',  text: 'text-purple-400',  ring: 'ring-purple-400/30',  glow: 'shadow-purple-500/20',  line: '#a78bfa' },
-  blue:    { dot: 'bg-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/30',    text: 'text-blue-400',    ring: 'ring-blue-400/30',    glow: 'shadow-blue-500/20',    line: '#60a5fa' },
-  cyan:    { dot: 'bg-cyan-400',    bg: 'bg-cyan-500/10',    border: 'border-cyan-500/30',    text: 'text-cyan-400',    ring: 'ring-cyan-400/30',    glow: 'shadow-cyan-500/20',    line: '#22d3ee' },
-  rose:    { dot: 'bg-rose-400',    bg: 'bg-rose-500/10',    border: 'border-rose-500/30',    text: 'text-rose-400',    ring: 'ring-rose-400/30',    glow: 'shadow-rose-500/20',    line: '#fb7185' },
-  sky:     { dot: 'bg-sky-400',     bg: 'bg-sky-500/10',     border: 'border-sky-500/30',     text: 'text-sky-400',     ring: 'ring-sky-400/30',     glow: 'shadow-sky-500/20',     line: '#38bdf8' },
-  orange:  { dot: 'bg-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/30',  text: 'text-orange-400',  ring: 'ring-orange-400/30',  glow: 'shadow-orange-500/20',  line: '#fb923c' },
-  teal:    { dot: 'bg-teal-400',    bg: 'bg-teal-500/10',    border: 'border-teal-500/30',    text: 'text-teal-400',    ring: 'ring-teal-400/30',    glow: 'shadow-teal-500/20',    line: '#2dd4bf' },
-  indigo:  { dot: 'bg-indigo-400',  bg: 'bg-indigo-500/10',  border: 'border-indigo-500/30',  text: 'text-indigo-400',  ring: 'ring-indigo-400/30',  glow: 'shadow-indigo-500/20',  line: '#818cf8' },
-  pink:    { dot: 'bg-pink-400',    bg: 'bg-pink-500/10',    border: 'border-pink-500/30',    text: 'text-pink-400',    ring: 'ring-pink-400/30',    glow: 'shadow-pink-500/20',    line: '#f472b6' },
+  emerald: { dot: 'bg-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', ring: 'ring-emerald-400/30', glow: 'shadow-gray-500/20', line: '#34d399' },
+  amber:   { dot: 'bg-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/30',   text: 'text-amber-400',   ring: 'ring-amber-400/30',   glow: 'shadow-gray-500/20',   line: '#fbbf24' },
+  purple:  { dot: 'bg-purple-400',  bg: 'bg-purple-500/10',  border: 'border-purple-500/30',  text: 'text-purple-400',  ring: 'ring-purple-400/30',  glow: 'shadow-gray-500/20',  line: '#a78bfa' },
+  blue:    { dot: 'bg-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/30',    text: 'text-blue-400',    ring: 'ring-blue-400/30',    glow: 'shadow-gray-500/20',    line: '#60a5fa' },
+  cyan:    { dot: 'bg-cyan-400',    bg: 'bg-cyan-500/10',    border: 'border-cyan-500/30',    text: 'text-cyan-400',    ring: 'ring-cyan-400/30',    glow: 'shadow-gray-500/20',    line: '#22d3ee' },
+  rose:    { dot: 'bg-rose-400',    bg: 'bg-rose-500/10',    border: 'border-rose-500/30',    text: 'text-rose-400',    ring: 'ring-rose-400/30',    glow: 'shadow-gray-500/20',    line: '#fb7185' },
+  sky:     { dot: 'bg-sky-400',     bg: 'bg-sky-500/10',     border: 'border-sky-500/30',     text: 'text-sky-400',     ring: 'ring-sky-400/30',     glow: 'shadow-gray-500/20',     line: '#38bdf8' },
+  orange:  { dot: 'bg-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/30',  text: 'text-orange-400',  ring: 'ring-orange-400/30',  glow: 'shadow-gray-500/20',  line: '#fb923c' },
+  teal:    { dot: 'bg-teal-400',    bg: 'bg-teal-500/10',    border: 'border-teal-500/30',    text: 'text-teal-400',    ring: 'ring-teal-400/30',    glow: 'shadow-gray-500/20',    line: '#2dd4bf' },
+  indigo:  { dot: 'bg-indigo-400',  bg: 'bg-indigo-500/10',  border: 'border-indigo-500/30',  text: 'text-indigo-400',  ring: 'ring-indigo-400/30',  glow: 'shadow-gray-500/20',  line: '#818cf8' },
+  pink:    { dot: 'bg-pink-400',    bg: 'bg-pink-500/10',    border: 'border-pink-500/30',    text: 'text-pink-400',    ring: 'ring-pink-400/30',    glow: 'shadow-gray-500/20',    line: '#f472b6' },
 };
 
 const ALL_COLORS = Object.keys(COLOR_MAP);
@@ -387,7 +387,7 @@ function renderScenarioSection(store) {
           return `
           <button class="scenario-tab relative rounded-xl border p-3 transition-all duration-200 text-center flex flex-col items-center justify-center min-h-[90px]
             ${isActive
-              ? `border-${scColor}-500/40 bg-${scColor}-500/10 shadow-lg shadow-${scColor}-500/10`
+              ? `border-${scColor}-500/40 bg-${scColor}-500/10 shadow-lg shadow-gray-500/10`
               : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-scenario-id="${sc.id}">
             <p class="text-xs font-bold ${isActive ? `text-${scColor}-400` : 'text-gray-400'}">${sc.nom}</p>
             <p class="text-[8px] ${isActive ? 'text-gray-300' : 'text-gray-600'} mt-1 leading-tight">${subtitle}</p>
@@ -407,7 +407,7 @@ function renderScenarioSection(store) {
           return `
           <button class="profil-btn relative rounded-xl border p-3 transition-all duration-200 text-center flex flex-col items-center justify-center min-h-[90px]
             ${isActive
-              ? `border-${clr}-500/40 bg-${clr}-500/10 shadow-lg shadow-${clr}-500/10`
+              ? `border-${clr}-500/40 bg-${clr}-500/10 shadow-lg shadow-gray-500/10`
               : 'border-dark-400/20 hover:border-dark-400/40 bg-dark-800/30'}" data-profil="${key}">
             <span class="text-sm leading-none">${icon}</span>
             <p class="text-xs font-bold ${isActive ? `text-${clr}-400` : 'text-gray-400'} mt-1">${p.label}</p>
@@ -1025,7 +1025,7 @@ function renderChildGauges(enfant, gauges, color) {
   return `
     <div class="bg-dark-800/30 rounded-2xl p-5 border border-dark-400/10 backdrop-blur-sm">
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-${color}/20 to-${color}/10 border border-${color}/20 flex items-center justify-center text-sm font-bold text-${color} shadow-lg shadow-${color}/5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-${color}/20 to-${color}/10 border border-${color}/20 flex items-center justify-center text-sm font-bold text-${color} shadow-lg shadow-gray-500/5">
           ${(enfant.prenom || '?')[0].toUpperCase()}
         </div>
         <div class="flex-1">
@@ -1167,7 +1167,7 @@ export function render(store) {
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btn-add-hyp" class="px-4 py-2 rounded-xl text-xs font-medium bg-gradient-to-r from-accent-green to-accent-blue text-white hover:opacity-90 transition flex items-center gap-1.5 shadow-lg shadow-accent-green/10">
+          <button id="btn-add-hyp" class="px-4 py-2 rounded-xl text-xs font-medium bg-gradient-to-r from-accent-green to-accent-blue text-white hover:opacity-90 transition flex items-center gap-1.5 shadow-lg shadow-gray-500/10">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
             Ajouter
           </button>
@@ -1175,7 +1175,7 @@ export function render(store) {
       </div>
 
       <!-- ═══ UNIFIED MEGA BLOCK: Timeline + Patrimoine + Abattements ═══ -->
-      <div class="card-dark rounded-3xl border border-purple-500/15 overflow-hidden shadow-2xl shadow-purple-500/5" style="background: linear-gradient(180deg, rgba(88,28,135,0.06) 0%, rgba(15,23,42,0) 40%);">
+      <div class="card-dark rounded-3xl border border-purple-500/15 overflow-hidden shadow-2xl shadow-gray-500/5" style="background: linear-gradient(180deg, rgba(88,28,135,0.06) 0%, rgba(15,23,42,0) 40%);">
 
         <!-- ── Timeline Section ── -->
         ${renderTimeline(sorted, themes)}

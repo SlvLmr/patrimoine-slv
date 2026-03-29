@@ -182,7 +182,7 @@ export function render(store) {
             <div class="flex items-center gap-1.5 mb-1">
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Placements</span>
-              <button id="proj-add-plac-global" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-xl font-bold shadow-sm shadow-accent-green/20" title="Ajouter un placement">+</button>
+              <button id="proj-add-plac-global" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-xl font-bold shadow-sm shadow-gray-500/20" title="Ajouter un placement">+</button>
               <button id="btn-actu-rapide" class="ml-1 flex items-center gap-1 px-2.5 py-1.5 bg-dark-700/60 text-gray-400 text-[11px] rounded hover:bg-dark-600 hover:text-gray-300 transition font-medium" title="Actualisation rapide DCA">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Actu. rapide
@@ -415,7 +415,7 @@ export function render(store) {
               <div class="flex items-center gap-1.5 mb-1">
                 <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                 <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Transferts</span>
-                <button id="proj-add-transfer" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-purple-500/25 text-purple-400 hover:bg-purple-500/40 transition text-xl font-bold shadow-sm shadow-purple-500/20" title="Ajouter un transfert">+</button>
+                <button id="proj-add-transfer" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-purple-500/25 text-purple-400 hover:bg-purple-500/40 transition text-xl font-bold shadow-sm shadow-gray-500/20" title="Ajouter un transfert">+</button>
               </div>
               <div class="space-y-1">
                 ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
@@ -446,7 +446,7 @@ export function render(store) {
               <div class="flex items-center gap-1.5 mb-1">
                 <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Héritage</span>
-                <button id="proj-add-heritage" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-amber/25 text-accent-amber hover:bg-accent-amber/40 transition text-xl font-bold shadow-sm shadow-accent-amber/20" title="Ajouter un héritage">+</button>
+                <button id="proj-add-heritage" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-amber/25 text-accent-amber hover:bg-accent-amber/40 transition text-xl font-bold shadow-sm shadow-gray-500/20" title="Ajouter un héritage">+</button>
               </div>
               <div class="space-y-1">
                 ${heritageItems.length > 0 ? heritageItems.map(h => {

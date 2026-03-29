@@ -335,7 +335,7 @@ export function render(store, { embedded = false } = {}) {
             <div class="flex items-center gap-1.5 mb-1">
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Placements</span>
-              <button id="pe-add-plac" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-xl font-bold shadow-sm shadow-accent-green/20" data-child-idx="${idx}" title="Ajouter">+</button>
+              <button id="pe-add-plac" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-xl font-bold shadow-sm shadow-gray-500/20" data-child-idx="${idx}" title="Ajouter">+</button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
               ${placements.length > 0 ? placements.map(p => {
@@ -370,7 +370,7 @@ export function render(store, { embedded = false } = {}) {
             <div class="flex items-center gap-1.5 mb-1">
               <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
               <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Sc\u00e9narios de donation</span>
-              <button id="pe-add-scenario" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-pink-500/25 text-pink-400 hover:bg-pink-500/40 transition text-xl font-bold shadow-sm shadow-pink-500/20" data-child-idx="${idx}" title="Ajouter un sc\u00e9nario">+</button>
+              <button id="pe-add-scenario" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-pink-500/25 text-pink-400 hover:bg-pink-500/40 transition text-xl font-bold shadow-sm shadow-gray-500/20" data-child-idx="${idx}" title="Ajouter un sc\u00e9nario">+</button>
             </div>
             <div class="space-y-1">
               ${scenarios.length > 0 ? scenarios.map(sc => {
