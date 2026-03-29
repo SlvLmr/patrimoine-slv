@@ -196,17 +196,22 @@ function computeChildProjection(enfant, horizonYears, store) {
     const placTotal = groupKeys.reduce((s, k) => s + gVal[k], 0);
     const totalApports = groupKeys.reduce((s, k) => s + gApp[k], 0);
     const totalGains = placTotal - totalApports;
-    const detail = {}, apports = {}, gains = {}, netImpot = {};
+    const detail = {}, apports = {}, gains = {}, netImpot = {}, taxes = {}, taxRates = {};
     let totalNetImpot = 0;
+    let totalTaxes = 0;
     for (const k of groupKeys) {
       detail[k] = Math.round(gVal[k]);
       apports[k] = Math.round(gApp[k]);
       const gain = gVal[k] - gApp[k];
       gains[k] = Math.round(gain);
-      const tax = getTaxRate(k, y);
-      const net = gApp[k] + gain * (1 - tax);
+      const taxRate = getTaxRate(k, y);
+      const taxAmount = Math.max(0, gain) * taxRate;
+      taxes[k] = Math.round(taxAmount);
+      taxRates[k] = taxRate;
+      const net = gApp[k] + gain * (1 - taxRate);
       netImpot[k] = Math.round(net);
       totalNetImpot += net;
+      totalTaxes += taxAmount;
     }
 
     snapshots.push({
@@ -219,6 +224,7 @@ function computeChildProjection(enfant, horizonYears, store) {
       totalApports: Math.round(totalApports),
       totalGains: Math.round(totalGains),
       totalNetImpot: Math.round(totalNetImpot),
+      totalTaxes: Math.round(totalTaxes),
       total: Math.round(livretTotal + placTotal),
       totalNet: Math.round(livretTotal + totalNetImpot),
       donation: Math.round(donation),
@@ -226,6 +232,8 @@ function computeChildProjection(enfant, horizonYears, store) {
       placementApports: { ...apports },
       placementGains: { ...gains },
       placementNetImpot: { ...netImpot },
+      placementTaxes: { ...taxes },
+      placementTaxRates: { ...taxRates },
     });
   }
   snapshots.groupKeys = groupKeys;
@@ -452,7 +460,7 @@ function renderTable(snapshots, groupKeys) {
     <div class="card-dark rounded-xl overflow-hidden">
       <div class="p-5 border-b border-dark-400/30">
         <h2 class="text-lg font-semibold text-gray-200">Détail année par année</h2>
-        <p class="text-[10px] text-gray-600 mt-1">CTO/Crypto: flat tax 31,4% · PEA &gt;5 ans: 17,2% PS · PEA &lt;5 ans: 31,4% · AV &gt;8 ans: 24,7% · AV &lt;8 ans: 31,4%</p>
+        <p class="text-[10px] text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. CTO/Crypto: flat tax 31,4% · PEA &gt;5 ans: 17,2% PS · PEA &lt;5 ans: 31,4% · AV &gt;8 ans: 24,7% · AV &lt;8 ans: 31,4%</p>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm table-fixed">
@@ -475,20 +483,31 @@ function renderTable(snapshots, groupKeys) {
               const isFiveYear = s.annee > 0 && s.annee % 5 === 0;
               const bt = isFiveYear ? 'border-t-2 border-t-dark-300/40' : '';
               const rowClass = s.annee === 0 ? 'bg-accent-blue/5' : '';
-              return `
-            <tr class="hover:bg-dark-600/30 transition ${rowClass} text-[11px]">
-              <td class="px-1 py-1 text-center font-medium text-gray-200 ${bt}">${s.label}</td>
-              <td class="px-0 py-1 text-center text-gray-500 ${bt}">${s.annee + 1}</td>
-              <td class="px-0 py-1 text-center text-gray-400 border-r-2 border-dark-300/40 ${bt}">${s.age !== null ? s.age : '–'}</td>
-              ${groupKeys.map((k, i) => {
+              const placCell = (k, extra) => {
                 const val = s.placementDetail[k] || 0;
                 const ap = s.placementApports[k] || 0;
-                const extra = i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '';
-                return `<td class="px-1 py-0.5 text-center text-gray-200 ${bt} ${extra}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500">${formatCurrency(ap)}</div>` : `<span class="text-gray-600">${formatCurrency(0)}</span>`}</td>`;
-              }).join('')}
+                const ga = s.placementGains[k] || 0;
+                const tx = s.placementTaxes?.[k] || 0;
+                const rate = s.placementTaxRates?.[k] || 0;
+                const rateStr = rate > 0 ? ` <span class="text-gray-500">(${Math.round(rate * 100)}%)</span>` : '';
+                const tip = val > 0 ? `<div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(ap)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Gains</span><span class="${ga >= 0 ? 'text-accent-green' : 'text-red-400'}">${ga >= 0 ? '+' : ''}${formatCurrency(ga)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts${rateStr}</span><span class="text-red-400">-${formatCurrency(tx)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(val - tx)}</span></div></div>` : '';
+                return `<td class="px-1 py-0.5 text-center text-gray-200 ${bt} ${extra} ${val > 0 ? 'proj-tip-wrap' : ''}">${val > 0 ? `${formatCurrency(val)}<div class="text-[8px] text-gray-500">${formatCurrency(ap)}</div>${tip}` : `<span class="text-gray-600">${formatCurrency(0)}</span>`}</td>`;
+              };
+              return `
+            <tr class="hover:bg-dark-600/30 transition ${rowClass} text-[11px] group/row">
+              <td class="px-1 py-1 text-center font-medium text-gray-200 ${bt}">
+                <span class="inline-flex items-center gap-0.5">
+                  ${s.label}
+                  ${s.isActualise ? '<span class="text-[8px] text-accent-green" title="Actualisé">&#10003;</span>' : ''}
+                  <button class="btn-actualiser-child text-[9px] text-gray-600 hover:text-accent-cyan transition opacity-0 group-hover/row:opacity-100 ml-0.5" data-year="${s.calendarYear}" title="Actualiser avec les valeurs réelles">&#9998;</button>
+                </span>
+              </td>
+              <td class="px-0 py-1 text-center text-gray-500 ${bt}">${s.annee + 1}</td>
+              <td class="px-0 py-1 text-center text-gray-400 border-r-2 border-dark-300/40 ${bt}">${s.age !== null ? s.age : '–'}</td>
+              ${groupKeys.map((k, i) => placCell(k, i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '')).join('')}
               <td class="px-1 py-0.5 text-center text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
               <td class="px-1 py-0.5 text-center font-semibold ${bt} ${s.totalGains >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${s.totalGains >= 0 ? '+' : ''}${formatCurrency(s.totalGains)}</td>
-              <td class="px-1 py-0.5 text-center font-semibold text-gray-300 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.totalNetImpot)}</td>
+              <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 ${bt} proj-tip-wrap">${formatCurrency(s.totalNetImpot)}<div class="text-[8px] text-gray-500">${formatCurrency(s.totalApports)}</div><div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Placements</span><span class="text-gray-200">${formatCurrency(s.placements)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(s.totalApports)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts</span><span class="text-red-400">-${formatCurrency(s.totalTaxes)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(s.totalNetImpot)}</span></div></div></td>
               <td class="px-1 py-1 text-center text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.livrets)}</td>
               <td class="px-1 py-1 text-center text-[11px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
               <td class="px-1 py-1 text-center font-semibold text-accent-green ${bt}">${formatCurrency(s.totalNet)}</td>
@@ -805,6 +824,88 @@ function openScenarioModal(store, childIdx, editItem, refresh) {
   }
 }
 
+// ─── Actualisation modal for children ────────────────────────────────────────
+
+function openChildActualisationModal(store, navigate, calendarYear, snapshots, childIdx) {
+  const enfants = getEnfants(store);
+  const enf = enfants[childIdx];
+  if (!enf) return;
+  const placements = enf.placements || [];
+  const actualisations = enf.actualisations || {};
+  const existing = actualisations[String(calendarYear)] || {};
+  const existingPlac = existing.placements || {};
+
+  const snapshot = snapshots.find(s => s.calendarYear === calendarYear);
+  if (!snapshot) return;
+
+  const placementRows = placements.map(p => {
+    const gk = getChildGroupKey(p);
+    const projValue = snapshot.placementDetail?.[gk] || 0;
+    const realValue = existingPlac[p.id] !== undefined ? existingPlac[p.id] : '';
+    return `
+      <div class="flex items-center gap-2 py-2 border-b border-dark-400/20">
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-gray-200 truncate">${p.nom || gk}</div>
+          <div class="text-[10px] text-gray-500">${gk} · Projeté : ${formatCurrency(projValue)}</div>
+        </div>
+        <input type="number" name="plac-${p.id}" value="${realValue}"
+          placeholder="${formatCurrency(projValue).replace(/[^\d\s]/g, '').trim()}"
+          class="input-field w-28 placeholder-gray-700" step="1">
+      </div>`;
+  }).join('');
+
+  const body = `
+    <p class="text-xs text-gray-500 mb-4">Saisissez les valeurs réelles de fin ${calendarYear} pour ${enf.prenom || 'cet enfant'}. Les champs vides conservent la valeur projetée.</p>
+    <div class="mb-4">
+      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Placements</h4>
+      <div class="max-h-[40vh] overflow-y-auto pr-1">${placementRows}</div>
+    </div>
+    <div class="border-t border-dark-400/30 pt-4 space-y-3">
+      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Livrets</h4>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-300 flex-1">Livrets d'épargne</label>
+        <input type="number" name="actu-livrets" value="${existing.livrets !== undefined ? existing.livrets : ''}"
+          placeholder="${formatCurrency(snapshot.livrets).replace(/[^\d\s]/g, '').trim()}"
+          class="input-field w-28 placeholder-gray-700" step="1">
+      </div>
+    </div>
+    ${Object.keys(existingPlac).length > 0 || existing.livrets !== undefined
+      ? '<div class="mt-4 pt-3 border-t border-dark-400/30"><button id="actu-clear" class="text-xs text-red-400 hover:text-red-300 transition">Supprimer cette actualisation</button></div>'
+      : ''}
+  `;
+
+  const modal = openModal(`Actualiser fin ${calendarYear} — ${enf.prenom || 'Enfant'}`, body, () => {
+    const modalBody = document.getElementById('modal-body');
+    const actu = { placements: {} };
+    let hasAny = false;
+    placements.forEach(p => {
+      const input = modalBody.querySelector(`[name="plac-${p.id}"]`);
+      if (input && input.value !== '') { actu.placements[p.id] = Number(input.value); hasAny = true; }
+    });
+    const livInput = modalBody.querySelector('[name="actu-livrets"]');
+    if (livInput && livInput.value !== '') { actu.livrets = Number(livInput.value); hasAny = true; }
+
+    const enfs = getEnfants(store);
+    if (!enfs[childIdx].actualisations) enfs[childIdx].actualisations = {};
+    if (hasAny) {
+      if (Object.keys(actu.placements).length === 0) delete actu.placements;
+      enfs[childIdx].actualisations[String(calendarYear)] = actu;
+    } else {
+      delete enfs[childIdx].actualisations[String(calendarYear)];
+    }
+    saveEnfants(store, enfs);
+    navigate('projection');
+  });
+
+  modal.querySelector('#actu-clear')?.addEventListener('click', () => {
+    const enfs = getEnfants(store);
+    if (enfs[childIdx].actualisations) delete enfs[childIdx].actualisations[String(calendarYear)];
+    saveEnfants(store, enfs);
+    modal.remove();
+    navigate('projection');
+  });
+}
+
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
 export function mount(store, navigate, { embedded = false } = {}) {
@@ -928,4 +1029,17 @@ export function mount(store, navigate, { embedded = false } = {}) {
       }
     });
   });
+
+  // Actualisation buttons (pencil) on child projection table
+  if (enf && idx >= 0) {
+    const horizonYears = Number(enf.horizonYears) || 20;
+    const snapshots = computeChildProjection(enf, horizonYears, store);
+    document.querySelectorAll('.btn-actualiser-child').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const year = parseInt(btn.dataset.year);
+        openChildActualisationModal(store, navigate, year, snapshots, idx);
+      });
+    });
+  }
 }

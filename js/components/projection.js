@@ -2,8 +2,8 @@ import { formatCurrency, formatPercent, computeProjection, inputField, selectFie
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=5';
 import { openHeritageModal } from './heritage.js?v=5';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260329a';
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329a';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260329h';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260329h';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -189,7 +189,7 @@ export function render(store) {
                       <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                     </svg>
                     ${icon}
-                    <span class="text-sm ${stockColor ? stockColor[1] : 'text-gray-200'} truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
+                    <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
                     <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
                     <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
