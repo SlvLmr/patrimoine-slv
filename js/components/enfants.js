@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, inputField, getFormData, computeProjection } from '../utils.js?v=8';
+import { formatCurrency, openModal, inputField, getFormData, computeProjection } from '../utils.js?v=9';
 
 const ABATTEMENT_PARENT_ENFANT = 100000;
 const DON_FAMILIAL_TEPA = 31865;
