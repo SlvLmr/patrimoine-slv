@@ -293,6 +293,12 @@ export function render(store) {
                     class="asset-val input-field w-full pr-5"/>
                   <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">\u20ac</span>
                 </div>
+                <div class="relative w-16 flex-shrink-0">
+                  <input type="number" step="0.1" min="-10" max="100" value="${((Number(i.tauxRevalorisation) || 0.02) * 100).toFixed(1)}"
+                    data-immo-taux-id="${i.id}"
+                    class="immo-taux input-field w-full pr-5"/>
+                  <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
+                </div>
                 <button data-del-immo-inline="${i.id}" class="btn-delete ml-1" title="Supprimer">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -485,6 +491,16 @@ export function mount(store, navigate) {
         store.updateItem('actifs.immobilier', id, { nom: val });
         showSaved();
       }
+    });
+  });
+
+  // Inline taux editing for immobilier
+  document.querySelectorAll('[data-immo-taux-id]').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const id = e.target.dataset.immoTauxId;
+      const val = (parseFloat(e.target.value) || 0) / 100;
+      store.updateItem('actifs.immobilier', id, { tauxRevalorisation: val });
+      showSaved();
     });
   });
 
