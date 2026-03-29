@@ -17,7 +17,12 @@ import * as SimulateurCredit from './components/simulateur-credit.js';
 import * as SimulateurInterets from './components/simulateur-interets.js';
 import * as SimulateurAuto from './components/simulateur-auto.js';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260329a';
-import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js';
+import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
+
+// Auto-configure Google Drive Client ID
+if (!isGdriveConfigured()) {
+  setClientId('594473713679-bke6lpnl2nq1dr4gc6u1javo5fodgfi3.apps.googleusercontent.com');
+}
 import * as Strategie from './components/strategie.js?v=20260327a';
 import * as Hypotheses from './components/hypotheses.js?v=20260328h';
 import * as SimulateurSuccession from './components/simulateur-succession.js';
@@ -581,22 +586,6 @@ async function exportLocal() {
   const data = store.exportData();
   const profile = store.getActiveProfile();
   const filename = `patrimoine-${profile.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`;
-
-  // If Google Drive is not configured, prompt for Client ID once
-  if (!isGdriveConfigured()) {
-    const clientId = prompt('Pour exporter vers Google Drive, entre ton Client ID OAuth Google.\n\n(Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID)\n\nLaisse vide pour télécharger en local.');
-    if (clientId && clientId.trim()) {
-      setClientId(clientId.trim());
-    } else {
-      // Fallback: local download
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
-      return;
-    }
-  }
 
   // Save to Google Drive
   try {
