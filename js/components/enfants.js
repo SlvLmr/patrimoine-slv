@@ -155,14 +155,14 @@ export function render(store) {
 
                 <!-- Livrets d'épargne -->
                 <div class="mt-3 pt-3 border-t border-dark-400/10">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-[10px] text-gray-500 uppercase font-semibold flex items-center gap-1">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                      Livrets d'épargne
-                    </span>
-                    <button class="btn-add-livret text-${color} hover:text-${color}/80 transition" data-enfant-id="${enf.id}" data-prenom="${enf.prenom || ''}">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    </button>
+                  <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-accent-amber/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5 text-accent-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                      </svg>
+                    </div>
+                    <span class="text-sm font-bold text-gray-200 flex-1">Épargne</span>
+                    <button class="btn-add-livret px-2 py-1 bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 text-[10px] rounded hover:opacity-90 transition font-medium" data-enfant-id="${enf.id}" data-prenom="${enf.prenom || ''}">+ Ajouter</button>
                   </div>
                   ${(() => {
                     const livrets = enf.livrets || [];
