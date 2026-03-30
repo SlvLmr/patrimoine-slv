@@ -337,33 +337,72 @@ export function render(store, { embedded = false } = {}) {
               <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Placements</span>
               <button id="pe-add-plac" class="ml-2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent-green/25 text-accent-green hover:bg-accent-green/40 transition text-xl font-bold shadow-sm shadow-gray-500/20" data-child-idx="${idx}" title="Ajouter">+</button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
-              ${placements.length > 0 ? placements.map(p => {
-                const gk = getChildGroupKey(p);
-                const rend = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
-                const dca = Number(p.dcaMensuel) || 0;
+            ${(() => {
                 const groupIcons = {
                   'ETF (CTO)': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>',
                   'Actions (CTO)': '<svg class="w-2.5 h-2.5 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
-                  'ETF (PEA)': '<svg class="w-2.5 h-2.5 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
-                  'Actions (PEA)': '<svg class="w-2.5 h-2.5 text-accent-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
-                  'Bitcoin': '<svg class="w-2.5 h-2.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-                  'Assurance Vie': '<svg class="w-2.5 h-2.5 text-accent-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+                  'ETF (PEA)': '<svg class="w-2.5 h-2.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
+                  'Actions (PEA)': '<svg class="w-2.5 h-2.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+                  'Bitcoin': '<svg class="w-2.5 h-2.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+                  'Assurance Vie': '<svg class="w-2.5 h-2.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
                   'Livrets': '<svg class="w-2.5 h-2.5 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
                 };
-                const icon = groupIcons[gk] || '<svg class="w-2.5 h-2.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
-                return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded row-item hover:border-accent-blue/40 hover:bg-dark-700/40 transition">
-                  ${icon}
-                  <span class="text-sm text-gray-200 truncate max-w-[7rem] font-medium pe-edit-plac cursor-pointer" data-child-idx="${idx}" data-placement-id="${p.id}" title="${p.nom}">${p.nom}</span>
-                  ${dca > 0 ? `<span class="text-[9px] text-gray-600">${dca}\u20ac/m</span>` : ''}
-                  <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
-                  <input type="number" class="pe-plac-rend input-field w-14 text-center font-medium"
-                    value="${(rend * 100).toFixed(1)}" min="-20" max="50" step="0.5" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()">
-                  <span class="text-[10px] text-gray-500">%</span>
-                  <button class="pe-del-plac btn-delete" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
+                const defaultIcon = '<svg class="w-2.5 h-2.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
+                const groupColors = {
+                  'ETF (CTO)': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
+                  'Actions (CTO)': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
+                  'ETF (PEA)': { border: 'border-purple-500/20', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400' },
+                  'Actions (PEA)': { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400' },
+                  'Bitcoin': { border: 'border-orange-500/20', bg: 'bg-orange-500/5', text: 'text-orange-400', dot: 'bg-orange-400' },
+                  'Assurance Vie': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'Livrets': { border: 'border-sky-500/20', bg: 'bg-sky-500/5', text: 'text-sky-400', dot: 'bg-sky-400' },
+                };
+                const defaultGC = { border: 'border-gray-500/20', bg: 'bg-gray-500/5', text: 'text-gray-400', dot: 'bg-gray-400' };
+
+                if (placements.length === 0) {
+                  return `<p class="text-center text-gray-600 text-sm py-3">Aucun placement \u2014 cliquez sur + pour en ajouter</p>`;
+                }
+
+                const groups = {};
+                const groupOrd = [];
+                placements.forEach(p => {
+                  const gk = getChildGroupKey(p);
+                  if (!groups[gk]) { groups[gk] = []; groupOrd.push(gk); }
+                  groups[gk].push(p);
+                });
+
+                return `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                  ${groupOrd.map(gk => {
+                    const gc = groupColors[gk] || defaultGC;
+                    const items = groups[gk];
+                    return `<div class="rounded-lg border ${gc.border} ${gc.bg} overflow-hidden">
+                      <div class="flex items-center justify-between px-3 py-1.5 border-b ${gc.border}">
+                        <div class="flex items-center gap-2">
+                          <span class="w-1.5 h-1.5 rounded-full ${gc.dot}"></span>
+                          <span class="text-xs font-semibold ${gc.text} uppercase tracking-wide">${gk}</span>
+                          <span class="text-[10px] text-gray-600">${items.length}</span>
+                        </div>
+                      </div>
+                      <div class="divide-y divide-dark-400/10">
+                        ${items.map(p => {
+                          const rend = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
+                          const dca = Number(p.dcaMensuel) || 0;
+                          const icon = groupIcons[gk] || defaultIcon;
+                          return `<div class="group/card flex items-center gap-1.5 px-3 py-1.5 hover:bg-dark-700/30 transition">
+                            ${icon}
+                            <span class="text-[11px] text-gray-200 truncate flex-1 min-w-0 font-medium pe-edit-plac cursor-pointer" data-child-idx="${idx}" data-placement-id="${p.id}" title="${p.nom}">${p.nom}</span>
+                            ${dca > 0 ? `<span class="text-[9px] text-gray-600">${dca}\u20ac/m</span>` : ''}
+                            <input type="number" class="pe-plac-rend input-field w-14 text-center font-medium"
+                              value="${(rend * 100).toFixed(1)}" min="-20" max="50" step="0.5" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()">
+                            <span class="text-[10px] text-gray-500">%</span>
+                            <button class="pe-del-plac btn-delete" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
+                          </div>`;
+                        }).join('')}
+                      </div>
+                    </div>`;
+                  }).join('')}
                 </div>`;
-              }).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement \u2014 cliquez sur + pour en ajouter</p>'}
-            </div>
+              })()}
           </div>
           <!-- Scénarios de donation -->
           <div>

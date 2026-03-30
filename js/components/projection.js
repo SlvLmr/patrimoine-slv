@@ -1,7 +1,7 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=9';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=7';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260330a';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260330b';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -35,7 +35,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260330a';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260330b';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -218,26 +218,66 @@ export function render(store) {
                   const dcaMaxOv = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
                   const dcaEff = Math.max(dcaBase, dcaMaxOv);
                   const dcaLabel = dcaEff > 0 ? `<span class="text-[9px] text-gray-600">${dcaEff}€/m${dcaBase === 0 ? ' (prog.)' : ''}</span>` : '';
-                  return `<div class="group/card flex items-center gap-1.5 px-2.5 py-1.5 rounded row-item hover:border-accent-blue/40 hover:bg-dark-700/40 transition cursor-grab active:cursor-grabbing placement-row" draggable="true" data-placement-id="${p.id}">
-                    <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                  return `<div class="group/card flex items-center gap-1.5 px-3 py-1.5 hover:bg-dark-700/30 transition cursor-grab active:cursor-grabbing placement-row" draggable="true" data-placement-id="${p.id}">
+                    <svg class="w-3 h-4 text-gray-600/40 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
                       <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
                       <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
                       <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                     </svg>
                     ${icon}
-                    <span class="text-[11px] text-gray-200 whitespace-nowrap font-medium proj-edit-plac" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
+                    <span class="text-[11px] text-gray-200 whitespace-nowrap font-medium proj-edit-plac flex-1 min-w-0 truncate" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
-                    <span class="text-[10px] text-gray-500 ml-auto">${gk}</span>
                     <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
                       value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5" onclick="event.stopPropagation()">
                     <span class="text-[10px] text-gray-500">%</span>
                     <button class="proj-del-plac btn-delete" data-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
                 };
-                return `
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
-              ${placements.length > 0 ? placements.map(renderCard).join('') : '<p class="col-span-full text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>'}
-            </div>`;
+                // Group placements by envelope
+                const groups = {};
+                const groupOrder = [];
+                placements.forEach(p => {
+                  const gk = getPlacementGroupKey(p);
+                  if (!groups[gk]) { groups[gk] = []; groupOrder.push(gk); }
+                  groups[gk].push(p);
+                });
+
+                const groupColors = {
+                  'PEA Actions': { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400' },
+                  'PEA ETF': { border: 'border-purple-500/20', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400' },
+                  'Crypto': { border: 'border-orange-500/20', bg: 'bg-orange-500/5', text: 'text-orange-400', dot: 'bg-orange-400' },
+                  'Assurance Vie': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'PEE': { border: 'border-emerald-500/20', bg: 'bg-emerald-500/5', text: 'text-emerald-400', dot: 'bg-emerald-400' },
+                  'CTO': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
+                  'CTO TR': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
+                  'CTO BB': { border: 'border-indigo-500/20', bg: 'bg-indigo-500/5', text: 'text-indigo-400', dot: 'bg-indigo-400' },
+                };
+                const defaultGroupColor = { border: 'border-gray-500/20', bg: 'bg-gray-500/5', text: 'text-gray-400', dot: 'bg-gray-400' };
+
+                if (placements.length === 0) {
+                  return `<p class="text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>`;
+                }
+
+                return `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                  ${groupOrder.map(gk => {
+                    const gc = groupColors[gk] || defaultGroupColor;
+                    const items = groups[gk];
+                    const groupDCA = items.reduce((s, p) => s + Math.max(Number(p.dcaMensuel) || 0, (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0)), 0);
+                    return `<div class="rounded-lg border ${gc.border} ${gc.bg} overflow-hidden">
+                      <div class="flex items-center justify-between px-3 py-1.5 border-b ${gc.border}">
+                        <div class="flex items-center gap-2">
+                          <span class="w-1.5 h-1.5 rounded-full ${gc.dot}"></span>
+                          <span class="text-xs font-semibold ${gc.text} uppercase tracking-wide">${gk}</span>
+                          <span class="text-[10px] text-gray-600">${items.length} placement${items.length > 1 ? 's' : ''}</span>
+                        </div>
+                        ${groupDCA > 0 ? `<span class="text-[10px] text-gray-500">${groupDCA} €/m</span>` : ''}
+                      </div>
+                      <div class="divide-y divide-dark-400/10">
+                        ${items.map(p => renderCard(p)).join('')}
+                      </div>
+                    </div>`;
+                  }).join('')}
+                </div>`;
               })()}
           </div>
 
