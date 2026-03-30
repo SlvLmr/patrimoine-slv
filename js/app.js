@@ -313,7 +313,7 @@ function initNav() {
             <svg id="outils-chevron" class="w-3 h-3 text-gray-600 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
         </div>
-        <div id="outils-items" class="hidden">`;
+        <div id="outils-items">`;
       }
       inOutilsGroup = false;
       return `<div class="section-title-wrap mt-3 mb-0.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
