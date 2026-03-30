@@ -333,6 +333,14 @@ function initNav() {
     </a>`;
   }).join('') + (inOutilsGroup ? '</div>' : '');
 
+  // Intercept nav links so they go through navigate() (needed for sim leave prompt)
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate(el.dataset.nav);
+    });
+  });
+
   // Outils toggle
   document.getElementById('outils-toggle')?.addEventListener('click', () => {
     const items = document.getElementById('outils-items');
