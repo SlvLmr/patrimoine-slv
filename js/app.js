@@ -112,6 +112,113 @@ const navItems = [
 ];
 
 let appStarted = false;
+let _currentHash = '';
+
+const SIMULATOR_PAGES = new Set([
+  'simulateur-fire', 'simulateur-credit', 'simulateur-interets',
+  'simulateur-auto', 'simulateur-salaire', 'simulateur-succession'
+]);
+
+const SIM_LABELS = {
+  'simulateur-fire': 'FIRE',
+  'simulateur-credit': 'Crédit immobilier',
+  'simulateur-interets': 'Intérêts composés',
+  'simulateur-auto': 'Crédit voiture',
+  'simulateur-salaire': 'Salaire brut/net',
+  'simulateur-succession': 'Cap Succession'
+};
+
+const SIM_SAVE_KEYS = {
+  'simulateur-fire': 'sim-fire-saves',
+  'simulateur-credit': 'sim-credit-saves',
+  'simulateur-interets': 'sim-interets-saves',
+  'simulateur-auto': 'sim-auto-saves',
+  'simulateur-salaire': null, // no named saves
+  'simulateur-succession': 'sim-succession-saves'
+};
+
+function showSimLeaveModal(fromPage, onContinue) {
+  const existing = document.getElementById('sim-leave-modal');
+  if (existing) existing.remove();
+
+  const label = SIM_LABELS[fromPage] || 'Simulateur';
+  const storageKey = SIM_SAVE_KEYS[fromPage];
+  const canSave = !!storageKey;
+
+  const modal = document.createElement('div');
+  modal.id = 'sim-leave-modal';
+  modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+  modal.style.background = 'rgba(0,0,0,0.6)';
+  modal.style.backdropFilter = 'blur(4px)';
+  modal.style.animation = 'fadeIn 0.15s ease-out';
+  modal.innerHTML = `
+    <div class="card-dark rounded-2xl p-6 max-w-sm w-full border border-dark-400/30" style="animation: slideUp 0.2s ease-out">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-accent-green/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-semibold text-gray-100">Quitter ${label} ?</h3>
+          <p class="text-xs text-gray-500 mt-0.5">Vos paramètres courants sont sauvegardés automatiquement.</p>
+        </div>
+      </div>
+      ${canSave ? `
+      <p class="text-sm text-gray-400 mb-4">Souhaitez-vous aussi enregistrer cette simulation comme scénario nommé ?</p>
+      <div class="flex gap-2 mb-4">
+        <input id="sim-leave-name" type="text" class="input-field flex-1 text-sm" placeholder="Nom du scénario…" />
+        <button id="sim-leave-save" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition whitespace-nowrap">Sauvegarder</button>
+      </div>
+      ` : ''}
+      <div class="flex gap-2 justify-end">
+        <button id="sim-leave-cancel" class="px-4 py-2 text-sm font-medium rounded-lg bg-dark-600 text-gray-300 hover:bg-dark-500 transition">Rester</button>
+        <button id="sim-leave-go" class="px-4 py-2 text-sm font-medium rounded-lg bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition">Quitter</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Focus name input if present
+  const nameInput = document.getElementById('sim-leave-name');
+  nameInput?.focus();
+
+  // Save scenario then leave
+  document.getElementById('sim-leave-save')?.addEventListener('click', () => {
+    const name = nameInput?.value?.trim();
+    if (!name) { nameInput?.classList.add('ring-2', 'ring-accent-red/50'); return; }
+    try {
+      const saves = JSON.parse(localStorage.getItem(storageKey)) || [];
+      // Get current inputs from the simulator's getInputs
+      const component = routes[fromPage];
+      if (component?.getInputs) {
+        saves.push({ name, date: new Date().toISOString(), inputs: component.getInputs() });
+      } else {
+        // Fallback: collect all inputs from the page
+        const inputs = {};
+        document.querySelectorAll('#app-content input[type="number"], #app-content input[type="range"], #app-content select').forEach(el => {
+          if (el.id) inputs[el.id] = el.value;
+        });
+        saves.push({ name, date: new Date().toISOString(), inputs });
+      }
+      localStorage.setItem(storageKey, JSON.stringify(saves));
+    } catch (e) { console.error('Save error:', e); }
+    modal.remove();
+    onContinue();
+  });
+
+  // Enter key in name input = save
+  nameInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('sim-leave-save')?.click();
+  });
+
+  // Just leave
+  document.getElementById('sim-leave-go').addEventListener('click', () => { modal.remove(); onContinue(); });
+
+  // Stay
+  document.getElementById('sim-leave-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
 
 function navigate(page) {
   // Close mobile sidebar on navigation
@@ -123,6 +230,16 @@ function navigate(page) {
   }
 
   const current = window.location.hash.slice(1);
+
+  // Show save prompt when leaving a simulator page
+  if (SIMULATOR_PAGES.has(current) && page !== current) {
+    showSimLeaveModal(current, () => {
+      if (page && page === current) renderPage();
+      else window.location.hash = page;
+    });
+    return;
+  }
+
   if (page && page === current) {
     // Same page — re-render directly
     renderPage();
@@ -135,6 +252,7 @@ function renderPage() {
   destroyAllCharts();
 
   let hash = window.location.hash.slice(1) || 'revenus-depenses';
+  _currentHash = hash;
   // Redirect legacy routes
   if (hash === 'actifs' || hash === 'passifs' || hash === 'heritage') { hash = 'projection'; window.location.hash = 'projection'; return; }
   if (hash === 'dashboard') { hash = 'revenus-depenses'; window.location.hash = 'revenus-depenses'; return; }
@@ -857,5 +975,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('hashchange', () => {
-  if (appStarted) renderPage();
+  if (!appStarted) return;
+  const newHash = window.location.hash.slice(1);
+  // If navigating away from a simulator via browser back/forward, show prompt
+  if (SIMULATOR_PAGES.has(_currentHash) && newHash !== _currentHash) {
+    // Restore the old hash silently, then show modal
+    history.replaceState(null, '', '#' + _currentHash);
+    showSimLeaveModal(_currentHash, () => {
+      window.location.hash = newHash;
+    });
+    return;
+  }
+  renderPage();
 });
