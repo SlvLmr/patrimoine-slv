@@ -359,7 +359,8 @@ export function render(store, { embedded = false } = {}) {
                 };
                 const defaultGC = { border: 'border-gray-500/20', bg: 'bg-gray-500/5', text: 'text-gray-400', dot: 'bg-gray-400' };
 
-                if (placements.length === 0) {
+                const livrets = enf.livrets || [];
+                if (placements.length === 0 && livrets.length === 0) {
                   return `<p class="text-center text-gray-600 text-sm py-3">Aucun placement \u2014 cliquez sur + pour en ajouter</p>`;
                 }
 
@@ -370,6 +371,13 @@ export function render(store, { embedded = false } = {}) {
                   if (!groups[gk]) { groups[gk] = []; groupOrd.push(gk); }
                   groups[gk].push(p);
                 });
+                // Include livrets from enfant.livrets as virtual entries in a "Livrets" group
+                if (livrets.length > 0) {
+                  if (!groups['Livrets']) { groups['Livrets'] = []; groupOrd.push('Livrets'); }
+                  livrets.forEach(l => {
+                    groups['Livrets'].push({ _isLivret: true, id: l.id || l.nom, nom: l.nom || 'Livret', solde: Number(l.solde) || 0, taux: Number(l.taux) || 0, dcaMensuel: Number(l.dcaMensuel) || 0 });
+                  });
+                }
 
                 return `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                   ${groupOrd.map(gk => {
@@ -385,6 +393,16 @@ export function render(store, { embedded = false } = {}) {
                       </div>
                       <div class="divide-y divide-dark-400/10">
                         ${items.map(p => {
+                          if (p._isLivret) {
+                            const icon = groupIcons['Livrets'] || defaultIcon;
+                            const dca = Number(p.dcaMensuel) || 0;
+                            return `<div class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-dark-700/30 transition">
+                              ${icon}
+                              <span class="text-[11px] text-gray-200 truncate flex-1 min-w-0 font-medium">${p.nom}</span>
+                              ${dca > 0 ? `<span class="text-[9px] text-gray-600">${dca}\u20ac/m</span>` : ''}
+                              <span class="text-[10px] text-gray-500">${p.taux}%</span>
+                            </div>`;
+                          }
                           const rend = rendements[p.id] !== undefined ? rendements[p.id] : DEFAULT_RENDEMENT;
                           const dca = Number(p.dcaMensuel) || 0;
                           const icon = groupIcons[gk] || defaultIcon;
