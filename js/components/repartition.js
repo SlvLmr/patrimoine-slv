@@ -74,30 +74,30 @@ export function render(store) {
         </button>
       </div>
 
-      <!-- Time Slider -->
-      <div class="card-dark rounded-2xl px-6 py-4">
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="text-sm text-gray-400">Année</span>
+      <!-- Time Slider + Diversification Score -->
+      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+        <div class="card-dark rounded-2xl px-6 py-4">
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="text-sm text-gray-400">Année</span>
+            </div>
+            <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
+              class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              style="accent-color: #c084fc;">
+            <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
+              <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
+              <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
+            </div>
           </div>
-          <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
-            class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-amber-500"
-            style="accent-color: #c084fc;">
-          <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
-            <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
-            <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
+          <div class="flex justify-between mt-1 px-1">
+            <span class="text-[10px] text-gray-600">${currentYear}</span>
+            <span class="text-[10px] text-gray-600">${currentYear + years}</span>
           </div>
+          <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
         </div>
-        <div class="flex justify-between mt-1 px-1">
-          <span class="text-[10px] text-gray-600">${currentYear}</span>
-          <span class="text-[10px] text-gray-600">${currentYear + years}</span>
-        </div>
-        <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
+        <div id="diversification-widget"></div>
       </div>
-
-      <!-- Diversification Score Widget (updated dynamically in mount) -->
-      <div id="diversification-widget"></div>
 
       <!-- Flow + Actions + PEE -->
       <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">

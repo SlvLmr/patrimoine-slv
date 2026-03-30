@@ -7,7 +7,7 @@ import * as Projection from './components/projection.js?v=20260330a';
 import * as SuiviDepenses from './components/suivi-depenses.js?v=20260330a';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Compte from './components/compte.js?v=20260329h';
-import * as Repartition from './components/repartition.js?v=20260329s';
+import * as Repartition from './components/repartition.js?v=20260330a';
 import * as SimulateurFire from './components/simulateur-fire.js?v=20260330a';
 import * as SimulateurCredit from './components/simulateur-credit.js?v=20260330a';
 import * as SimulateurInterets from './components/simulateur-interets.js?v=20260330a';
