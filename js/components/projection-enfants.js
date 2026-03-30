@@ -22,7 +22,7 @@ const CHILD_CATEGORIES = [
 
 const CHILD_COLORS = ['#a855f7', '#06b6d4'];
 const DEFAULT_RENDEMENT = 0.07;
-const FIXED_GROUP_KEYS = ['ETF (CTO)', 'Actions (CTO)', 'ETF (PEA)', 'Actions (PEA)', 'Bitcoin', 'Assurance Vie', 'Livrets'];
+const FIXED_GROUP_KEYS = ['ETF (CTO)', 'Actions (CTO)', 'ETF (PEA)', 'Actions (PEA)', 'Bitcoin', 'Assurance Vie'];
 
 // ─── Fiscalité ───────────────────────────────────────────────────────────────
 const PFU_RATE = 0.314;   // Flat tax: 14.2% IR + 17.2% PS
@@ -403,7 +403,7 @@ export function render(store, { embedded = false } = {}) {
       </div>
 
       <!-- Detailed Table -->
-      ${renderTable(snapshots, groupKeys)}
+      ${renderTable(snapshots, groupKeys.filter(k => k !== 'Livrets'))}
     </div>`;
 }
 
