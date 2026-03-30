@@ -83,7 +83,7 @@ export function render(store) {
           </div>
           <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
             class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-amber-500"
-            style="accent-color: #c9a76c;">
+            style="accent-color: #c084fc;">
           <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
             <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
             <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
@@ -914,7 +914,7 @@ export function mount(store, navigate) {
       topDot.setAttribute('cx', mid);
       topDot.setAttribute('cy', '0');
       topDot.setAttribute('r', '3');
-      topDot.setAttribute('fill', '#c9a76c');
+      topDot.setAttribute('fill', '#c084fc');
       topDot.setAttribute('opacity', '0.8');
       svg.appendChild(topDot);
     }
@@ -1066,8 +1066,8 @@ export function mount(store, navigate) {
     datasets.push({
       label: 'Immobilier',
       data: snapshots.map(s => s.immobilier || 0),
-      backgroundColor: '#8b691440',
-      borderColor: '#8b6914',
+      backgroundColor: '#7c3aed40',
+      borderColor: '#7c3aed',
       borderWidth: 1.5,
       fill: true,
       tension: 0.4,

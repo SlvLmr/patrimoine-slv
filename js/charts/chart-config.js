@@ -28,19 +28,19 @@ export const legendStrikethroughPlugin = {
 };
 
 export const COLORS = {
-  immobilier: '#8b6914',
-  placements: '#c9a76c',
-  epargne: '#e8d5b0',
+  immobilier: '#7c3aed',
+  placements: '#c084fc',
+  epargne: '#e9d5ff',
   dette: '#ff4757',
-  patrimoine: '#e8d5b0',
-  revenus: '#c9a76c',
+  patrimoine: '#e9d5ff',
+  revenus: '#c084fc',
   depenses: '#ff4757',
-  primary: '#c9a76c',
+  primary: '#c084fc',
   secondary: '#9b7cb8',
   grid: 'rgba(72, 72, 82, 0.25)',
   gridText: '#7a7a88',
-  actions: '#dbb88a',
-  etf: '#c9a76c',
+  actions: '#d8b4fe',
+  etf: '#c084fc',
   crypto: '#f59e0b',
   obligations: '#6b8aae'
 };
@@ -58,8 +58,8 @@ export const GRADIENT_PAIRS = [
 ];
 
 export const PALETTE = [
-  '#c9a76c', '#dbb88a', '#9b7cb8', '#6b8aae', '#e8d5b0',
-  '#5ea3a3', '#f59e0b', '#c4985a', '#8b7355', '#d9c4a0'
+  '#c084fc', '#d8b4fe', '#9b7cb8', '#6b8aae', '#e9d5ff',
+  '#5ea3a3', '#f59e0b', '#a855f7', '#7c3aed', '#e9d5ff'
 ];
 
 // Vivid, high-contrast palette for multi-line charts (no green/red)
@@ -132,7 +132,7 @@ export function createChart(canvasId, config) {
       },
       tooltip: {
         backgroundColor: 'rgba(30, 30, 40, 0.95)',
-        titleColor: '#e8d5b0',
+        titleColor: '#e9d5ff',
         bodyColor: '#a0a0a5',
         borderColor: 'rgba(72, 72, 82, 0.6)',
         borderWidth: 1,

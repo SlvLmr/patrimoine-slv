@@ -571,7 +571,7 @@ export function mount() {
     // Level 1 → 2: Patrimoine → Liquidités + Investissements + Immobilier
     drawConnectors('ptf-svg-L1-svg', 'ptf-svg-L1',
       ['ptf-card-liq', 'ptf-card-inv', 'ptf-card-immo'],
-      ['#6366f1', '#c9a76c', '#8b6914'],
+      ['#6366f1', '#c084fc', '#7c3aed'],
       ['glow-indigo', 'glow-amber', 'glow-brown']
     );
 
@@ -605,8 +605,8 @@ export function mount() {
     if (envCards.length > 0) {
       drawConnectors('ptf-svg-L2C-svg', 'ptf-svg-L2C',
         envCards,
-        envCards.map(() => '#c9a76c'),
-        envCards.map(() => 'glow-amber2')
+        envCards.map(() => '#c084fc'),
+        envCards.map(() => 'glow-purple2')
       );
     }
 
@@ -615,8 +615,8 @@ export function mount() {
     if (peaSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-pea-svg', 'ptf-svg-L3C-pea',
         peaSubCards,
-        peaSubCards.map(() => '#c9a76c'),
-        peaSubCards.map(() => 'glow-amber3'),
+        peaSubCards.map(() => '#c084fc'),
+        peaSubCards.map(() => 'glow-purple3'),
         'ptf-card-pea'
       );
     }

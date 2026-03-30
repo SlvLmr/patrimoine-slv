@@ -589,7 +589,7 @@ function drawChildChart(enfant, horizonYears, store) {
     datasets.push({ label: k, data: snapshots.map(s => s.placementDetail[k] || 0), borderColor: color, backgroundColor: createVerticalGradient(ctx, color, 0.15, 0.02), fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 });
   });
 
-  datasets.push({ label: 'Total', data: snapshots.map(s => s.total), borderColor: '#c9a76c', borderWidth: 2.5, borderDash: [6, 3], tension: 0.4, pointRadius: 0, fill: false });
+  datasets.push({ label: 'Total', data: snapshots.map(s => s.total), borderColor: '#c084fc', borderWidth: 2.5, borderDash: [6, 3], tension: 0.4, pointRadius: 0, fill: false });
 
   createChart('pe-chart-child', { type: 'line', data: { labels, datasets }, options: {
     interaction: { intersect: false, mode: 'index' },

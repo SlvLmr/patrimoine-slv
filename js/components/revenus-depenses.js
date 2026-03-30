@@ -711,7 +711,7 @@ export function mount(store, navigate) {
     let budgetOutY = budgetNode.y;
     grpNodes.forEach((grp, i) => {
       const gid = `bg-${i}`;
-      addGradient(gid, '#c9a76c', grp.color);
+      addGradient(gid, '#c084fc', grp.color);
       const bh = maxVal > 0 ? (grp.value / maxVal) * budgetNode.h : grp.h;
       body += `<path d="${flowPath(budgetNode.x + nodeW, budgetOutY, bh, grp.x, grp.y, grp.h)}" fill="url(#${gid})"/>`;
       budgetOutY += bh;
@@ -740,8 +740,8 @@ export function mount(store, navigate) {
     });
 
     // Budget (label inside/right of bar)
-    body += `<rect x="${budgetNode.x}" y="${budgetNode.y}" width="${nodeW}" height="${budgetNode.h}" rx="3" fill="#c9a76c"/>`;
-    if (showLabels) body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e8d5b0" font-size="${fs(12)}" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
+    body += `<rect x="${budgetNode.x}" y="${budgetNode.y}" width="${nodeW}" height="${budgetNode.h}" rx="3" fill="#c084fc"/>`;
+    if (showLabels) body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e9d5ff" font-size="${fs(12)}" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
 
     // Groups (label left of bar)
     grpNodes.forEach(n => {

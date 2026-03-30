@@ -653,7 +653,7 @@ function renderStackedChart(r) {
         },
         tooltip: {
           backgroundColor: 'rgba(11,11,15,0.95)',
-          titleColor: '#e8d5b0',
+          titleColor: '#e9d5ff',
           bodyColor: '#a0a0a5',
           borderColor: 'rgba(56,56,63,0.6)',
           borderWidth: 1,
@@ -704,7 +704,7 @@ function renderPieChart(r) {
         },
         tooltip: {
           backgroundColor: 'rgba(11,11,15,0.95)',
-          titleColor: '#e8d5b0',
+          titleColor: '#e9d5ff',
           bodyColor: '#a0a0a5',
           borderColor: 'rgba(56,56,63,0.6)',
           borderWidth: 1,

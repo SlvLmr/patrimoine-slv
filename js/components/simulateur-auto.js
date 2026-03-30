@@ -537,7 +537,7 @@ function renderChart(r) {
       plugins: {
         legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, color: '#e5e7eb', font: { size: 12, family: 'Inter' } } },
         tooltip: {
-          backgroundColor: 'rgba(11,11,15,0.95)', titleColor: '#e8d5b0', bodyColor: '#a0a0a5',
+          backgroundColor: 'rgba(11,11,15,0.95)', titleColor: '#e9d5ff', bodyColor: '#a0a0a5',
           borderColor: 'rgba(56,56,63,0.6)', borderWidth: 1, padding: 12, cornerRadius: 10,
           callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` },
         },

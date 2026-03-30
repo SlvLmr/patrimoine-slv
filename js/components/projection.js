@@ -1277,8 +1277,8 @@ export function mount(store, navigate) {
     datasets.push({
       label: 'Total liquidités nettes',
       data: snapshots.map(s => s.totalLiquiditesNettes),
-      borderColor: '#dbb88a',
-      backgroundColor: createVerticalGradient(ctx2d, '#dbb88a', 0.25, 0.02),
+      borderColor: '#d8b4fe',
+      backgroundColor: createVerticalGradient(ctx2d, '#d8b4fe', 0.25, 0.02),
       fill: true,
       tension: 0.45,
       pointRadius: 0,

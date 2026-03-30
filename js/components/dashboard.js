@@ -833,9 +833,9 @@ export function mount(store, navigate) {
     const labels = [];
     const gradColors = [];
     const gradientPairsMap = [
-      ['#8b6914', '#c9a76c'],
-      ['#c9a76c', '#dbb88a'],
-      ['#e8d5b0', '#f5edd8'],
+      ['#7c3aed', '#c084fc'],
+      ['#c084fc', '#d8b4fe'],
+      ['#e9d5ff', '#f5f0ff'],
       ['#6366f1', '#818cf8'],
     ];
     if (immoTotal > 0) { data.push(immoTotal); labels.push('Immobilier'); gradColors.push(createSliceGradient(ctx2d, gradientPairsMap[0][0], gradientPairsMap[0][1])); }
@@ -879,8 +879,8 @@ export function mount(store, navigate) {
     const canvas = document.getElementById('chart-actifs-passifs');
     const ctx2d = canvas.getContext('2d');
     const gradActifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
-    gradActifs.addColorStop(0, '#c9a76c');
-    gradActifs.addColorStop(1, '#dbb88a');
+    gradActifs.addColorStop(0, '#c084fc');
+    gradActifs.addColorStop(1, '#d8b4fe');
     const gradPassifs = ctx2d.createLinearGradient(0, 0, canvas.width, 0);
     gradPassifs.addColorStop(0, '#ff4757');
     gradPassifs.addColorStop(1, '#ff6b6b');
