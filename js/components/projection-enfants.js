@@ -20,7 +20,7 @@ const CHILD_CATEGORIES = [
   { value: 'Autre', label: 'Autre' },
 ];
 
-const CHILD_COLORS = ['#a855f7', '#06b6d4'];
+const CHILD_COLORS = ['#4ade80', '#f472b6'];
 const DEFAULT_RENDEMENT = 0.07;
 const FIXED_GROUP_KEYS = ['ETF (CTO)', 'Actions (CTO)', 'ETF (PEA)', 'Actions (PEA)', 'Bitcoin', 'Assurance Vie'];
 
