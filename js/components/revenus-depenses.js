@@ -404,7 +404,7 @@ export function render(store) {
           </div>
           <!-- Sankey view (default) -->
           <div id="viz-sankey" class="flex-1 relative" style="min-height:200px;">
-            <div id="sankey-wrap" class="cursor-pointer overflow-hidden group/sankey absolute inset-0" title="Cliquer pour agrandir">
+            <div id="sankey-wrap" class="cursor-pointer overflow-x-hidden overflow-y-auto group/sankey absolute inset-0" title="Cliquer pour agrandir">
               <svg id="sankey-svg" width="100%" height="100%"></svg>
               <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div class="w-12 h-12 rounded-full bg-dark-700/60 border border-dark-400/40 flex items-center justify-center opacity-60 group-hover/sankey:opacity-100 transition">
@@ -645,9 +645,6 @@ export function mount(store, navigate) {
     const allItems = data.groups.flatMap(g => g.items);
     const drawH = H - padTop - padBottom;
 
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    svg.style.height = H + 'px';
-
     // Column x positions (leave space for labels)
     const col0x = 8;
     const col1x = W * 0.30;
@@ -683,6 +680,13 @@ export function mount(store, navigate) {
         itemY += h + gap;
       });
     });
+
+    // Expand height if items overflow
+    const neededH = itemY - gap + padBottom;
+    const finalH = Math.max(H, neededH);
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${finalH}`);
+    svg.style.height = finalH + 'px';
 
     // Draw
     let defs = '';
@@ -793,7 +797,7 @@ export function mount(store, navigate) {
             </button>
           </div>
         </div>
-        <div id="sankey-popup-wrap" class="flex-1 min-h-0" style="position:relative;">
+        <div id="sankey-popup-wrap" class="flex-1 min-h-0 overflow-y-auto" style="position:relative;">
           <svg id="sankey-popup-svg" width="100%" height="100%"></svg>
         </div>
       </div>

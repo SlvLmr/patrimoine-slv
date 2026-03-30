@@ -2,7 +2,7 @@ import { Store } from './store.js';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
-import * as RevenusDepenses from './components/revenus-depenses.js?v=20260329g';
+import * as RevenusDepenses from './components/revenus-depenses.js?v=20260330a';
 import * as Projection from './components/projection.js?v=20260330a';
 import * as SuiviDepenses from './components/suivi-depenses.js?v=20260330a';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
