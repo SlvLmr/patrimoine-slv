@@ -213,7 +213,7 @@ export function render(store) {
     const isRevenu = op.type === 'revenu';
     const isVirement = !isRevenu && (op.categorie || '') === 'Virement';
     const isNDF = !isRevenu && (op.categorie || '') === 'NDF';
-    const arrowColor = isRevenu ? 'text-green-500' : isVirement ? 'text-accent-amber' : isNDF ? 'text-purple-400' : 'text-accent-red';
+    const arrowColor = isRevenu ? 'text-emerald-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : 'text-accent-red';
     const icon = isRevenu
       ? `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
       : `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
@@ -262,9 +262,9 @@ export function render(store) {
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
             Clôturer le mois
           </button>
-          <button id="btn-add-revenu" class="px-2.5 sm:px-3 py-1.5 bg-accent-green/20 text-accent-green text-xs sm:text-sm rounded-lg hover:bg-accent-green/30 transition font-medium">+ Revenu</button>
+          <button id="btn-add-revenu" class="px-2.5 sm:px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm rounded-lg hover:bg-emerald-500/30 transition font-medium">+ Revenu</button>
           <button id="btn-add-expense" class="px-2.5 sm:px-3 py-1.5 bg-accent-red/20 text-accent-red text-xs sm:text-sm rounded-lg hover:bg-accent-red/30 transition font-medium">+ Dépense</button>
-          <button id="btn-add-virement" class="px-2.5 sm:px-3 py-1.5 bg-accent-amber/20 text-accent-amber text-xs sm:text-sm rounded-lg hover:bg-accent-amber/30 transition font-medium">+ Virement</button>
+          <button id="btn-add-virement" class="px-2.5 sm:px-3 py-1.5 bg-amber-500/20 text-amber-400 text-xs sm:text-sm rounded-lg hover:bg-amber-500/30 transition font-medium">+ Virement</button>
           <button id="btn-add-ndf" class="px-2.5 sm:px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs sm:text-sm rounded-lg hover:bg-purple-500/30 transition font-medium">+ NDF</button>
         </div>
       </div>
@@ -300,7 +300,7 @@ export function render(store) {
             <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
               <div class="flex items-center gap-2">
                 <div class="flex flex-col gap-0.5 flex-shrink-0 invisible"><span class="leading-none text-[10px]">▲</span><span class="leading-none text-[10px]">▼</span></div>
-                <svg class="w-3.5 h-3.5 text-accent-amber flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <svg class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 <span class="text-xs font-semibold text-gray-300">Dépenses mensuelles</span>
                 <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${depMensuelles.length}</span>
               </div>
@@ -366,15 +366,15 @@ export function render(store) {
           </div>` : ''}
           <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
             <span class="text-xs text-gray-500">${lblEnveloppe}</span>
-            <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-accent-green' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
+            <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="interets">
             <span class="text-[11px] text-gray-500">${lblInterets}</span>
-            <span class="text-[11px] font-medium text-accent-green">+${formatCurrencyCents(trInterets)}</span>
+            <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="saveback">
             <span class="text-[11px] text-gray-500">${lblSaveback}</span>
-            <span class="text-[11px] font-medium text-accent-amber">${formatCurrencyCents(trSaveback)}</span>
+            <span class="text-[11px] font-medium text-amber-400">${formatCurrencyCents(trSaveback)}</span>
           </div>
           <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="roundup">
             <span class="text-[11px] text-gray-500">${lblRoundup}</span>
@@ -447,7 +447,7 @@ export function render(store) {
           <div class="flex items-center justify-between px-4 py-2.5 rounded-lg hover:bg-dark-600/30 transition cursor-pointer archive-row" data-mois="${a.mois}">
             <span class="text-sm text-gray-200 capitalize font-medium">${label}</span>
             <div class="flex items-center gap-6">
-              <span class="text-xs font-medium ${balance >= 0 ? 'text-accent-green' : 'text-accent-red'}">${balance >= 0 ? '+' : ''}${formatCurrencyCents(balance)}</span>
+              <span class="text-xs font-medium ${balance >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${balance >= 0 ? '+' : ''}${formatCurrencyCents(balance)}</span>
               <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </div>
           </div>`;
@@ -538,7 +538,7 @@ export function mount(store, navigate) {
       <div class="space-y-3 text-sm">
         <p class="text-gray-300">Archiver <span class="font-semibold text-gray-100 capitalize">${label}</span> et repartir sur un nouveau mois ?</p>
         <div class="bg-dark-700/50 rounded-lg p-3 space-y-1">
-          <div class="flex justify-between"><span class="text-gray-400">Total revenus</span><span class="text-accent-green font-medium">${formatCurrencyCents(totalRevenus)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Total revenus</span><span class="text-emerald-400 font-medium">${formatCurrencyCents(totalRevenus)}</span></div>
           <div class="flex justify-between"><span class="text-gray-400">Total dépenses</span><span class="text-accent-red font-medium">${formatCurrencyCents(totalDepenses)}</span></div>
           <div class="border-t border-dark-400/30 my-1"></div>
           <div class="flex justify-between"><span class="text-gray-400">Solde final ${bankNames.primary}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeCIC)}</span></div>
@@ -1266,7 +1266,7 @@ export function mount(store, navigate) {
       const isRev = op.type === 'revenu';
       const isVirement = !isRev && (op.categorie || '') === 'Virement';
       const isNDF = !isRev && (op.categorie || '') === 'NDF';
-      const color = isRev ? 'text-green-500' : isVirement ? 'text-accent-amber' : isNDF ? 'text-purple-400' : 'text-accent-red';
+      const color = isRev ? 'text-emerald-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : 'text-accent-red';
       const icon = isRev
         ? `<svg class="w-3 h-3 ${color} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
         : `<svg class="w-3 h-3 ${color} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
@@ -1324,7 +1324,7 @@ export function mount(store, navigate) {
       if (isSecondary && m.trInterets !== undefined) {
         trFeatHtml = `
           <div class="border-t border-dark-400/20 mt-1 pt-0.5">
-            ${subLine(m.lblInterets || 'Intérêts', m.trInterets || 0, 'text-accent-green')}
+            ${subLine(m.lblInterets || 'Intérêts', m.trInterets || 0, 'text-emerald-400')}
             ${subLine(m.lblSaveback || 'Saveback', m.trSaveback || 0, 'text-accent-amber')}
             ${subLine(m.lblRoundup || 'Round-up', m.trRoundup || 0, 'text-accent-red')}
           </div>`;
