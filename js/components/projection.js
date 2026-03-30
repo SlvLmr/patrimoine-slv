@@ -579,13 +579,7 @@ export function render(store) {
       <!-- Charts -->
       <div class="card-dark rounded-xl p-3 sm:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div class="flex items-center gap-3">
-            <h2 class="text-base sm:text-lg font-semibold text-gray-200">Répartition des actifs dans le temps</h2>
-            <div class="flex items-center gap-1">
-              <button id="chart-legend-all" class="px-2 py-0.5 text-[10px] font-medium rounded bg-dark-600 text-gray-400 hover:text-gray-200 hover:bg-dark-500 transition" title="Tout cocher">Tout</button>
-              <button id="chart-legend-none" class="px-2 py-0.5 text-[10px] font-medium rounded bg-dark-600 text-gray-400 hover:text-gray-200 hover:bg-dark-500 transition" title="Tout décocher">Aucun</button>
-            </div>
-          </div>
+          <h2 class="text-base sm:text-lg font-semibold text-gray-200">Répartition des actifs dans le temps</h2>
           <div class="flex flex-wrap items-center gap-2">
             <div class="flex items-center gap-1 px-2 py-1 rounded bg-red-500/8 border border-red-500/25">
               <svg class="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
@@ -618,6 +612,10 @@ export function render(store) {
               <span class="text-[10px] text-gray-500">€</span>
             </div>
           </div>
+        </div>
+        <div class="flex justify-end gap-1 mb-1">
+          <button id="chart-legend-all" class="px-2 py-0.5 text-[10px] font-medium rounded bg-dark-600 text-gray-400 hover:text-gray-200 hover:bg-dark-500 transition" title="Tout cocher">Tout</button>
+          <button id="chart-legend-none" class="px-2 py-0.5 text-[10px] font-medium rounded bg-dark-600 text-gray-400 hover:text-gray-200 hover:bg-dark-500 transition" title="Tout décocher">Aucun</button>
         </div>
         <div class="relative">
           <div id="chart-slide-0" class="h-64 sm:h-80">
