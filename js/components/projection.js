@@ -1,7 +1,7 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=9';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=7';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260330b';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260330c';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -35,7 +35,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260330b';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260330c';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -281,28 +281,30 @@ export function render(store) {
               })()}
           </div>
 
-          <!-- Row 2a: Livrets d'épargne -->
+          <!-- Row 2+3: Livrets, Overflow, Transferts, Héritage — compact grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+
+          <!-- Livrets d'épargne -->
           ${(() => {
             const epargne = store.get('actifs.epargne') || [];
             if (epargne.length === 0) return '';
             const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
             return `
           <div class="rounded-lg border border-sky-400/20 overflow-hidden">
-            <div class="flex items-center gap-2 px-3 py-2 bg-sky-400/5 border-b border-sky-400/15">
-              <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-              <span class="text-xs font-semibold text-sky-300 uppercase tracking-wide">Livrets d'épargne</span>
-              <span class="text-xs font-bold text-sky-300 ml-auto">${formatCurrency(totalEpargne)}</span>
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-sky-400/5 border-b border-sky-400/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+              <span class="text-[10px] font-semibold text-sky-300 uppercase tracking-wide">Épargne</span>
+              <span class="text-[10px] font-bold text-sky-300 ml-auto">${formatCurrency(totalEpargne)}</span>
             </div>
           </div>`;
           })()}
 
-          <!-- Row 2b: PEA overflow redirection -->
+          <!-- PEA overflow -->
           ${(() => {
             const peaPlacements = placements.filter(p => {
               const env = (p.enveloppe || p.type || '').toUpperCase();
               return env.startsWith('PEA') && env !== 'PEE';
             });
-            // Consider both base dcaMensuel and dcaOverrides to detect future DCA
             const peaDCA = peaPlacements.reduce((s, p) => {
               const base = Number(p.dcaMensuel) || 0;
               const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
@@ -314,13 +316,11 @@ export function render(store) {
             const peaRestant = Math.max(0, 150000 - peaApports);
             const moisRestant = peaDCA > 0 ? Math.ceil(peaRestant / peaDCA) : 0;
 
-            // Compute average CTO rendement from configured placements
             const ctoPlacs = placements.filter(p => (p.enveloppe || '').toUpperCase() === 'CTO');
             const avgCTORend = ctoPlacs.length > 0
               ? ctoPlacs.reduce((s, p) => s + (rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05)), 0) / ctoPlacs.length
               : 0.05;
 
-            // Category options for overflow targets
             const overflowCategories = [
               { value: 'cto', label: 'CTO (tous)' },
               { value: 'cto_tr', label: 'CTO TR' },
@@ -329,58 +329,44 @@ export function render(store) {
               { value: 'bitcoin', label: 'Bitcoin' },
               { value: 'epargne', label: 'Épargne' },
               { value: 'donation', label: 'Donation' },
-              { value: 'epargne', label: 'Épargne' },
             ];
 
-            // Current overflow targets from params
             const overflowTargets = params.peaOverflowTargets || [];
-            // If no targets configured, default to empty (will show CTO default)
             const hasTargets = overflowTargets.length > 0;
             const totalPct = overflowTargets.reduce((s, t) => s + (Number(t.pct) || 0), 0);
 
             return `
           <div class="rounded-lg border border-amber-400/20 overflow-hidden">
-            <div class="flex flex-wrap items-center gap-2 px-3 py-2 bg-amber-400/5 border-b border-amber-400/15">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-              <span class="text-xs font-semibold text-amber-300 uppercase tracking-wide">Quand le PEA est plein</span>
-              <span class="text-[10px] text-gray-500 hidden sm:inline">→ rediriger ${formatCurrency(peaDCA)}/mois vers :</span>
-              <span class="text-[10px] ${peaRestant <= 0 ? 'text-accent-red' : 'text-gray-600'} ml-auto">${peaRestant <= 0 ? 'PEA déjà plein' : `Plein dans ~${moisRestant} mois`} (versé : ${formatCurrency(peaApports)} / 150 000 €)</span>
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-amber-400/5 border-b border-amber-400/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span class="text-[10px] font-semibold text-amber-300 uppercase tracking-wide">PEA plein</span>
+              <span class="text-[10px] text-gray-600 ml-auto">${peaRestant <= 0 ? 'Déjà plein' : `~${moisRestant} mois`}</span>
             </div>
-            <div class="px-3 py-2 space-y-1.5" id="pea-overflow-targets">
-              ${hasTargets ? overflowTargets.map((t, idx) => {
-                const catLabel = overflowCategories.find(c => c.value === t.category)?.label || t.category;
-                return `
-              <div class="flex items-center gap-2 text-sm overflow-target-row" data-idx="${idx}">
-                <select class="overflow-target-select input-field flex-1">
+            <div class="px-2 py-1.5 space-y-1" id="pea-overflow-targets">
+              ${hasTargets ? overflowTargets.map((t, idx) => `
+              <div class="flex items-center gap-1 text-[11px] overflow-target-row" data-idx="${idx}">
+                <select class="overflow-target-select input-field flex-1 text-[11px] py-0.5">
                   ${overflowCategories.map(c => `<option value="${c.value}" ${c.value === t.category ? 'selected' : ''}>${c.label}</option>`).join('')}
                 </select>
-                <input type="number" class="overflow-target-pct input-field w-16 text-center" value="${t.pct || 100}" min="1" max="100" step="1">
-                <span class="text-[10px] text-gray-500">%</span>
-                <span class="text-[10px] text-gray-600">${formatCurrency(peaDCA * (t.pct || 100) / 100)}/m</span>
-                <button class="overflow-target-delete btn-delete" data-idx="${idx}">✕</button>
-              </div>`;
-              }).join('') : `
-              <div class="flex items-center gap-2 text-sm text-gray-500">
-                <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>Par défaut : tout bascule vers le CTO (${(avgCTORend * 100).toFixed(1)}%/an)</span>
-              </div>
-              `}
-              ${totalPct < 100 && hasTargets ? `<p class="text-[10px] text-accent-amber">Attention : ${totalPct}% alloué — les ${100 - totalPct}% restants iront vers le CTO</p>` : ''}
+                <input type="number" class="overflow-target-pct input-field w-12 text-center text-[11px] py-0.5" value="${t.pct || 100}" min="1" max="100" step="1">
+                <span class="text-[9px] text-gray-600">%</span>
+                <button class="overflow-target-delete btn-delete text-[9px]" data-idx="${idx}">✕</button>
+              </div>`).join('') : `
+              <div class="text-[10px] text-gray-500">→ CTO (${(avgCTORend * 100).toFixed(1)}%/an)</div>`}
+              ${totalPct < 100 && hasTargets ? `<p class="text-[9px] text-amber-400">${totalPct}% alloué</p>` : ''}
             </div>
-            <button id="btn-add-overflow-target" class="px-3 py-1.5 text-[11px] text-amber-400 hover:text-amber-300 transition flex items-center gap-1">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-              Ajouter une cible
+            <button id="btn-add-overflow-target" class="px-2 py-1 text-[10px] text-amber-400 hover:text-amber-300 transition flex items-center gap-0.5">
+              <span>+ Cible</span>
             </button>
           </div>`;
           })()}
 
-          <!-- Row 2c: AV overflow redirection -->
+          <!-- AV overflow -->
           ${(() => {
             const avPlacements = placements.filter(p => {
               const env = (p.enveloppe || p.type || '').toUpperCase();
               return env === 'AV';
             });
-            // Consider both base dcaMensuel and dcaOverrides to detect future DCA
             const avDCA = avPlacements.reduce((s, p) => {
               const base = Number(p.dcaMensuel) || 0;
               const maxOverride = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
@@ -392,13 +378,11 @@ export function render(store) {
             const avRestant = Math.max(0, 300000 - avApports);
             const moisRestantAV = avDCA > 0 ? Math.ceil(avRestant / avDCA) : 0;
 
-            // Compute average CTO rendement from configured placements
             const ctoPlacs = placements.filter(p => (p.enveloppe || '').toUpperCase() === 'CTO');
             const avgCTORendAV = ctoPlacs.length > 0
               ? ctoPlacs.reduce((s, p) => s + (rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05)), 0) / ctoPlacs.length
               : 0.05;
 
-            // Category options for AV overflow targets
             const avOverflowCategories = [
               { value: 'cto', label: 'CTO (tous)' },
               { value: 'cto_tr', label: 'CTO TR' },
@@ -414,101 +398,82 @@ export function render(store) {
 
             return `
           <div class="rounded-lg border border-cyan-400/20 overflow-hidden">
-            <div class="flex flex-wrap items-center gap-2 px-3 py-2 bg-cyan-400/5 border-b border-cyan-400/15">
-              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-              <span class="text-xs font-semibold text-cyan-300 uppercase tracking-wide">Quand l'Assurance Vie est pleine</span>
-              <span class="text-[10px] text-gray-500 hidden sm:inline">→ rediriger ${formatCurrency(avDCA)}/mois vers :</span>
-              <span class="text-[10px] ${avRestant <= 0 ? 'text-accent-red' : 'text-gray-600'} ml-auto">${avRestant <= 0 ? 'AV déjà pleine' : `Pleine dans ~${moisRestantAV} mois`} (versé : ${formatCurrency(avApports)} / 300 000 €)</span>
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-cyan-400/5 border-b border-cyan-400/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span class="text-[10px] font-semibold text-cyan-300 uppercase tracking-wide">AV pleine</span>
+              <span class="text-[10px] text-gray-600 ml-auto">${avRestant <= 0 ? 'Déjà pleine' : `~${moisRestantAV} mois`}</span>
             </div>
-            <div class="px-3 py-2 space-y-1.5" id="av-overflow-targets">
-              ${hasAVTargets ? avOverflowTargets.map((t, idx) => {
-                const catLabel = avOverflowCategories.find(c => c.value === t.category)?.label || t.category;
-                return `
-              <div class="flex items-center gap-2 text-sm av-overflow-target-row" data-idx="${idx}">
-                <select class="av-overflow-target-select input-field flex-1">
+            <div class="px-2 py-1.5 space-y-1" id="av-overflow-targets">
+              ${hasAVTargets ? avOverflowTargets.map((t, idx) => `
+              <div class="flex items-center gap-1 text-[11px] av-overflow-target-row" data-idx="${idx}">
+                <select class="av-overflow-target-select input-field flex-1 text-[11px] py-0.5">
                   ${avOverflowCategories.map(c => `<option value="${c.value}" ${c.value === t.category ? 'selected' : ''}>${c.label}</option>`).join('')}
                 </select>
-                <input type="number" class="av-overflow-target-pct input-field w-16 text-center" value="${t.pct || 100}" min="1" max="100" step="1">
-                <span class="text-[10px] text-gray-500">%</span>
-                <span class="text-[10px] text-gray-600">${formatCurrency(avDCA * (t.pct || 100) / 100)}/m</span>
-                <button class="av-overflow-target-delete btn-delete" data-idx="${idx}">✕</button>
-              </div>`;
-              }).join('') : `
-              <div class="flex items-center gap-2 text-sm text-gray-500">
-                <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>Par défaut : tout bascule vers le CTO (${(avgCTORendAV * 100).toFixed(1)}%/an)</span>
-              </div>
-              `}
-              ${totalAVPct < 100 && hasAVTargets ? `<p class="text-[10px] text-cyan-400">Attention : ${totalAVPct}% alloué — les ${100 - totalAVPct}% restants iront vers le CTO</p>` : ''}
+                <input type="number" class="av-overflow-target-pct input-field w-12 text-center text-[11px] py-0.5" value="${t.pct || 100}" min="1" max="100" step="1">
+                <span class="text-[9px] text-gray-600">%</span>
+                <button class="av-overflow-target-delete btn-delete text-[9px]" data-idx="${idx}">✕</button>
+              </div>`).join('') : `
+              <div class="text-[10px] text-gray-500">→ CTO (${(avgCTORendAV * 100).toFixed(1)}%/an)</div>`}
+              ${totalAVPct < 100 && hasAVTargets ? `<p class="text-[9px] text-cyan-400">${totalAVPct}% alloué</p>` : ''}
             </div>
-            <button id="btn-add-av-overflow-target" class="px-3 py-1.5 text-[11px] text-cyan-400 hover:text-cyan-300 transition flex items-center gap-1">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-              Ajouter une cible
+            <button id="btn-add-av-overflow-target" class="px-2 py-1 text-[10px] text-cyan-400 hover:text-cyan-300 transition flex items-center gap-0.5">
+              <span>+ Cible</span>
             </button>
           </div>`;
           })()}
 
-          <!-- Row 3: Capital Transfers + Heritage side by side -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <!-- Capital Transfers -->
-            <div class="rounded-lg border border-purple-400/20 overflow-hidden">
-              <div class="flex items-center gap-2 px-3 py-2 bg-purple-400/5 border-b border-purple-400/15">
-                <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-                <span class="text-xs font-semibold text-purple-300 uppercase tracking-wide">Transferts</span>
-                <span class="text-[10px] text-gray-600">${capitalTransfers.length} planifié${capitalTransfers.length > 1 ? 's' : ''}</span>
-                <button id="proj-add-transfer" class="ml-auto w-6 h-6 flex items-center justify-center rounded-md bg-purple-500/20 text-purple-400 hover:bg-purple-500/35 transition text-sm font-bold" title="Ajouter un transfert">+</button>
-              </div>
-              <div class="divide-y divide-dark-400/10">
-                ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
-                  const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_epargne__': 'Epargne', 'surplus': 'Surplus', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
-                  const destPlacement = placements.find(p => p.id === t.destinationId);
-                  const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
-                  const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'Assurance Vie', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'surplus': 'Surplus', 'heritage': 'Héritage', '__donation__': 'Donation' };
-                  const sourceLabel = catSrcNames[t.source] || t.source;
-                  const sourceBg = t.source === 'heritage' ? 'bg-amber-400/10 text-amber-400' : t.source === 'epargne' ? 'bg-cyan-400/10 text-cyan-400' : 'bg-purple-500/10 text-purple-300';
-                  const freqLabels = { annual: '/an', monthly: '/mois', once: '×1' };
-                  const freqLabel = freqLabels[t.frequency] || '×1';
-                  return `<div class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
-                    <svg class="w-2.5 h-2.5 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                    <span class="text-[9px] px-1 py-0.5 rounded-full ${sourceBg}">${sourceLabel}</span>
-                    <span class="text-gray-500 text-[9px]">→</span>
-                    <span class="text-xs text-gray-200 font-medium truncate max-w-[6rem]">${destName}</span>
-                    <span class="text-[9px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
-                    <span class="text-[10px] text-gray-500 ml-auto">${t.startYear}</span>
-                    ${t.endYear ? `<span class="text-[10px] text-gray-600">→${t.endYear}</span>` : ''}
-                    <button class="proj-del-transfer btn-delete" data-id="${t.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
-                  </div>`;
-                }).join('') : '<p class="text-center text-gray-600 text-xs py-3">Aucun transfert planifié</p>'}
-              </div>
+          <!-- Transferts -->
+          <div class="rounded-lg border border-purple-400/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-purple-400/5 border-b border-purple-400/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+              <span class="text-[10px] font-semibold text-purple-300 uppercase tracking-wide">Transferts</span>
+              <span class="text-[10px] text-gray-600">${capitalTransfers.length}</span>
+              <button id="proj-add-transfer" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/35 transition text-xs font-bold" title="Ajouter un transfert">+</button>
             </div>
-
-            <!-- Heritage -->
-            <div class="rounded-lg border border-amber-400/20 overflow-hidden">
-              <div class="flex items-center gap-2 px-3 py-2 bg-amber-400/5 border-b border-amber-400/15">
-                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span class="text-xs font-semibold text-amber-300 uppercase tracking-wide">Héritage</span>
-                <span class="text-[10px] text-gray-600">${heritageItems.length} prévu${heritageItems.length > 1 ? 's' : ''}</span>
-                <button id="proj-add-heritage" class="ml-auto w-6 h-6 flex items-center justify-center rounded-md bg-amber-400/20 text-amber-400 hover:bg-amber-400/35 transition text-sm font-bold" title="Ajouter un héritage">+</button>
-              </div>
-              <div class="divide-y divide-dark-400/10">
-                ${heritageItems.length > 0 ? heritageItems.map(h => {
-                  const isImmo = h.type === 'Immobilier';
-                  const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
-                  return `<div class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
-                    <svg class="w-2.5 h-2.5 shrink-0 ${isImmo ? 'text-accent-green' : 'text-amber-400'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      ${isImmo
-                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/>'
-                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>'}
-                    </svg>
-                    <span class="text-xs text-gray-200 truncate max-w-[7rem] font-medium" title="${h.nom}">${h.nom}</span>
-                    <span class="text-[9px] text-gray-600">${formatCurrency(h.montant)}</span>
-                    <span class="text-[10px] text-gray-500 ml-auto">${yearLabel}</span>
-                    <button class="proj-del-heritage btn-delete" data-id="${h.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
-                  </div>`;
-                }).join('') : '<p class="text-center text-gray-600 text-xs py-3">Aucun héritage</p>'}
-              </div>
+            <div class="divide-y divide-dark-400/10">
+              ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
+                const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'AV', '__cat_epargne__': 'Epargne', 'surplus': 'Surplus', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
+                const destPlacement = placements.find(p => p.id === t.destinationId);
+                const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
+                const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'AV', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'surplus': 'Surplus', 'heritage': 'Héritage', '__donation__': 'Donation' };
+                const sourceLabel = catSrcNames[t.source] || t.source;
+                const sourceBg = t.source === 'heritage' ? 'bg-amber-400/10 text-amber-400' : t.source === 'epargne' ? 'bg-cyan-400/10 text-cyan-400' : 'bg-purple-500/10 text-purple-300';
+                const freqLabels = { annual: '/an', monthly: '/m', once: '×1' };
+                const freqLabel = freqLabels[t.frequency] || '×1';
+                return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
+                  <span class="text-[8px] px-1 py-0.5 rounded-full ${sourceBg}">${sourceLabel}</span>
+                  <span class="text-gray-600 text-[8px]">→</span>
+                  <span class="text-[10px] text-gray-200 font-medium truncate flex-1 min-w-0">${destName}</span>
+                  <span class="text-[8px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
+                  <span class="text-[9px] text-gray-500">${t.startYear}</span>
+                  <button class="proj-del-transfer btn-delete text-[9px]" data-id="${t.id}" onclick="event.stopPropagation()">✕</button>
+                </div>`;
+              }).join('') : '<p class="text-center text-gray-600 text-[10px] py-2">Aucun</p>'}
             </div>
           </div>
+
+          <!-- Héritage -->
+          <div class="rounded-lg border border-amber-400/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-amber-400/5 border-b border-amber-400/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span class="text-[10px] font-semibold text-amber-300 uppercase tracking-wide">Héritage</span>
+              <span class="text-[10px] text-gray-600">${heritageItems.length}</span>
+              <button id="proj-add-heritage" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/35 transition text-xs font-bold" title="Ajouter un héritage">+</button>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${heritageItems.length > 0 ? heritageItems.map(h => {
+                const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
+                return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
+                  <span class="text-[10px] text-gray-200 truncate flex-1 min-w-0 font-medium" title="${h.nom}">${h.nom}</span>
+                  <span class="text-[8px] text-gray-600">${formatCurrency(h.montant)}</span>
+                  <span class="text-[9px] text-gray-500">${yearLabel}</span>
+                  <button class="proj-del-heritage btn-delete text-[9px]" data-id="${h.id}" onclick="event.stopPropagation()">✕</button>
+                </div>`;
+              }).join('') : '<p class="text-center text-gray-600 text-[10px] py-2">Aucun</p>'}
+            </div>
+          </div>
+
+          </div><!-- end grid -->
 
           <!-- Actions -->
           <div class="flex flex-wrap justify-end">
