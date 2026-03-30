@@ -113,7 +113,6 @@ const navItems = [
 
 let appStarted = false;
 let _currentHash = '';
-let _skipLeavePrompt = false;
 const SIMULATOR_PAGES = new Set([
   'simulateur-fire', 'simulateur-credit', 'simulateur-interets',
   'simulateur-auto', 'simulateur-salaire', 'simulateur-succession'
@@ -232,9 +231,8 @@ function navigate(page) {
   const current = window.location.hash.slice(1);
 
   // Show save prompt when leaving a simulator page
-  if (!_skipLeavePrompt && SIMULATOR_PAGES.has(current) && page !== current) {
+  if (SIMULATOR_PAGES.has(current) && page !== current) {
     showSimLeaveModal(current, () => {
-      _skipLeavePrompt = true;
       if (page && page === current) renderPage();
       else window.location.hash = page;
     });
@@ -251,7 +249,6 @@ function navigate(page) {
 
 function renderPage() {
   destroyAllCharts();
-  _skipLeavePrompt = false;
 
   let hash = window.location.hash.slice(1) || 'revenus-depenses';
   _currentHash = hash;
@@ -977,17 +974,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('hashchange', () => {
-  if (!appStarted) return;
-  const newHash = window.location.hash.slice(1);
-  // If navigating away from a simulator via browser back/forward, show prompt
-  if (!_skipLeavePrompt && SIMULATOR_PAGES.has(_currentHash) && newHash !== _currentHash) {
-    // Restore the old hash silently, then show modal
-    history.replaceState(null, '', '#' + _currentHash);
-    showSimLeaveModal(_currentHash, () => {
-      _skipLeavePrompt = true;
-      window.location.hash = newHash;
-    });
-    return;
-  }
-  renderPage();
+  if (appStarted) renderPage();
 });
