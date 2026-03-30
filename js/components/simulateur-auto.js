@@ -354,7 +354,34 @@ function prosConsCard(title, color, pros, cons) {
 
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
-export function mount() {
+let _store = null;
+
+function saveState() {
+  if (!_store) return;
+  const data = {};
+  FIELD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  _store.set('simAuto', data);
+}
+
+function restoreState() {
+  if (!_store) return;
+  const data = _store.get('simAuto');
+  if (!data) return;
+  FIELD_IDS.forEach(id => {
+    const val = data[id];
+    if (val === undefined) return;
+    const input = document.getElementById(id);
+    const range = document.getElementById(id + '-range');
+    if (input) { input.value = val; if (range) range.value = val; }
+  });
+}
+
+export function mount(store) {
+  _store = store || null;
+
   FIELD_IDS.forEach(id => {
     const input = document.getElementById(id);
     const range = document.getElementById(id + '-range');
@@ -369,6 +396,7 @@ export function mount() {
   });
 
   refreshSaveBar();
+  restoreState();
   recalculate();
 }
 
@@ -416,6 +444,7 @@ function recalculate() {
   renderCompare(r);
   renderDetailTable(r, inputs);
   renderChart(r);
+  saveState();
 }
 
 // ─── Winner ──────────────────────────────────────────────────────────────────

@@ -227,7 +227,11 @@ export function render() {
 
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
-export function mount() {
+let _store = null;
+
+export function mount(store) {
+  _store = store || null;
+
   const brutH = document.getElementById('sal-brut-h');
   const brutM = document.getElementById('sal-brut-m');
   const brutA = document.getElementById('sal-brut-a');
@@ -330,6 +334,42 @@ export function mount() {
         <td class="text-right py-2 px-3 text-accent-green font-bold">${r.netApresIR_annuel > 0 ? fmt(r.netApresIR_annuel) + ' \u20ac' : '–'}</td>
       </tr>` : ''}
     `;
+
+    // Save state after recalculate
+    if (_store) {
+      const data = {
+        'sal-brut-h': brutH.value,
+        'sal-brut-m': brutM.value,
+        'sal-brut-a': brutA.value,
+        'sal-tp': tpRange.value,
+        'sal-pas': pasRange.value,
+        'sal-statut': document.querySelector('input[name="sal-statut"]:checked')?.value || 'non-cadre',
+        'sal-mois': document.querySelector('input[name="sal-mois"]:checked')?.value || '12',
+        'lastEdited': lastEdited,
+      };
+      _store.set('simSalaire', data);
+    }
+  }
+
+  // Restore state
+  function restoreState() {
+    if (!_store) return;
+    const data = _store.get('simSalaire');
+    if (!data) return;
+    if (data['sal-brut-h'] !== undefined) brutH.value = data['sal-brut-h'];
+    if (data['sal-brut-m'] !== undefined) brutM.value = data['sal-brut-m'];
+    if (data['sal-brut-a'] !== undefined) brutA.value = data['sal-brut-a'];
+    if (data['sal-tp'] !== undefined) tpRange.value = data['sal-tp'];
+    if (data['sal-pas'] !== undefined) pasRange.value = data['sal-pas'];
+    if (data['sal-statut']) {
+      const radio = document.querySelector(`input[name="sal-statut"][value="${data['sal-statut']}"]`);
+      if (radio) radio.checked = true;
+    }
+    if (data['sal-mois']) {
+      const radio = document.querySelector(`input[name="sal-mois"][value="${data['sal-mois']}"]`);
+      if (radio) radio.checked = true;
+    }
+    if (data['lastEdited']) lastEdited = data['lastEdited'];
   }
 
   // Brut field listeners
@@ -356,5 +396,6 @@ export function mount() {
     recalculate();
   });
 
+  restoreState();
   recalculate();
 }

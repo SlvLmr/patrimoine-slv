@@ -592,7 +592,50 @@ export function render() {
 
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
-export function mount() {
+let _store = null;
+
+const CHECK_IDS = ['succ-couple', 'succ-leverDonationCash', 'succ-leverTEPA', 'succ-leverDemembrement',
+  'succ-leverAV', 'succ-leverCouple', 'succ-leverGrandchildren', 'succ-leverDonationCTO', 'succ-lever2eCycle'];
+
+function saveState() {
+  if (!_store) return;
+  const data = {};
+  FIELD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  CHECK_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.checked;
+  });
+  _store.set('simSuccession', data);
+}
+
+function restoreState() {
+  if (!_store) return;
+  const data = _store.get('simSuccession');
+  if (!data) return;
+  FIELD_IDS.forEach(id => {
+    const val = data[id];
+    if (val === undefined) return;
+    const input = document.getElementById(id);
+    const range = document.getElementById(id + '-range');
+    if (input) { input.value = val; if (range) range.value = val; }
+  });
+  CHECK_IDS.forEach(id => {
+    const val = data[id];
+    if (val === undefined) return;
+    const el = document.getElementById(id);
+    if (el) el.checked = val;
+  });
+  // Sync age2 visibility
+  const wrap = document.getElementById('succ-age2-wrap');
+  if (wrap) wrap.style.display = document.getElementById('succ-couple')?.checked ? '' : 'none';
+}
+
+export function mount(store) {
+  _store = store || null;
+
   FIELD_IDS.forEach(id => {
     const input = document.getElementById(id);
     const range = document.getElementById(id + '-range');
@@ -602,9 +645,7 @@ export function mount() {
   });
 
   // Checkboxes
-  const checkIds = ['succ-couple', 'succ-leverDonationCash', 'succ-leverTEPA', 'succ-leverDemembrement',
-    'succ-leverAV', 'succ-leverCouple', 'succ-leverGrandchildren', 'succ-leverDonationCTO', 'succ-lever2eCycle'];
-  checkIds.forEach(id => {
+  CHECK_IDS.forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => {
       // Toggle age2 visibility
       const wrap = document.getElementById('succ-age2-wrap');
@@ -624,6 +665,7 @@ export function mount() {
   });
 
   refreshSaveBar();
+  restoreState();
   recalculate();
 }
 
@@ -659,6 +701,7 @@ function recalculate() {
   renderWaterfall(r);
   renderTips(r, inputs);
   renderReserve(r);
+  saveState();
 }
 
 // ─── Hero Cards ──────────────────────────────────────────────────────────────

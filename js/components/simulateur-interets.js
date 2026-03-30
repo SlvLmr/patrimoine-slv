@@ -266,7 +266,39 @@ export function render() {
 
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
-export function mount() {
+let _store = null;
+
+function saveState() {
+  if (!_store) return;
+  const data = {};
+  FIELD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  const freqEl = document.getElementById('ic-frequence');
+  if (freqEl) data['ic-frequence'] = freqEl.value;
+  _store.set('simInterets', data);
+}
+
+function restoreState() {
+  if (!_store) return;
+  const data = _store.get('simInterets');
+  if (!data) return;
+  FIELD_IDS.forEach(id => {
+    const val = data[id];
+    if (val === undefined) return;
+    const input = document.getElementById(id);
+    const range = document.getElementById(id + '-range');
+    if (input) { input.value = val; if (range) range.value = val; }
+  });
+  const freqVal = data['ic-frequence'];
+  const freqEl = document.getElementById('ic-frequence');
+  if (freqEl && freqVal !== undefined) freqEl.value = freqVal;
+}
+
+export function mount(store) {
+  _store = store || null;
+
   FIELD_IDS.forEach(id => {
     const input = document.getElementById(id);
     const range = document.getElementById(id + '-range');
@@ -284,6 +316,7 @@ export function mount() {
   });
 
   refreshSaveBar();
+  restoreState();
   recalculate();
 }
 
@@ -332,6 +365,7 @@ function recalculate() {
   renderResults(result);
   renderChart(result);
   renderTable(result);
+  saveState();
 }
 
 // ─── Results ─────────────────────────────────────────────────────────────────

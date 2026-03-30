@@ -399,7 +399,34 @@ function fireInput(id, label, defaultVal, unit, min, max, step) {
 
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
-export function mount() {
+let _store = null;
+
+function saveState() {
+  if (!_store) return;
+  const data = {};
+  FIELD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  _store.set('simFire', data);
+}
+
+function restoreState() {
+  if (!_store) return;
+  const data = _store.get('simFire');
+  if (!data) return;
+  FIELD_IDS.forEach(id => {
+    const val = data[id];
+    if (val === undefined) return;
+    const input = document.getElementById(id);
+    const range = document.getElementById(id + '-range');
+    if (input) { input.value = val; if (range) range.value = val; }
+  });
+}
+
+export function mount(store) {
+  _store = store || null;
+
   // Sync range <-> input for all fields
   FIELD_IDS.forEach(id => {
     const input = document.getElementById(id);
@@ -427,6 +454,7 @@ export function mount() {
 
   // Render save bar content & initial calculation
   refreshSaveBar();
+  restoreState();
   recalculate();
 }
 
@@ -489,6 +517,7 @@ function recalculate() {
   renderResults(result);
   renderChart(result);
   renderTable(result);
+  saveState();
 }
 
 // ─── Render Results Cards ────────────────────────────────────────────────────

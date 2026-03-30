@@ -379,7 +379,33 @@ let currentView = 'annuel'; // 'annuel' | 'mensuel'
 let currentTab = 'amort';   // 'amort' | 'repartition'
 let lastResult = null;
 
-export function mount() {
+let _store = null;
+
+function saveState() {
+  if (!_store) return;
+  const data = {};
+  FIELD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  _store.set('simCredit', data);
+}
+
+function restoreState() {
+  if (!_store) return;
+  const data = _store.get('simCredit');
+  if (!data) return;
+  FIELD_IDS.forEach(id => {
+    const val = data[id];
+    if (val === undefined) return;
+    const input = document.getElementById(id);
+    const range = document.getElementById(id + '-range');
+    if (input) { input.value = val; if (range) range.value = val; }
+  });
+}
+
+export function mount(store) {
+  _store = store || null;
   currentView = 'annuel';
   currentTab = 'amort';
 
@@ -416,6 +442,7 @@ export function mount() {
   });
 
   refreshSaveBar();
+  restoreState();
   recalculate();
 }
 
@@ -523,6 +550,7 @@ function recalculate() {
   if (currentTab === 'amort') renderStackedChart(result);
   else renderPieChart(result);
   renderTable(result);
+  saveState();
 }
 
 // ─── Results Cards ───────────────────────────────────────────────────────────
