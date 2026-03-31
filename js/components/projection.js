@@ -1112,53 +1112,59 @@ export function render(store) {
 
             const depletedYear = simRows.find(r => r.depleted);
 
-            return \`
-          <div class="mt-2">
-            <h3 class="text-sm font-semibold text-orange-400/80 mb-2 flex items-center gap-2">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              Simulation de décumulation
-            </h3>
-            <p class="text-[10px] text-gray-600 mb-1">Départ \${fireSnap ? 'FIRE' : 'souhaité'} à \${startSnap.age} ans (\${startSnap.calendarYear}) → 85 ans. CTO BB exclu (réservé donation). Enveloppes non consommées continuent de croître.</p>
-            \${depletedYear ? \`<p class="text-[10px] text-red-400 font-medium mb-2">⚠ Patrimoine épuisé à \${depletedYear.age} ans (\${depletedYear.calYear})</p>\` : \`<p class="text-[10px] text-accent-green font-medium mb-2">✓ Patrimoine suffisant jusqu'à 85 ans — solde final : \${formatCurrency(simRows[simRows.length-1].totalPatrimoine)}</p>\`}
-            <div class="overflow-x-auto">
-              <table class="w-full text-[9px] min-w-[700px]">
-                <thead class="bg-dark-800/50 text-gray-500 text-[8px] uppercase tracking-wider">
-                  <tr>
-                    <th class="px-1.5 py-1.5 text-center">Année</th>
-                    <th class="px-1.5 py-1.5 text-center">Âge</th>
-                    <th class="px-1.5 py-1.5 text-right">Dépenses</th>
-                    <th class="px-1.5 py-1.5 text-right">Pension</th>
-                    <th class="px-1.5 py-1.5 text-right border-r border-dark-300/40">Besoin net</th>
-                    \${visibleKeys.map(k => \`<th class="px-1.5 py-1.5 text-right \${reservedKeys.includes(k) ? 'text-pink-400/60' : ''}">\${k}</th>\`).join('')}
-                    <th class="px-1.5 py-1.5 text-right border-l border-dark-300/40 font-semibold">Total</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-dark-400/20">
-                  \${simRows.map((r, i) => {
-                    const isPension = r.age >= fireAgeLegal;
-                    const isDepleted = r.depleted;
-                    const isFiveYear = i > 0 && i % 5 === 0;
-                    const rowCls = isDepleted ? 'bg-red-500/10' : isPension && i === simRows.findIndex(x => x.age >= fireAgeLegal) ? 'bg-amber-500/5' : '';
-                    const bt = isFiveYear ? 'border-t border-dark-300/30' : '';
-                    return \`<tr class="hover:bg-dark-600/30 transition \${rowCls}">
-                      <td class="px-1.5 py-1 text-center text-gray-400 \${bt}">\${r.calYear}</td>
-                      <td class="px-1.5 py-1 text-center font-medium \${bt} \${isPension && r.age === fireAgeLegal ? 'text-amber-400' : 'text-gray-200'}">\${r.age}</td>
-                      <td class="px-1.5 py-1 text-right text-gray-400 \${bt}">\${formatCurrency(r.depenses)}</td>
-                      <td class="px-1.5 py-1 text-right \${bt} \${r.pension > 0 ? 'text-amber-400/80' : 'text-gray-700'}">\${r.pension > 0 ? formatCurrency(r.pension) : '—'}</td>
-                      <td class="px-1.5 py-1 text-right font-medium text-gray-300 border-r border-dark-300/40 \${bt}">\${formatCurrency(r.besoinNet)}</td>
-                      \${visibleKeys.map(k => {
-                        const bal = r.balances[k] || 0;
-                        const w = r.withdrawals[k] || 0;
-                        const isReserved = reservedKeys.includes(k);
-                        return \`<td class="px-1.5 py-1 text-right \${bt} \${isReserved ? 'text-pink-300/50' : bal > 0 ? 'text-gray-300' : 'text-gray-700'}">\${bal > 0 || w > 0 ? formatCurrency(bal) : '—'}\${w > 0 ? \`<div class="text-[7px] text-red-400/70">-\${formatCurrency(w)}</div>\` : ''}</td>\`;
-                      }).join('')}
-                      <td class="px-1.5 py-1 text-right font-semibold border-l border-dark-300/40 \${bt} \${isDepleted ? 'text-red-400' : 'text-accent-green'}">\${formatCurrency(r.totalPatrimoine)}</td>
-                    </tr>\`;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>\`;
+            // Build HTML with string concatenation to avoid nested template literal issues
+            let simHtml = '<div class="mt-2">';
+            simHtml += '<h3 class="text-sm font-semibold text-orange-400/80 mb-2 flex items-center gap-2">';
+            simHtml += '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
+            simHtml += 'Simulation de décumulation</h3>';
+            simHtml += '<p class="text-[10px] text-gray-600 mb-1">Départ ' + (fireSnap ? 'FIRE' : 'souhaité') + ' à ' + startSnap.age + ' ans (' + startSnap.calendarYear + ') → 85 ans. CTO BB exclu (réservé donation). Enveloppes non consommées continuent de croître.</p>';
+            if (depletedYear) {
+              simHtml += '<p class="text-[10px] text-red-400 font-medium mb-2">⚠ Patrimoine épuisé à ' + depletedYear.age + ' ans (' + depletedYear.calYear + ')</p>';
+            } else {
+              simHtml += '<p class="text-[10px] text-accent-green font-medium mb-2">✓ Patrimoine suffisant jusqu\'à 85 ans — solde final : ' + formatCurrency(simRows[simRows.length-1].totalPatrimoine) + '</p>';
+            }
+            simHtml += '<div class="overflow-x-auto"><table class="w-full text-[9px] min-w-[700px]">';
+            simHtml += '<thead class="bg-dark-800/50 text-gray-500 text-[8px] uppercase tracking-wider"><tr>';
+            simHtml += '<th class="px-1.5 py-1.5 text-center">Année</th>';
+            simHtml += '<th class="px-1.5 py-1.5 text-center">Âge</th>';
+            simHtml += '<th class="px-1.5 py-1.5 text-right">Dépenses</th>';
+            simHtml += '<th class="px-1.5 py-1.5 text-right">Pension</th>';
+            simHtml += '<th class="px-1.5 py-1.5 text-right border-r border-dark-300/40">Besoin net</th>';
+            visibleKeys.forEach(k => {
+              simHtml += '<th class="px-1.5 py-1.5 text-right ' + (reservedKeys.includes(k) ? 'text-pink-400/60' : '') + '">' + k + '</th>';
+            });
+            simHtml += '<th class="px-1.5 py-1.5 text-right border-l border-dark-300/40 font-semibold">Total</th>';
+            simHtml += '</tr></thead><tbody class="divide-y divide-dark-400/20">';
+
+            const firstPensionIdx = simRows.findIndex(x => x.age >= fireAgeLegal);
+            simRows.forEach((r, i) => {
+              const isPension = r.age >= fireAgeLegal;
+              const isDepleted = r.depleted;
+              const isFiveYear = i > 0 && i % 5 === 0;
+              const rowCls = isDepleted ? 'bg-red-500/10' : (isPension && i === firstPensionIdx) ? 'bg-amber-500/5' : '';
+              const bt = isFiveYear ? 'border-t border-dark-300/30' : '';
+              simHtml += '<tr class="hover:bg-dark-600/30 transition ' + rowCls + '">';
+              simHtml += '<td class="px-1.5 py-1 text-center text-gray-400 ' + bt + '">' + r.calYear + '</td>';
+              simHtml += '<td class="px-1.5 py-1 text-center font-medium ' + bt + ' ' + (isPension && r.age === fireAgeLegal ? 'text-amber-400' : 'text-gray-200') + '">' + r.age + '</td>';
+              simHtml += '<td class="px-1.5 py-1 text-right text-gray-400 ' + bt + '">' + formatCurrency(r.depenses) + '</td>';
+              simHtml += '<td class="px-1.5 py-1 text-right ' + bt + ' ' + (r.pension > 0 ? 'text-amber-400/80' : 'text-gray-700') + '">' + (r.pension > 0 ? formatCurrency(r.pension) : '—') + '</td>';
+              simHtml += '<td class="px-1.5 py-1 text-right font-medium text-gray-300 border-r border-dark-300/40 ' + bt + '">' + formatCurrency(r.besoinNet) + '</td>';
+              visibleKeys.forEach(k => {
+                const bal = r.balances[k] || 0;
+                const w = r.withdrawals[k] || 0;
+                const isReserved = reservedKeys.includes(k);
+                const cls = isReserved ? 'text-pink-300/50' : bal > 0 ? 'text-gray-300' : 'text-gray-700';
+                simHtml += '<td class="px-1.5 py-1 text-right ' + bt + ' ' + cls + '">';
+                simHtml += (bal > 0 || w > 0) ? formatCurrency(bal) : '—';
+                if (w > 0) simHtml += '<div class="text-[7px] text-red-400/70">-' + formatCurrency(w) + '</div>';
+                simHtml += '</td>';
+              });
+              simHtml += '<td class="px-1.5 py-1 text-right font-semibold border-l border-dark-300/40 ' + bt + ' ' + (isDepleted ? 'text-red-400' : 'text-accent-green') + '">' + formatCurrency(r.totalPatrimoine) + '</td>';
+              simHtml += '</tr>';
+            });
+
+            simHtml += '</tbody></table></div></div>';
+            return simHtml;
           })()}
 
         </div>
