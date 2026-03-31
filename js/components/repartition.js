@@ -152,34 +152,35 @@ export function render(store) {
       </div>
 
       <!-- Detailed table -->
-      <div class="card-dark rounded-2xl p-5">
-        <div class="flex items-center justify-between mb-3">
+      <details class="card-dark rounded-2xl group">
+        <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
           <div class="flex items-center gap-2">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
             <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Détail par placement</h2>
             <span id="rep-table-year" class="text-sm text-gray-500 ml-1"></span>
+            <svg class="w-3.5 h-3.5 text-gray-600 transition-transform group-open:rotate-180 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </div>
-          <button id="rep-add-placement-bottom" class="flex items-center gap-1.5 px-3 py-1.5 bg-accent-green/15 text-accent-green rounded-lg hover:bg-accent-green/25 transition text-xs font-medium">
+          <button id="rep-add-placement-bottom" class="flex items-center gap-1.5 px-3 py-1.5 bg-accent-green/15 text-accent-green rounded-lg hover:bg-accent-green/25 transition text-xs font-medium" onclick="event.stopPropagation()">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
             Ajouter
           </button>
-        </div>
-        <div class="overflow-x-auto">
+        </summary>
+        <div class="px-5 pb-4 overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-gray-500 text-xs uppercase tracking-wider border-b border-dark-400/30">
-                <th class="text-left py-2 px-2">Placement</th>
-                <th class="text-left py-2 px-2">Enveloppe</th>
-                <th class="text-right py-2 px-2">DCA/mois</th>
-                <th class="text-right py-2 px-2">Valeur</th>
-                <th class="text-right py-2 px-2">% total</th>
-                <th class="py-2 px-1 w-16"></th>
+                <th class="text-left py-1 px-2">Placement</th>
+                <th class="text-left py-1 px-2">Enveloppe</th>
+                <th class="text-right py-1 px-2">DCA/mois</th>
+                <th class="text-right py-1 px-2">Valeur</th>
+                <th class="text-right py-1 px-2">% total</th>
+                <th class="py-1 px-1 w-16"></th>
               </tr>
             </thead>
             <tbody id="rep-table-body"></tbody>
           </table>
         </div>
-      </div>
+      </details>
     </div>
   `;
 }
@@ -944,21 +945,21 @@ export function mount(store, navigate) {
       const pct = totalPlacements > 0 ? (r.value / totalPlacements * 100).toFixed(1) : 0;
       return `
         <tr class="border-b border-dark-400/15 hover:bg-dark-700/30 transition group/row">
-          <td class="py-2 px-2">
+          <td class="py-0.5 px-2">
             <div class="flex items-center gap-2 cursor-pointer rep-table-edit" data-id="${r.id}">
               <div class="w-1.5 h-1.5 rounded-full" style="background: ${r.style.color}"></div>
               <span class="text-gray-200 font-medium hover:text-accent-blue transition">${r.nom}</span>
             </div>
           </td>
-          <td class="py-2 px-2">
+          <td class="py-0.5 px-2">
             <span class="text-[11px] px-2 py-0.5 rounded-full ${r.style.bg} ${r.style.text}">${r.gk}</span>
           </td>
-          <td class="py-1.5 px-2 text-right">
+          <td class="py-0.5 px-2 text-right">
             <input type="number" class="rep-table-dca input-field w-20 ${r.dca > 0 ? 'text-accent-amber' : 'text-gray-600'}"
               value="${r.dca}" min="0" step="10" data-dca-id="${r.id}">
           </td>
-          <td class="py-2 px-2 text-right text-gray-200 font-medium">${formatCurrency(r.value)}</td>
-          <td class="py-2 px-2 text-right">
+          <td class="py-0.5 px-2 text-right text-gray-200 font-medium">${formatCurrency(r.value)}</td>
+          <td class="py-0.5 px-2 text-right">
             <div class="flex items-center justify-end gap-1.5">
               <div class="w-16 h-1.5 bg-dark-600 rounded-full overflow-hidden">
                 <div class="h-full rounded-full" style="width: ${Math.min(pct, 100)}%; background: ${r.style.color}"></div>
@@ -966,7 +967,7 @@ export function mount(store, navigate) {
               <span class="text-[11px] text-gray-400 w-10 text-right">${pct}%</span>
             </div>
           </td>
-          <td class="py-2 px-1 text-right">
+          <td class="py-0.5 px-1 text-right">
             <div class="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition">
               <button class="rep-tbl-edit text-gray-500 hover:text-accent-blue transition" data-id="${r.id}" title="Modifier">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -984,10 +985,10 @@ export function mount(store, navigate) {
     const totalDCA = rows.reduce((s, r) => s + r.dca, 0);
     tbody.innerHTML += `
       <tr class="border-t border-dark-400/40">
-        <td class="py-2 px-2 text-gray-300 font-semibold" colspan="2">Total</td>
-        <td class="py-2 px-2 text-right text-accent-amber font-bold">${formatCurrency(totalDCA)}</td>
-        <td class="py-2 px-2 text-right text-gray-100 font-bold">${formatCurrency(totalPlacements)}</td>
-        <td class="py-2 px-2 text-right text-gray-400 text-[11px]">100%</td>
+        <td class="py-1 px-2 text-gray-300 font-semibold" colspan="2">Total</td>
+        <td class="py-1 px-2 text-right text-accent-amber font-bold">${formatCurrency(totalDCA)}</td>
+        <td class="py-1 px-2 text-right text-gray-100 font-bold">${formatCurrency(totalPlacements)}</td>
+        <td class="py-1 px-2 text-right text-gray-400 text-[11px]">100%</td>
         <td></td>
       </tr>
     `;
