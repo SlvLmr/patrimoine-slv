@@ -662,7 +662,7 @@ export function render(store) {
           <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5 ans: 31,4% · PEA &gt;5 ans: 17,2% · AV &lt;8 ans: 31,4% · AV &gt;8 ans: 24,7% · CTO/Crypto: 31,4% · PEE: 17,2%</p>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-sm table-fixed min-w-[800px]">
+          <table class="w-full text-sm table-fixed min-w-[1000px]">
             <thead class="bg-dark-800/50 text-gray-500 text-[10px] whitespace-nowrap">
               <tr>
                 <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
@@ -730,7 +730,7 @@ export function render(store) {
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[11px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
-                <td class="px-1 py-1 text-center text-[11px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${formatCurrency(fire.rente)}${fire.pension > 0 ? `<div class="text-[8px] text-amber-400/60 leading-tight">+${formatCurrency(fire.pension)} retr.</div>` : ''}</td>
+                <td class="px-1 py-1 text-center text-[11px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'} proj-tip-wrap">${formatCurrency(fire.rente + fire.pension)}${fire.pension > 0 ? `<div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Rente SWR</span><span>${formatCurrency(fire.rente)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Pension</span><span class="text-amber-400">${formatCurrency(fire.pension)}</span></div></div>` : ''}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-gray-500 ${bt}">${formatCurrency(fireDepAnnuelles)}</td>
                 <td class="px-1 py-1 text-center text-[11px] font-bold ${bt} ${fire.couverture >= 1 ? 'text-orange-400' : fire.couverture >= 0.8 ? 'text-yellow-400/80' : 'text-gray-500'}">${Math.round(fire.couverture * 100)}%${isFireFirst ? ' 🔥' : ''}</td>
               </tr>`;
