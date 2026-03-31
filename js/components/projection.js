@@ -985,8 +985,8 @@ export function render(store) {
             </div>
           </div>
 
-          <!-- Decumulation Simulation -->
-          ${(() => {
+          <!-- Decumulation Simulation — disabled pending donation integration -->
+          ${(() => { return ''; /* TODO: réactiver quand le plan de donation sera intégré */
             // Use FIRE year snapshot as starting point, or fall back to "retraite souhaitée" age
             const ageRetraiteSouhaitee = params.ageRetraiteSouhaitee || 60;
             const ageFinAnnee = params.ageFinAnnee || 43;
