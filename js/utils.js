@@ -475,10 +475,12 @@ export function computeProjection(store, overrides = {}) {
     // Immobilier
     immo *= (1 + rendImmo * periodFraction);
 
-    // Épargne
+    // Épargne (save pre-growth values for interest tracking)
+    const eparAvantCroissance = epar;
     epar *= (1 + rendEpar * periodFraction);
 
     // Héritage liquide
+    const heritageAvantCroissance = heritage;
     if (heritage > 0) heritage *= (1 + rendEpar * periodFraction);
 
     const currentAge = ageFinAnnee + year;
@@ -937,9 +939,9 @@ export function computeProjection(store, overrides = {}) {
     }
     } // end if (!cashedOut)
 
-    // Interest on épargne/héritage (compound interest)
-    interetsAnnuels += epar * (Math.pow(1 + rendEpar, periodFraction) - 1);
-    if (heritage > 0) interetsAnnuels += heritage * (Math.pow(1 + rendEpar, periodFraction) - 1);
+    // Interest on épargne/héritage (use pre-growth values to avoid double counting)
+    interetsAnnuels += eparAvantCroissance * (Math.pow(1 + rendEpar, periodFraction) - 1);
+    if (heritageAvantCroissance > 0) interetsAnnuels += heritageAvantCroissance * (Math.pow(1 + rendEpar, periodFraction) - 1);
 
     cumulInterets += Math.max(0, interetsAnnuels);
 

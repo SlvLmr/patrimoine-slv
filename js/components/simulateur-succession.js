@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput } from '../utils.js?v=9';
+import { formatCurrency, parseNumberInput } from '../utils.js?v=10';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Succession Pro ───────────────────────────────────────────────

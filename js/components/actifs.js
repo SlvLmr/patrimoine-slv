@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, formatDate, openModal, getFormData, inputField, selectField } from '../utils.js?v=9';
+import { formatCurrency, formatPercent, formatDate, openModal, getFormData, inputField, selectField } from '../utils.js?v=10';
 import { ENVELOPPES, CATEGORIES, openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=7';
 
 const ENVELOPE_COLORS = {

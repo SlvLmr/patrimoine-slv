@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=9';
+import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=10';
 import { createChart, VIVID_PALETTE, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ============================================================================
