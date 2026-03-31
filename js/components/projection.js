@@ -218,14 +218,14 @@ export function render(store) {
                   const dcaMaxOv = (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0);
                   const dcaEff = Math.max(dcaBase, dcaMaxOv);
                   const dcaLabel = dcaEff > 0 ? `<span class="text-[9px] text-gray-600">${dcaEff}€/m${dcaBase === 0 ? ' (prog.)' : ''}</span>` : '';
-                  return `<div class="group/card flex items-center gap-1.5 px-3 py-1.5 hover:bg-dark-700/30 transition cursor-grab active:cursor-grabbing placement-row" draggable="true" data-placement-id="${p.id}">
-                    <svg class="w-3 h-4 text-gray-600/40 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                  return `<div class="group/card flex items-center gap-1 px-2 py-0.5 hover:bg-dark-700/30 transition cursor-grab active:cursor-grabbing placement-row" draggable="true" data-placement-id="${p.id}">
+                    <svg class="w-2.5 h-3.5 text-gray-600/40 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
                       <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
                       <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
                       <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                     </svg>
                     ${icon}
-                    <span class="text-[11px] text-gray-200 whitespace-nowrap font-medium proj-edit-plac flex-1 min-w-0 truncate" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
+                    <span class="text-[11px] text-gray-100 whitespace-nowrap font-medium proj-edit-plac flex-1 min-w-0 truncate" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
                     <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
                       value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5" onclick="event.stopPropagation()">
@@ -267,18 +267,18 @@ export function render(store) {
                 const epargne = store.get('actifs.epargne') || [];
                 const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
                 const epargneCard = epargne.length > 0 ? `<div class="rounded-lg border border-purple-500/20 bg-purple-500/5 overflow-hidden">
-                  <div class="flex items-center justify-between px-3 py-1.5 border-b border-purple-500/15">
-                    <div class="flex items-center gap-2">
+                  <div class="flex items-center justify-between px-2 py-1 border-b border-purple-500/15">
+                    <div class="flex items-center gap-1.5">
                       <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                      <span class="text-xs font-semibold text-purple-400 uppercase tracking-wide">Épargne</span>
+                      <span class="text-[11px] font-semibold text-purple-400 uppercase tracking-wide">Épargne</span>
                     </div>
-                    <span class="text-xs font-bold text-purple-400">${formatCurrency(totalEpargne)}</span>
+                    <span class="text-[11px] font-bold text-purple-400">${formatCurrency(totalEpargne)}</span>
                   </div>
                   <div class="divide-y divide-dark-400/10">
-                    ${epargne.map(e => `<div class="flex items-center gap-1.5 px-3 py-1.5">
-                      <span class="text-[11px] text-gray-200 font-medium flex-1 min-w-0 truncate">${e.nom || 'Livret'}</span>
-                      <span class="text-[9px] text-gray-600">${formatCurrency(e.solde)}</span>
-                      <span class="text-[10px] text-gray-500">${((Number(e.tauxInteret) || 0) * 100).toFixed(1)}%</span>
+                    ${epargne.map(e => `<div class="flex items-center gap-1.5 px-2 py-0.5">
+                      <span class="text-[11px] text-gray-100 font-medium flex-1 min-w-0 truncate">${e.nom || 'Livret'}</span>
+                      <span class="text-[9px] text-gray-500">${formatCurrency(e.solde)}</span>
+                      <span class="text-[10px] text-gray-400">${((Number(e.tauxInteret) || 0) * 100).toFixed(1)}%</span>
                     </div>`).join('')}
                   </div>
                 </div>` : '';
@@ -289,11 +289,11 @@ export function render(store) {
                     const items = groups[gk];
                     const groupDCA = items.reduce((s, p) => s + Math.max(Number(p.dcaMensuel) || 0, (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0)), 0);
                     return `<div class="rounded-lg border ${gc.border} ${gc.bg} overflow-hidden">
-                      <div class="flex items-center justify-between px-3 py-1.5 border-b ${gc.border}">
-                        <div class="flex items-center gap-2">
+                      <div class="flex items-center justify-between px-2 py-1 border-b ${gc.border}">
+                        <div class="flex items-center gap-1.5">
                           <span class="w-1.5 h-1.5 rounded-full ${gc.dot}"></span>
-                          <span class="text-xs font-semibold ${gc.text} uppercase tracking-wide">${gk}</span>
-                          <span class="text-[10px] text-gray-600">${items.length} placement${items.length > 1 ? 's' : ''}</span>
+                          <span class="text-[11px] font-semibold ${gc.text} uppercase tracking-wide">${gk}</span>
+                          <span class="text-[9px] text-gray-600">${items.length} placement${items.length > 1 ? 's' : ''}</span>
                         </div>
                         ${groupDCA > 0 ? `<span class="text-[10px] text-gray-500">${groupDCA} €/m</span>` : ''}
                       </div>
