@@ -985,6 +985,182 @@ export function render(store) {
             </div>
           </div>
 
+          <!-- Decumulation Simulation -->
+          ${(() => {
+            // Use FIRE year snapshot as starting point, or fall back to "retraite souhaitée" age
+            const ageRetraiteSouhaitee = params.ageRetraiteSouhaitee || 60;
+            const ageFinAnnee = params.ageFinAnnee || 43;
+            const startIdx = fireFirstIdx >= 0 ? fireFirstIdx : snapshots.findIndex(s => s.age >= ageRetraiteSouhaitee);
+            if (startIdx < 0) return '<p class="text-[10px] text-gray-600">Aucun point de départ FIRE trouvé dans l\'horizon de projection.</p>';
+            const startSnap = snapshots[startIdx];
+            const endAge = 85;
+            const yearsToSim = endAge - startSnap.age;
+            if (yearsToSim <= 0) return '';
+
+            // Compute average rendement per group from placements
+            const placList = (store.getAll().actifs?.placements || []);
+            const groupRend = {};
+            const groupRendCount = {};
+            placList.forEach(p => {
+              const gk = getPlacementGroupKey(p);
+              const rend = rendementPlacements[p.id] !== undefined ? rendementPlacements[p.id] : (Number(p.rendement) || 0.05);
+              const frais = (Number(p.fraisAnnuels) || 0) / 100;
+              groupRend[gk] = (groupRend[gk] || 0) + (rend - frais);
+              groupRendCount[gk] = (groupRendCount[gk] || 0) + 1;
+            });
+            Object.keys(groupRend).forEach(k => { groupRend[k] = groupRend[k] / groupRendCount[k]; });
+            const rendEpargne = (() => {
+              const ep = store.get('actifs.epargne') || [];
+              if (ep.length === 0) return 0.02;
+              let wt = 0, ws = 0;
+              ep.forEach(e => { const s = Number(e.solde)||0; wt += (Number(e.tauxInteret)||0.02)*s; ws += s; });
+              return ws > 0 ? wt/ws : 0.02;
+            })();
+
+            // Withdrawal order: keys in priority (CTO BB excluded = reserved for donation)
+            const withdrawKeys = ['Épargne', 'PEE', 'CTO TR', 'Crypto', 'PEA ETF', 'PEA Actions', 'Assurance Vie'];
+            const reservedKeys = ['CTO BB']; // Reserved for donation, not withdrawn
+
+            // Tax rates per group key
+            const taxRates = {};
+            groupKeys.forEach(gk => {
+              const gkL = gk.toLowerCase();
+              if (gkL.includes('pea')) taxRates[gk] = 0.172; // PEA >5 ans
+              else if (gkL.includes('assurance') || gkL === 'av') taxRates[gk] = 0.247; // AV >8 ans
+              else if (gkL.includes('pee')) taxRates[gk] = 0.172;
+              else if (gkL.includes('livret') || gkL.includes('épargne')) taxRates[gk] = 0;
+              else taxRates[gk] = 0.314; // CTO, Crypto → PFU
+            });
+            taxRates['Épargne'] = 0;
+
+            // Init balances from FIRE snapshot
+            const balances = {};
+            groupKeys.forEach(gk => {
+              balances[gk] = startSnap.placementDetail[gk] || 0;
+            });
+            balances['Épargne'] = startSnap.epargne || 0;
+
+            // All keys that exist with a balance
+            const allKeys = ['Épargne', ...groupKeys];
+
+            // Simulate year by year
+            const simRows = [];
+            for (let y = 0; y <= yearsToSim; y++) {
+              const age = startSnap.age + y;
+              const calYear = startSnap.calendarYear + y;
+              const depenses = fireDepBase * Math.pow(1 + fireInflation, startSnap.annee + y);
+
+              // Pension
+              let pension = 0;
+              if (age >= fireAgePlein) pension = firePensionPlein;
+              else if (age >= fireAgeLegal) pension = firePensionLegal;
+
+              let besoinNet = Math.max(0, depenses - pension);
+              const withdrawals = {};
+              allKeys.forEach(k => { withdrawals[k] = 0; });
+
+              // Withdraw in priority order
+              const orderedKeys = [...withdrawKeys.filter(k => allKeys.includes(k))];
+              // Add any remaining keys not in withdraw or reserved
+              allKeys.forEach(k => {
+                if (!orderedKeys.includes(k) && !reservedKeys.includes(k) && k !== 'Épargne') orderedKeys.push(k);
+              });
+
+              let remaining = besoinNet;
+              for (const k of orderedKeys) {
+                if (remaining <= 0) break;
+                const available = balances[k] || 0;
+                if (available <= 0) continue;
+                // For taxed envelopes: need to withdraw more to get net amount
+                const rate = taxRates[k] || 0;
+                const apports = k !== 'Épargne' ? (startSnap.placementApports?.[k] || 0) : 0;
+                const gainRatio = available > apports ? (available - apports) / available : 0;
+                const effectiveTax = rate * gainRatio; // Tax only on gains portion
+                const grossNeeded = remaining / (1 - effectiveTax);
+                const withdrawal = Math.min(grossNeeded, available);
+                const taxOnWithdrawal = withdrawal * gainRatio * rate;
+                const netWithdrawal = withdrawal - taxOnWithdrawal;
+                withdrawals[k] = withdrawal;
+                balances[k] -= withdrawal;
+                remaining -= netWithdrawal;
+              }
+
+              const totalPatrimoine = allKeys.reduce((s, k) => s + Math.max(0, balances[k]), 0);
+
+              simRows.push({
+                age, calYear, depenses, pension, besoinNet,
+                withdrawals: { ...withdrawals },
+                balances: { ...balances },
+                totalPatrimoine,
+                depleted: totalPatrimoine <= 0
+              });
+
+              if (totalPatrimoine <= 0) break;
+
+              // Apply growth for next year (remaining balances grow)
+              allKeys.forEach(k => {
+                if (balances[k] <= 0) return;
+                const rend = k === 'Épargne' ? rendEpargne : (groupRend[k] || 0.05);
+                balances[k] *= (1 + rend);
+              });
+            }
+
+            // Determine which columns to show (only groups with balance > 0)
+            const visibleKeys = allKeys.filter(k => {
+              return simRows.some(r => (r.balances[k] || 0) > 0 || (r.withdrawals[k] || 0) > 0);
+            });
+
+            const depletedYear = simRows.find(r => r.depleted);
+
+            return \`
+          <div class="mt-2">
+            <h3 class="text-sm font-semibold text-orange-400/80 mb-2 flex items-center gap-2">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Simulation de décumulation
+            </h3>
+            <p class="text-[10px] text-gray-600 mb-1">Départ \${fireSnap ? 'FIRE' : 'souhaité'} à \${startSnap.age} ans (\${startSnap.calendarYear}) → 85 ans. CTO BB exclu (réservé donation). Enveloppes non consommées continuent de croître.</p>
+            \${depletedYear ? \`<p class="text-[10px] text-red-400 font-medium mb-2">⚠ Patrimoine épuisé à \${depletedYear.age} ans (\${depletedYear.calYear})</p>\` : \`<p class="text-[10px] text-accent-green font-medium mb-2">✓ Patrimoine suffisant jusqu'à 85 ans — solde final : \${formatCurrency(simRows[simRows.length-1].totalPatrimoine)}</p>\`}
+            <div class="overflow-x-auto">
+              <table class="w-full text-[9px] min-w-[700px]">
+                <thead class="bg-dark-800/50 text-gray-500 text-[8px] uppercase tracking-wider">
+                  <tr>
+                    <th class="px-1.5 py-1.5 text-center">Année</th>
+                    <th class="px-1.5 py-1.5 text-center">Âge</th>
+                    <th class="px-1.5 py-1.5 text-right">Dépenses</th>
+                    <th class="px-1.5 py-1.5 text-right">Pension</th>
+                    <th class="px-1.5 py-1.5 text-right border-r border-dark-300/40">Besoin net</th>
+                    \${visibleKeys.map(k => \`<th class="px-1.5 py-1.5 text-right \${reservedKeys.includes(k) ? 'text-pink-400/60' : ''}">\${k}</th>\`).join('')}
+                    <th class="px-1.5 py-1.5 text-right border-l border-dark-300/40 font-semibold">Total</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-dark-400/20">
+                  \${simRows.map((r, i) => {
+                    const isPension = r.age >= fireAgeLegal;
+                    const isDepleted = r.depleted;
+                    const isFiveYear = i > 0 && i % 5 === 0;
+                    const rowCls = isDepleted ? 'bg-red-500/10' : isPension && i === simRows.findIndex(x => x.age >= fireAgeLegal) ? 'bg-amber-500/5' : '';
+                    const bt = isFiveYear ? 'border-t border-dark-300/30' : '';
+                    return \`<tr class="hover:bg-dark-600/30 transition \${rowCls}">
+                      <td class="px-1.5 py-1 text-center text-gray-400 \${bt}">\${r.calYear}</td>
+                      <td class="px-1.5 py-1 text-center font-medium \${bt} \${isPension && r.age === fireAgeLegal ? 'text-amber-400' : 'text-gray-200'}">\${r.age}</td>
+                      <td class="px-1.5 py-1 text-right text-gray-400 \${bt}">\${formatCurrency(r.depenses)}</td>
+                      <td class="px-1.5 py-1 text-right \${bt} \${r.pension > 0 ? 'text-amber-400/80' : 'text-gray-700'}">\${r.pension > 0 ? formatCurrency(r.pension) : '—'}</td>
+                      <td class="px-1.5 py-1 text-right font-medium text-gray-300 border-r border-dark-300/40 \${bt}">\${formatCurrency(r.besoinNet)}</td>
+                      \${visibleKeys.map(k => {
+                        const bal = r.balances[k] || 0;
+                        const w = r.withdrawals[k] || 0;
+                        const isReserved = reservedKeys.includes(k);
+                        return \`<td class="px-1.5 py-1 text-right \${bt} \${isReserved ? 'text-pink-300/50' : bal > 0 ? 'text-gray-300' : 'text-gray-700'}">\${bal > 0 || w > 0 ? formatCurrency(bal) : '—'}\${w > 0 ? \`<div class="text-[7px] text-red-400/70">-\${formatCurrency(w)}</div>\` : ''}</td>\`;
+                      }).join('')}
+                      <td class="px-1.5 py-1 text-right font-semibold border-l border-dark-300/40 \${bt} \${isDepleted ? 'text-red-400' : 'text-accent-green'}">\${formatCurrency(r.totalPatrimoine)}</td>
+                    </tr>\`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>\`;
+          })()}
+
         </div>
       </details>`;
       })()}
