@@ -117,7 +117,7 @@ export function render(store) {
   let fireFirstIdx = -1;
   const fireData = snapshots.map((s, idx) => {
     const depenses = fireDepBase * Math.pow(1 + fireInflation, s.annee);
-    const rente = s.cashApresImpot * fireSwr;
+    const rente = s.totalLiquiditesNettes * fireSwr;
     let pension = 0;
     if (s.age >= fireAgePlein) pension = firePensionPlein;
     else if (s.age >= fireAgeLegal) pension = firePensionLegal;
