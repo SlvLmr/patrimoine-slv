@@ -3,7 +3,8 @@ import { inputField, selectField, getFormData, openModal } from '../utils.js?v=9
 export const ENVELOPPES = [
   { value: 'PEA', label: 'PEA' },
   { value: 'AV', label: 'Assurance Vie' },
-  { value: 'CTO', label: 'Compte-Titres (CTO)' },
+  { value: 'CTO TR', label: 'CTO TR (Trade Republic)' },
+  { value: 'CTO BB', label: 'CTO BB (Boursobank)' },
   { value: 'PEE', label: 'PEE (Épargne entreprise)' },
   { value: 'PER', label: 'PER' },
   { value: 'Crypto', label: 'Crypto' },

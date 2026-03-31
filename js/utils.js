@@ -107,6 +107,8 @@ export function getPlacementGroupKey(p) {
     return 'PEA Autre';
   }
   if (env === 'AV') return 'Assurance Vie';
+  if (env === 'CTO TR') return 'CTO TR';
+  if (env === 'CTO BB') return 'CTO BB';
   if (env === 'CTO') {
     const nom = (p.nom || '').toUpperCase();
     if (nom.includes('BB')) return 'CTO BB';

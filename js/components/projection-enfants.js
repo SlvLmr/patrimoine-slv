@@ -6,7 +6,8 @@ import { createChart, VIVID_PALETTE, createVerticalGradient, COLORS } from '../c
 // ============================================================================
 
 const CHILD_ENVELOPPES = [
-  { value: 'CTO', label: 'CTO' },
+  { value: 'CTO TR', label: 'CTO TR' },
+  { value: 'CTO BB', label: 'CTO BB' },
   { value: 'PEA', label: 'PEA' },
   { value: 'AV', label: 'Assurance Vie' },
   { value: 'Crypto', label: 'Crypto' },
@@ -22,7 +23,7 @@ const CHILD_CATEGORIES = [
 
 const CHILD_COLORS = ['#4ade80', '#f472b6'];
 const DEFAULT_RENDEMENT = 0.07;
-const FIXED_GROUP_KEYS = ['ETF (CTO)', 'Actions (CTO)', 'ETF (PEA)', 'Actions (PEA)', 'Bitcoin', 'Assurance Vie'];
+const FIXED_GROUP_KEYS = ['ETF (CTO TR)', 'ETF (CTO BB)', 'ETF (CTO)', 'ETF (PEA)', 'Actions (PEA)', 'Bitcoin', 'Assurance Vie'];
 
 // ─── Fiscalité ───────────────────────────────────────────────────────────────
 const PFU_RATE = 0.314;   // Flat tax: 14.2% IR + 17.2% PS
@@ -51,10 +52,11 @@ function getChildGroupKey(p) {
   const nomLower = (p.nom || '').toLowerCase();
   // Detect livret-like placements by name
   if (env === 'Livrets' || nomLower.includes('livret') || nomLower.includes('ldds') || nomLower.includes('lep') || nomLower.includes('pel')) return 'Livrets';
-  if (env === 'CTO') {
-    if (cat.includes('ETF')) return 'ETF (CTO)';
-    if (cat.includes('Action')) return 'Actions (CTO)';
-    return 'ETF (CTO)'; // default CTO → ETF (CTO)
+  if (env === 'CTO' || env === 'CTO TR' || env === 'CTO BB') {
+    const suffix = env === 'CTO TR' ? ' TR' : env === 'CTO BB' ? ' BB' : '';
+    if (cat.includes('ETF')) return `ETF (CTO${suffix})`;
+    if (cat.includes('Action')) return `Actions (CTO${suffix})`;
+    return `ETF (CTO${suffix})`;
   }
   if (env === 'PEA') {
     if (cat.includes('Action')) return 'Actions (PEA)';
@@ -354,6 +356,10 @@ export function render(store, { embedded = false } = {}) {
                 const groupColors = {
                   'ETF (CTO)': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
                   'Actions (CTO)': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
+                  'ETF (CTO TR)': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'Actions (CTO TR)': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'ETF (CTO BB)': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'Actions (CTO BB)': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
                   'ETF (PEA)': { border: 'border-purple-500/20', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400' },
                   'Actions (PEA)': { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400' },
                   'Bitcoin': { border: 'border-orange-500/20', bg: 'bg-orange-500/5', text: 'text-orange-400', dot: 'bg-orange-400' },
