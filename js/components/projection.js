@@ -850,7 +850,9 @@ export function render(store) {
         const fireFd = fireFirstIdx >= 0 ? fireData[fireFirstIdx] : null;
         const lastSnap = snapshots[snapshots.length - 1];
         const lastFire = fireData[fireData.length - 1];
-        const patrimoineNecessaire = fireDepBase / fireSwr;
+        // Patrimoine nécessaire AT the FIRE year (with inflation), not at year 0
+        const fireDepAtFire = fireFd ? fireFd.depenses : lastFire.depenses;
+        const patrimoineNecessaire = fireDepAtFire / fireSwr;
 
         // Build withdrawal order from fiscal data at FIRE year (or last year)
         const refSnap = fireSnap || lastSnap;
@@ -926,7 +928,8 @@ export function render(store) {
             <div class="rounded-lg bg-dark-700/50 p-3 text-center">
               <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Patrimoine nécessaire</p>
               <p class="text-lg font-bold text-gray-200">${formatCurrency(patrimoineNecessaire)}</p>
-              <p class="text-[10px] text-gray-500">Dép. ${formatCurrency(fireDepBase)}/an ÷ SWR ${(fireSwr * 100).toFixed(0)}%</p>
+              <p class="text-[10px] text-gray-500">Dép. ${formatCurrency(fireDepAtFire)}/an ÷ SWR ${(fireSwr * 100).toFixed(0)}%</p>
+              ${fireDepAtFire > fireDepBase ? `<p class="text-[9px] text-gray-600">(${formatCurrency(fireDepBase)} + inflation)</p>` : ''}
             </div>
             <div class="rounded-lg bg-dark-700/50 p-3 text-center">
               <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Patrimoine au FIRE</p>
