@@ -1,7 +1,7 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=9';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=7';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260330c';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=8';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260330d';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -35,7 +35,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260330c';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260330d';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -278,7 +278,7 @@ export function render(store) {
                     ${epargne.map(e => `<div class="flex items-center gap-1.5 px-3 py-1.5">
                       <span class="text-[11px] text-gray-200 font-medium flex-1 min-w-0 truncate">${e.nom || 'Livret'}</span>
                       <span class="text-[9px] text-gray-600">${formatCurrency(e.solde)}</span>
-                      <span class="text-[10px] text-gray-500">${e.taux || 0}%</span>
+                      <span class="text-[10px] text-gray-500">${((Number(e.tauxInteret) || 0) * 100).toFixed(1)}%</span>
                     </div>`).join('')}
                   </div>
                 </div>` : '';

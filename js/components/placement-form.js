@@ -21,123 +21,120 @@ export const CATEGORIES = [
   { value: 'Autre', label: 'Autre' }
 ];
 
+function dcaOverrideRow(o = {}, currentYear) {
+  return `<div class="flex items-center gap-1.5 dca-override-row">
+    <input type="number" class="dca-ov-year input-field w-20 text-center text-xs py-1" value="${o.fromYear || ''}" placeholder="Début" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="dca-ov-end-year input-field w-20 text-center text-xs py-1" value="${o.endYear || ''}" placeholder="Fin" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="dca-ov-amount input-field flex-1 text-xs py-1" value="${o.dcaMensuel || ''}" placeholder="€/mois" step="10">
+    <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-xs px-0.5">✕</button>
+  </div>`;
+}
+
+function cashInjRow(inj = {}, currentYear) {
+  return `<div class="flex items-center gap-1.5 cash-inj-row">
+    <input type="number" class="cash-inj-year input-field w-20 text-center text-xs py-1" value="${inj.year || ''}" placeholder="Année" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="cash-inj-amount input-field flex-1 text-xs py-1 text-accent-green" value="${inj.montant || ''}" placeholder="Montant €" step="100">
+    <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-xs px-0.5">✕</button>
+  </div>`;
+}
+
+function peeContribRow(c = {}, currentYear) {
+  return `<div class="flex items-center gap-1.5 pee-contrib-row">
+    <input type="number" class="pee-contrib-year input-field w-20 text-center text-xs py-1" value="${c.year || ''}" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="pee-contrib-amount input-field flex-1 text-xs py-1 text-emerald-400" value="${c.montant || ''}" placeholder="Montant annuel €" step="100">
+    <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-xs px-0.5">✕</button>
+  </div>`;
+}
+
 export function buildPlacementFormBody(item) {
   const currentYear = new Date().getFullYear();
   const isPEE = (item.enveloppe || item.type || '') === 'PEE';
 
-  // DCA overrides (non-PEE)
-  const overrides = item.dcaOverrides || [];
-  const overridesHtml = overrides.map((o, i) => `
-    <div class="flex items-center gap-2 dca-override-row" data-idx="${i}">
-      <div class="flex-1">
-        <input type="number" class="dca-ov-year w-full input-field" value="${o.fromYear || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
-      </div>
-      <span class="text-gray-500 text-xs">→</span>
-      <div class="flex-1">
-        <input type="number" class="dca-ov-amount w-full input-field" value="${o.dcaMensuel || ''}" placeholder="€/mois" step="10">
-      </div>
-      <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
-    </div>
-  `).join('');
-
-  // Cash injections (non-PEE)
-  const injections = item.cashInjections || [];
-  const injectionsHtml = injections.map((inj, i) => `
-    <div class="flex items-center gap-2 cash-inj-row" data-idx="${i}">
-      <div class="flex-1">
-        <input type="number" class="cash-inj-year w-full input-field" value="${inj.year || ''}" placeholder="Ex: ${currentYear + 1}" min="${currentYear}" max="${currentYear + 50}" step="1">
-      </div>
-      <span class="text-gray-500 text-xs">→</span>
-      <div class="flex-1">
-        <input type="number" class="cash-inj-amount w-full input-field text-accent-green" value="${inj.montant || ''}" placeholder="Montant €" step="100">
-      </div>
-      <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
-    </div>
-  `).join('');
-
-  // PEE annual contributions
-  const peeContribs = item.peeContributions || [];
-  const peeContribsHtml = peeContribs.map((c, i) => `
-    <div class="flex items-center gap-2 pee-contrib-row" data-idx="${i}">
-      <div class="w-24">
-        <input type="number" class="pee-contrib-year w-full input-field text-center" value="${c.year || ''}" min="${currentYear}" max="${currentYear + 50}" step="1">
-      </div>
-      <span class="text-gray-500 text-xs">→</span>
-      <div class="flex-1">
-        <input type="number" class="pee-contrib-amount w-full input-field text-emerald-400" value="${c.montant || ''}" placeholder="Montant annuel €" step="100">
-      </div>
-      <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
-    </div>
-  `).join('');
+  const overridesHtml = (item.dcaOverrides || []).map(o => dcaOverrideRow(o, currentYear)).join('');
+  const injectionsHtml = (item.cashInjections || []).map(inj => cashInjRow(inj, currentYear)).join('');
+  const peeContribsHtml = (item.peeContributions || []).map(c => peeContribRow(c, currentYear)).join('');
 
   return `
-    ${inputField('nom', 'Nom du titre', item.nom || '', 'text', 'placeholder="Ex: Amundi MSCI World"')}
-    ${selectField('enveloppe', 'Enveloppe', ENVELOPPES, item.enveloppe || item.type || '')}
-    ${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie || '')}
-    ${inputField('isin', 'ISIN / Ticker', item.isin || item.ticker || '', 'text', 'placeholder="Ex: LU1681043599 ou CW8"')}
-    ${inputField('dateOuverture', "Date d'ouverture de l'enveloppe", item.dateOuverture || '', 'date', 'placeholder="Date d\'ouverture PEA/AV/CTO"')}
-    <div class="grid grid-cols-2 gap-3">
-      ${inputField('quantite', 'Quantité', item.quantite || '', 'number', 'step="0.0001" placeholder="Ex: 15.5"')}
-      ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="Prix de revient unitaire"')}
+    <div class="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-2 items-end">
+      <div class="col-span-3">
+        ${inputField('nom', 'Nom du titre', item.nom || '', 'text', 'placeholder="Ex: Amundi MSCI World"')}
+      </div>
+      <div>${selectField('enveloppe', 'Enveloppe', ENVELOPPES, item.enveloppe || item.type || '')}</div>
+      <div>${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie || '')}</div>
+      <div>${inputField('isin', 'ISIN / Ticker', item.isin || item.ticker || '', 'text', 'placeholder="LU168..."')}</div>
     </div>
-    ${inputField('valeur', 'Valeur totale actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
-    ${inputField('fraisAnnuels', 'Frais annuels (%)', item.fraisAnnuels || '', 'number', 'step="0.01" min="0" max="10" placeholder="Ex: 0.25"')}
+
+    <div class="grid grid-cols-3 gap-3 mt-1">
+      ${inputField('dateOuverture', "Ouverture enveloppe", item.dateOuverture || '', 'date')}
+      ${inputField('quantite', 'Quantité', item.quantite || '', 'number', 'step="0.0001" placeholder="15.5"')}
+      ${inputField('pru', 'PRU (€)', item.pru || '', 'number', 'step="0.01" placeholder="51.45"')}
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mt-1">
+      ${inputField('valeur', 'Valeur actuelle (€)', item.valeur || '', 'number', 'step="0.01"')}
+      ${inputField('fraisAnnuels', 'Frais annuels (%)', item.fraisAnnuels || '', 'number', 'step="0.01" min="0" max="10" placeholder="0.25"')}
+    </div>
 
     <!-- DCA section (non-PEE) -->
-    <div id="dca-section" class="${isPEE ? 'hidden' : ''} mt-2 pt-3 border-t border-dark-400/30">
-      <p class="text-sm font-medium text-gray-300 mb-3">Investissement programmé</p>
-      ${inputField('apport', 'Apport initial (€)', item.apport || '', 'number', 'step="100" placeholder="Capital de départ"')}
-      <div class="grid grid-cols-2 gap-3">
-        ${inputField('dcaMensuel', 'DCA mensuel (€/mois)', item.dcaMensuel || '', 'number', 'step="10" placeholder="Apport mensuel"')}
-        ${inputField('dcaFinAnnee', 'Fin du DCA (année)', item.dcaFinAnnee || '', 'number', `step="1" min="${currentYear}" max="${currentYear + 50}" placeholder="Illimité"`)}
-      </div>
-
-      <div class="mt-2">
-        <label class="block text-xs font-medium text-gray-400 mb-1.5">Modifier le DCA par période</label>
-        <div id="dca-overrides-list" class="space-y-2 mb-2">
-          ${overridesHtml}
-        </div>
-        <button type="button" id="btn-add-dca-override" class="text-xs text-accent-blue hover:text-accent-blue/80 font-medium">+ Ajouter une période</button>
-        <p class="text-xs text-gray-600 mt-1">Ex: À partir de 2030, passer le DCA à 500€/mois</p>
+    <div id="dca-section" class="${isPEE ? 'hidden' : ''} mt-3 pt-3 border-t border-dark-400/30">
+      <p class="text-xs font-semibold text-gray-300 uppercase tracking-wide mb-2">Investissement programmé</p>
+      <div class="grid grid-cols-3 gap-3">
+        ${inputField('apport', 'Apport initial (€)', item.apport || '', 'number', 'step="100" placeholder="Capital"')}
+        ${inputField('dcaMensuel', 'DCA (€/mois)', item.dcaMensuel || '', 'number', 'step="10" placeholder="Mensuel"')}
+        ${inputField('dcaFinAnnee', 'Fin DCA', item.dcaFinAnnee || '', 'number', `step="1" min="${currentYear}" max="${currentYear + 50}" placeholder="Illimité"`)}
       </div>
 
       <div class="mt-3">
-        <label class="block text-xs font-medium text-gray-400 mb-1.5">Apports exceptionnels</label>
-        <div id="cash-injections-list" class="space-y-2 mb-2">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Périodes DCA</span>
+          <button type="button" id="btn-add-dca-override" class="text-[10px] text-accent-blue hover:text-accent-blue/80 font-medium">+ Période</button>
+        </div>
+        <div id="dca-overrides-list" class="space-y-1">
+          ${overridesHtml}
+        </div>
+      </div>
+
+      <div class="mt-2">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Apports exceptionnels</span>
+          <button type="button" id="btn-add-cash-injection" class="text-[10px] text-accent-green hover:text-accent-green/80 font-medium">+ Apport</button>
+        </div>
+        <div id="cash-injections-list" class="space-y-1">
           ${injectionsHtml}
         </div>
-        <button type="button" id="btn-add-cash-injection" class="text-xs text-accent-green hover:text-accent-green/80 font-medium">+ Ajouter un apport</button>
-        <p class="text-xs text-gray-600 mt-1">Ex: En 2029, injecter 5 000€ en une fois</p>
       </div>
     </div>
 
     <!-- PEE annual contributions section -->
-    <div id="pee-section" class="${isPEE ? '' : 'hidden'} mt-2 pt-3 border-t border-dark-400/30">
-      <p class="text-sm font-medium text-gray-300 mb-1">Versements annuels</p>
-      <p class="text-xs text-gray-600 mb-3">Renseignez le montant total versé (ou prévu) chaque année</p>
-      <div id="pee-contribs-list" class="space-y-2 mb-2">
+    <div id="pee-section" class="${isPEE ? '' : 'hidden'} mt-3 pt-3 border-t border-dark-400/30">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-semibold text-gray-300 uppercase tracking-wide">Versements annuels PEE</p>
+        <button type="button" id="btn-add-pee-contrib" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium">+ Année</button>
+      </div>
+      <div id="pee-contribs-list" class="space-y-1">
         ${peeContribsHtml}
       </div>
-      <button type="button" id="btn-add-pee-contrib" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Ajouter une année</button>
     </div>
 
-    <div class="mt-2 pt-3 border-t border-dark-400/30">
-      <div class="flex items-center gap-3 mb-3">
-        <input type="checkbox" id="field-isAirLiquide" class="w-4 h-4 rounded bg-dark-800 border-dark-400" ${item.isAirLiquide ? 'checked' : ''}>
-        <label for="field-isAirLiquide" class="text-sm font-medium text-gray-300">Mode Air Liquide</label>
-        <span class="text-xs text-gray-500">(Actions gratuites + prime de fidélité)</span>
+    <div class="mt-3 pt-3 border-t border-dark-400/30">
+      <div class="flex items-center gap-3 mb-2">
+        <input type="checkbox" id="field-isAirLiquide" class="w-3.5 h-3.5 rounded bg-dark-800 border-dark-400" ${item.isAirLiquide ? 'checked' : ''}>
+        <label for="field-isAirLiquide" class="text-xs font-medium text-gray-300">Mode Air Liquide</label>
+        <span class="text-[10px] text-gray-600">(Actions gratuites + prime fidélité)</span>
       </div>
       <div id="air-liquide-fields" class="${item.isAirLiquide ? '' : 'hidden'}">
-        ${inputField('dividendeParAction', 'Dividende par action (€)', item.dividendeParAction || '3.30', 'number', 'step="0.01"')}
-        ${inputField('croissanceDividende', 'Croissance dividende/an (%)', ((parseFloat(item.croissanceDividende) || 0.08) * 100).toFixed(1), 'number', 'step="1" min="0" max="100"')}
-        <div class="flex items-center gap-3 mb-4">
-          <input type="checkbox" id="field-loyaltyEligible" class="w-4 h-4 rounded bg-dark-800 border-dark-400" ${item.loyaltyEligible ? 'checked' : ''}>
-          <label for="field-loyaltyEligible" class="text-sm text-gray-300">Prime de fidélité (+10% dividendes & actions gratuites)</label>
+        <div class="grid grid-cols-2 gap-3">
+          ${inputField('dividendeParAction', 'Dividende/action (€)', item.dividendeParAction || '3.30', 'number', 'step="0.01"')}
+          ${inputField('croissanceDividende', 'Croissance div./an (%)', ((parseFloat(item.croissanceDividende) || 0.08) * 100).toFixed(1), 'number', 'step="1" min="0" max="100"')}
         </div>
-        <div class="p-3 bg-dark-800/50 rounded-lg text-xs text-gray-500 space-y-1">
-          <p><strong class="text-gray-400">Actions gratuites :</strong> 1 pour 10 détenues, tous les 2 ans</p>
-          <p><strong class="text-gray-400">Prime fidélité :</strong> +10% sur dividendes et attributions (après 2 ans en nominatif)</p>
-          <p><strong class="text-gray-400">Dividendes :</strong> réinvestis automatiquement dans la projection</p>
+        <div class="flex items-center gap-3 mt-2 mb-2">
+          <input type="checkbox" id="field-loyaltyEligible" class="w-3.5 h-3.5 rounded bg-dark-800 border-dark-400" ${item.loyaltyEligible ? 'checked' : ''}>
+          <label for="field-loyaltyEligible" class="text-xs text-gray-300">Prime de fidélité (+10% dividendes & actions gratuites)</label>
+        </div>
+        <div class="p-2 bg-dark-800/50 rounded-lg text-[10px] text-gray-500 space-y-0.5">
+          <p><strong class="text-gray-400">Actions gratuites :</strong> 1 pour 10, tous les 2 ans</p>
+          <p><strong class="text-gray-400">Fidélité :</strong> +10% dividendes et attributions (après 2 ans nominatif)</p>
+          <p><strong class="text-gray-400">Dividendes :</strong> réinvestis automatiquement</p>
         </div>
       </div>
     </div>
@@ -149,9 +146,12 @@ export function collectDcaOverrides() {
   const overrides = [];
   rows.forEach(row => {
     const year = parseInt(row.querySelector('.dca-ov-year')?.value);
+    const endYear = parseInt(row.querySelector('.dca-ov-end-year')?.value) || null;
     const amount = parseFloat(row.querySelector('.dca-ov-amount')?.value);
     if (year > 0 && !isNaN(amount)) {
-      overrides.push({ fromYear: year, dcaMensuel: amount });
+      const entry = { fromYear: year, dcaMensuel: amount };
+      if (endYear) entry.endYear = endYear;
+      overrides.push(entry);
     }
   });
   return overrides.sort((a, b) => a.fromYear - b.fromYear);
@@ -183,19 +183,41 @@ export function collectPeeContributions() {
   return contribs.sort((a, b) => a.year - b.year);
 }
 
-function createPeeContribRow() {
+function createDcaOverrideRowElement() {
   const currentYear = new Date().getFullYear();
   const row = document.createElement('div');
-  row.className = 'flex items-center gap-2 pee-contrib-row';
+  row.className = 'flex items-center gap-1.5 dca-override-row';
   row.innerHTML = `
-    <div class="w-24">
-      <input type="number" class="pee-contrib-year w-full input-field text-center" value="${currentYear}" min="${currentYear}" max="${currentYear + 50}" step="1">
-    </div>
-    <span class="text-gray-500 text-xs">→</span>
-    <div class="flex-1">
-      <input type="number" class="pee-contrib-amount w-full input-field text-emerald-400" placeholder="Montant annuel €" step="100">
-    </div>
-    <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
+    <input type="number" class="dca-ov-year input-field w-20 text-center text-xs py-1" placeholder="Début" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="dca-ov-end-year input-field w-20 text-center text-xs py-1" placeholder="Fin" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="dca-ov-amount input-field flex-1 text-xs py-1" placeholder="€/mois" step="10">
+    <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-xs px-0.5">✕</button>
+  `;
+  row.querySelector('.dca-ov-remove').addEventListener('click', () => row.remove());
+  return row;
+}
+
+function createCashInjRowElement() {
+  const currentYear = new Date().getFullYear();
+  const row = document.createElement('div');
+  row.className = 'flex items-center gap-1.5 cash-inj-row';
+  row.innerHTML = `
+    <input type="number" class="cash-inj-year input-field w-20 text-center text-xs py-1" placeholder="Année" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="cash-inj-amount input-field flex-1 text-xs py-1 text-accent-green" placeholder="Montant €" step="100">
+    <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-xs px-0.5">✕</button>
+  `;
+  row.querySelector('.cash-inj-remove').addEventListener('click', () => row.remove());
+  return row;
+}
+
+function createPeeContribRowElement() {
+  const currentYear = new Date().getFullYear();
+  const row = document.createElement('div');
+  row.className = 'flex items-center gap-1.5 pee-contrib-row';
+  row.innerHTML = `
+    <input type="number" class="pee-contrib-year input-field w-20 text-center text-xs py-1" value="${currentYear}" min="${currentYear}" max="${currentYear + 50}" step="1">
+    <input type="number" class="pee-contrib-amount input-field flex-1 text-xs py-1 text-emerald-400" placeholder="Montant annuel €" step="100">
+    <button type="button" class="pee-contrib-remove text-accent-red/60 hover:text-accent-red text-xs px-0.5">✕</button>
   `;
   row.querySelector('.pee-contrib-remove').addEventListener('click', () => row.remove());
   return row;
@@ -242,22 +264,8 @@ export function initPlacementFormListeners(modal) {
   const list = modal.querySelector('#dca-overrides-list');
   if (addBtn && list) {
     addBtn.addEventListener('click', () => {
-      const row = document.createElement('div');
-      row.className = 'flex items-center gap-2 dca-override-row';
-      row.innerHTML = `
-        <div class="flex-1">
-          <input type="number" class="dca-ov-year w-full input-field" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
-        </div>
-        <span class="text-gray-500 text-xs">→</span>
-        <div class="flex-1">
-          <input type="number" class="dca-ov-amount w-full input-field" placeholder="€/mois" step="10">
-        </div>
-        <button type="button" class="dca-ov-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
-      `;
-      list.appendChild(row);
-      row.querySelector('.dca-ov-remove').addEventListener('click', () => row.remove());
+      list.appendChild(createDcaOverrideRowElement());
     });
-
     list.querySelectorAll('.dca-ov-remove').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.dca-override-row').remove());
     });
@@ -268,22 +276,8 @@ export function initPlacementFormListeners(modal) {
   const injList = modal.querySelector('#cash-injections-list');
   if (addInjBtn && injList) {
     addInjBtn.addEventListener('click', () => {
-      const row = document.createElement('div');
-      row.className = 'flex items-center gap-2 cash-inj-row';
-      row.innerHTML = `
-        <div class="flex-1">
-          <input type="number" class="cash-inj-year w-full input-field" placeholder="Ex: ${new Date().getFullYear() + 1}" min="${new Date().getFullYear()}" max="${new Date().getFullYear() + 50}" step="1">
-        </div>
-        <span class="text-gray-500 text-xs">→</span>
-        <div class="flex-1">
-          <input type="number" class="cash-inj-amount w-full input-field text-accent-green" placeholder="Montant €" step="100">
-        </div>
-        <button type="button" class="cash-inj-remove text-accent-red/60 hover:text-accent-red text-sm px-1">✕</button>
-      `;
-      injList.appendChild(row);
-      row.querySelector('.cash-inj-remove').addEventListener('click', () => row.remove());
+      injList.appendChild(createCashInjRowElement());
     });
-
     injList.querySelectorAll('.cash-inj-remove').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.cash-inj-row').remove());
     });
@@ -294,9 +288,8 @@ export function initPlacementFormListeners(modal) {
   const peeList = modal.querySelector('#pee-contribs-list');
   if (addPeeBtn && peeList) {
     addPeeBtn.addEventListener('click', () => {
-      // Auto-increment year from last row
       const existingRows = peeList.querySelectorAll('.pee-contrib-row');
-      const row = createPeeContribRow();
+      const row = createPeeContribRowElement();
       if (existingRows.length > 0) {
         const lastYear = parseInt(existingRows[existingRows.length - 1].querySelector('.pee-contrib-year')?.value) || new Date().getFullYear();
         row.querySelector('.pee-contrib-year').value = lastYear + 1;
@@ -304,7 +297,6 @@ export function initPlacementFormListeners(modal) {
       peeList.appendChild(row);
       row.querySelector('.pee-contrib-amount').focus();
     });
-
     peeList.querySelectorAll('.pee-contrib-remove').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.pee-contrib-row').remove());
     });
