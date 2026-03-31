@@ -248,14 +248,14 @@ export function render(store) {
                 groupOrder.forEach(k => { if (!sortedOrder.includes(k)) sortedOrder.push(k); });
 
                 const groupColors = {
-                  'PEA Actions': { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400' },
-                  'PEA ETF': { border: 'border-purple-500/20', bg: 'bg-purple-500/5', text: 'text-purple-400', dot: 'bg-purple-400' },
+                  'PEA Actions': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
+                  'PEA ETF': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
                   'Crypto': { border: 'border-orange-500/20', bg: 'bg-orange-500/5', text: 'text-orange-400', dot: 'bg-orange-400' },
-                  'Assurance Vie': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'Assurance Vie': { border: 'border-emerald-500/20', bg: 'bg-emerald-500/5', text: 'text-emerald-400', dot: 'bg-emerald-400' },
                   'PEE': { border: 'border-emerald-500/20', bg: 'bg-emerald-500/5', text: 'text-emerald-400', dot: 'bg-emerald-400' },
-                  'CTO': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
-                  'CTO TR': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
-                  'CTO BB': { border: 'border-indigo-500/20', bg: 'bg-indigo-500/5', text: 'text-indigo-400', dot: 'bg-indigo-400' },
+                  'CTO': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'CTO TR': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
+                  'CTO BB': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
                 };
                 const defaultGroupColor = { border: 'border-gray-500/20', bg: 'bg-gray-500/5', text: 'text-gray-400', dot: 'bg-gray-400' };
 
@@ -266,13 +266,13 @@ export function render(store) {
                 // Add Épargne as last card in the placement grid
                 const epargne = store.get('actifs.epargne') || [];
                 const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
-                const epargneCard = epargne.length > 0 ? `<div class="rounded-lg border border-sky-400/20 bg-sky-400/5 overflow-hidden">
-                  <div class="flex items-center justify-between px-3 py-1.5 border-b border-sky-400/15">
+                const epargneCard = epargne.length > 0 ? `<div class="rounded-lg border border-purple-500/20 bg-purple-500/5 overflow-hidden">
+                  <div class="flex items-center justify-between px-3 py-1.5 border-b border-purple-500/15">
                     <div class="flex items-center gap-2">
-                      <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                      <span class="text-xs font-semibold text-sky-300 uppercase tracking-wide">Épargne</span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                      <span class="text-xs font-semibold text-purple-400 uppercase tracking-wide">Épargne</span>
                     </div>
-                    <span class="text-xs font-bold text-sky-300">${formatCurrency(totalEpargne)}</span>
+                    <span class="text-xs font-bold text-purple-400">${formatCurrency(totalEpargne)}</span>
                   </div>
                   <div class="divide-y divide-dark-400/10">
                     ${epargne.map(e => `<div class="flex items-center gap-1.5 px-3 py-1.5">
@@ -316,12 +316,12 @@ export function render(store) {
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
 
           <!-- Transferts -->
-          <div class="rounded-lg border border-purple-400/20 overflow-hidden">
-            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-purple-400/5 border-b border-purple-400/15">
-              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-              <span class="text-[10px] font-semibold text-purple-300 uppercase tracking-wide">Transferts</span>
+          <div class="rounded-lg border border-gray-500/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-gray-500/5 border-b border-gray-500/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+              <span class="text-[10px] font-semibold text-gray-300 uppercase tracking-wide">Transferts</span>
               <span class="text-[10px] text-gray-600">${capitalTransfers.length}</span>
-              <button id="proj-add-transfer" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/35 transition text-xs font-bold" title="Ajouter un transfert">+</button>
+              <button id="proj-add-transfer" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-gray-500/20 text-gray-400 hover:bg-gray-500/35 transition text-xs font-bold" title="Ajouter un transfert">+</button>
             </div>
             <div class="divide-y divide-dark-400/10">
               ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
@@ -346,12 +346,12 @@ export function render(store) {
           </div>
 
           <!-- Héritage -->
-          <div class="rounded-lg border border-amber-400/20 overflow-hidden">
-            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-amber-400/5 border-b border-amber-400/15">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-              <span class="text-[10px] font-semibold text-amber-300 uppercase tracking-wide">Héritage</span>
+          <div class="rounded-lg border border-gray-500/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-gray-500/5 border-b border-gray-500/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+              <span class="text-[10px] font-semibold text-gray-300 uppercase tracking-wide">Héritage</span>
               <span class="text-[10px] text-gray-600">${heritageItems.length}</span>
-              <button id="proj-add-heritage" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/35 transition text-xs font-bold" title="Ajouter un héritage">+</button>
+              <button id="proj-add-heritage" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-gray-500/20 text-gray-400 hover:bg-gray-500/35 transition text-xs font-bold" title="Ajouter un héritage">+</button>
             </div>
             <div class="divide-y divide-dark-400/10">
               ${heritageItems.length > 0 ? heritageItems.map(h => {
@@ -403,10 +403,10 @@ export function render(store) {
             const totalPct = overflowTargets.reduce((s, t) => s + (Number(t.pct) || 0), 0);
 
             return `
-          <div class="rounded-lg border border-amber-400/20 overflow-hidden">
-            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-amber-400/5 border-b border-amber-400/15">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-              <span class="text-[10px] font-semibold text-amber-300 uppercase tracking-wide">PEA plein</span>
+          <div class="rounded-lg border border-gray-500/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-gray-500/5 border-b border-gray-500/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+              <span class="text-[10px] font-semibold text-gray-300 uppercase tracking-wide">PEA plein</span>
               <span class="text-[10px] text-gray-600 ml-auto">${peaRestant <= 0 ? 'Déjà plein' : `~${moisRestant} mois`}</span>
             </div>
             <div class="px-2 py-1.5 space-y-1" id="pea-overflow-targets">
@@ -420,9 +420,9 @@ export function render(store) {
                 <button class="overflow-target-delete btn-delete text-[9px]" data-idx="${idx}">✕</button>
               </div>`).join('') : `
               <div class="text-[10px] text-gray-500">→ CTO (${(avgCTORend * 100).toFixed(1)}%/an)</div>`}
-              ${totalPct < 100 && hasTargets ? `<p class="text-[9px] text-amber-400">${totalPct}% alloué</p>` : ''}
+              ${totalPct < 100 && hasTargets ? `<p class="text-[9px] text-gray-400">${totalPct}% alloué</p>` : ''}
             </div>
-            <button id="btn-add-overflow-target" class="px-2 py-1 text-[10px] text-amber-400 hover:text-amber-300 transition flex items-center gap-0.5">
+            <button id="btn-add-overflow-target" class="px-2 py-1 text-[10px] text-gray-400 hover:text-gray-300 transition flex items-center gap-0.5">
               <span>+ Cible</span>
             </button>
           </div>`;
@@ -464,10 +464,10 @@ export function render(store) {
             const totalAVPct = avOverflowTargets.reduce((s, t) => s + (Number(t.pct) || 0), 0);
 
             return `
-          <div class="rounded-lg border border-cyan-400/20 overflow-hidden">
-            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-cyan-400/5 border-b border-cyan-400/15">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-              <span class="text-[10px] font-semibold text-cyan-300 uppercase tracking-wide">AV pleine</span>
+          <div class="rounded-lg border border-gray-500/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-gray-500/5 border-b border-gray-500/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+              <span class="text-[10px] font-semibold text-gray-300 uppercase tracking-wide">AV pleine</span>
               <span class="text-[10px] text-gray-600 ml-auto">${avRestant <= 0 ? 'Déjà pleine' : `~${moisRestantAV} mois`}</span>
             </div>
             <div class="px-2 py-1.5 space-y-1" id="av-overflow-targets">
@@ -481,9 +481,9 @@ export function render(store) {
                 <button class="av-overflow-target-delete btn-delete text-[9px]" data-idx="${idx}">✕</button>
               </div>`).join('') : `
               <div class="text-[10px] text-gray-500">→ CTO (${(avgCTORendAV * 100).toFixed(1)}%/an)</div>`}
-              ${totalAVPct < 100 && hasAVTargets ? `<p class="text-[9px] text-cyan-400">${totalAVPct}% alloué</p>` : ''}
+              ${totalAVPct < 100 && hasAVTargets ? `<p class="text-[9px] text-gray-400">${totalAVPct}% alloué</p>` : ''}
             </div>
-            <button id="btn-add-av-overflow-target" class="px-2 py-1 text-[10px] text-cyan-400 hover:text-cyan-300 transition flex items-center gap-0.5">
+            <button id="btn-add-av-overflow-target" class="px-2 py-1 text-[10px] text-gray-400 hover:text-gray-300 transition flex items-center gap-0.5">
               <span>+ Cible</span>
             </button>
           </div>`;
