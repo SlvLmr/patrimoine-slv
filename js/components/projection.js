@@ -241,6 +241,11 @@ export function render(store) {
                   if (!groups[gk]) { groups[gk] = []; groupOrder.push(gk); }
                   groups[gk].push(p);
                 });
+                // Force display order
+                const forcedOrder = ['PEA ETF', 'PEA Actions', 'CTO TR', 'CTO BB', 'Crypto', 'Assurance Vie', 'PEE'];
+                const sortedOrder = forcedOrder.filter(k => groups[k]);
+                // Add any remaining groups not in forced order
+                groupOrder.forEach(k => { if (!sortedOrder.includes(k)) sortedOrder.push(k); });
 
                 const groupColors = {
                   'PEA Actions': { border: 'border-amber-500/20', bg: 'bg-amber-500/5', text: 'text-amber-400', dot: 'bg-amber-400' },
@@ -258,8 +263,28 @@ export function render(store) {
                   return `<p class="text-center text-gray-600 text-sm py-3">Aucun placement — cliquez sur + pour en ajouter</p>`;
                 }
 
-                return `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-                  ${groupOrder.map(gk => {
+                // Add Épargne as last card in the placement grid
+                const epargne = store.get('actifs.epargne') || [];
+                const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
+                const epargneCard = epargne.length > 0 ? `<div class="rounded-lg border border-sky-400/20 bg-sky-400/5 overflow-hidden">
+                  <div class="flex items-center justify-between px-3 py-1.5 border-b border-sky-400/15">
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                      <span class="text-xs font-semibold text-sky-300 uppercase tracking-wide">Épargne</span>
+                    </div>
+                    <span class="text-xs font-bold text-sky-300">${formatCurrency(totalEpargne)}</span>
+                  </div>
+                  <div class="divide-y divide-dark-400/10">
+                    ${epargne.map(e => `<div class="flex items-center gap-1.5 px-3 py-1.5">
+                      <span class="text-[11px] text-gray-200 font-medium flex-1 min-w-0 truncate">${e.nom || 'Livret'}</span>
+                      <span class="text-[9px] text-gray-600">${formatCurrency(e.solde)}</span>
+                      <span class="text-[10px] text-gray-500">${e.taux || 0}%</span>
+                    </div>`).join('')}
+                  </div>
+                </div>` : '';
+
+                return `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                  ${sortedOrder.map(gk => {
                     const gc = groupColors[gk] || defaultGroupColor;
                     const items = groups[gk];
                     const groupDCA = items.reduce((s, p) => s + Math.max(Number(p.dcaMensuel) || 0, (p.dcaOverrides || []).reduce((m, ov) => Math.max(m, Number(ov.dcaMensuel) || 0), 0)), 0);
@@ -277,27 +302,69 @@ export function render(store) {
                       </div>
                     </div>`;
                   }).join('')}
+                  ${epargneCard}
                 </div>`;
               })()}
           </div>
 
-          <!-- Row 2+3: Livrets, Overflow, Transferts, Héritage — compact grid -->
+          <!-- Scénarios -->
+          <div>
+            <div class="flex items-center gap-1.5 mb-1">
+              <svg class="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              <span class="text-base font-bold text-gray-300 uppercase tracking-wide">Scénarios</span>
+            </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
 
-          <!-- Livrets d'épargne -->
-          ${(() => {
-            const epargne = store.get('actifs.epargne') || [];
-            if (epargne.length === 0) return '';
-            const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
-            return `
-          <div class="rounded-lg border border-sky-400/20 overflow-hidden">
-            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-sky-400/5 border-b border-sky-400/15">
-              <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-              <span class="text-[10px] font-semibold text-sky-300 uppercase tracking-wide">Épargne</span>
-              <span class="text-[10px] font-bold text-sky-300 ml-auto">${formatCurrency(totalEpargne)}</span>
+          <!-- Transferts -->
+          <div class="rounded-lg border border-purple-400/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-purple-400/5 border-b border-purple-400/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+              <span class="text-[10px] font-semibold text-purple-300 uppercase tracking-wide">Transferts</span>
+              <span class="text-[10px] text-gray-600">${capitalTransfers.length}</span>
+              <button id="proj-add-transfer" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/35 transition text-xs font-bold" title="Ajouter un transfert">+</button>
             </div>
-          </div>`;
-          })()}
+            <div class="divide-y divide-dark-400/10">
+              ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
+                const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'AV', '__cat_epargne__': 'Epargne', 'surplus': 'Surplus', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
+                const destPlacement = placements.find(p => p.id === t.destinationId);
+                const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
+                const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'AV', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'surplus': 'Surplus', 'heritage': 'Héritage', '__donation__': 'Donation' };
+                const sourceLabel = catSrcNames[t.source] || t.source;
+                const sourceBg = t.source === 'heritage' ? 'bg-amber-400/10 text-amber-400' : t.source === 'epargne' ? 'bg-cyan-400/10 text-cyan-400' : 'bg-purple-500/10 text-purple-300';
+                const freqLabels = { annual: '/an', monthly: '/m', once: '×1' };
+                const freqLabel = freqLabels[t.frequency] || '×1';
+                return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
+                  <span class="text-[8px] px-1 py-0.5 rounded-full ${sourceBg}">${sourceLabel}</span>
+                  <span class="text-gray-600 text-[8px]">→</span>
+                  <span class="text-[10px] text-gray-200 font-medium truncate flex-1 min-w-0">${destName}</span>
+                  <span class="text-[8px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
+                  <span class="text-[9px] text-gray-500">${t.startYear}</span>
+                  <button class="proj-del-transfer btn-delete text-[9px]" data-id="${t.id}" onclick="event.stopPropagation()">✕</button>
+                </div>`;
+              }).join('') : '<p class="text-center text-gray-600 text-[10px] py-2">Aucun</p>'}
+            </div>
+          </div>
+
+          <!-- Héritage -->
+          <div class="rounded-lg border border-amber-400/20 overflow-hidden">
+            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-amber-400/5 border-b border-amber-400/15">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span class="text-[10px] font-semibold text-amber-300 uppercase tracking-wide">Héritage</span>
+              <span class="text-[10px] text-gray-600">${heritageItems.length}</span>
+              <button id="proj-add-heritage" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/35 transition text-xs font-bold" title="Ajouter un héritage">+</button>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${heritageItems.length > 0 ? heritageItems.map(h => {
+                const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
+                return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
+                  <span class="text-[10px] text-gray-200 truncate flex-1 min-w-0 font-medium" title="${h.nom}">${h.nom}</span>
+                  <span class="text-[8px] text-gray-600">${formatCurrency(h.montant)}</span>
+                  <span class="text-[9px] text-gray-500">${yearLabel}</span>
+                  <button class="proj-del-heritage btn-delete text-[9px]" data-id="${h.id}" onclick="event.stopPropagation()">✕</button>
+                </div>`;
+              }).join('') : '<p class="text-center text-gray-600 text-[10px] py-2">Aucun</p>'}
+            </div>
+          </div>
 
           <!-- PEA overflow -->
           ${(() => {
@@ -422,58 +489,8 @@ export function render(store) {
           </div>`;
           })()}
 
-          <!-- Transferts -->
-          <div class="rounded-lg border border-purple-400/20 overflow-hidden">
-            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-purple-400/5 border-b border-purple-400/15">
-              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-              <span class="text-[10px] font-semibold text-purple-300 uppercase tracking-wide">Transferts</span>
-              <span class="text-[10px] text-gray-600">${capitalTransfers.length}</span>
-              <button id="proj-add-transfer" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/35 transition text-xs font-bold" title="Ajouter un transfert">+</button>
-            </div>
-            <div class="divide-y divide-dark-400/10">
-              ${capitalTransfers.length > 0 ? capitalTransfers.map(t => {
-                const catDestNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'AV', '__cat_epargne__': 'Epargne', 'surplus': 'Surplus', '__donation__': 'Donation', '__cto_overflow__': 'CTO' };
-                const destPlacement = placements.find(p => p.id === t.destinationId);
-                const destName = catDestNames[t.destinationId] || (destPlacement ? destPlacement.nom : '(supprimé)');
-                const catSrcNames = { '__cat_pea__': 'PEA', '__cat_cto__': 'CTO', '__cat_cto_tr__': 'CTO TR', '__cat_cto_bb__': 'CTO BB', '__cat_bitcoin__': 'Bitcoin', '__cat_av__': 'AV', '__cat_pee__': 'PEE', 'epargne': 'Epargne', 'surplus': 'Surplus', 'heritage': 'Héritage', '__donation__': 'Donation' };
-                const sourceLabel = catSrcNames[t.source] || t.source;
-                const sourceBg = t.source === 'heritage' ? 'bg-amber-400/10 text-amber-400' : t.source === 'epargne' ? 'bg-cyan-400/10 text-cyan-400' : 'bg-purple-500/10 text-purple-300';
-                const freqLabels = { annual: '/an', monthly: '/m', once: '×1' };
-                const freqLabel = freqLabels[t.frequency] || '×1';
-                return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
-                  <span class="text-[8px] px-1 py-0.5 rounded-full ${sourceBg}">${sourceLabel}</span>
-                  <span class="text-gray-600 text-[8px]">→</span>
-                  <span class="text-[10px] text-gray-200 font-medium truncate flex-1 min-w-0">${destName}</span>
-                  <span class="text-[8px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
-                  <span class="text-[9px] text-gray-500">${t.startYear}</span>
-                  <button class="proj-del-transfer btn-delete text-[9px]" data-id="${t.id}" onclick="event.stopPropagation()">✕</button>
-                </div>`;
-              }).join('') : '<p class="text-center text-gray-600 text-[10px] py-2">Aucun</p>'}
-            </div>
-          </div>
-
-          <!-- Héritage -->
-          <div class="rounded-lg border border-amber-400/20 overflow-hidden">
-            <div class="flex items-center gap-1.5 px-2 py-1.5 bg-amber-400/5 border-b border-amber-400/15">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-              <span class="text-[10px] font-semibold text-amber-300 uppercase tracking-wide">Héritage</span>
-              <span class="text-[10px] text-gray-600">${heritageItems.length}</span>
-              <button id="proj-add-heritage" class="ml-auto w-5 h-5 flex items-center justify-center rounded bg-amber-400/20 text-amber-400 hover:bg-amber-400/35 transition text-xs font-bold" title="Ajouter un héritage">+</button>
-            </div>
-            <div class="divide-y divide-dark-400/10">
-              ${heritageItems.length > 0 ? heritageItems.map(h => {
-                const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
-                return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
-                  <span class="text-[10px] text-gray-200 truncate flex-1 min-w-0 font-medium" title="${h.nom}">${h.nom}</span>
-                  <span class="text-[8px] text-gray-600">${formatCurrency(h.montant)}</span>
-                  <span class="text-[9px] text-gray-500">${yearLabel}</span>
-                  <button class="proj-del-heritage btn-delete text-[9px]" data-id="${h.id}" onclick="event.stopPropagation()">✕</button>
-                </div>`;
-              }).join('') : '<p class="text-center text-gray-600 text-[10px] py-2">Aucun</p>'}
-            </div>
-          </div>
-
-          </div><!-- end grid -->
+          </div><!-- end scenarios grid -->
+          </div><!-- end Scénarios -->
 
           <!-- Actions -->
           <div class="flex flex-wrap justify-end">
