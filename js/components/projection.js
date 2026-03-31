@@ -105,6 +105,26 @@ export function render(store) {
   surplusAnnuel.forEach(s => { surplusByYear[Number(s.year)] = Number(s.montant) || 0; });
   const currentCalendarYear = new Date().getFullYear();
   const last = snapshots[snapshots.length - 1];
+
+  // FIRE computation
+  const fireSwr = (params.swr || 4) / 100;
+  const fireDepAnnuelles = (params.fireDepensesMensuelles || 1750) * 12;
+  const firePensionLegal = (params.pensionTauxLegal || 2442) * 12;
+  const firePensionPlein = (params.pensionTauxPlein || 2642) * 12;
+  const fireAgeLegal = params.ageRetraiteTauxLegal || 64;
+  const fireAgePlein = params.ageRetraiteTauxPlein || 65;
+  let fireFirstIdx = -1;
+  const fireData = snapshots.map((s, idx) => {
+    const rente = s.cashApresImpot * fireSwr;
+    let pension = 0;
+    if (s.age >= fireAgePlein) pension = firePensionPlein;
+    else if (s.age >= fireAgeLegal) pension = firePensionLegal;
+    const totalRevenu = rente + pension;
+    const couverture = fireDepAnnuelles > 0 ? totalRevenu / fireDepAnnuelles : 0;
+    const isFire = couverture >= 1;
+    if (isFire && fireFirstIdx === -1) fireFirstIdx = idx;
+    return { rente, pension, couverture, isFire };
+  });
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
   const evolutionPct = first?.patrimoineNet ? evolution / Math.abs(first.patrimoineNet) : 0;
@@ -595,6 +615,18 @@ export function render(store) {
                 class="param-input w-18 px-1 py-0.5 text-sm bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-semibold">
               <span class="text-[10px] text-gray-500">€</span>
             </div>
+            <div class="w-px h-4 bg-dark-400/30 hidden sm:block"></div>
+            <div class="flex items-center gap-1 px-2 py-1 rounded bg-orange-500/8 border border-orange-500/25">
+              <span class="text-xs text-orange-400">🔥 FIRE</span>
+              <span class="text-[10px] text-gray-500">SWR</span>
+              <input type="number" id="param-swr" value="${params.swr || 4}" min="1" max="10" step="0.5"
+                class="param-input w-12 px-1 py-0.5 text-sm bg-transparent border-0 text-orange-400 focus:ring-0 text-center font-semibold">
+              <span class="text-[10px] text-gray-500">%</span>
+              <span class="text-[10px] text-gray-500 ml-1">Dép.</span>
+              <input type="number" id="param-fire-depenses" value="${params.fireDepensesMensuelles || 1750}" min="0" max="50000" step="50"
+                class="param-input w-16 px-1 py-0.5 text-sm bg-transparent border-0 text-orange-400/80 focus:ring-0 text-center font-semibold">
+              <span class="text-[10px] text-gray-500">€/m</span>
+            </div>
           </div>
         </div>
         <div class="flex justify-end gap-1 mb-1">
@@ -646,17 +678,24 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Immo.</th>
                 <th class="px-1 py-1.5 text-center font-semibold">Liq.</th>
                 <th class="px-1 py-1.5 text-center">Donation</th>
+                <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-orange-400/70">🔥 Rente</th>
+                <th class="px-1 py-1.5 text-center text-orange-400/50">Dép.</th>
+                <th class="px-1 py-1.5 text-center text-orange-400/70">FIRE</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-400/20">
-              ${snapshots.map(s => {
+              ${snapshots.map((s, sIdx) => {
+                const fire = fireData[sIdx];
                 const isRetirement = s.isRetraite;
+                const isFireFirst = sIdx === fireFirstIdx;
                 const isFiveYear = (s.annee + 1) > 1 && (s.annee + 1) % 5 === 0;
-                const rowClass = isRetirement
-                  ? 'bg-accent-amber/10 border-l-4 border-l-accent-amber'
-                  : s.annee === 0
-                    ? 'bg-accent-blue/5'
-                    : '';
+                const rowClass = isFireFirst
+                  ? 'bg-orange-500/10 border-l-4 border-l-orange-400'
+                  : isRetirement
+                    ? 'bg-accent-amber/10 border-l-4 border-l-accent-amber'
+                    : s.annee === 0
+                      ? 'bg-accent-blue/5'
+                      : '';
                 const bt = isFiveYear ? 'border-t-2 border-t-dark-300/40' : '';
                 // Helper: render a placement cell with tooltip
                 const placCell = (gk, extraClass = '') => {
@@ -691,6 +730,9 @@ export function render(store) {
                 <td class="px-1 py-1 text-center text-[11px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[11px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
+                <td class="px-1 py-1 text-center text-[11px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${formatCurrency(fire.rente)}${fire.pension > 0 ? `<div class="text-[8px] text-amber-400/60 leading-tight">+${formatCurrency(fire.pension)} retr.</div>` : ''}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-500 ${bt}">${formatCurrency(fireDepAnnuelles)}</td>
+                <td class="px-1 py-1 text-center text-[11px] font-bold ${bt} ${fire.couverture >= 1 ? 'text-orange-400' : fire.couverture >= 0.8 ? 'text-yellow-400/80' : 'text-gray-500'}">${Math.round(fire.couverture * 100)}%${isFireFirst ? ' 🔥' : ''}</td>
               </tr>`;
               }).join('')}
             </tbody>
@@ -1561,6 +1603,10 @@ export function mount(store, navigate) {
 
     const cashOutVal = document.getElementById('param-cashout-year')?.value;
     store.set('parametres.cashOutYear', cashOutVal ? parseInt(cashOutVal) : null);
+
+    // FIRE params
+    store.set('parametres.swr', parseFloat(document.getElementById('param-swr')?.value) || 4);
+    store.set('parametres.fireDepensesMensuelles', parseInt(document.getElementById('param-fire-depenses')?.value) || 1750);
 
     navigate('projection');
   });
