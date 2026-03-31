@@ -843,6 +843,149 @@ export function render(store) {
       </details>`;
       })()}
 
+      <!-- Stratégie FIRE — collapsible -->
+      ${(() => {
+        if (snapshots.length === 0) return '';
+        const fireSnap = fireFirstIdx >= 0 ? snapshots[fireFirstIdx] : null;
+        const fireFd = fireFirstIdx >= 0 ? fireData[fireFirstIdx] : null;
+        const lastSnap = snapshots[snapshots.length - 1];
+        const lastFire = fireData[fireData.length - 1];
+        const patrimoineNecessaire = fireDepBase / fireSwr;
+
+        // Build withdrawal order from fiscal data at FIRE year (or last year)
+        const refSnap = fireSnap || lastSnap;
+        const withdrawalOrder = [];
+
+        // 1. Épargne (livrets exonérés)
+        const epar = refSnap.epargne || 0;
+        if (epar > 0) {
+          withdrawalOrder.push({ priority: 1, source: 'Épargne (Livrets)', valeur: epar, regime: 'Exonéré', taux: '0%', raison: 'Pas de plus-value, liquidité immédiate' });
+        }
+
+        // Group placements by fiscal regime for withdrawal ordering
+        const gkData = groupKeys.map(gk => ({
+          gk,
+          valeur: refSnap.placementDetail[gk] || 0,
+          apports: refSnap.placementApports[gk] || 0,
+          gains: refSnap.placementGains[gk] || 0,
+          taxes: refSnap.placementTaxes?.[gk] || 0,
+          rate: refSnap.placementTaxRates?.[gk] || 0
+        })).filter(d => d.valeur > 0);
+
+        // 2. PEE (PS seuls 17.2% après déblocage retraite)
+        gkData.filter(d => d.gk === 'PEE').forEach(d => {
+          withdrawalOrder.push({ priority: 2, source: d.gk, valeur: d.valeur, regime: 'PS seuls', taux: '17,2%', raison: 'Déblocable à la retraite, fiscalité réduite' });
+        });
+
+        // 3. PEA > 5 ans (PS seuls 17.2%)
+        gkData.filter(d => d.gk.startsWith('PEA')).forEach(d => {
+          withdrawalOrder.push({ priority: 3, source: d.gk, valeur: d.valeur, regime: 'PS seuls (>5 ans)', taux: '17,2%', raison: 'PEA mature : seuls les PS s\'appliquent' });
+        });
+
+        // 4. AV > 8 ans (PS + IR 7.5% avec abattement)
+        gkData.filter(d => d.gk === 'Assurance Vie').forEach(d => {
+          withdrawalOrder.push({ priority: 4, source: d.gk, valeur: d.valeur, regime: 'PS + IR 7,5%', taux: '24,7%', raison: 'Abattement 4 600 €/an sur les gains, puis IR 7,5%' });
+        });
+
+        // 5. CTO / Crypto (PFU 30%)
+        gkData.filter(d => d.gk.startsWith('CTO') || d.gk === 'Crypto').forEach(d => {
+          withdrawalOrder.push({ priority: 5, source: d.gk, valeur: d.valeur, regime: 'PFU', taux: '30%', raison: 'Flat tax sur les plus-values' });
+        });
+
+        // Any remaining
+        const coveredGks = new Set(withdrawalOrder.map(w => w.source));
+        gkData.filter(d => !coveredGks.has(d.gk) && d.gk !== 'PEE').forEach(d => {
+          withdrawalOrder.push({ priority: 6, source: d.gk, valeur: d.valeur, regime: 'Variable', taux: `${Math.round(d.rate * 100)}%`, raison: '' });
+        });
+
+        withdrawalOrder.sort((a, b) => a.priority - b.priority);
+        const totalRetirable = withdrawalOrder.reduce((s, w) => s + w.valeur, 0);
+
+        // Compute years of FIRE coverage by envelope
+        const refDepenses = fireFd ? fireFd.depenses : fireDepBase;
+
+        return `
+      <details class="card-dark rounded-xl group">
+        <summary class="flex items-center justify-between px-3 sm:px-5 py-3 cursor-pointer select-none">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base">🔥</span>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-200">Stratégie FIRE</h2>
+            ${fireSnap ? `<span class="text-[10px] text-orange-400 font-medium hidden sm:inline">FIRE à ${fireSnap.age} ans (${fireSnap.calendarYear})</span>` : '<span class="text-[10px] text-gray-500 hidden sm:inline">Non atteint sur l\'horizon</span>'}
+          </div>
+          <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-3 sm:px-5 pb-5 space-y-4">
+
+          <!-- FIRE Summary -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="rounded-lg bg-dark-700/50 p-3 text-center">
+              <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Date FIRE</p>
+              <p class="text-lg font-bold ${fireSnap ? 'text-orange-400' : 'text-gray-500'}">${fireSnap ? `${fireSnap.calendarYear}` : '—'}</p>
+              <p class="text-[10px] text-gray-500">${fireSnap ? `Âge ${fireSnap.age} · An ${fireSnap.annee + 1}` : 'Non atteint'}</p>
+            </div>
+            <div class="rounded-lg bg-dark-700/50 p-3 text-center">
+              <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Patrimoine nécessaire</p>
+              <p class="text-lg font-bold text-gray-200">${formatCurrency(patrimoineNecessaire)}</p>
+              <p class="text-[10px] text-gray-500">Dép. ${formatCurrency(fireDepBase)}/an ÷ SWR ${(fireSwr * 100).toFixed(0)}%</p>
+            </div>
+            <div class="rounded-lg bg-dark-700/50 p-3 text-center">
+              <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Patrimoine au FIRE</p>
+              <p class="text-lg font-bold text-accent-green">${fireSnap ? formatCurrency(fireSnap.totalLiquiditesNettes) : '—'}</p>
+              <p class="text-[10px] text-gray-500">${fireSnap ? `Couverture ${Math.round(fireFd.couverture * 100)}%` : ''}</p>
+            </div>
+            <div class="rounded-lg bg-dark-700/50 p-3 text-center">
+              <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Rente annuelle</p>
+              <p class="text-lg font-bold text-purple-400">${fireSnap ? formatCurrency(fireFd.rente + fireFd.pension) : formatCurrency(lastFire.rente)}</p>
+              <p class="text-[10px] text-gray-500">${fireSnap && fireFd.pension > 0 ? `dont ${formatCurrency(fireFd.pension)} pension` : 'SWR uniquement'}</p>
+            </div>
+          </div>
+
+          <!-- Withdrawal Order -->
+          <div>
+            <h3 class="text-sm font-semibold text-orange-400/80 mb-2 flex items-center gap-2">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+              Ordre optimal de retrait
+            </h3>
+            <p class="text-[10px] text-gray-600 mb-2">Du moins taxé au plus taxé — à ${fireSnap ? `fin ${fireSnap.calendarYear}` : `fin ${lastSnap.calendarYear}`} (valeurs projetées)</p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm min-w-[500px]">
+                <thead class="bg-dark-800/50 text-gray-500 text-[10px] uppercase tracking-wider">
+                  <tr>
+                    <th class="px-3 py-2 text-center w-8">#</th>
+                    <th class="px-3 py-2 text-left">Source</th>
+                    <th class="px-3 py-2 text-right">Valeur</th>
+                    <th class="px-3 py-2 text-center">Régime</th>
+                    <th class="px-3 py-2 text-center">Taux</th>
+                    <th class="px-3 py-2 text-left">Raison</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-dark-400/20">
+                  ${withdrawalOrder.map((w, i) => `
+                  <tr class="hover:bg-dark-600/30 transition">
+                    <td class="px-3 py-2 text-center text-orange-400/60 font-bold text-[11px]">${i + 1}</td>
+                    <td class="px-3 py-2 text-gray-200 font-medium text-[12px]">${w.source}</td>
+                    <td class="px-3 py-2 text-right text-gray-200 text-[12px]">${formatCurrency(w.valeur)}</td>
+                    <td class="px-3 py-2 text-center text-[11px] text-gray-400">${w.regime}</td>
+                    <td class="px-3 py-2 text-center text-[11px] font-semibold ${w.taux === '0%' ? 'text-accent-green' : parseFloat(w.taux) <= 17.5 ? 'text-yellow-400' : 'text-red-400/70'}">${w.taux}</td>
+                    <td class="px-3 py-2 text-[10px] text-gray-500">${w.raison}</td>
+                  </tr>`).join('')}
+                </tbody>
+                <tfoot class="border-t-2 border-dark-300/40">
+                  <tr class="font-semibold">
+                    <td class="px-3 py-2.5"></td>
+                    <td class="px-3 py-2.5 text-gray-300 uppercase text-[11px]">Total retirable</td>
+                    <td class="px-3 py-2.5 text-right text-gray-100 text-[13px]">${formatCurrency(totalRetirable)}</td>
+                    <td colspan="3" class="px-3 py-2.5 text-[11px] text-gray-500">≈ ${refDepenses > 0 ? Math.floor(totalRetirable / refDepenses) : '∞'} ans de dépenses</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </details>`;
+      })()}
+
       <!-- Stratégie d'investissement — éditable -->
       ${(() => {
         // Compute real data for strategy defaults
