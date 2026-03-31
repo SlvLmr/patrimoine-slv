@@ -108,22 +108,24 @@ export function render(store) {
 
   // FIRE computation
   const fireSwr = (params.swr || 4) / 100;
-  const fireDepAnnuelles = (params.fireDepensesMensuelles || 1750) * 12;
+  const fireDepBase = (params.fireDepensesMensuelles || 1750) * 12;
+  const fireInflation = params.inflationRate || 0.02;
   const firePensionLegal = (params.pensionTauxLegal || 2442) * 12;
   const firePensionPlein = (params.pensionTauxPlein || 2642) * 12;
   const fireAgeLegal = params.ageRetraiteTauxLegal || 64;
   const fireAgePlein = params.ageRetraiteTauxPlein || 65;
   let fireFirstIdx = -1;
   const fireData = snapshots.map((s, idx) => {
+    const depenses = fireDepBase * Math.pow(1 + fireInflation, s.annee);
     const rente = s.cashApresImpot * fireSwr;
     let pension = 0;
     if (s.age >= fireAgePlein) pension = firePensionPlein;
     else if (s.age >= fireAgeLegal) pension = firePensionLegal;
     const totalRevenu = rente + pension;
-    const couverture = fireDepAnnuelles > 0 ? totalRevenu / fireDepAnnuelles : 0;
+    const couverture = depenses > 0 ? totalRevenu / depenses : 0;
     const isFire = couverture >= 1;
     if (isFire && fireFirstIdx === -1) fireFirstIdx = idx;
-    return { rente, pension, couverture, isFire };
+    return { rente, pension, depenses, couverture, isFire };
   });
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
@@ -731,7 +733,7 @@ export function render(store) {
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[11px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
                 <td class="px-1 py-1 text-center text-[11px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
                 <td class="px-1 py-1 text-center text-[11px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'} proj-tip-wrap">${formatCurrency(fire.rente + fire.pension)}${fire.pension > 0 ? `<div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Rente SWR</span><span>${formatCurrency(fire.rente)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Pension</span><span class="text-amber-400">${formatCurrency(fire.pension)}</span></div></div>` : ''}</td>
-                <td class="px-1 py-1 text-center text-[11px] text-gray-500 ${bt}">${formatCurrency(fireDepAnnuelles)}</td>
+                <td class="px-1 py-1 text-center text-[11px] text-gray-500 ${bt}">${formatCurrency(fire.depenses)}</td>
                 <td class="px-1 py-1 text-center text-[11px] font-bold ${bt} ${fire.couverture >= 1 ? 'text-orange-400' : fire.couverture >= 0.8 ? 'text-yellow-400/80' : 'text-gray-500'}">${Math.round(fire.couverture * 100)}%${isFireFirst ? ' 🔥' : ''}</td>
               </tr>`;
               }).join('')}
