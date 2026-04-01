@@ -2,7 +2,6 @@ import { formatCurrency, formatPercent, computeProjection, inputField, selectFie
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=9';
 import * as ProjectionEnfants from './projection-enfants.js?v=20260331a';
-import { exportProjectionPDF } from '../export-pdf.js?v=2';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -1612,6 +1611,7 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=2');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);
