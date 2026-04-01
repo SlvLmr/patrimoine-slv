@@ -1611,7 +1611,7 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
-      const { exportProjectionPDF } = await import('../export-pdf.js?v=2');
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=3');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);
