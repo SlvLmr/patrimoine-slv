@@ -44,8 +44,8 @@ export function render(store) {
 
   // Group placements by envelope
   const peaPlac = placements.filter(p => (p.enveloppe || '').startsWith('PEA'));
-  const ctoPlac = placements.filter(p => (p.enveloppe || '') === 'CTO');
-  const cryptoPlac = placements.filter(p => (p.categorie || '') === 'Crypto');
+  const ctoPlac = placements.filter(p => (p.enveloppe || '').startsWith('CTO'));
+  const cryptoPlac = placements.filter(p => (p.categorie || '') === 'Crypto' || (p.enveloppe || '') === 'Crypto');
   const avPlac = placements.filter(p => (p.enveloppe || '') === 'AV');
   const peePlac = placements.filter(p => (p.enveloppe || '') === 'PEE');
   const categorizedEnv = new Set([...peaPlac, ...ctoPlac, ...cryptoPlac, ...avPlac, ...peePlac]);
@@ -165,18 +165,18 @@ export function render(store) {
         <!-- Immobilier (compact, includes details) -->
         <div id="ptf-card-immo" class="card-dark rounded-xl sm:rounded-2xl p-2 sm:p-3">
           <div class="flex items-center gap-1 sm:gap-2 mb-1">
-            <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-lg bg-amber-700/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-lg bg-rose-700/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
             </div>
             <p class="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider font-bold">Immo.</p>
           </div>
-          <p class="text-sm sm:text-lg font-bold text-amber-500 mb-1 text-center">${fmt(totalImmo)}</p>
+          <p class="text-sm sm:text-lg font-bold text-rose-400 mb-1 text-center">${fmt(totalImmo)}</p>
           <div class="hidden sm:block space-y-1 mt-1 border-t border-dark-400/20 pt-1">
             ${immobilier.length > 0 ? immobilier.map(i => `
             <div class="flex items-center justify-center gap-1.5">
-                <div class="w-1 h-1 rounded-full bg-amber-500/50 flex-shrink-0"></div>
+                <div class="w-1 h-1 rounded-full bg-rose-400/50 flex-shrink-0"></div>
                 <span class="text-[9px] text-gray-400">${i.nom}</span>
             </div>`).join('') : '<p class="text-[9px] text-gray-600">Aucun bien</p>'}
           </div>
@@ -380,13 +380,13 @@ export function render(store) {
         <details class="card-dark rounded-xl overflow-hidden group/imm">
           <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
             <div class="flex items-center gap-2">
-              <div class="w-5 h-5 rounded-lg bg-amber-700/15 flex items-center justify-center">
-                <svg class="w-2.5 h-2.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              <div class="w-5 h-5 rounded-lg bg-rose-700/15 flex items-center justify-center">
+                <svg class="w-2.5 h-2.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
               </div>
               <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Immobilier</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-amber-500">${fmt(totalImmo)}</span>
+              <span class="text-sm font-bold text-rose-400">${fmt(totalImmo)}</span>
               <svg class="w-3 h-3 text-gray-600 transition-transform group-open/imm:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
           </summary>
@@ -571,7 +571,7 @@ export function mount() {
     // Level 1 → 2: Patrimoine → Liquidités + Investissements + Immobilier
     drawConnectors('ptf-svg-L1-svg', 'ptf-svg-L1',
       ['ptf-card-liq', 'ptf-card-inv', 'ptf-card-immo'],
-      ['#6366f1', '#c084fc', '#7c3aed'],
+      ['#6366f1', '#c084fc', '#f43f5e'],
       ['glow-indigo', 'glow-amber', 'glow-brown']
     );
 
