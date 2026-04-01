@@ -10,19 +10,29 @@ let loaded = false;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) { resolve(); return; }
     const s = document.createElement('script');
     s.src = src;
-    s.onload = resolve;
+    s.onload = () => setTimeout(resolve, 50); // small delay for global registration
     s.onerror = reject;
     document.head.appendChild(s);
   });
 }
 
 async function ensureLibs() {
-  if (loaded) return;
+  if (loaded && window.jspdf) return;
   await loadScript(CDN_JSPDF);
+  // Wait for window.jspdf to be available
+  let tries = 0;
+  while (!window.jspdf && tries < 20) {
+    await new Promise(r => setTimeout(r, 100));
+    tries++;
+  }
+  if (!window.jspdf) throw new Error('jsPDF failed to load');
   await loadScript(CDN_AUTOTABLE);
+  loaded = true;
+}
   loaded = true;
 }
 

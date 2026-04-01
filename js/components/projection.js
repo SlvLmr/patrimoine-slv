@@ -2,7 +2,7 @@ import { formatCurrency, formatPercent, computeProjection, inputField, selectFie
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=9';
 import * as ProjectionEnfants from './projection-enfants.js?v=20260331a';
-import { exportProjectionPDF } from '../export-pdf.js?v=1';
+import { exportProjectionPDF } from '../export-pdf.js?v=2';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
