@@ -33,8 +33,6 @@ async function ensureLibs() {
   await loadScript(CDN_AUTOTABLE);
   loaded = true;
 }
-  loaded = true;
-}
 
 function fmt(v) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v || 0);
