@@ -330,7 +330,8 @@ const Store = {
     this._state = loadState(activeId);
     this._migrateInformatif();
     this._applyMonthlyDCA();
-    this._archivePastExpenses();
+    // Don't auto-archive past expenses — let the user close the month manually
+    // via the "Clôturer le mois" button to avoid silent data loss
     return this;
   },
 
