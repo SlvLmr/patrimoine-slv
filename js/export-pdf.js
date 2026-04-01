@@ -3,8 +3,8 @@
  * Uses jsPDF + jsPDF-AutoTable loaded from CDN
  */
 
-const CDN_JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
-const CDN_AUTOTABLE = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js';
+const CDN_JSPDF = './js/lib/jspdf.umd.min.js';
+const CDN_AUTOTABLE = './js/lib/jspdf.plugin.autotable.min.js';
 
 let loaded = false;
 
