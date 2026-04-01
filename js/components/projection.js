@@ -2,6 +2,7 @@ import { formatCurrency, formatPercent, computeProjection, inputField, selectFie
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=9';
 import * as ProjectionEnfants from './projection-enfants.js?v=20260331a';
+import { exportProjectionPDF } from '../export-pdf.js?v=1';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -157,6 +158,10 @@ export function render(store) {
             </svg>
           </div>
           Projection
+          <button id="btn-export-pdf" class="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-dark-700/60 text-gray-400 text-xs rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium border border-dark-400/20" title="Exporter en PDF">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            PDF
+          </button>
         </h2>
         <p class="text-gray-500 text-sm mt-1">Simule l'évolution de ton patrimoine dans le temps</p>
       </div>
@@ -1600,6 +1605,21 @@ export function mount(store, navigate) {
     ProjectionEnfants.mount(store, navigate, { embedded: true });
     return;
   }
+
+  // ── PDF export button
+  document.getElementById('btn-export-pdf')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
+    try {
+      await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      alert('Erreur lors de l\'export PDF : ' + err.message);
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> PDF';
+  });
 
   // ── "Moi" tab: original projection mount
   const snapshots = computeProjection(store);
