@@ -1220,50 +1220,6 @@ export function render(store) {
         const hTotal = heritageItems.reduce((s, h) => s + (Number(h.montant) || 0), 0);
         const hYears = heritageItems.map(h => h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?');
 
-        // Enveloppes text
-        const enveloppes = allPlac.length > 0 ? (() => {
-          const envSet = new Set();
-          allPlac.forEach(p => envSet.add(p.enveloppe || p.type || 'Autre'));
-          const lines = [];
-          if (envSet.has('PEA')) lines.push(`PEA : plafond 150 000 € (versé ${formatCurrency(peaApports)}) — gains exonérés d'IR après 5 ans`);
-          if (envSet.has('AV') || allPlac.some(p => (p.enveloppe || p.type || '').includes('AV'))) lines.push('Assurance Vie : pas de plafond, fiscalité avantageuse après 8 ans');
-          if (envSet.has('CTO') || allPlac.some(p => getPlacementGroupKey(p).startsWith('CTO'))) lines.push('CTO : pas de plafond, flat tax 31,4% sur les plus-values');
-          if (envSet.has('PEE')) lines.push('PEE : abondement employeur, bloqué 5 ans');
-          if (envSet.has('PER')) lines.push('PER : déductible du revenu imposable, bloqué jusqu\'à la retraite');
-          if (envSet.has('Crypto') || allPlac.some(p => getPlacementGroupKey(p) === 'Crypto')) lines.push('Crypto : flat tax 31,4% sur les plus-values réalisées');
-          return lines.join('\n');
-        })() : 'Aucun placement configuré';
-
-        // DCA text
-        const dcaLines = ['Objectif : remplir le PEA en priorité (avantage fiscal)'];
-        Object.entries(dcaByGroup).sort((a, b) => b[1] - a[1]).forEach(([gk, dca]) => {
-          dcaLines.push(`DCA mensuel ${gk} : ${formatCurrency(dca)}/mois`);
-        });
-        const totalDCA = Object.values(dcaByGroup).reduce((s, v) => s + v, 0);
-        if (totalDCA > 0) dcaLines.push(`Total DCA : ${formatCurrency(totalDCA)}/mois`);
-        dcaLines.push('Quand le PEA est plein → basculer le DCA vers le CTO');
-        const repartition = dcaLines.join('\n');
-
-        // Moyens
-        const moyensLines = [];
-        moyensLines.push(`Capacité d'épargne mensuelle : ${formatCurrency(capaciteEpargne)}`);
-        moyensLines.push(`Revenus : ${formatCurrency(revenus)}/mois — Dépenses : ${formatCurrency(depenses)}/mois`);
-        if (mensualitesEmprunt > 0) moyensLines.push(`Crédits : ${formatCurrency(mensualitesEmprunt)}/mois`);
-        if (hTotal > 0) moyensLines.push(`Héritage prévu : ${formatCurrency(hTotal)} (${hYears.join(', ')})`);
-        const moyens = moyensLines.join('\n');
-
-        // Objectifs
-        const ageRetraiteSouhaitee = params.ageRetraiteSouhaitee || 60;
-        const cashOutLabel = params.cashOutYear ? `Cash out en ${params.cashOutYear}` : 'Non défini';
-        const objectifsLines = [
-          `Retraite souhaitée à ${ageRetraiteSouhaitee} ans`,
-          `Patrimoine actuel : ${formatCurrency(first?.patrimoineNet || 0)}`,
-          `Patrimoine projeté (fin) : ${formatCurrency(last?.patrimoineNet || 0)}`,
-          `Pension légale : ${formatCurrency(params.pensionTauxLegal || 2442)}/mois — Taux plein : ${formatCurrency(params.pensionTauxPlein || 2642)}/mois`,
-          `Stratégie de sortie : ${cashOutLabel}`
-        ];
-        const objectifs = objectifsLines.join('\n');
-
         return `
       <details class="card-dark rounded-xl group">
         <summary class="flex items-center justify-between px-3 sm:px-5 py-3 cursor-pointer select-none">
@@ -1275,35 +1231,7 @@ export function render(store) {
           <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
         <div class="px-3 sm:px-5 pb-5 space-y-4">
-          <div class="flex justify-end mb-2">
-            <button id="strat-refresh" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Régénérer depuis les données actuelles">
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              Actualiser depuis mes données
-            </button>
-          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 class="text-sm font-semibold text-accent-amber mb-2">Enveloppes & plafonds</h3>
-              <div id="strat-enveloppes" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
-                data-default="${enveloppes.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.enveloppes || enveloppes).replace(/</g, '&lt;')}</div>
-            </div>
-            <div>
-              <h3 class="text-sm font-semibold text-accent-cyan mb-2">Répartition cible & DCA</h3>
-              <div id="strat-repartition" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
-                data-default="${repartition.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.repartition || repartition).replace(/</g, '&lt;')}</div>
-            </div>
-            <div>
-              <h3 class="text-sm font-semibold text-accent-green mb-2">Moyens supplémentaires</h3>
-              <div id="strat-moyens" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
-                data-default="${moyens.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.moyens || moyens).replace(/</g, '&lt;')}</div>
-            </div>
-            <div>
-              <h3 class="text-sm font-semibold text-purple-400 mb-2">Objectifs & horizon</h3>
-              <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
-                data-default="${objectifs.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.objectifs || objectifs).replace(/</g, '&lt;')}</div>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
               <h3 class="text-sm font-semibold text-sky-400 mb-2">Répartition investissements 2026</h3>
               <div id="strat-repinvest2026" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre répartition 2026...">${(params.strategie?.repinvest2026 || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre répartition 2026...</span>'}</div>
@@ -2190,18 +2118,6 @@ export function mount(store, navigate) {
     });
   });
 
-  // Refresh strategy blocks from data
-  document.getElementById('strat-refresh')?.addEventListener('click', () => {
-    ['strat-enveloppes', 'strat-repartition', 'strat-moyens', 'strat-objectifs'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el && el.dataset.default) {
-        el.textContent = el.dataset.default;
-      }
-    });
-    // Clear saved strategy so defaults regenerate
-    store.set('parametres.strategie', {});
-  });
-
   // --- Surplus annuel inline editing ---
   document.querySelectorAll('.surplus-input').forEach(input => {
     input.addEventListener('change', () => {
@@ -2369,10 +2285,6 @@ export function mount(store, navigate) {
 
   // Auto-save editable strategy blocks on blur
   const stratFields = [
-    { id: 'strat-enveloppes', key: 'enveloppes' },
-    { id: 'strat-repartition', key: 'repartition' },
-    { id: 'strat-moyens', key: 'moyens' },
-    { id: 'strat-objectifs', key: 'objectifs' },
     { id: 'strat-repinvest2026', key: 'repinvest2026' },
     { id: 'strat-repinvest2027', key: 'repinvest2027' },
     { id: 'strat-donation', key: 'donation' },
@@ -2380,36 +2292,25 @@ export function mount(store, navigate) {
   ];
   stratFields.forEach(({ id, key }) => {
     const el = document.getElementById(id);
-    if (el) {
-      // Handle placeholder on focus/blur for free-text blocks
-      if (el.dataset.placeholder) {
-        el.addEventListener('focus', () => {
-          if (!el.dataset.hasContent) el.innerHTML = '';
-        });
-        el.addEventListener('blur', () => {
-          const text = el.innerText.trim();
-          const current = store.get('parametres')?.strategie || {};
-          if (text) {
-            el.dataset.hasContent = '1';
-            current[key] = text;
-          } else {
-            delete el.dataset.hasContent;
-            el.innerHTML = `<span class="text-gray-600 italic pointer-events-none">${el.dataset.placeholder}</span>`;
-            delete current[key];
-          }
-          store.set('parametres.strategie', current);
-        });
-        // Mark as having content if it has saved data
-        if (el.innerText.trim() && !el.querySelector('.pointer-events-none')) {
-          el.dataset.hasContent = '1';
-        }
+    if (!el) return;
+    el.addEventListener('focus', () => {
+      if (!el.dataset.hasContent) el.innerHTML = '';
+    });
+    el.addEventListener('blur', () => {
+      const text = el.innerText.trim();
+      const current = store.get('parametres')?.strategie || {};
+      if (text) {
+        el.dataset.hasContent = '1';
+        current[key] = text;
       } else {
-        el.addEventListener('blur', () => {
-          const current = store.get('parametres')?.strategie || {};
-          current[key] = el.innerText;
-          store.set('parametres.strategie', current);
-        });
+        delete el.dataset.hasContent;
+        el.innerHTML = `<span class="text-gray-600 italic pointer-events-none">${el.dataset.placeholder}</span>`;
+        delete current[key];
       }
+      store.set('parametres.strategie', current);
+    });
+    if (el.innerText.trim() && !el.querySelector('.pointer-events-none')) {
+      el.dataset.hasContent = '1';
     }
   });
 }
