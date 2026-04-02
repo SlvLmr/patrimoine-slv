@@ -972,33 +972,33 @@ export function render(store) {
               <table class="w-full text-sm min-w-[500px]">
                 <thead class="bg-dark-800/50 text-gray-500 text-[10px] uppercase tracking-wider">
                   <tr>
-                    <th class="px-3 py-2 text-center w-8">#</th>
-                    <th class="px-3 py-2 text-left">Source</th>
-                    <th class="px-3 py-2 text-right">Valeur</th>
-                    <th class="px-3 py-2 text-center">Régime</th>
-                    <th class="px-3 py-2 text-center">Taux</th>
-                    <th class="px-3 py-2 text-left">Raison</th>
+                    <th class="px-2 py-1 text-center w-8">#</th>
+                    <th class="px-2 py-1 text-left">Source</th>
+                    <th class="px-2 py-1 text-right">Valeur</th>
+                    <th class="px-2 py-1 text-center">Régime</th>
+                    <th class="px-2 py-1 text-center">Taux</th>
+                    <th class="px-2 py-1 text-left">Raison</th>
                   </tr>
                 </thead>
                 <tbody id="fire-withdrawal-tbody" class="divide-y divide-dark-400/20">
                   ${withdrawalOrder.map((w, i) => `
                   <tr class="hover:bg-dark-600/30 transition cursor-grab active:cursor-grabbing fire-wd-row" draggable="true" data-wd-source="${w.source}">
-                    <td class="px-2 py-2 text-center text-orange-400/60 font-bold text-[11px]">
-                      <svg class="w-3 h-3.5 text-gray-600/40 inline-block mr-0.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>${i + 1}
+                    <td class="px-1 py-0.5 text-center text-orange-400/60 font-bold text-[11px]">
+                      <svg class="w-3 h-3 text-gray-600/40 inline-block mr-0.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>${i + 1}
                     </td>
-                    <td class="px-3 py-2 text-gray-200 font-medium text-[12px]">${w.source}</td>
-                    <td class="px-3 py-2 text-right text-gray-200 text-[12px]">${formatCurrency(w.valeur)}</td>
-                    <td class="px-3 py-2 text-center text-[11px] text-gray-400">${w.regime}</td>
-                    <td class="px-3 py-2 text-center text-[11px] font-semibold ${w.taux === '0%' ? 'text-accent-green' : parseFloat(w.taux) <= 17.5 ? 'text-yellow-400' : 'text-red-400/70'}">${w.taux}</td>
-                    <td class="px-3 py-2 text-[10px] text-gray-500">${w.raison}</td>
+                    <td class="px-2 py-0.5 text-gray-200 font-medium text-[12px]">${w.source}</td>
+                    <td class="px-2 py-0.5 text-right text-gray-200 text-[12px]">${formatCurrency(w.valeur)}</td>
+                    <td class="px-2 py-0.5 text-center text-[11px] text-gray-400">${w.regime}</td>
+                    <td class="px-2 py-0.5 text-center text-[11px] font-semibold ${w.taux === '0%' ? 'text-accent-green' : parseFloat(w.taux) <= 17.5 ? 'text-yellow-400' : 'text-red-400/70'}">${w.taux}</td>
+                    <td class="px-2 py-0.5 text-[10px] text-gray-500">${w.raison}</td>
                   </tr>`).join('')}
                 </tbody>
                 <tfoot class="border-t-2 border-dark-300/40">
                   <tr class="font-semibold">
-                    <td class="px-3 py-2.5"></td>
-                    <td class="px-3 py-2.5 text-gray-300 uppercase text-[11px]">Total retirable</td>
-                    <td class="px-3 py-2.5 text-right text-gray-100 text-[13px]">${formatCurrency(totalRetirable)}</td>
-                    <td colspan="3" class="px-3 py-2.5 text-[11px] text-gray-500">≈ ${refDepenses > 0 ? Math.floor(totalRetirable / refDepenses) : '∞'} ans de dépenses</td>
+                    <td class="px-2 py-1.5"></td>
+                    <td class="px-2 py-1.5 text-gray-300 uppercase text-[11px]">Total retirable</td>
+                    <td class="px-2 py-1.5 text-right text-gray-100 text-[13px]">${formatCurrency(totalRetirable)}</td>
+                    <td colspan="3" class="px-2 py-1.5 text-[11px] text-gray-500">≈ ${refDepenses > 0 ? Math.floor(totalRetirable / refDepenses) : '∞'} ans de dépenses</td>
                   </tr>
                 </tfoot>
               </table>
