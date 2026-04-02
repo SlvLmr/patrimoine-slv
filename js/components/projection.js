@@ -588,50 +588,50 @@ export function render(store) {
 
       <!-- Charts -->
       <div class="card-dark rounded-xl p-3 sm:p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <h2 class="text-xs font-semibold text-gray-200 shrink-0">Répartition des actifs dans le temps</h2>
-          <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-1 min-w-0">
-            <div class="flex items-center gap-1 px-2 py-1 rounded bg-red-500/8 border border-red-500/25 shrink-0">
-              <svg class="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-              <span class="text-xs text-red-400 font-medium">Cash out</span>
+        <div class="flex items-center gap-1.5 mb-4">
+          <h2 class="text-[11px] font-semibold text-gray-200 shrink-0">Répartition des actifs</h2>
+          <div class="flex items-center gap-1 flex-1 min-w-0">
+            <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-500/8 border border-red-500/25 shrink-0">
+              <svg class="w-2.5 h-2.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+              <span class="text-[10px] text-red-400 font-medium">Cash out</span>
               <input type="number" id="param-cashout-year" value="${params.cashOutYear || ''}" min="${currentCalendarYear}" max="${currentCalendarYear + 50}" step="1"
-                class="param-input w-16 px-1 py-0.5 text-sm bg-transparent border-0 text-red-400 focus:ring-0 text-center font-semibold" placeholder="année">
+                class="param-input w-14 px-0.5 py-0 text-[11px] bg-transparent border-0 text-red-400 focus:ring-0 text-center font-semibold" placeholder="année">
             </div>
-            <div class="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/8 border border-purple-500/25 shrink-0">
-              <span class="text-xs text-purple-400">Souhaité</span>
+            <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-500/8 border border-purple-500/25 shrink-0">
+              <span class="text-[10px] text-purple-400">Souhaité</span>
               <input type="number" id="param-retraite-souhaitee" value="${params.ageRetraiteSouhaitee || 60}" min="40" max="70" step="1"
-                class="param-input w-12 px-1 py-0.5 text-sm bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-semibold">
+                class="param-input w-8 px-0 py-0 text-[11px] bg-transparent border-0 text-purple-400 focus:ring-0 text-center font-semibold">
               <input type="number" id="param-salaire" value="${params.salaireNet || 1650}" min="0" max="50000" step="10"
-                class="param-input w-18 px-1 py-0.5 text-sm bg-transparent border-0 text-purple-400/80 focus:ring-0 text-center font-semibold">
-              <span class="text-[10px] text-gray-500">€</span>
+                class="param-input w-12 px-0 py-0 text-[11px] bg-transparent border-0 text-purple-400/80 focus:ring-0 text-center font-semibold">
+              <span class="text-[9px] text-gray-500">€</span>
             </div>
-            <div class="flex items-center gap-1 px-2 py-1 rounded bg-amber-400/5 border border-amber-400/20 shrink-0">
-              <span class="text-xs text-amber-400/80">Légal</span>
+            <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-400/5 border border-amber-400/20 shrink-0">
+              <span class="text-[10px] text-amber-400/80">Légal</span>
               <input type="number" id="param-retraite-legal-age" value="${params.ageRetraiteTauxLegal || 64}" min="55" max="70" step="1"
-                class="param-input w-12 px-1 py-0.5 text-sm bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
+                class="param-input w-8 px-0 py-0 text-[11px] bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
               <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
-                class="param-input w-18 px-1 py-0.5 text-sm bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center font-semibold">
-              <span class="text-[10px] text-gray-500">€</span>
+                class="param-input w-12 px-0 py-0 text-[11px] bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center font-semibold">
+              <span class="text-[9px] text-gray-500">€</span>
             </div>
-            <div class="flex items-center gap-1 px-2 py-1 rounded bg-cyan-400/5 border border-cyan-400/20 shrink-0">
-              <span class="text-xs text-cyan-400/80">Plein</span>
+            <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-400/5 border border-cyan-400/20 shrink-0">
+              <span class="text-[10px] text-cyan-400/80">Plein</span>
               <input type="number" id="param-retraite-plein-age" value="${params.ageRetraiteTauxPlein || 65}" min="55" max="70" step="1"
-                class="param-input w-12 px-1 py-0.5 text-sm bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
+                class="param-input w-8 px-0 py-0 text-[11px] bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
               <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
-                class="param-input w-18 px-1 py-0.5 text-sm bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-semibold">
-              <span class="text-[10px] text-gray-500">€</span>
+                class="param-input w-12 px-0 py-0 text-[11px] bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-semibold">
+              <span class="text-[9px] text-gray-500">€</span>
             </div>
-            <div class="w-px h-4 bg-dark-400/30 shrink-0"></div>
-            <div class="flex items-center gap-1 px-2 py-1 rounded bg-orange-500/8 border border-orange-500/25 shrink-0">
-              <span class="text-xs text-orange-400">🔥 FIRE</span>
-              <span class="text-[10px] text-gray-500">SWR</span>
+            <div class="w-px h-3 bg-dark-400/30 shrink-0"></div>
+            <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/8 border border-orange-500/25 shrink-0">
+              <span class="text-[10px] text-orange-400">🔥</span>
+              <span class="text-[9px] text-gray-500">SWR</span>
               <input type="number" id="param-swr" value="${params.swr || 4}" min="1" max="10" step="0.5"
-                class="param-input w-12 px-1 py-0.5 text-sm bg-transparent border-0 text-orange-400 focus:ring-0 text-center font-semibold">
-              <span class="text-[10px] text-gray-500">%</span>
-              <span class="text-[10px] text-gray-500 ml-1">Dép.</span>
+                class="param-input w-8 px-0 py-0 text-[11px] bg-transparent border-0 text-orange-400 focus:ring-0 text-center font-semibold">
+              <span class="text-[9px] text-gray-500">%</span>
+              <span class="text-[9px] text-gray-500">Dép.</span>
               <input type="number" id="param-fire-depenses" value="${params.fireDepensesMensuelles || 1750}" min="0" max="50000" step="50"
-                class="param-input w-16 px-1 py-0.5 text-sm bg-transparent border-0 text-orange-400/80 focus:ring-0 text-center font-semibold">
-              <span class="text-[10px] text-gray-500">€/m</span>
+                class="param-input w-12 px-0 py-0 text-[11px] bg-transparent border-0 text-orange-400/80 focus:ring-0 text-center font-semibold">
+              <span class="text-[9px] text-gray-500">€/m</span>
             </div>
           </div>
         </div>
