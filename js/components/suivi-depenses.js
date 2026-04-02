@@ -393,10 +393,10 @@ export function render(store) {
                     <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                   </svg>
                   <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
-                  <span class="text-[12px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
+                  <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[12px] font-medium ${checked ? 'text-gray-600' : 'text-gray-300'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
+                  <span class="text-[11px] font-medium ${checked ? 'text-gray-600' : 'text-gray-300'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
                   <button data-mc-del="${d.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
@@ -480,10 +480,10 @@ export function render(store) {
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
                   <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
-                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[12px] font-medium ${confirmed ? 'text-gray-300' : 'text-gray-600 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
+                  <span class="text-[11px] font-medium ${confirmed ? 'text-gray-300' : 'text-gray-600 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
                   <button data-tr-dca-del="${d.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
@@ -512,10 +512,10 @@ export function render(store) {
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
                   <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
-                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[12px] font-medium ${confirmed ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">+${formatCurrencyCents(r.montant)}</span>
+                  <span class="text-[11px] font-medium ${confirmed ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">+${formatCurrencyCents(r.montant)}</span>
                   <button data-tr-rev-del="${r.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;

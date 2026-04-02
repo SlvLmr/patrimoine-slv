@@ -230,7 +230,7 @@ input[type="number"] {
   cursor: pointer;
 }
 .group:hover .btn-delete,
-[class*="group/"]:hover > .btn-delete,
+[class*="group/"]:hover .btn-delete,
 .row-item:hover .btn-delete {
   opacity: 1;
 }
