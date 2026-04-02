@@ -16,6 +16,38 @@ const BANK_ICON_SECONDARY = `<svg class="w-7 h-7 text-white" fill="none" viewBox
 const BANK_ICON_EXTRA = `<svg class="w-7 h-7 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
 const PENCIL_ICON = `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
 
+const AFFECTATIONS = [
+  { value: 'depense',        label: 'Dépense',       border: 'border-red-500',     bg: 'bg-red-500/10',        text: 'text-red-400',     ring: 'focus:ring-red-500/40',     radio: 'text-red-500' },
+  { value: 'investissement',  label: 'Invest.',       border: 'border-blue-500',    bg: 'bg-blue-500/10',       text: 'text-blue-400',    ring: 'focus:ring-blue-500/40',    radio: 'text-blue-500' },
+  { value: 'virement',        label: 'Virement',      border: 'border-amber-500',   bg: 'bg-amber-500/10',      text: 'text-amber-400',   ring: 'focus:ring-amber-500/40',   radio: 'text-amber-500' },
+  { value: 'ndf',             label: 'NDF',           border: 'border-purple-500',  bg: 'bg-purple-500/10',     text: 'text-purple-400',  ring: 'focus:ring-purple-500/40',  radio: 'text-purple-500' },
+  { value: 'revenu',          label: 'Revenu',        border: 'border-emerald-500', bg: 'bg-emerald-500/10',    text: 'text-emerald-400', ring: 'focus:ring-emerald-500/40', radio: 'text-emerald-500' },
+];
+
+function affectationField(currentValue) {
+  return `
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Affectation</label>
+      <div class="flex flex-wrap gap-2">
+        ${AFFECTATIONS.map(a => `
+          <label class="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg border border-dark-400/50 bg-dark-800 hover:${a.border}/40 transition has-[:checked]:${a.border} has-[:checked]:${a.bg}">
+            <input type="radio" name="affectation" value="${a.value}" ${a.value === currentValue ? 'checked' : ''} class="w-3.5 h-3.5 ${a.radio} bg-dark-800 border-dark-400 ${a.ring}">
+            <span class="text-xs font-medium ${a.text}">${a.label}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function getCurrentAffectation(item) {
+  if (item.type === 'revenu') return 'revenu';
+  const cat = (item.categorie || '').toLowerCase();
+  if (cat === 'investissement') return 'investissement';
+  if (cat === 'virement') return 'virement';
+  if (cat === 'ndf') return 'ndf';
+  return 'depense';
+}
+
 function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -892,7 +924,9 @@ export function mount(store, navigate) {
       const items = store.get('suiviDepenses') || [];
       const item = items.find(i => i.id === id);
       if (!item) return;
+      const curAff = getCurrentAffectation(item);
       const body = `
+        ${affectationField(curAff)}
         ${inputField('date', 'Date', item.date, 'date')}
         ${inputField('description', 'Description', item.description || '', 'text')}
         ${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie)}
@@ -909,11 +943,25 @@ export function mount(store, navigate) {
           </div>
         </div>
       `;
-      openModal('Modifier la dépense', body, () => {
+      openModal('Modifier l\'opération', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         data.compte = document.querySelector('input[name="compte"]:checked')?.value || item.compte;
-        Object.assign(item, data);
-        store.set('suiviDepenses', items);
+        const newAff = document.querySelector('input[name="affectation"]:checked')?.value || curAff;
+
+        // If switched to revenu → move from suiviDepenses to suiviRevenus
+        if (newAff === 'revenu') {
+          store.set('suiviDepenses', items.filter(i => i.id !== id));
+          const revenus = store.get('suiviRevenus') || [];
+          revenus.unshift({ id: item.id, type: 'revenu', date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie });
+          store.set('suiviRevenus', revenus);
+        } else {
+          // Map affectation to categorie
+          if (newAff === 'investissement') data.categorie = 'Investissement';
+          else if (newAff === 'virement') data.categorie = 'Virement';
+          else if (newAff === 'ndf') data.categorie = 'NDF';
+          Object.assign(item, data);
+          store.set('suiviDepenses', items);
+        }
         navigate('suivi-depenses');
       });
     });
@@ -927,6 +975,7 @@ export function mount(store, navigate) {
       const rev = revenus.find(r => r.id === id);
       if (!rev) return;
       const body = `
+        ${affectationField('revenu')}
         ${inputField('date', 'Date', rev.date, 'date')}
         ${inputField('description', 'Description', rev.description || '', 'text')}
         ${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS, rev.categorie)}
@@ -943,11 +992,24 @@ export function mount(store, navigate) {
           </div>
         </div>
       `;
-      openModal('Modifier le revenu', body, () => {
+      openModal('Modifier l\'opération', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         data.compte = document.querySelector('input[name="compte"]:checked')?.value || rev.compte;
-        Object.assign(rev, data);
-        store.set('suiviRevenus', revenus);
+        const newAff = document.querySelector('input[name="affectation"]:checked')?.value || 'revenu';
+
+        // If switched away from revenu → move to suiviDepenses
+        if (newAff !== 'revenu') {
+          store.set('suiviRevenus', revenus.filter(r => r.id !== id));
+          if (newAff === 'investissement') data.categorie = 'Investissement';
+          else if (newAff === 'virement') data.categorie = 'Virement';
+          else if (newAff === 'ndf') data.categorie = 'NDF';
+          const items = store.get('suiviDepenses') || [];
+          items.unshift({ id: rev.id, date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie });
+          store.set('suiviDepenses', items);
+        } else {
+          Object.assign(rev, data);
+          store.set('suiviRevenus', revenus);
+        }
         navigate('suivi-depenses');
       });
     });
