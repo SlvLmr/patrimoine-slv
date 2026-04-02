@@ -1307,7 +1307,10 @@ export function render(store) {
       <!-- Bloc règles fiscales (collapsible) -->
       <details class="mt-10 rounded-xl border border-dark-400/20 bg-dark-800/40 overflow-hidden group">
         <summary class="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-dark-700/30 transition select-none">
-          <h2 class="text-sm font-bold text-gray-200">Règles de donation et fiscalité</h2>
+          <div class="flex items-center gap-2 min-w-0">
+            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <h2 class="text-sm font-bold text-gray-200">Règles de donation et fiscalité</h2>
+          </div>
           <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
         <div class="px-6 py-5 space-y-5 text-xs text-gray-400 leading-relaxed border-t border-dark-400/15">
