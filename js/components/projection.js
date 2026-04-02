@@ -808,36 +808,36 @@ export function render(store) {
             <table class="w-full text-sm min-w-[600px]">
               <thead class="bg-dark-800/50 text-gray-500 text-[10px] uppercase tracking-wider">
                 <tr>
-                  <th class="px-2 sm:px-3 py-2 text-left">Enveloppe</th>
-                  <th class="px-3 py-2 text-right">Valeur</th>
-                  <th class="px-3 py-2 text-right">Apports</th>
-                  <th class="px-3 py-2 text-right">Plus-value</th>
-                  <th class="px-3 py-2 text-center">R\u00e9gime fiscal</th>
-                  <th class="px-3 py-2 text-right">Imp\u00f4t estim\u00e9</th>
-                  <th class="px-3 py-2 text-right">Net apr\u00e8s imp\u00f4t</th>
+                  <th class="px-2 sm:px-3 py-1 text-left">Enveloppe</th>
+                  <th class="px-3 py-1 text-right">Valeur</th>
+                  <th class="px-3 py-1 text-right">Apports</th>
+                  <th class="px-3 py-1 text-right">Plus-value</th>
+                  <th class="px-3 py-1 text-center">R\u00e9gime fiscal</th>
+                  <th class="px-3 py-1 text-right">Imp\u00f4t estim\u00e9</th>
+                  <th class="px-3 py-1 text-right">Net apr\u00e8s imp\u00f4t</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-dark-400/20">
                 ${fiscalRows.map(r => `
                 <tr class="hover:bg-dark-600/30 transition">
-                  <td class="px-3 py-2 text-gray-200 font-medium text-[12px]">${r.gk}</td>
-                  <td class="px-3 py-2 text-right text-gray-200 text-[12px]">${formatCurrency(r.valeur)}</td>
-                  <td class="px-3 py-2 text-right text-gray-400 text-[12px]">${formatCurrency(r.apports)}</td>
-                  <td class="px-3 py-2 text-right text-[12px] ${r.gains >= 0 ? 'text-gray-300' : 'text-red-400'}">${r.gains >= 0 ? '+' : ''}${formatCurrency(r.gains)}</td>
-                  <td class="px-3 py-2 text-center text-[11px] text-gray-500">${r.regime}</td>
-                  <td class="px-3 py-2 text-right text-red-400/80 text-[12px]">-${formatCurrency(r.impot)}</td>
-                  <td class="px-3 py-2 text-right text-gray-200 font-semibold text-[12px]">${formatCurrency(r.net)}</td>
+                  <td class="px-3 py-1 text-gray-200 font-medium text-[12px]">${r.gk}</td>
+                  <td class="px-3 py-1 text-right text-gray-200 text-[12px]">${formatCurrency(r.valeur)}</td>
+                  <td class="px-3 py-1 text-right text-gray-400 text-[12px]">${formatCurrency(r.apports)}</td>
+                  <td class="px-3 py-1 text-right text-[12px] ${r.gains >= 0 ? 'text-gray-300' : 'text-red-400'}">${r.gains >= 0 ? '+' : ''}${formatCurrency(r.gains)}</td>
+                  <td class="px-3 py-1 text-center text-[11px] text-gray-500">${r.regime}</td>
+                  <td class="px-3 py-1 text-right text-red-400/80 text-[12px]">-${formatCurrency(r.impot)}</td>
+                  <td class="px-3 py-1 text-right text-gray-200 font-semibold text-[12px]">${formatCurrency(r.net)}</td>
                 </tr>`).join('')}
               </tbody>
               <tfoot class="border-t-2 border-dark-300/40">
                 <tr class="font-semibold">
-                  <td class="px-3 py-2.5 text-gray-300 uppercase text-[11px] tracking-wider">Total</td>
-                  <td class="px-3 py-2.5 text-right text-gray-200 text-[12px]">${formatCurrency(totVal)}</td>
-                  <td class="px-3 py-2.5 text-right text-gray-400 text-[12px]">${formatCurrency(totAp)}</td>
-                  <td class="px-3 py-2.5 text-right text-[12px] ${totGains >= 0 ? 'text-gray-300' : 'text-red-400'}">${totGains >= 0 ? '+' : ''}${formatCurrency(totGains)}</td>
-                  <td class="px-3 py-2.5 text-center text-gray-600 text-[11px]">\u2014</td>
-                  <td class="px-3 py-2.5 text-right text-red-400 text-[12px]">-${formatCurrency(totImpot)}</td>
-                  <td class="px-3 py-2.5 text-right text-gray-100 text-[13px]">${formatCurrency(totNet)}</td>
+                  <td class="px-3 py-1.5 text-gray-300 uppercase text-[11px] tracking-wider">Total</td>
+                  <td class="px-3 py-1.5 text-right text-gray-200 text-[12px]">${formatCurrency(totVal)}</td>
+                  <td class="px-3 py-1.5 text-right text-gray-400 text-[12px]">${formatCurrency(totAp)}</td>
+                  <td class="px-3 py-1.5 text-right text-[12px] ${totGains >= 0 ? 'text-gray-300' : 'text-red-400'}">${totGains >= 0 ? '+' : ''}${formatCurrency(totGains)}</td>
+                  <td class="px-3 py-1.5 text-center text-gray-600 text-[11px]">\u2014</td>
+                  <td class="px-3 py-1.5 text-right text-red-400 text-[12px]">-${formatCurrency(totImpot)}</td>
+                  <td class="px-3 py-1.5 text-right text-gray-100 text-[13px]">${formatCurrency(totNet)}</td>
                 </tr>
               </tfoot>
             </table>
