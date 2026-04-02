@@ -2297,24 +2297,20 @@ export function mount(store, navigate) {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('focus', () => {
-      if (!el.dataset.hasContent) el.innerHTML = '';
+      // Only clear if it's showing the placeholder
+      if (el.querySelector('.pointer-events-none')) el.innerHTML = '';
     });
     el.addEventListener('blur', () => {
       const text = el.innerText.trim();
       const params = store.get('parametres') || {};
       if (!params.strategie) params.strategie = {};
       if (text) {
-        el.dataset.hasContent = '1';
         params.strategie[key] = text;
       } else {
-        delete el.dataset.hasContent;
         el.innerHTML = `<span class="text-gray-600 italic pointer-events-none">${el.dataset.placeholder}</span>`;
         delete params.strategie[key];
       }
       store.set('parametres', params);
     });
-    if (el.innerText.trim() && !el.querySelector('.pointer-events-none')) {
-      el.dataset.hasContent = '1';
-    }
   });
 }
