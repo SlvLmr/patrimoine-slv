@@ -1256,7 +1256,10 @@ export function render(store) {
       <!-- Formules de calcul -->
       <details class="card-dark rounded-xl group">
         <summary class="flex items-center justify-between px-3 sm:px-5 py-3 cursor-pointer select-none">
-          <h2 class="text-base sm:text-lg font-semibold text-gray-200">Comment sont calculées les projections</h2>
+          <div class="flex items-center gap-2 min-w-0">
+            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-200">Comment sont calculées les projections</h2>
+          </div>
           <svg class="w-4 h-4 text-gray-500 shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
         <div class="px-3 sm:px-5 pb-5 space-y-4 text-sm text-gray-400 leading-relaxed">
