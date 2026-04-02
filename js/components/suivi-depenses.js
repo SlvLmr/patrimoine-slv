@@ -453,43 +453,18 @@ export function render(store) {
             <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
           </div>
 
-          <!-- Revenus mensuels récurrents TR -->
-          <div class="border-t border-dark-400/30">
-            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
-              <div class="flex items-center gap-2">
-                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
-                <span class="text-xs font-semibold text-gray-300">Revenus mensuels</span>
-                <span class="text-[10px] text-gray-500">${confirmedRevIds.length}/${revMensuelsTR.length}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-medium text-emerald-400">+${formatCurrencyCents(totalRevConfirmed)}</span>
-                <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
-              </div>
-            </div>
-            <div class="divide-y divide-dark-400/10">
-              ${revMensuelsTR.map(r => {
-                const confirmed = confirmedRevIds.includes(r.id);
-                return `
-              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev">
-                <div class="flex items-center gap-2 min-w-0">
-                  <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? '' : 'checked'} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
-                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
-                </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[12px] font-medium ${confirmed ? 'text-emerald-400' : 'text-gray-600'} cursor-pointer" data-tr-rev-edit="${r.id}">+${formatCurrencyCents(r.montant)}</span>
-                  <button data-tr-rev-del="${r.id}" class="btn-delete text-xs">✕</button>
-                </div>
-              </div>`;
-              }).join('')}
-            </div>
+          ${opsTR.length > 0 ? `
+          <div class="divide-y divide-dark-400/20" id="ops-drop-tr">
+            ${opsTR.map(renderOp).join('')}
           </div>
+          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
 
           <!-- DCA & Investissements récurrents TR -->
           <div class="border-t border-dark-400/30">
             <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
               <div class="flex items-center gap-2">
                 <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>
-                <span class="text-xs font-semibold text-gray-300">DCA & Invest.</span>
+                <span class="text-xs font-semibold text-gray-300">DCA & Investissements</span>
                 <span class="text-[10px] text-gray-500">${confirmedDcaIds.length}/${dcaTR.length}</span>
               </div>
               <div class="flex items-center gap-2">
@@ -503,11 +478,11 @@ export function render(store) {
                 return `
               <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/tr-dca">
                 <div class="flex items-center gap-2 min-w-0">
-                  <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? '' : 'checked'} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
-                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
+                  <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
+                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[12px] font-medium ${confirmed ? 'text-gray-300' : 'text-gray-600'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
+                  <span class="text-[12px] font-medium ${confirmed ? 'text-gray-300' : 'text-gray-600 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
                   <button data-tr-dca-del="${d.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
@@ -515,11 +490,36 @@ export function render(store) {
             </div>
           </div>
 
-          ${opsTR.length > 0 ? `
-          <div class="divide-y divide-dark-400/20" id="ops-drop-tr">
-            ${opsTR.map(renderOp).join('')}
+          <!-- Apports mensuels récurrents TR -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+                <span class="text-xs font-semibold text-gray-300">Apports mensuels</span>
+                <span class="text-[10px] text-gray-500">${confirmedRevIds.length}/${revMensuelsTR.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-emerald-400">+${formatCurrencyCents(totalRevConfirmed)}</span>
+                <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${revMensuelsTR.map(r => {
+                const confirmed = confirmedRevIds.includes(r.id);
+                return `
+              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev">
+                <div class="flex items-center gap-2 min-w-0">
+                  <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
+                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[12px] font-medium ${confirmed ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">+${formatCurrencyCents(r.montant)}</span>
+                  <button data-tr-rev-del="${r.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
           </div>
-          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
         </div>
 
         ${extraBankData.map(bank => `
@@ -1225,18 +1225,18 @@ export function mount(store, navigate) {
     });
   });
 
-  // --- TR Recurring DCA toggle (checked=pending, unchecked=confirmed/debited) ---
+  // --- TR Recurring DCA toggle (unchecked=pending/barré, checked=confirmed/debited) ---
   document.querySelectorAll('[data-tr-dca-recurring]').forEach(cb => {
     cb.addEventListener('change', () => {
       const id = cb.dataset.trDcaRecurring;
       const monthKey = getCurrentMonthKey();
       const all = store.get('trRecurringConfirmed') || {};
       const month = all[monthKey] || { expenses: [], revenues: [] };
-      if (!cb.checked) {
-        // Unchecked = confirmed = debited
+      if (cb.checked) {
+        // Checked = confirmed = debited
         if (!month.expenses.includes(id)) month.expenses.push(id);
       } else {
-        // Re-checked = back to pending
+        // Unchecked = back to pending
         month.expenses = month.expenses.filter(x => x !== id);
       }
       all[monthKey] = month;
@@ -1245,14 +1245,14 @@ export function mount(store, navigate) {
     });
   });
 
-  // --- TR Recurring Revenue toggle (checked=pending, unchecked=confirmed/credited) ---
+  // --- TR Recurring Revenue toggle (unchecked=pending/barré, checked=confirmed/credited) ---
   document.querySelectorAll('[data-tr-rev-recurring]').forEach(cb => {
     cb.addEventListener('change', () => {
       const id = cb.dataset.trRevRecurring;
       const monthKey = getCurrentMonthKey();
       const all = store.get('trRecurringConfirmed') || {};
       const month = all[monthKey] || { expenses: [], revenues: [] };
-      if (!cb.checked) {
+      if (cb.checked) {
         if (!month.revenues.includes(id)) month.revenues.push(id);
       } else {
         month.revenues = month.revenues.filter(x => x !== id);
