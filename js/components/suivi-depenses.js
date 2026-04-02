@@ -302,11 +302,11 @@ export function render(store) {
           </svg>
           ${icon}
           <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
-          <span class="ml-2 text-[13px] text-gray-200 truncate">${op.description || '—'}</span>
-          ${op.categorie ? `<span class="text-[10px] font-light text-gray-500 flex-shrink-0">${op.categorie}</span>` : ''}
+          <span class="ml-2 text-[11px] text-gray-200 truncate">${op.description || '—'}</span>
+          ${op.categorie ? `<span class="text-[9px] font-light text-gray-500 flex-shrink-0">${op.categorie}</span>` : ''}
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
-          <span class="text-[13px] font-medium text-gray-100">${sign}${formatCurrencyCents(op.montant)}</span>
+          <span class="text-[11px] font-medium text-gray-100">${sign}${formatCurrencyCents(op.montant)}</span>
           <button ${delAttr} class="btn-delete text-xs" onclick="event.stopPropagation()">✕</button>
         </div>
       </div>`;
@@ -476,8 +476,9 @@ export function render(store) {
               ${dcaTR.map(d => {
                 const confirmed = confirmedDcaIds.includes(d.id);
                 return `
-              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/tr-dca">
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-dca cursor-grab active:cursor-grabbing tr-dca-drag-row" draggable="true" data-drag-dca-id="${d.id}">
                 <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
                   <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
                   <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
                 </div>
@@ -507,8 +508,9 @@ export function render(store) {
               ${revMensuelsTR.map(r => {
                 const confirmed = confirmedRevIds.includes(r.id);
                 return `
-              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev">
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev cursor-grab active:cursor-grabbing tr-rev-drag-row" draggable="true" data-drag-rev-id="${r.id}">
                 <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
                   <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
                   <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
                 </div>
@@ -1356,6 +1358,54 @@ export function mount(store, navigate) {
       navigate('suivi-depenses');
     });
   });
+
+  // Drag-and-drop reorder TR DCA recurring
+  {
+    let draggedId = null;
+    document.querySelectorAll('.tr-dca-drag-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => { draggedId = row.dataset.dragDcaId; row.style.opacity = '0.4'; e.dataTransfer.effectAllowed = 'move'; });
+      row.addEventListener('dragend', () => { row.style.opacity = ''; document.querySelectorAll('.tr-dca-drag-row').forEach(r => r.classList.remove('drag-over')); });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const targetId = row.dataset.dragDcaId;
+        if (!draggedId || draggedId === targetId) return;
+        const list = store.get('dcaMensuelsTR') || [];
+        const fromIdx = list.findIndex(d => d.id === draggedId);
+        const toIdx = list.findIndex(d => d.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = list.splice(fromIdx, 1);
+        list.splice(toIdx, 0, moved);
+        store.set('dcaMensuelsTR', list);
+        navigate('suivi-depenses');
+      });
+    });
+  }
+
+  // Drag-and-drop reorder TR Revenue recurring
+  {
+    let draggedId = null;
+    document.querySelectorAll('.tr-rev-drag-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => { draggedId = row.dataset.dragRevId; row.style.opacity = '0.4'; e.dataTransfer.effectAllowed = 'move'; });
+      row.addEventListener('dragend', () => { row.style.opacity = ''; document.querySelectorAll('.tr-rev-drag-row').forEach(r => r.classList.remove('drag-over')); });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const targetId = row.dataset.dragRevId;
+        if (!draggedId || draggedId === targetId) return;
+        const list = store.get('revenusMensuelsTR') || [];
+        const fromIdx = list.findIndex(r => r.id === draggedId);
+        const toIdx = list.findIndex(r => r.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = list.splice(fromIdx, 1);
+        list.splice(toIdx, 0, moved);
+        store.set('revenusMensuelsTR', list);
+        navigate('suivi-depenses');
+      });
+    });
+  }
 
   // Drag and drop for operations
   function setupDragDrop(containerId) {
