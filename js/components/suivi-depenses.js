@@ -708,6 +708,9 @@ export function mount(store, navigate) {
         revenus: JSON.parse(JSON.stringify(revenus)),
         cochees: [...cocheesThisMonth],
         depMensuelles: JSON.parse(JSON.stringify(depMensuelles)),
+        dcaTR: JSON.parse(JSON.stringify(dcaTR)),
+        revMensuelsTR: JSON.parse(JSON.stringify(revMensuelsTR)),
+        trRecurringConfirmed: JSON.parse(JSON.stringify(trConfirmedThisMonth)),
         // Sub-line snapshots
         meta: {
           soldePrevCIC, soldePrevTR,
