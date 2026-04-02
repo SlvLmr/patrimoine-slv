@@ -2,7 +2,7 @@ import { formatCurrencyCents, formatDate, openModal, inputField, selectField, ge
 
 const CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
-  'Loisirs - Plaisirs', 'Petits travaux', 'Virement', 'NDF', 'Autre - Imprévu'
+  'Loisirs - Plaisirs', 'Petits travaux', 'Virement', 'NDF', 'Investissement', 'Autre - Imprévu'
 ];
 
 const CATEGORIES_REVENUS = [
@@ -163,7 +163,7 @@ export function render(store) {
 
   // Enveloppe restante pour quotidien = budget quotidien - (dépenses rouges + virements sortants TR)
   const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 700);
-  const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
   // Trade Republic features (editable values)
@@ -213,7 +213,8 @@ export function render(store) {
     const isRevenu = op.type === 'revenu';
     const isVirement = !isRevenu && (op.categorie || '') === 'Virement';
     const isNDF = !isRevenu && (op.categorie || '') === 'NDF';
-    const arrowColor = isRevenu ? 'text-emerald-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : 'text-accent-red';
+    const isInvest = !isRevenu && (op.categorie || '') === 'Investissement';
+    const arrowColor = isRevenu ? 'text-emerald-400' : isInvest ? 'text-blue-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : 'text-accent-red';
     const icon = isRevenu
       ? `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
       : `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
@@ -265,6 +266,7 @@ export function render(store) {
           <button id="btn-add-revenu" class="px-2.5 sm:px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm rounded-lg hover:bg-emerald-500/30 transition font-medium">+ Revenu</button>
           <button id="btn-add-expense" class="px-2.5 sm:px-3 py-1.5 bg-accent-red/20 text-accent-red text-xs sm:text-sm rounded-lg hover:bg-accent-red/30 transition font-medium">+ Dépense</button>
           <button id="btn-add-virement" class="px-2.5 sm:px-3 py-1.5 bg-amber-500/20 text-amber-400 text-xs sm:text-sm rounded-lg hover:bg-amber-500/30 transition font-medium">+ Virement</button>
+          <button id="btn-add-invest" class="px-2.5 sm:px-3 py-1.5 bg-blue-500/20 text-blue-400 text-xs sm:text-sm rounded-lg hover:bg-blue-500/30 transition font-medium">+ Invest.</button>
           <button id="btn-add-ndf" class="px-2.5 sm:px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs sm:text-sm rounded-lg hover:bg-purple-500/30 transition font-medium">+ NDF</button>
         </div>
       </div>
@@ -1187,6 +1189,35 @@ export function mount(store, navigate) {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'Virement';
+      const items = store.get('suiviDepenses') || [];
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      store.set('suiviDepenses', items);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Add Investissement (shortcut)
+  document.getElementById('btn-add-invest')?.addEventListener('click', () => {
+    const body = `
+      ${inputField('date', 'Date', getToday(), 'date')}
+      ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: DCA PEA, Achat Bitcoin..."')}
+      ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 300"')}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
+        <div class="flex gap-3">
+          ${COMPTES.map(c => `
+            <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-blue-400/40 transition has-[:checked]:border-blue-400 has-[:checked]:bg-blue-400/10">
+              <input type="radio" name="compte" value="${c}" ${c === bankNames.secondary ? 'checked' : ''} class="w-4 h-4 text-blue-400 bg-dark-800 border-dark-400 focus:ring-blue-400/40">
+              <span class="text-sm text-gray-200">${c}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    openModal('Ajouter un investissement', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
+      data.categorie = 'Investissement';
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
       store.set('suiviDepenses', items);
