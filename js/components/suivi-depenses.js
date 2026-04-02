@@ -83,6 +83,22 @@ const DEPENSES_MENSUELLES_CIC = [
   { id: 'mc-pea-agt',    nom: 'PEA Agt /TRR',      montant: 50.00 },
 ];
 
+// Recurring DCA/Invest expenses for TR (checked=pending, unchecked=debited)
+const DCA_MENSUELS_TR = [
+  { id: 'dca-pea-sp500',   nom: 'DCA ETF PEA S&P 500',     montant: 375.00 },
+  { id: 'dca-pea-stoxx',   nom: 'DCA ETF PEA Stoxx 600',   montant: 80.00 },
+  { id: 'dca-pea-emerging', nom: 'DCA ETF PEA Emerging',    montant: 35.00 },
+  { id: 'dca-bitcoin',     nom: 'DCA Bitcoin',              montant: 50.00 },
+  { id: 'dca-cto-gsp',     nom: 'DCA CTO Gaspard',         montant: 50.00 },
+  { id: 'dca-cto-agt',     nom: 'DCA CTO Agathe',          montant: 50.00 },
+];
+
+// Recurring revenues for TR (checked=pending, unchecked=credited)
+const REVENUS_MENSUELS_TR = [
+  { id: 'rev-quotidien',    nom: 'Quotidien',          montant: 700.00 },
+  { id: 'rev-invest',       nom: 'Enveloppe Invest.',  montant: 450.00 },
+];
+
 
 export function render(store) {
   const bankNames = store.getBankNames();
@@ -129,6 +145,16 @@ export function render(store) {
     store.set('depensesMensuellesCIC', JSON.parse(JSON.stringify(DEPENSES_MENSUELLES_CIC)));
   }
   const depMensuelles = store.get('depensesMensuellesCIC') || [];
+
+  // Init TR recurring DCA & revenues from defaults if not present
+  if (!store.get('dcaMensuelsTR')) {
+    store.set('dcaMensuelsTR', JSON.parse(JSON.stringify(DCA_MENSUELS_TR)));
+  }
+  if (!store.get('revenusMensuelsTR')) {
+    store.set('revenusMensuelsTR', JSON.parse(JSON.stringify(REVENUS_MENSUELS_TR)));
+  }
+  const dcaTR = store.get('dcaMensuelsTR') || [];
+  const revMensuelsTR = store.get('revenusMensuelsTR') || [];
   const items = store.get('suiviDepenses') || [];
   const revenus = store.get('suiviRevenus') || [];
   const comptesCourants = store.get('actifs')?.comptesCourants || [
@@ -185,6 +211,18 @@ export function render(store) {
     .filter(d => cocheesThisMonth.includes(d.id))
     .reduce((s, d) => s + d.montant, 0);
 
+  // TR recurring state: confirmed (unchecked) items are counted in balance
+  const trConfirmed = store.get('trRecurringConfirmed') || {};
+  const trConfirmedThisMonth = trConfirmed[monthKey] || { expenses: [], revenues: [] };
+  const confirmedDcaIds = trConfirmedThisMonth.expenses || [];
+  const confirmedRevIds = trConfirmedThisMonth.revenues || [];
+  const totalDcaConfirmed = dcaTR
+    .filter(d => confirmedDcaIds.includes(d.id))
+    .reduce((s, d) => s + d.montant, 0);
+  const totalRevConfirmed = revMensuelsTR
+    .filter(r => confirmedRevIds.includes(r.id))
+    .reduce((s, r) => s + r.montant, 0);
+
   // Compute live solde = base + revenus - depenses - checked monthly
   const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
@@ -207,7 +245,7 @@ export function render(store) {
   const trRoundup = Number(trFeatures.roundup) || 0;
   const lblRoundup = trFeatures.lblRoundup || 'Round-up → CTO';
 
-  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup;
+  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed;
 
   // Extra banks computation
   const extraBankData = extraBanks.map(bank => {
@@ -414,6 +452,69 @@ export function render(store) {
             <span class="text-[11px] text-gray-500">${lblRoundup}</span>
             <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
           </div>
+
+          <!-- Revenus mensuels récurrents TR -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+                <span class="text-xs font-semibold text-gray-300">Revenus mensuels</span>
+                <span class="text-[10px] text-gray-500">${confirmedRevIds.length}/${revMensuelsTR.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-emerald-400">+${formatCurrencyCents(totalRevConfirmed)}</span>
+                <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${revMensuelsTR.map(r => {
+                const confirmed = confirmedRevIds.includes(r.id);
+                return `
+              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev">
+                <div class="flex items-center gap-2 min-w-0">
+                  <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? '' : 'checked'} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
+                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[12px] font-medium ${confirmed ? 'text-emerald-400' : 'text-gray-600'} cursor-pointer" data-tr-rev-edit="${r.id}">+${formatCurrencyCents(r.montant)}</span>
+                  <button data-tr-rev-del="${r.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- DCA & Investissements récurrents TR -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>
+                <span class="text-xs font-semibold text-gray-300">DCA & Invest.</span>
+                <span class="text-[10px] text-gray-500">${confirmedDcaIds.length}/${dcaTR.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-blue-400">-${formatCurrencyCents(totalDcaConfirmed)}</span>
+                <button id="btn-add-dca-tr" class="text-blue-400 hover:text-blue-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${dcaTR.map(d => {
+                const confirmed = confirmedDcaIds.includes(d.id);
+                return `
+              <div class="flex items-center justify-between pl-8 pr-3 py-px hover:bg-dark-600/30 transition group/tr-dca">
+                <div class="flex items-center gap-2 min-w-0">
+                  <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? '' : 'checked'} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
+                  <span class="text-[12px] ${confirmed ? 'text-gray-200' : 'text-gray-500'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[12px] font-medium ${confirmed ? 'text-gray-300' : 'text-gray-600'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
+                  <button data-tr-dca-del="${d.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>
+
           ${opsTR.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-tr">
             ${opsTR.map(renderOp).join('')}
@@ -1120,6 +1221,138 @@ export function mount(store, navigate) {
       const list = store.get('depensesMensuellesCIC') || [];
       list.push({ id: 'mc-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) });
       store.set('depensesMensuellesCIC', list);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // --- TR Recurring DCA toggle (checked=pending, unchecked=confirmed/debited) ---
+  document.querySelectorAll('[data-tr-dca-recurring]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.trDcaRecurring;
+      const monthKey = getCurrentMonthKey();
+      const all = store.get('trRecurringConfirmed') || {};
+      const month = all[monthKey] || { expenses: [], revenues: [] };
+      if (!cb.checked) {
+        // Unchecked = confirmed = debited
+        if (!month.expenses.includes(id)) month.expenses.push(id);
+      } else {
+        // Re-checked = back to pending
+        month.expenses = month.expenses.filter(x => x !== id);
+      }
+      all[monthKey] = month;
+      store.set('trRecurringConfirmed', all);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // --- TR Recurring Revenue toggle (checked=pending, unchecked=confirmed/credited) ---
+  document.querySelectorAll('[data-tr-rev-recurring]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.trRevRecurring;
+      const monthKey = getCurrentMonthKey();
+      const all = store.get('trRecurringConfirmed') || {};
+      const month = all[monthKey] || { expenses: [], revenues: [] };
+      if (!cb.checked) {
+        if (!month.revenues.includes(id)) month.revenues.push(id);
+      } else {
+        month.revenues = month.revenues.filter(x => x !== id);
+      }
+      all[monthKey] = month;
+      store.set('trRecurringConfirmed', all);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Edit TR DCA recurring item
+  document.querySelectorAll('[data-tr-dca-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.trDcaEdit;
+      const list = store.get('dcaMensuelsTR') || [];
+      const item = list.find(d => d.id === id);
+      if (!item) return;
+      const body = `
+        ${inputField('nom', 'Nom', item.nom)}
+        ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+      `;
+      openModal('Modifier le DCA', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        item.nom = data.nom || item.nom;
+        item.montant = Number(data.montant) || item.montant;
+        store.set('dcaMensuelsTR', list);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit TR Revenue recurring item
+  document.querySelectorAll('[data-tr-rev-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.trRevEdit;
+      const list = store.get('revenusMensuelsTR') || [];
+      const item = list.find(r => r.id === id);
+      if (!item) return;
+      const body = `
+        ${inputField('nom', 'Nom', item.nom)}
+        ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+      `;
+      openModal('Modifier le revenu mensuel', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        item.nom = data.nom || item.nom;
+        item.montant = Number(data.montant) || item.montant;
+        store.set('revenusMensuelsTR', list);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Delete TR DCA recurring item
+  document.querySelectorAll('[data-tr-dca-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.trDcaDel;
+      const list = store.get('dcaMensuelsTR') || [];
+      store.set('dcaMensuelsTR', list.filter(d => d.id !== id));
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Delete TR Revenue recurring item
+  document.querySelectorAll('[data-tr-rev-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.trRevDel;
+      const list = store.get('revenusMensuelsTR') || [];
+      store.set('revenusMensuelsTR', list.filter(r => r.id !== id));
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Add new TR DCA recurring
+  document.getElementById('btn-add-dca-tr')?.addEventListener('click', () => {
+    const body = `
+      ${inputField('nom', 'Nom', '')}
+      ${inputField('montant', 'Montant (€)', '', 'number', '0.01')}
+    `;
+    openModal('Ajouter un DCA mensuel', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      if (!data.nom || !data.montant) return;
+      const list = store.get('dcaMensuelsTR') || [];
+      list.push({ id: 'dca-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) });
+      store.set('dcaMensuelsTR', list);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Add new TR Revenue recurring
+  document.getElementById('btn-add-rev-tr')?.addEventListener('click', () => {
+    const body = `
+      ${inputField('nom', 'Nom', '')}
+      ${inputField('montant', 'Montant (€)', '', 'number', '0.01')}
+    `;
+    openModal('Ajouter un revenu mensuel', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      if (!data.nom || !data.montant) return;
+      const list = store.get('revenusMensuelsTR') || [];
+      list.push({ id: 'rev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) });
+      store.set('revenusMensuelsTR', list);
       navigate('suivi-depenses');
     });
   });
