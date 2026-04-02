@@ -589,7 +589,7 @@ export function render(store) {
       <!-- Charts -->
       <div class="card-dark rounded-xl p-3 sm:p-6">
         <div class="flex items-center gap-3 mb-4">
-          <h2 class="text-base sm:text-lg font-semibold text-gray-200 shrink-0">Répartition des actifs dans le temps</h2>
+          <h2 class="text-xs font-semibold text-gray-200 shrink-0">Répartition des actifs dans le temps</h2>
           <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-1 min-w-0">
             <div class="flex items-center gap-1 px-2 py-1 rounded bg-red-500/8 border border-red-500/25 shrink-0">
               <svg class="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
