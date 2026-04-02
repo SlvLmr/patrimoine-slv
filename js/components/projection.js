@@ -1234,19 +1234,19 @@ export function render(store) {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 class="text-sm font-semibold text-sky-400 mb-2">Répartition investissements 2026</h3>
-              <div id="strat-repinvest2026" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre répartition 2026...">${(params.strategie?.repinvest2026 || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre répartition 2026...</span>'}</div>
+              <div id="strat-repinvest2026" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-xs text-gray-300 leading-snug whitespace-pre-wrap" data-placeholder="Saisir votre répartition 2026...">${(params.strategie?.repinvest2026 || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre répartition 2026...</span>'}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-teal-400 mb-2">Répartition investissements 2027</h3>
-              <div id="strat-repinvest2027" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre répartition 2027...">${(params.strategie?.repinvest2027 || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre répartition 2027...</span>'}</div>
+              <div id="strat-repinvest2027" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-xs text-gray-300 leading-snug whitespace-pre-wrap" data-placeholder="Saisir votre répartition 2027...">${(params.strategie?.repinvest2027 || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre répartition 2027...</span>'}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-orange-400 mb-2">Stratégie Donation</h3>
-              <div id="strat-donation" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre stratégie donation...">${(params.strategie?.donation || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre stratégie donation...</span>'}</div>
+              <div id="strat-donation" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-xs text-gray-300 leading-snug whitespace-pre-wrap" data-placeholder="Saisir votre stratégie donation...">${(params.strategie?.donation || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre stratégie donation...</span>'}</div>
             </div>
             <div>
               <h3 class="text-sm font-semibold text-rose-400 mb-2">Stratégie FIRE</h3>
-              <div id="strat-fire" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre stratégie FIRE...">${(params.strategie?.fire || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre stratégie FIRE...</span>'}</div>
+              <div id="strat-fire" contenteditable="true" class="editable-block min-h-[48px] p-2 sm:p-3 rounded-lg row-item text-xs text-gray-300 leading-snug whitespace-pre-wrap" data-placeholder="Saisir votre stratégie FIRE...">${(params.strategie?.fire || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre stratégie FIRE...</span>'}</div>
             </div>
           </div>
         </div>
