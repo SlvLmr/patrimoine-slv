@@ -905,6 +905,20 @@ export function render(store) {
         });
 
         withdrawalOrder.sort((a, b) => a.priority - b.priority);
+
+        // Apply user custom order if saved
+        const savedOrder = params.fireWithdrawalOrder || [];
+        if (savedOrder.length > 0) {
+          withdrawalOrder.sort((a, b) => {
+            const ia = savedOrder.indexOf(a.source);
+            const ib = savedOrder.indexOf(b.source);
+            if (ia === -1 && ib === -1) return 0;
+            if (ia === -1) return 1;
+            if (ib === -1) return -1;
+            return ia - ib;
+          });
+        }
+
         const totalRetirable = withdrawalOrder.reduce((s, w) => s + w.valeur, 0);
 
         // Compute years of FIRE coverage by envelope
@@ -966,10 +980,12 @@ export function render(store) {
                     <th class="px-3 py-2 text-left">Raison</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-dark-400/20">
+                <tbody id="fire-withdrawal-tbody" class="divide-y divide-dark-400/20">
                   ${withdrawalOrder.map((w, i) => `
-                  <tr class="hover:bg-dark-600/30 transition">
-                    <td class="px-3 py-2 text-center text-orange-400/60 font-bold text-[11px]">${i + 1}</td>
+                  <tr class="hover:bg-dark-600/30 transition cursor-grab active:cursor-grabbing fire-wd-row" draggable="true" data-wd-source="${w.source}">
+                    <td class="px-2 py-2 text-center text-orange-400/60 font-bold text-[11px]">
+                      <svg class="w-3 h-3.5 text-gray-600/40 inline-block mr-0.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>${i + 1}
+                    </td>
                     <td class="px-3 py-2 text-gray-200 font-medium text-[12px]">${w.source}</td>
                     <td class="px-3 py-2 text-right text-gray-200 text-[12px]">${formatCurrency(w.valeur)}</td>
                     <td class="px-3 py-2 text-center text-[11px] text-gray-400">${w.regime}</td>
@@ -1960,6 +1976,52 @@ export function mount(store, navigate) {
 
     navigate('projection');
   });
+
+  // --- FIRE withdrawal order drag & drop ---
+  {
+    const tbody = document.getElementById('fire-withdrawal-tbody');
+    if (tbody) {
+      let dragRow = null;
+      tbody.addEventListener('dragstart', (e) => {
+        dragRow = e.target.closest('.fire-wd-row');
+        if (dragRow) {
+          dragRow.style.opacity = '0.4';
+          e.dataTransfer.effectAllowed = 'move';
+        }
+      });
+      tbody.addEventListener('dragend', () => {
+        if (dragRow) dragRow.style.opacity = '';
+        dragRow = null;
+        tbody.querySelectorAll('.fire-wd-row').forEach(r => r.classList.remove('bg-orange-500/10'));
+      });
+      tbody.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const target = e.target.closest('.fire-wd-row');
+        tbody.querySelectorAll('.fire-wd-row').forEach(r => r.classList.remove('bg-orange-500/10'));
+        if (target && target !== dragRow) target.classList.add('bg-orange-500/10');
+      });
+      tbody.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const target = e.target.closest('.fire-wd-row');
+        if (!target || !dragRow || target === dragRow) return;
+        const rows = [...tbody.querySelectorAll('.fire-wd-row')];
+        const fromIdx = rows.indexOf(dragRow);
+        const toIdx = rows.indexOf(target);
+        if (fromIdx < toIdx) target.after(dragRow);
+        else target.before(dragRow);
+        // Update numbering and save order
+        const newRows = [...tbody.querySelectorAll('.fire-wd-row')];
+        const newOrder = [];
+        newRows.forEach((r, i) => {
+          const numCell = r.querySelector('td');
+          if (numCell) numCell.innerHTML = numCell.innerHTML.replace(/\d+$/, String(i + 1));
+          newOrder.push(r.dataset.wdSource);
+        });
+        store.set('parametres.fireWithdrawalOrder', newOrder);
+      });
+    }
+  }
 
   // --- Placement CRUD from projection ---
   // Global add button
