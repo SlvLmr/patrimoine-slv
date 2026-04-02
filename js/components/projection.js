@@ -2301,16 +2301,17 @@ export function mount(store, navigate) {
     });
     el.addEventListener('blur', () => {
       const text = el.innerText.trim();
-      const current = store.get('parametres')?.strategie || {};
+      const params = store.get('parametres') || {};
+      if (!params.strategie) params.strategie = {};
       if (text) {
         el.dataset.hasContent = '1';
-        current[key] = text;
+        params.strategie[key] = text;
       } else {
         delete el.dataset.hasContent;
         el.innerHTML = `<span class="text-gray-600 italic pointer-events-none">${el.dataset.placeholder}</span>`;
-        delete current[key];
+        delete params.strategie[key];
       }
-      store.set('parametres.strategie', current);
+      store.set('parametres', params);
     });
     if (el.innerText.trim() && !el.querySelector('.pointer-events-none')) {
       el.dataset.hasContent = '1';
