@@ -1268,6 +1268,7 @@ export function render(store) {
       <details class="card-dark rounded-xl group">
         <summary class="flex items-center justify-between px-3 sm:px-5 py-3 cursor-pointer select-none">
           <div class="flex items-center gap-2 min-w-0">
+            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <h2 class="text-base sm:text-lg font-semibold text-gray-200">Ma stratégie d'investissement</h2>
             <span class="text-[10px] text-gray-600 italic hidden sm:inline">Cliquer pour modifier</span>
           </div>
@@ -1300,6 +1301,24 @@ export function render(store) {
               <h3 class="text-sm font-semibold text-purple-400 mb-2">Objectifs & horizon</h3>
               <div id="strat-objectifs" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
                 data-default="${objectifs.replace(/"/g, '&quot;').replace(/</g, '&lt;')}">${(params.strategie?.objectifs || objectifs).replace(/</g, '&lt;')}</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <h3 class="text-sm font-semibold text-sky-400 mb-2">Répartition investissements 2026</h3>
+              <div id="strat-repinvest2026" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre répartition 2026...">${(params.strategie?.repinvest2026 || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre répartition 2026...</span>'}</div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-teal-400 mb-2">Répartition investissements 2027</h3>
+              <div id="strat-repinvest2027" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre répartition 2027...">${(params.strategie?.repinvest2027 || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre répartition 2027...</span>'}</div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-orange-400 mb-2">Stratégie Donation</h3>
+              <div id="strat-donation" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre stratégie donation...">${(params.strategie?.donation || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre stratégie donation...</span>'}</div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-rose-400 mb-2">Stratégie FIRE</h3>
+              <div id="strat-fire" contenteditable="true" class="editable-block min-h-[80px] sm:min-h-[120px] p-2 sm:p-3 rounded-lg row-item text-sm text-gray-300 leading-relaxed whitespace-pre-wrap" data-placeholder="Saisir votre stratégie FIRE...">${(params.strategie?.fire || '').replace(/</g, '&lt;') || '<span class=&quot;text-gray-600 italic pointer-events-none&quot;>Saisir votre stratégie FIRE...</span>'}</div>
             </div>
           </div>
         </div>
@@ -2348,16 +2367,44 @@ export function mount(store, navigate) {
     { id: 'strat-enveloppes', key: 'enveloppes' },
     { id: 'strat-repartition', key: 'repartition' },
     { id: 'strat-moyens', key: 'moyens' },
-    { id: 'strat-objectifs', key: 'objectifs' }
+    { id: 'strat-objectifs', key: 'objectifs' },
+    { id: 'strat-repinvest2026', key: 'repinvest2026' },
+    { id: 'strat-repinvest2027', key: 'repinvest2027' },
+    { id: 'strat-donation', key: 'donation' },
+    { id: 'strat-fire', key: 'fire' }
   ];
   stratFields.forEach(({ id, key }) => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('blur', () => {
-        const current = store.get('parametres')?.strategie || {};
-        current[key] = el.innerText;
-        store.set('parametres.strategie', current);
-      });
+      // Handle placeholder on focus/blur for free-text blocks
+      if (el.dataset.placeholder) {
+        el.addEventListener('focus', () => {
+          if (!el.dataset.hasContent) el.innerHTML = '';
+        });
+        el.addEventListener('blur', () => {
+          const text = el.innerText.trim();
+          const current = store.get('parametres')?.strategie || {};
+          if (text) {
+            el.dataset.hasContent = '1';
+            current[key] = text;
+          } else {
+            delete el.dataset.hasContent;
+            el.innerHTML = `<span class="text-gray-600 italic pointer-events-none">${el.dataset.placeholder}</span>`;
+            delete current[key];
+          }
+          store.set('parametres.strategie', current);
+        });
+        // Mark as having content if it has saved data
+        if (el.innerText.trim() && !el.querySelector('.pointer-events-none')) {
+          el.dataset.hasContent = '1';
+        }
+      } else {
+        el.addEventListener('blur', () => {
+          const current = store.get('parametres')?.strategie || {};
+          current[key] = el.innerText;
+          store.set('parametres.strategie', current);
+        });
+      }
     }
   });
 }
