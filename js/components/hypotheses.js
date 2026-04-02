@@ -1025,9 +1025,10 @@ function renderChildGauges(enfant, gauges, color) {
   return `
     <div class="bg-dark-800/30 rounded-2xl p-3 sm:p-5 border border-dark-400/10 backdrop-blur-sm">
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-${color}/20 to-${color}/10 border border-${color}/20 flex items-center justify-center text-sm font-bold text-${color} shadow-lg shadow-gray-500/5">
-          ${(enfant.prenom || '?')[0].toUpperCase()}
-        </div>
+        ${enfant.photo
+          ? `<img src="${enfant.photo}" alt="${(enfant.prenom || '?')[0]}" class="w-10 h-10 rounded-xl object-cover border border-${color}/20 shadow-lg shadow-gray-500/5"/>`
+          : `<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-${color}/20 to-${color}/10 border border-${color}/20 flex items-center justify-center text-sm font-bold text-${color} shadow-lg shadow-gray-500/5">${(enfant.prenom || '?')[0].toUpperCase()}</div>`
+        }
         <div class="flex-1">
           <h4 class="text-sm font-bold text-gray-100">${enfant.prenom || 'Sans nom'}</h4>
           <p class="text-[10px] text-gray-500">${age !== null ? `${age} ans` : ''}</p>

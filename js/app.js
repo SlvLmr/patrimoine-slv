@@ -13,7 +13,7 @@ import * as SimulateurCredit from './components/simulateur-credit.js?v=20260330a
 import * as SimulateurInterets from './components/simulateur-interets.js?v=20260330a';
 import * as SimulateurAuto from './components/simulateur-auto.js?v=20260330a';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260330a';
-import * as Hypotheses from './components/hypotheses.js?v=20260402a';
+import * as Hypotheses from './components/hypotheses.js?v=20260402b';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260330a';
 import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
 
