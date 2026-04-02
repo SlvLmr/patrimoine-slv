@@ -26,13 +26,13 @@ const AFFECTATIONS = [
 
 function affectationField(currentValue) {
   return `
-    <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-300 mb-1.5">Affectation</label>
-      <div class="flex flex-wrap gap-2">
+    <div class="mb-3">
+      <label class="block text-xs font-medium text-gray-300 mb-1">Affectation</label>
+      <div class="flex gap-1.5">
         ${AFFECTATIONS.map(a => `
-          <label class="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg border border-dark-400/50 bg-dark-800 hover:${a.border}/40 transition has-[:checked]:${a.border} has-[:checked]:${a.bg}">
-            <input type="radio" name="affectation" value="${a.value}" ${a.value === currentValue ? 'checked' : ''} class="w-3.5 h-3.5 ${a.radio} bg-dark-800 border-dark-400 ${a.ring}">
-            <span class="text-xs font-medium ${a.text}">${a.label}</span>
+          <label class="flex items-center gap-1 cursor-pointer px-2 py-1 rounded-md border border-dark-400/50 bg-dark-800 hover:${a.border}/40 transition has-[:checked]:${a.border} has-[:checked]:${a.bg}">
+            <input type="radio" name="affectation" value="${a.value}" ${a.value === currentValue ? 'checked' : ''} class="w-3 h-3 ${a.radio} bg-dark-800 border-dark-400 ${a.ring}">
+            <span class="text-[11px] font-medium ${a.text}">${a.label}</span>
           </label>
         `).join('')}
       </div>
@@ -927,19 +927,23 @@ export function mount(store, navigate) {
       const curAff = getCurrentAffectation(item);
       const body = `
         ${affectationField(curAff)}
-        ${inputField('date', 'Date', item.date, 'date')}
+        <div class="grid grid-cols-2 gap-2">
+          <div>${inputField('date', 'Date', item.date, 'date')}</div>
+          <div>${inputField('montant', 'Montant (€)', item.montant, 'number', 'step="0.01"')}</div>
+        </div>
         ${inputField('description', 'Description', item.description || '', 'text')}
-        ${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie)}
-        ${inputField('montant', 'Montant (€)', item.montant, 'number', 'step="0.01"')}
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
-          <div class="flex gap-3">
-            ${COMPTES.map(c => `
-              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-blue/40 transition has-[:checked]:border-accent-blue has-[:checked]:bg-accent-blue/10">
-                <input type="radio" name="compte" value="${c}" ${c === item.compte ? 'checked' : ''} class="w-4 h-4 text-accent-blue bg-dark-800 border-dark-400 focus:ring-accent-blue/40">
-                <span class="text-sm text-gray-200">${c}</span>
-              </label>
-            `).join('')}
+        <div class="grid grid-cols-2 gap-2">
+          <div>${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie)}</div>
+          <div class="mb-3">
+            <label class="block text-xs font-medium text-gray-300 mb-1">Compte</label>
+            <div class="flex gap-1.5">
+              ${COMPTES.map(c => `
+                <label class="flex items-center gap-1 cursor-pointer px-2 py-1.5 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-blue/40 transition has-[:checked]:border-accent-blue has-[:checked]:bg-accent-blue/10">
+                  <input type="radio" name="compte" value="${c}" ${c === item.compte ? 'checked' : ''} class="w-3 h-3 text-accent-blue bg-dark-800 border-dark-400 focus:ring-accent-blue/40">
+                  <span class="text-[11px] text-gray-200">${c}</span>
+                </label>
+              `).join('')}
+            </div>
           </div>
         </div>
       `;
@@ -976,19 +980,23 @@ export function mount(store, navigate) {
       if (!rev) return;
       const body = `
         ${affectationField('revenu')}
-        ${inputField('date', 'Date', rev.date, 'date')}
+        <div class="grid grid-cols-2 gap-2">
+          <div>${inputField('date', 'Date', rev.date, 'date')}</div>
+          <div>${inputField('montant', 'Montant (€)', rev.montant, 'number', 'step="0.01"')}</div>
+        </div>
         ${inputField('description', 'Description', rev.description || '', 'text')}
-        ${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS, rev.categorie)}
-        ${inputField('montant', 'Montant (€)', rev.montant, 'number', 'step="0.01"')}
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
-          <div class="flex gap-3">
-            ${COMPTES.map(c => `
-              <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-green-500/40 transition has-[:checked]:border-green-500 has-[:checked]:bg-green-500/10">
-                <input type="radio" name="compte" value="${c}" ${c === rev.compte ? 'checked' : ''} class="w-4 h-4 text-green-500 bg-dark-800 border-dark-400 focus:ring-green-500/40">
-                <span class="text-sm text-gray-200">${c}</span>
-              </label>
-            `).join('')}
+        <div class="grid grid-cols-2 gap-2">
+          <div>${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS, rev.categorie)}</div>
+          <div class="mb-3">
+            <label class="block text-xs font-medium text-gray-300 mb-1">Compte</label>
+            <div class="flex gap-1.5">
+              ${COMPTES.map(c => `
+                <label class="flex items-center gap-1 cursor-pointer px-2 py-1.5 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-green-500/40 transition has-[:checked]:border-green-500 has-[:checked]:bg-green-500/10">
+                  <input type="radio" name="compte" value="${c}" ${c === rev.compte ? 'checked' : ''} class="w-3 h-3 text-green-500 bg-dark-800 border-dark-400 focus:ring-green-500/40">
+                  <span class="text-[11px] text-gray-200">${c}</span>
+                </label>
+              `).join('')}
+            </div>
           </div>
         </div>
       `;
