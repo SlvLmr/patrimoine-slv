@@ -15,7 +15,7 @@ import * as SimulateurAuto from './components/simulateur-auto.js?v=20260330a';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260330a';
 import * as Hypotheses from './components/hypotheses.js?v=20260402b';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260330a';
-import { saveToDrive, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
+import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
 
 // Auto-configure Google Drive Client ID
 setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
@@ -472,13 +472,27 @@ function initProfileSwitcher() {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          Exporter
+          Exporter vers Drive
         </button>
-        <button id="dd-import" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
+        <button id="dd-import-drive" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
           </svg>
-          Importer
+          Importer depuis Drive
+        </button>
+      </div>
+      <div class="border-t border-dark-400 space-y-0">
+        <button id="dd-export-file" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Exporter (fichier)
+        </button>
+        <button id="dd-import" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Importer (fichier)
         </button>
         <button id="dd-logout" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -550,18 +564,32 @@ function initProfileSwitcher() {
       });
     });
 
-    // Export
+    // Export to Drive
     dropdown.querySelector('#dd-export')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
       dropdown.remove();
-      exportLocal();
+      exportToDrive();
     });
 
-    // Import
+    // Import from Drive
+    dropdown.querySelector('#dd-import-drive')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      dropdown.remove();
+      importFromDrive();
+    });
+
+    // Export to file (manual download)
+    dropdown.querySelector('#dd-export-file')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      dropdown.remove();
+      exportToFile();
+    });
+
+    // Import from file (manual upload)
     dropdown.querySelector('#dd-import')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
       dropdown.remove();
-      importLocal();
+      importFromFile();
     });
 
     // Reset
@@ -728,29 +756,103 @@ function showConfirmModal({ title, message, icon, confirmLabel = 'Confirmer', co
   modal.addEventListener('click', (e) => { if (e.target === modal) closeChoiceModal(); });
 }
 
-async function exportLocal() {
+// --- Export to Google Drive ---
+async function exportToDrive() {
   const data = store.exportData();
   const profile = store.getActiveProfile();
   const filename = `patrimoine-${profile.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`;
 
-  // Save to Google Drive
   try {
     showToast('Export vers Google Drive en cours...', 'info', 3000);
     await saveToDrive(data, filename);
     showToast('Exporté sur Google Drive ✓', 'success', 4000);
   } catch (err) {
     console.error('Google Drive export error:', err);
-    showToast('Erreur Drive : ' + err.message + ' — Téléchargement local à la place', 'error', 6000);
-    // Fallback: local download
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
+    showToast('Erreur Drive : ' + err.message, 'error', 6000);
   }
 }
 
-function importLocal() {
+// --- Import from Google Drive ---
+async function importFromDrive() {
+  try {
+    showToast('Chargement des fichiers Drive...', 'info', 3000);
+    const files = await listDriveFiles();
+    if (!files || files.length === 0) {
+      showToast('Aucun fichier trouvé sur Google Drive.', 'info', 4000);
+      return;
+    }
+    // Show a picker modal with Drive files
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm';
+    modal.innerHTML = `
+      <div class="bg-dark-800 rounded-2xl border border-dark-400/30 shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="px-5 py-4 border-b border-dark-400/20 flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-200">Importer depuis Google Drive</h3>
+          <button id="drive-pick-close" class="p-1 rounded hover:bg-dark-600 text-gray-500 hover:text-gray-300 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="p-4 max-h-64 overflow-y-auto space-y-1">
+          ${files.map(f => `
+            <button data-drive-file-id="${f.id}" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-dark-600 transition flex items-center gap-3 group">
+              <svg class="w-4 h-4 text-accent-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs text-gray-300 truncate">${f.name}</div>
+                <div class="text-[10px] text-gray-600">${new Date(f.modifiedTime).toLocaleDateString('fr-FR')} — ${f.size ? Math.round(Number(f.size) / 1024) + ' Ko' : ''}</div>
+              </div>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    modal.querySelector('#drive-pick-close').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    modal.querySelectorAll('[data-drive-file-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const fileId = btn.dataset.driveFileId;
+        closeModal();
+        try {
+          showToast('Importation depuis Drive...', 'info', 3000);
+          const content = await loadFromDrive(fileId);
+          if (store.importData(content)) {
+            showToast('Données importées depuis Drive ✓', 'success', 4000);
+            renderPage();
+          } else {
+            showToast('Erreur : fichier invalide.', 'error', 5000);
+          }
+        } catch (err) {
+          console.error('Drive import error:', err);
+          showToast('Erreur Drive : ' + err.message, 'error', 6000);
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Drive list error:', err);
+    showToast('Erreur Drive : ' + err.message, 'error', 6000);
+  }
+}
+
+// --- Export to local file (manual download) ---
+function exportToFile() {
+  const data = store.exportData();
+  const profile = store.getActiveProfile();
+  const filename = `patrimoine-${profile.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.json`;
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Fichier téléchargé ✓', 'success', 3000);
+}
+
+// --- Import from local file (manual upload) ---
+function importFromFile() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json';
@@ -760,9 +862,10 @@ function importLocal() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       if (store.importData(ev.target.result)) {
+        showToast('Fichier importé ✓', 'success', 3000);
         renderPage();
       } else {
-        alert('Erreur: fichier invalide.');
+        showToast('Erreur : fichier invalide.', 'error', 5000);
       }
     };
     reader.readAsText(file);
