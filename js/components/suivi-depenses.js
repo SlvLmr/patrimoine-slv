@@ -1097,47 +1097,53 @@ export function mount(store, navigate) {
         if (!Number(trFeats.interets)) options.push({ key: 'feat-interets', label: 'Intérêts' });
         if (!Number(trFeats.saveback)) options.push({ key: 'feat-saveback', label: 'Saveback' });
         if (!Number(trFeats.roundup)) options.push({ key: 'feat-roundup', label: 'Round-up' });
-        if (options.length === 0) return;
+        if (options.length === 0) {
+          const body = `<p class="text-sm text-gray-400">Toutes les lignes sont déjà actives. Supprime une ligne existante (✕ au survol) pour pouvoir en recréer une.</p>`;
+          openModal('Ajouter une ligne', body, null);
+          return;
+        }
         const body = `<div class="space-y-1">${options.map(o =>
           `<button data-pick-line="${o.key}" class="w-full text-left px-3 py-2 rounded-lg hover:bg-dark-600 transition text-sm text-gray-300">${o.label}</button>`
         ).join('')}</div>`;
         openModal('Ajouter une ligne', body, null);
-        setTimeout(() => {
-          document.querySelectorAll('[data-pick-line]').forEach(pick => {
-            pick.addEventListener('click', () => {
-              document.getElementById('app-modal')?.remove();
-              const lineKey = pick.dataset.pickLine;
-              if (lineKey === 'invest') {
-                const inv2 = store.get('restantInvestissement') || {};
-                inv2.tr = 1;
-                store.set('restantInvestissement', inv2);
-              } else if (lineKey === 'pea') {
-                const pea2 = store.get('restantPEA') || {};
-                pea2.tr = 1;
-                store.set('restantPEA', pea2);
-              } else if (lineKey === 'ndf') {
-                const p = store.get('parametres') || {};
-                p.budgetNDF = 1;
-                store.set('parametres', p);
-              } else if (lineKey === 'quotidien') {
-                const p = store.get('parametres') || {};
-                p.budgetQuotidien = 1;
-                store.set('parametres', p);
-              } else if (lineKey.startsWith('feat-')) {
-                const feat = lineKey.replace('feat-', '');
-                const tf = store.get('trFeatures') || {};
-                tf[feat] = 1;
-                store.set('trFeatures', tf);
-              }
-              navigate('suivi-depenses');
-            });
+        document.querySelectorAll('[data-pick-line]').forEach(pick => {
+          pick.addEventListener('click', () => {
+            document.getElementById('app-modal')?.remove();
+            const lineKey = pick.dataset.pickLine;
+            if (lineKey === 'invest') {
+              const inv2 = store.get('restantInvestissement') || {};
+              inv2.tr = 1;
+              store.set('restantInvestissement', inv2);
+            } else if (lineKey === 'pea') {
+              const pea2 = store.get('restantPEA') || {};
+              pea2.tr = 1;
+              store.set('restantPEA', pea2);
+            } else if (lineKey === 'ndf') {
+              const p = store.get('parametres') || {};
+              p.budgetNDF = 1;
+              store.set('parametres', p);
+            } else if (lineKey === 'quotidien') {
+              const p = store.get('parametres') || {};
+              p.budgetQuotidien = 1;
+              store.set('parametres', p);
+            } else if (lineKey.startsWith('feat-')) {
+              const feat = lineKey.replace('feat-', '');
+              const tf = store.get('trFeatures') || {};
+              tf[feat] = 1;
+              store.set('trFeatures', tf);
+            }
+            navigate('suivi-depenses');
           });
-        }, 50);
+        });
       } else {
         // CIC or extra bank: offer solde obligatoire
         const oblig = store.get('soldeObligatoire') || {};
         const currentKey = bankKey === 'cic' ? 'cic' : bankKey;
-        if (Number(oblig[currentKey]) > 0) return;
+        if (Number(oblig[currentKey]) > 0) {
+          const body = `<p class="text-sm text-gray-400">Le solde obligatoire est déjà actif. Supprime-le (✕ au survol) pour pouvoir le recréer.</p>`;
+          openModal('Ajouter une ligne', body, null);
+          return;
+        }
         const labels = store.get('customLabels') || {};
         const lblKey = `soldeObligatoire_${currentKey}`;
         const currentLabel = labels[lblKey] || 'Solde obligatoire';
