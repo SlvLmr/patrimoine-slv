@@ -180,8 +180,15 @@ export function render(store) {
   // Budget quotidien (moved up so soldeObligTR can use it)
   const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
 
-  // Solde obligatoire TR = sum of all active budget lines
-  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + budgetQuotidien;
+  // Dynamic custom pockets (unlimited)
+  const allPockets = store.get('budgetPockets') || {};
+  const pocketsTR = allPockets.tr || [];
+  const pocketsCIC = allPockets.cic || [];
+  const pocketsTRTotal = pocketsTR.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const pocketsCICTotal = pocketsCIC.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+  // Solde obligatoire TR = sum of all active budget lines + custom pockets
+  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + budgetQuotidien + pocketsTRTotal;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -343,6 +350,13 @@ export function render(store) {
               <button data-del-budget="oblig-cic" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/oblig:opacity-100 transition" title="Supprimer">✕</button>
             </div>
           </div>` : ''}
+          ${pocketsCIC.map(p => `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-pocket="${p.id}" data-pocket-bank="cic">
+            <span class="text-xs text-gray-500">- ${p.label}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="cic" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>`).join('')}
           <div class="flex items-center justify-end px-3 py-0.5 mb-3">
             <button data-add-budget="cic" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
           </div>
@@ -437,6 +451,13 @@ export function render(store) {
               <button data-del-budget="quotidien" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
             </div>
           </div>` : ''}
+          ${pocketsTR.map(p => `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-pocket="${p.id}" data-pocket-bank="tr">
+            <span class="text-xs text-gray-500">- ${p.label}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>`).join('')}
           ${trInterets > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="interets">
             <span class="text-[11px] text-gray-500">${lblInterets}</span>
             <div class="flex items-center gap-1.5">
@@ -561,6 +582,13 @@ export function render(store) {
               <button data-del-budget="oblig-${bank.id}" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/oblig:opacity-100 transition" title="Supprimer">✕</button>
             </div>
           </div>` : ''}
+          ${(allPockets[bank.id] || []).map(p => `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-pocket="${p.id}" data-pocket-bank="${bank.id}">
+            <span class="text-xs text-gray-500">- ${p.label}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="${bank.id}" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>`).join('')}
           <div class="flex items-center justify-end px-3 py-0.5 mb-3">
             <button data-add-budget="${bank.id}" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
           </div>
@@ -784,6 +812,7 @@ export function mount(store, navigate) {
           lblEnveloppe: labelsSnap.enveloppeQuotidien || 'Pocket 4',
           extraPrev: {},
           extraOblig: {},
+          budgetPockets: JSON.parse(JSON.stringify(store.get('budgetPockets') || {})),
         },
       };
       for (const bank of extraBanks) {
@@ -1078,88 +1107,58 @@ export function mount(store, navigate) {
     });
   });
 
-  // Add budget line (opens a picker of available line types)
+  // Add budget line — always opens a create form for a new pocket
   document.querySelectorAll('[data-add-budget]').forEach(btn => {
     btn.addEventListener('click', () => {
       const bankKey = btn.dataset.addBudget;
-      if (bankKey === 'tr') {
-        // TR bank: offer invest, PEA, NDF, quotidien, features
-        const inv = store.get('restantInvestissement') || {};
-        const pea = store.get('restantPEA') || {};
-        const params = store.get('parametres') || {};
-        const trFeats = store.get('trFeatures') || {};
-        const lbls = store.get('customLabels') || {};
-        const options = [];
-        if (!Number(inv.tr)) options.push({ key: 'invest', label: lbls.restantInvestissement || 'Pocket 1' });
-        if (!Number(pea.tr)) options.push({ key: 'pea', label: lbls.restantPEA || 'Pocket 2' });
-        if (!Number(params.budgetNDF)) options.push({ key: 'ndf', label: lbls.aRecupererNDF || 'Pocket 3' });
-        if (!Number(params.budgetQuotidien)) options.push({ key: 'quotidien', label: lbls.enveloppeQuotidien || 'Pocket 4' });
-        if (!Number(trFeats.interets)) options.push({ key: 'feat-interets', label: 'Intérêts' });
-        if (!Number(trFeats.saveback)) options.push({ key: 'feat-saveback', label: 'Saveback' });
-        if (!Number(trFeats.roundup)) options.push({ key: 'feat-roundup', label: 'Round-up' });
-        if (options.length === 0) {
-          const body = `<p class="text-sm text-gray-400">Toutes les lignes sont déjà actives. Supprime une ligne existante (✕ au survol) pour pouvoir en recréer une.</p>`;
-          openModal('Ajouter une ligne', body, null);
-          return;
-        }
-        const body = `<div class="space-y-1">${options.map(o =>
-          `<button data-pick-line="${o.key}" class="w-full text-left px-3 py-2 rounded-lg hover:bg-dark-600 transition text-sm text-gray-300">${o.label}</button>`
-        ).join('')}</div>`;
-        openModal('Ajouter une ligne', body, null);
-        document.querySelectorAll('[data-pick-line]').forEach(pick => {
-          pick.addEventListener('click', () => {
-            document.getElementById('app-modal')?.remove();
-            const lineKey = pick.dataset.pickLine;
-            if (lineKey === 'invest') {
-              const inv2 = store.get('restantInvestissement') || {};
-              inv2.tr = 1;
-              store.set('restantInvestissement', inv2);
-            } else if (lineKey === 'pea') {
-              const pea2 = store.get('restantPEA') || {};
-              pea2.tr = 1;
-              store.set('restantPEA', pea2);
-            } else if (lineKey === 'ndf') {
-              const p = store.get('parametres') || {};
-              p.budgetNDF = 1;
-              store.set('parametres', p);
-            } else if (lineKey === 'quotidien') {
-              const p = store.get('parametres') || {};
-              p.budgetQuotidien = 1;
-              store.set('parametres', p);
-            } else if (lineKey.startsWith('feat-')) {
-              const feat = lineKey.replace('feat-', '');
-              const tf = store.get('trFeatures') || {};
-              tf[feat] = 1;
-              store.set('trFeatures', tf);
-            }
-            navigate('suivi-depenses');
-          });
-        });
-      } else {
-        // CIC or extra bank: offer solde obligatoire
-        const oblig = store.get('soldeObligatoire') || {};
-        const currentKey = bankKey === 'cic' ? 'cic' : bankKey;
-        if (Number(oblig[currentKey]) > 0) {
-          const body = `<p class="text-sm text-gray-400">Le solde obligatoire est déjà actif. Supprime-le (✕ au survol) pour pouvoir le recréer.</p>`;
-          openModal('Ajouter une ligne', body, null);
-          return;
-        }
-        const labels = store.get('customLabels') || {};
-        const lblKey = `soldeObligatoire_${currentKey}`;
-        const currentLabel = labels[lblKey] || 'Solde obligatoire';
-        const bLabel = bankKey === 'cic' ? bankNames.primary : (extraBanks.find(b => b.id === bankKey)?.name || 'Banque');
-        const body2 = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant (€)`, 0, 'number', 'step="0.01"');
-        openModal(`Ajouter — ${bLabel}`, body2, () => {
-          const data = getFormData(document.getElementById('modal-body'));
-          oblig[currentKey] = Number(data.solde) || 0;
-          store.set('soldeObligatoire', oblig);
-          if (data.libelle && data.libelle !== currentLabel) {
-            labels[lblKey] = data.libelle;
-            store.set('customLabels', labels);
-          }
-          navigate('suivi-depenses');
-        });
+      const body = inputField('libelle', 'Nom', '', 'text', 'placeholder="Ex: Vacances, Épargne..."') + inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 500"');
+      openModal('Nouveau pocket', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        const label = (data.libelle || '').trim();
+        const amount = Number(data.montant) || 0;
+        if (!label || !amount) return;
+        const pockets = store.get('budgetPockets') || {};
+        if (!pockets[bankKey]) pockets[bankKey] = [];
+        pockets[bankKey].push({ id: 'pocket-' + Date.now(), label, amount });
+        store.set('budgetPockets', pockets);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Edit custom pocket
+  document.querySelectorAll('[data-edit-pocket]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-del-pocket]')) return;
+      const pocketId = el.dataset.editPocket;
+      const bankKey = el.dataset.pocketBank;
+      const pockets = store.get('budgetPockets') || {};
+      const arr = pockets[bankKey] || [];
+      const pocket = arr.find(p => p.id === pocketId);
+      if (!pocket) return;
+      const body = inputField('libelle', 'Nom', pocket.label) + inputField('montant', 'Montant (€)', pocket.amount, 'number', 'step="0.01"');
+      openModal('Modifier le pocket', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        pocket.label = (data.libelle || '').trim() || pocket.label;
+        pocket.amount = Number(data.montant) || 0;
+        store.set('budgetPockets', pockets);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Delete custom pocket
+  document.querySelectorAll('[data-del-pocket]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pocketId = btn.dataset.delPocket;
+      const bankKey = btn.dataset.pocketBank;
+      const pockets = store.get('budgetPockets') || {};
+      if (pockets[bankKey]) {
+        pockets[bankKey] = pockets[bankKey].filter(p => p.id !== pocketId);
+        store.set('budgetPockets', pockets);
       }
+      navigate('suivi-depenses');
     });
   });
 
@@ -1861,14 +1860,17 @@ export function mount(store, navigate) {
       if (isPrimary) {
         subLines = subLine(m.lblSoldeDebutCIC || 'Solde début de mois', m.soldePrevCIC || 0);
         if (m.soldeObligCIC) subLines += subLine(m.lblSoldeObligCIC || 'Solde obligatoire', m.soldeObligCIC, 'text-amber-400');
+        ((m.budgetPockets || {}).cic || []).forEach(p => { subLines += subLine(p.label, p.amount); });
       } else if (isSecondary) {
         subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', m.soldePrevTR || 0);
-        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + (m.budgetQuotidien || 0);
+        const archPocketsTR = ((m.budgetPockets || {}).tr || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + (m.budgetQuotidien || 0) + archPocketsTR;
         if (soldeObligTR) subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
         if (m.restantInvestTR) subLines += subLine(m.lblRestantInvest || 'Pocket 1', m.restantInvestTR);
         if (m.restantPEATR) subLines += subLine(m.lblRestantPEA || 'Pocket 2', m.restantPEATR);
         if (m.budgetNDF) subLines += subLine(m.lblNDF || 'Pocket 3', m.budgetNDF, 'text-purple-400');
         if (m.budgetQuotidien) subLines += subLine(m.lblEnveloppe || 'Pocket 4', m.budgetQuotidien);
+        ((m.budgetPockets || {}).tr || []).forEach(p => { subLines += subLine(p.label, p.amount); });
       } else if (isExtra && extraBankObj) {
         const prevExtra = (m.extraPrev || {})[extraBankObj.id] || 0;
         const obligExtra = (m.extraOblig || {})[extraBankObj.id] || 0;
