@@ -121,6 +121,17 @@ export function render(store) {
   }
   const dcaTR = store.get('dcaMensuelsTR') || [];
   const revMensuelsTR = store.get('revenusMensuelsTR') || [];
+
+  // Section names & collapsed state
+  const sectionNames = store.get('sectionNames') || {};
+  const sectionCollapsed = store.get('sectionCollapsed') || {};
+  const secNameDep = sectionNames.depMensuelles || 'Dépenses mensuelles';
+  const secNameDca = sectionNames.dcaTR || 'DCA & Investissements';
+  const secNameRev = sectionNames.revMensuels || 'Apports mensuels';
+  const secCollDep = !!sectionCollapsed.depMensuelles;
+  const secCollDca = !!sectionCollapsed.dcaTR;
+  const secCollRev = !!sectionCollapsed.revMensuels;
+
   const items = store.get('suiviDepenses') || [];
   const revenus = store.get('suiviRevenus') || [];
   const comptesCourants = store.get('actifs')?.comptesCourants || [
@@ -161,13 +172,13 @@ export function render(store) {
 
   // A récupérer NDF = budget NDF - somme NDF
   const paramètres = store.get('parametres') || {};
-  const budgetNDF = paramètres.budgetNDF !== undefined ? Number(paramètres.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 789.99);
+  const budgetNDF = paramètres.budgetNDF !== undefined ? Number(paramètres.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 0);
   const ndfTR = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const aRecupererNDF = budgetNDF - ndfTR;
   const sommeARecuperer = 39.99 + ndfTR;
 
-  // Solde obligatoire TR = restant invest + restant PEA + 750
-  const soldeObligTR = restantInvestTR + restantPEATR + 750;
+  // Solde obligatoire TR = sum of all active budget lines
+  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + budgetQuotidien;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -198,7 +209,7 @@ export function render(store) {
   const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   // Enveloppe restante pour quotidien = budget quotidien - (dépenses rouges + virements sortants TR)
-  const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 700);
+  const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
   const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
@@ -323,9 +334,15 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutCIC}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="cic">
+          ${soldeObligCIC > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/oblig" data-edit-oblig="cic">
             <span class="text-xs text-gray-500">${lblSoldeObligCIC}</span>
-            <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
+              <button data-del-budget="oblig-cic" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/oblig:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          <div class="flex items-center justify-end px-3 py-0.5 mb-3">
+            <button data-add-budget="cic" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
           </div>
           ${opsCIC.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-cic">
@@ -335,11 +352,11 @@ export function render(store) {
 
           <!-- Dépenses mensuelles fixes -->
           <div class="border-t border-dark-400/30">
-            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="depMensuelles">
               <div class="flex items-center gap-2">
-                <div class="flex flex-col gap-0.5 flex-shrink-0 invisible"><span class="leading-none text-[10px]">▲</span><span class="leading-none text-[10px]">▼</span></div>
+                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollDep ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 <svg class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                <span class="text-xs font-semibold text-gray-300">Dépenses mensuelles</span>
+                <span class="text-xs font-semibold text-gray-300 cursor-text" data-section-rename="depMensuelles">${secNameDep}</span>
                 <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${depMensuelles.length}</span>
               </div>
               <div class="flex items-center gap-2">
@@ -347,7 +364,7 @@ export function render(store) {
                 <button id="btn-add-mensuel-cic" class="text-accent-amber hover:text-accent-amber/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
-            <div class="divide-y divide-dark-400/10">
+            <div class="divide-y divide-dark-400/10 ${secCollDep ? 'hidden' : ''}" data-section-body="depMensuelles">
               ${depMensuelles.map((d, idx) => {
                 const checked = cocheesThisMonth.includes(d.id);
                 return `
@@ -386,37 +403,61 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
+          ${soldeObligTR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
             <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
             <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-restant-invest>
-            <span class="text-xs text-gray-500">${lblRestantInvest}</span>
-            <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-restant-pea>
-            <span class="text-xs text-gray-500">${lblRestantPEA}</span>
-            <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
-          </div>
-          ${budgetNDF > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-ndf>
-            <span class="text-xs text-gray-500">${lblNDF}</span>
-            <span class="text-xs font-medium"><span class="text-[9px] italic text-gray-600">(${formatCurrencyCents(sommeARecuperer)})</span> <span class="text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span></span>
           </div>` : ''}
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 mb-4 cursor-pointer hover:bg-dark-600/30 transition" data-edit-budget-quotidien>
-            <span class="text-xs text-gray-500">${lblEnveloppe}</span>
-            <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="interets">
+          ${restantInvestTR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-restant-invest>
+            <span class="text-xs text-gray-500">- ${lblRestantInvest}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
+              <button data-del-budget="invest" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          ${restantPEATR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-restant-pea>
+            <span class="text-xs text-gray-500">- ${lblRestantPEA}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
+              <button data-del-budget="pea" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          ${budgetNDF > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-budget-ndf>
+            <span class="text-xs text-gray-500">- ${lblNDF}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium"><span class="text-[9px] italic text-gray-600">(${formatCurrencyCents(sommeARecuperer)})</span> <span class="text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span></span>
+              <button data-del-budget="ndf" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          ${budgetQuotidien > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-budget-quotidien>
+            <span class="text-xs text-gray-500">- ${lblEnveloppe}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
+              <button data-del-budget="quotidien" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          ${trInterets > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="interets">
             <span class="text-[11px] text-gray-500">${lblInterets}</span>
-            <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="saveback">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
+              <button data-del-budget="feat-interets" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          ${trSaveback > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="saveback">
             <span class="text-[11px] text-gray-500">${lblSaveback}</span>
-            <span class="text-[11px] font-medium text-amber-400">${formatCurrencyCents(trSaveback)}</span>
-          </div>
-          <div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition" data-edit-tr-feature="roundup">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] font-medium text-amber-400">${formatCurrencyCents(trSaveback)}</span>
+              <button data-del-budget="feat-saveback" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          ${trRoundup > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="roundup">
             <span class="text-[11px] text-gray-500">${lblRoundup}</span>
-            <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
+              <button data-del-budget="feat-roundup" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          <div class="flex items-center justify-end px-3 py-0.5 mb-3">
+            <button data-add-budget="tr" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
           </div>
 
           ${opsTR.length > 0 ? `
@@ -427,10 +468,11 @@ export function render(store) {
 
           <!-- DCA & Investissements récurrents TR -->
           <div class="border-t border-dark-400/30">
-            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="dcaTR">
               <div class="flex items-center gap-2">
+                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollDca ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>
-                <span class="text-xs font-semibold text-gray-300">DCA & Investissements</span>
+                <span class="text-xs font-semibold text-gray-300 cursor-text" data-section-rename="dcaTR">${secNameDca}</span>
                 <span class="text-[10px] text-gray-500">${confirmedDcaIds.length}/${dcaTR.length}</span>
               </div>
               <div class="flex items-center gap-2">
@@ -438,7 +480,7 @@ export function render(store) {
                 <button id="btn-add-dca-tr" class="text-blue-400 hover:text-blue-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
-            <div class="divide-y divide-dark-400/10">
+            <div class="divide-y divide-dark-400/10 ${secCollDca ? 'hidden' : ''}" data-section-body="dcaTR">
               ${dcaTR.map(d => {
                 const confirmed = confirmedDcaIds.includes(d.id);
                 return `
@@ -459,10 +501,11 @@ export function render(store) {
 
           <!-- Apports mensuels récurrents TR -->
           <div class="border-t border-dark-400/30">
-            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="revMensuels">
               <div class="flex items-center gap-2">
+                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollRev ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
-                <span class="text-xs font-semibold text-gray-300">Apports mensuels</span>
+                <span class="text-xs font-semibold text-gray-300 cursor-text" data-section-rename="revMensuels">${secNameRev}</span>
                 <span class="text-[10px] text-gray-500">${confirmedRevIds.length}/${revMensuelsTR.length}</span>
               </div>
               <div class="flex items-center gap-2">
@@ -470,7 +513,7 @@ export function render(store) {
                 <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
-            <div class="divide-y divide-dark-400/10">
+            <div class="divide-y divide-dark-400/10 ${secCollRev ? 'hidden' : ''}" data-section-body="revMensuels">
               ${revMensuelsTR.map(r => {
                 const confirmed = confirmedRevIds.includes(r.id);
                 return `
@@ -509,9 +552,15 @@ export function render(store) {
             <span class="text-xs text-gray-500">${bank.lblPrev}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition mb-4" data-edit-oblig="${bank.id}">
+          ${bank.obligSolde > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/oblig" data-edit-oblig="${bank.id}">
             <span class="text-xs text-gray-500">${bank.lblOblig}</span>
-            <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
+              <button data-del-budget="oblig-${bank.id}" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/oblig:opacity-100 transition" title="Supprimer">✕</button>
+            </div>
+          </div>` : ''}
+          <div class="flex items-center justify-end px-3 py-0.5 mb-3">
+            <button data-add-budget="${bank.id}" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
           </div>
           ${bank.ops.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-${bank.id}">
@@ -580,6 +629,42 @@ export function mount(store, navigate) {
         const newName = (data.nom || '').trim();
         if (!newName || newName === currentName) return;
         store.renameBank(key, newName);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Section collapse/expand toggle
+  document.querySelectorAll('[data-section-toggle]').forEach(header => {
+    header.addEventListener('click', (e) => {
+      // Don't toggle if clicking the + button or rename span
+      if (e.target.closest('button') || e.target.closest('[data-section-rename]')) return;
+      const key = header.dataset.sectionToggle;
+      const collapsed = store.get('sectionCollapsed') || {};
+      collapsed[key] = !collapsed[key];
+      store.set('sectionCollapsed', collapsed);
+      const body = document.querySelector(`[data-section-body="${key}"]`);
+      const chevron = header.querySelector('svg');
+      if (body) body.classList.toggle('hidden');
+      if (chevron) chevron.classList.toggle('-rotate-90');
+    });
+  });
+
+  // Section rename (double-click on title)
+  document.querySelectorAll('[data-section-rename]').forEach(span => {
+    span.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const key = span.dataset.sectionRename;
+      const names = store.get('sectionNames') || {};
+      const defaults = { depMensuelles: 'Dépenses mensuelles', dcaTR: 'DCA & Investissements', revMensuels: 'Apports mensuels' };
+      const current = names[key] || defaults[key] || '';
+      const body = inputField('nom', 'Nom de la section', current);
+      openModal('Renommer la section', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        const newName = (data.nom || '').trim();
+        if (!newName || newName === current) return;
+        names[key] = newName;
+        store.set('sectionNames', names);
         navigate('suivi-depenses');
       });
     });
@@ -679,8 +764,8 @@ export function mount(store, navigate) {
           soldeObligCIC: Number(soldeObligSnap.cic) || 0,
           restantInvestTR: Number(restInvSnap.tr) || 0,
           restantPEATR: Number(restPeaSnap.tr) || 0,
-          budgetNDF: paramsSnap.budgetNDF !== undefined ? Number(paramsSnap.budgetNDF) : 789.99,
-          budgetQuotidien: paramsSnap.budgetQuotidien !== undefined ? Number(paramsSnap.budgetQuotidien) : 700,
+          budgetNDF: paramsSnap.budgetNDF !== undefined ? Number(paramsSnap.budgetNDF) : 0,
+          budgetQuotidien: paramsSnap.budgetQuotidien !== undefined ? Number(paramsSnap.budgetQuotidien) : 0,
           trInterets: Number(trFeatsSnap.interets) || 0,
           trSaveback: Number(trFeatsSnap.saveback) || 0,
           trRoundup: Number(trFeatsSnap.roundup) || 0,
@@ -893,7 +978,7 @@ export function mount(store, navigate) {
       const labels = store.get('customLabels') || {};
       const currentLabel = labels.aRecupererNDF || 'A récupérer NDF';
       const params = store.get('parametres') || {};
-      const current = params.budgetNDF !== undefined ? Number(params.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 789.99);
+      const current = params.budgetNDF !== undefined ? Number(params.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 0);
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget NDF (€)', current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -915,7 +1000,7 @@ export function mount(store, navigate) {
       const labels = store.get('customLabels') || {};
       const currentLabel = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
       const paramsQ = store.get('parametres') || {};
-      const current = paramsQ.budgetQuotidien !== undefined ? Number(paramsQ.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 700);
+      const current = paramsQ.budgetQuotidien !== undefined ? Number(paramsQ.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget quotidien (€)', current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -952,6 +1037,120 @@ export function mount(store, navigate) {
         store.set('trFeatures', trFeatures);
         navigate('suivi-depenses');
       });
+    });
+  });
+
+  // Delete budget line
+  document.querySelectorAll('[data-del-budget]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.delBudget;
+      if (key.startsWith('oblig-')) {
+        const bankKey = key.replace('oblig-', '');
+        const oblig = store.get('soldeObligatoire') || {};
+        oblig[bankKey] = 0;
+        store.set('soldeObligatoire', oblig);
+      } else if (key === 'invest') {
+        const inv = store.get('restantInvestissement') || {};
+        inv.tr = 0;
+        store.set('restantInvestissement', inv);
+      } else if (key === 'pea') {
+        const pea = store.get('restantPEA') || {};
+        pea.tr = 0;
+        store.set('restantPEA', pea);
+      } else if (key === 'ndf') {
+        const p = store.get('parametres') || {};
+        p.budgetNDF = 0;
+        store.set('parametres', p);
+      } else if (key === 'quotidien') {
+        const p = store.get('parametres') || {};
+        p.budgetQuotidien = 0;
+        store.set('parametres', p);
+      } else if (key.startsWith('feat-')) {
+        const feat = key.replace('feat-', '');
+        const trFeatures = store.get('trFeatures') || {};
+        trFeatures[feat] = 0;
+        store.set('trFeatures', trFeatures);
+      }
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Add budget line (opens a picker of available line types)
+  document.querySelectorAll('[data-add-budget]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bankKey = btn.dataset.addBudget;
+      if (bankKey === 'tr') {
+        // TR bank: offer invest, PEA, NDF, quotidien, features
+        const inv = store.get('restantInvestissement') || {};
+        const pea = store.get('restantPEA') || {};
+        const params = store.get('parametres') || {};
+        const trFeats = store.get('trFeatures') || {};
+        const options = [];
+        if (!Number(inv.tr)) options.push({ key: 'invest', label: 'Enveloppe investissement' });
+        if (!Number(pea.tr)) options.push({ key: 'pea', label: 'Enveloppe PEA' });
+        if (!Number(params.budgetNDF)) options.push({ key: 'ndf', label: 'Budget NDF' });
+        if (!Number(params.budgetQuotidien)) options.push({ key: 'quotidien', label: 'Budget quotidien' });
+        if (!Number(trFeats.interets)) options.push({ key: 'feat-interets', label: 'Intérêts' });
+        if (!Number(trFeats.saveback)) options.push({ key: 'feat-saveback', label: 'Saveback' });
+        if (!Number(trFeats.roundup)) options.push({ key: 'feat-roundup', label: 'Round-up' });
+        if (options.length === 0) return;
+        const body = `<div class="space-y-1">${options.map(o =>
+          `<button data-pick-line="${o.key}" class="w-full text-left px-3 py-2 rounded-lg hover:bg-dark-600 transition text-sm text-gray-300">${o.label}</button>`
+        ).join('')}</div>`;
+        openModal('Ajouter une ligne', body, null);
+        setTimeout(() => {
+          document.querySelectorAll('[data-pick-line]').forEach(pick => {
+            pick.addEventListener('click', () => {
+              document.getElementById('app-modal')?.remove();
+              const lineKey = pick.dataset.pickLine;
+              if (lineKey === 'invest') {
+                const inv2 = store.get('restantInvestissement') || {};
+                inv2.tr = 1;
+                store.set('restantInvestissement', inv2);
+              } else if (lineKey === 'pea') {
+                const pea2 = store.get('restantPEA') || {};
+                pea2.tr = 1;
+                store.set('restantPEA', pea2);
+              } else if (lineKey === 'ndf') {
+                const p = store.get('parametres') || {};
+                p.budgetNDF = 1;
+                store.set('parametres', p);
+              } else if (lineKey === 'quotidien') {
+                const p = store.get('parametres') || {};
+                p.budgetQuotidien = 1;
+                store.set('parametres', p);
+              } else if (lineKey.startsWith('feat-')) {
+                const feat = lineKey.replace('feat-', '');
+                const tf = store.get('trFeatures') || {};
+                tf[feat] = 1;
+                store.set('trFeatures', tf);
+              }
+              navigate('suivi-depenses');
+            });
+          });
+        }, 50);
+      } else {
+        // CIC or extra bank: offer solde obligatoire
+        const oblig = store.get('soldeObligatoire') || {};
+        const currentKey = bankKey === 'cic' ? 'cic' : bankKey;
+        if (Number(oblig[currentKey]) > 0) return;
+        const labels = store.get('customLabels') || {};
+        const lblKey = `soldeObligatoire_${currentKey}`;
+        const currentLabel = labels[lblKey] || 'Solde obligatoire';
+        const bLabel = bankKey === 'cic' ? bankNames.primary : (extraBanks.find(b => b.id === bankKey)?.name || 'Banque');
+        const body2 = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant (€)`, 0, 'number', 'step="0.01"');
+        openModal(`Ajouter — ${bLabel}`, body2, () => {
+          const data = getFormData(document.getElementById('modal-body'));
+          oblig[currentKey] = Number(data.solde) || 0;
+          store.set('soldeObligatoire', oblig);
+          if (data.libelle && data.libelle !== currentLabel) {
+            labels[lblKey] = data.libelle;
+            store.set('customLabels', labels);
+          }
+          navigate('suivi-depenses');
+        });
+      }
     });
   });
 
@@ -1651,16 +1850,16 @@ export function mount(store, navigate) {
 
       let subLines = '';
       if (isPrimary) {
-        subLines = subLine(m.lblSoldeDebutCIC || 'Solde début de mois', m.soldePrevCIC || 0)
-                 + subLine(m.lblSoldeObligCIC || 'Solde obligatoire', m.soldeObligCIC || 0, 'text-amber-400');
+        subLines = subLine(m.lblSoldeDebutCIC || 'Solde début de mois', m.soldePrevCIC || 0);
+        if (m.soldeObligCIC) subLines += subLine(m.lblSoldeObligCIC || 'Solde obligatoire', m.soldeObligCIC, 'text-amber-400');
       } else if (isSecondary) {
         subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', m.soldePrevTR || 0);
-        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + 750;
-        subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
-        subLines += subLine(m.lblRestantInvest || '- Restant pour Invest.', m.restantInvestTR || 0);
-        subLines += subLine(m.lblRestantPEA || '- Restant pour PEA', m.restantPEATR || 0);
+        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + (m.budgetQuotidien || 0);
+        if (soldeObligTR) subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
+        if (m.restantInvestTR) subLines += subLine(m.lblRestantInvest || '- Restant pour Invest.', m.restantInvestTR);
+        if (m.restantPEATR) subLines += subLine(m.lblRestantPEA || '- Restant pour PEA', m.restantPEATR);
         if (m.budgetNDF) subLines += subLine(m.lblNDF || '- Restant NDF', m.budgetNDF, 'text-purple-400');
-        subLines += subLine(m.lblEnveloppe || '- Restant pour quotidien', m.budgetQuotidien || 0);
+        if (m.budgetQuotidien) subLines += subLine(m.lblEnveloppe || '- Restant pour quotidien', m.budgetQuotidien);
       } else if (isExtra && extraBankObj) {
         const prevExtra = (m.extraPrev || {})[extraBankObj.id] || 0;
         const obligExtra = (m.extraOblig || {})[extraBankObj.id] || 0;
