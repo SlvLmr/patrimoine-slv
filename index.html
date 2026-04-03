@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
   <link rel="stylesheet" href="css/custom.css">
-  <script type="module" src="js/app.js?v=20260403e"></script>
+  <script type="module" src="js/app.js?v=20260403f"></script>
   <style>
     :root {
       --dark-900: 26 26 34;
@@ -117,6 +117,11 @@
     if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
   </script>
   <script>
+    function twColor(varName) {
+      return ({ opacityValue }) => opacityValue !== undefined
+        ? `rgb(var(${varName}) / ${opacityValue})`
+        : `rgb(var(${varName}))`;
+    }
     tailwind.config = {
       theme: {
         extend: {
@@ -125,21 +130,21 @@
           },
           colors: {
             dark: {
-              900: 'rgb(var(--dark-900) / <alpha-value>)',
-              800: 'rgb(var(--dark-800) / <alpha-value>)',
-              700: 'rgb(var(--dark-700) / <alpha-value>)',
-              600: 'rgb(var(--dark-600) / <alpha-value>)',
-              500: 'rgb(var(--dark-500) / <alpha-value>)',
-              400: 'rgb(var(--dark-400) / <alpha-value>)',
-              300: 'rgb(var(--dark-300) / <alpha-value>)',
+              900: twColor('--dark-900'),
+              800: twColor('--dark-800'),
+              700: twColor('--dark-700'),
+              600: twColor('--dark-600'),
+              500: twColor('--dark-500'),
+              400: twColor('--dark-400'),
+              300: twColor('--dark-300'),
             },
             accent: {
-              green: 'rgb(var(--accent-green) / <alpha-value>)',
-              red: 'rgb(var(--accent-red) / <alpha-value>)',
-              blue: 'rgb(var(--accent-blue) / <alpha-value>)',
-              purple: 'rgb(var(--accent-purple) / <alpha-value>)',
-              amber: 'rgb(var(--accent-amber) / <alpha-value>)',
-              cyan: 'rgb(var(--accent-cyan) / <alpha-value>)',
+              green: twColor('--accent-green'),
+              red: twColor('--accent-red'),
+              blue: twColor('--accent-blue'),
+              purple: twColor('--accent-purple'),
+              amber: twColor('--accent-amber'),
+              cyan: twColor('--accent-cyan'),
             }
           }
         }
