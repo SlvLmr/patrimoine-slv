@@ -177,6 +177,9 @@ export function render(store) {
   const aRecupererNDF = budgetNDF - ndfTR;
   const sommeARecuperer = 39.99 + ndfTR;
 
+  // Budget quotidien (moved up so soldeObligTR can use it)
+  const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
+
   // Solde obligatoire TR = sum of all active budget lines
   const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + budgetQuotidien;
 
@@ -208,8 +211,7 @@ export function render(store) {
   const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
-  // Enveloppe restante pour quotidien = budget quotidien - (dépenses rouges + virements sortants TR)
-  const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
+  // Enveloppe restante pour quotidien
   const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
