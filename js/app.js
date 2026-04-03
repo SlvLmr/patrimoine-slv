@@ -439,21 +439,6 @@ function initProfileSwitcher() {
     dropdown.id = 'profile-dropdown';
     dropdown.className = 'absolute left-0 right-0 bottom-full mb-1 bg-dark-700 border border-dark-400 rounded-xl shadow-2xl z-50 overflow-hidden';
     dropdown.innerHTML = `
-      <div class="px-4 py-2.5 border-b border-dark-400/30 flex items-center justify-between">
-        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Profil de ${active.name}</span>
-        <div class="flex items-center gap-1">
-          <button id="btn-rename-profile" class="p-1.5 rounded-lg hover:bg-dark-600 text-gray-500 hover:text-gray-300 transition" title="Renommer le profil">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-          </button>
-          <button id="btn-new-profile" class="p-1.5 rounded-lg hover:bg-dark-600 text-accent-blue hover:text-accent-blue/80 transition" title="Nouveau profil">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-          </button>
-        </div>
-      </div>
       <div class="max-h-48 overflow-y-auto">
         ${profiles.map(p => `
           <div class="flex items-center hover:bg-dark-600 transition group/prof">
@@ -462,11 +447,20 @@ function initProfileSwitcher() {
               <span>${p.name}</span>
               ${p.id === active.id ? '<span class="w-2 h-2 rounded-full bg-accent-green"></span>' : ''}
             </button>
-            ${profiles.length > 1 ? `<button data-delete-profile="${p.id}" class="opacity-0 group-hover/prof:opacity-100 text-red-400/60 hover:text-red-400 px-3 py-2 transition" title="Supprimer">
+            <button data-rename-profile="${p.id}" class="opacity-0 group-hover/prof:opacity-100 text-gray-500 hover:text-gray-300 px-1.5 py-2 transition" title="Renommer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            ${profiles.length > 1 ? `<button data-delete-profile="${p.id}" class="opacity-0 group-hover/prof:opacity-100 text-red-400/60 hover:text-red-400 px-1.5 py-2 transition" title="Supprimer">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>` : ''}
           </div>
         `).join('')}
+        <button id="btn-new-profile" class="w-full text-left px-4 py-2 text-sm text-accent-blue hover:bg-dark-600 transition flex items-center gap-2">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Nouveau profil
+        </button>
       </div>
       <div class="border-t border-dark-400 space-y-0">
         <button id="dd-export" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
@@ -545,12 +539,17 @@ function initProfileSwitcher() {
     });
 
     // Rename profile
-    dropdown.querySelector('#btn-rename-profile')?.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      dropdown.remove();
-      promptModal('Renommer le profil', active.name, (newName) => {
-        store.renameProfile(active.id, newName);
-        updateProfileDisplay();
+    dropdown.querySelectorAll('[data-rename-profile]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const id = btn.dataset.renameProfile;
+        const prof = profiles.find(p => p.id === id);
+        dropdown.remove();
+        promptModal('Renommer le profil', prof?.name || '', (newName) => {
+          store.renameProfile(id, newName);
+          updateProfileDisplay();
+          renderPage();
+        });
       });
     });
 
