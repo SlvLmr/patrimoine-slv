@@ -715,6 +715,27 @@ function initSidebarCollapse() {
   });
 }
 
+// Theme toggle (light/dark)
+function initThemeToggle() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const iconMoon = document.getElementById('theme-icon-moon');
+  const iconSun = document.getElementById('theme-icon-sun');
+
+  function applyIcons() {
+    const isLight = document.documentElement.classList.contains('light');
+    if (iconMoon) iconMoon.classList.toggle('hidden', isLight);
+    if (iconSun) iconSun.classList.toggle('hidden', !isLight);
+  }
+  applyIcons();
+
+  btn.addEventListener('click', () => {
+    const isLight = document.documentElement.classList.toggle('light');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    applyIcons();
+  });
+}
+
 // --- Save/Import choice modals ---
 
 function createChoiceModal(html) {
@@ -972,6 +993,7 @@ function showApp() {
     initProfileSwitcher();
     initMobileMenu();
     initSidebarCollapse();
+    initThemeToggle();
     appStarted = true;
 
 

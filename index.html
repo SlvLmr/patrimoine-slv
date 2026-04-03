@@ -15,7 +15,107 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
   <link rel="stylesheet" href="css/custom.css">
-  <script type="module" src="js/app.js?v=20260403b"></script>
+  <script type="module" src="js/app.js?v=20260403c"></script>
+  <style>
+    :root {
+      --dark-900: #1a1a22;
+      --dark-800: #222230;
+      --dark-700: #2c2c3a;
+      --dark-600: #353542;
+      --dark-500: #42424f;
+      --dark-400: #52525e;
+      --dark-300: #686874;
+      --accent-green: #c084fc;
+      --accent-red: #ff4757;
+      --accent-blue: #6b8aae;
+      --accent-purple: #9b7cb8;
+      --accent-amber: #d8b4fe;
+      --accent-cyan: #5ea3a3;
+      --body-bg: #1a1a22;
+      --body-text: #e5e7eb;
+    }
+    html.light {
+      --dark-900: #f5f5f7;
+      --dark-800: #eaeaef;
+      --dark-700: #dddde5;
+      --dark-600: #d0d0da;
+      --dark-500: #b8b8c4;
+      --dark-400: #9a9aaa;
+      --dark-300: #78788a;
+      --accent-green: #9333ea;
+      --accent-red: #dc2626;
+      --accent-blue: #4a6f94;
+      --accent-purple: #7c5ca0;
+      --accent-amber: #a855f7;
+      --accent-cyan: #0f766e;
+      --body-bg: #f5f5f7;
+      --body-text: #1a1a2e;
+    }
+    html.light body { color: #1a1a2e; }
+    html.light .text-gray-100, html.light .text-gray-200 { color: #1a1a2e !important; }
+    html.light .text-gray-300 { color: #2d2d3f !important; }
+    html.light .text-gray-400 { color: #4a4a5e !important; }
+    html.light .text-gray-500 { color: #6b6b80 !important; }
+    html.light .text-gray-600 { color: #8a8a9e !important; }
+    html.light .text-gray-700 { color: #a0a0b0 !important; }
+    html.light .text-white { color: #1a1a2e !important; }
+    html.light .placeholder-gray-600::placeholder { color: #8a8a9e !important; }
+    html.light input, html.light select, html.light textarea { color: #1a1a2e; }
+    html.light .bg-black\/60, html.light .bg-black\/40 { background-color: rgba(255,255,255,0.6) !important; }
+    html.light ::-webkit-scrollbar-thumb { background: #b8b8c4; }
+    html.light ::-webkit-scrollbar-thumb:hover { background: #9a9aaa; }
+    /* Card, row, input overrides for light mode */
+    html.light .card-dark {
+      background: linear-gradient(135deg, rgba(100,80,160,0.03) 0%, transparent 40%, rgba(100,80,160,0.03) 100%), #ffffff !important;
+      border-color: rgba(0,0,0,0.08) !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+    }
+    html.light .row-item {
+      background: rgba(0,0,0,0.02) !important;
+      border-color: rgba(0,0,0,0.06) !important;
+    }
+    html.light .input-field {
+      background: rgba(0,0,0,0.03) !important;
+      border-color: rgba(0,0,0,0.1) !important;
+      color: #1a1a2e !important;
+    }
+    html.light .input-inline {
+      color: #1a1a2e !important;
+      border-color: transparent !important;
+    }
+    html.light .input-inline:focus { border-color: rgba(0,0,0,0.15) !important; }
+    html.light .editable-block {
+      background: rgba(0,0,0,0.02) !important;
+      color: #1a1a2e !important;
+    }
+    html.light .btn-add {
+      color: #6b21a8 !important;
+      border-color: rgba(107,33,168,0.2) !important;
+    }
+    html.light .btn-add:hover {
+      color: #7c3aed !important;
+      border-color: rgba(124,58,237,0.4) !important;
+    }
+    html.light .btn-delete { color: rgba(220,38,38,0.5) !important; }
+    html.light .proj-tip {
+      background: rgba(255,255,255,0.97) !important;
+      border-color: rgba(0,0,0,0.12) !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+    }
+    html.light .proj-tip::after { border-top-color: rgba(0,0,0,0.12) !important; }
+    html.light .proj-tip-below > .proj-tip::after { border-bottom-color: rgba(0,0,0,0.12) !important; border-top-color: transparent !important; }
+    html.light table thead { background: rgba(0,0,0,0.03) !important; }
+    html.light .progress-bar { background: rgba(0,0,0,0.06) !important; }
+    html.light .glow-green, html.light .glow-blue, html.light .glow-red {
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06) !important;
+    }
+    html.light select option { background: #fff; color: #1a1a2e; }
+    html.light .backdrop-blur-sm { background-color: rgba(255,255,255,0.5) !important; }
+  </style>
+  <script>
+    // Apply saved theme before paint
+    if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
+  </script>
   <script>
     tailwind.config = {
       theme: {
@@ -25,21 +125,21 @@
           },
           colors: {
             dark: {
-              900: '#1a1a22',
-              800: '#222230',
-              700: '#2c2c3a',
-              600: '#353542',
-              500: '#42424f',
-              400: '#52525e',
-              300: '#686874',
+              900: 'var(--dark-900)',
+              800: 'var(--dark-800)',
+              700: 'var(--dark-700)',
+              600: 'var(--dark-600)',
+              500: 'var(--dark-500)',
+              400: 'var(--dark-400)',
+              300: 'var(--dark-300)',
             },
             accent: {
-              green: '#c084fc',
-              red: '#ff4757',
-              blue: '#6b8aae',
-              purple: '#9b7cb8',
-              amber: '#d8b4fe',
-              cyan: '#5ea3a3',
+              green: 'var(--accent-green)',
+              red: 'var(--accent-red)',
+              blue: 'var(--accent-blue)',
+              purple: 'var(--accent-purple)',
+              amber: 'var(--accent-amber)',
+              cyan: 'var(--accent-cyan)',
             }
           }
         }
@@ -50,7 +150,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-dark-900 font-sans text-gray-200 min-h-screen">
+<body class="bg-dark-900 font-sans text-gray-200 min-h-screen" style="background:var(--body-bg);color:var(--body-text)">
 
   <!-- Tailwind CDN safelist: force generation of classes used in JS components -->
   <div class="hidden"
@@ -128,8 +228,16 @@
       <!-- Populated by JS -->
     </nav>
 
-    <!-- Dropdown arrow (profiles, export, import, etc.) -->
-    <div id="profile-switcher" class="relative border-t border-dark-400/20 px-4 py-2 flex items-center justify-center">
+    <!-- Theme toggle + Dropdown arrow -->
+    <div id="profile-switcher" class="relative border-t border-dark-400/20 px-4 py-2 flex items-center justify-center gap-3">
+      <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-dark-600 transition cursor-pointer" title="Mode clair / sombre">
+        <svg id="theme-icon-moon" class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+        <svg id="theme-icon-sun" class="w-4 h-4 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+      </button>
       <button id="profile-dropdown-btn" class="p-1.5 rounded-lg hover:bg-dark-600 transition cursor-pointer" title="Options">
         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
