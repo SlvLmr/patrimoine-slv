@@ -15,39 +15,39 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
   <link rel="stylesheet" href="css/custom.css">
-  <script type="module" src="js/app.js?v=20260403c"></script>
+  <script type="module" src="js/app.js?v=20260403d"></script>
   <style>
     :root {
-      --dark-900: #1a1a22;
-      --dark-800: #222230;
-      --dark-700: #2c2c3a;
-      --dark-600: #353542;
-      --dark-500: #42424f;
-      --dark-400: #52525e;
-      --dark-300: #686874;
-      --accent-green: #c084fc;
-      --accent-red: #ff4757;
-      --accent-blue: #6b8aae;
-      --accent-purple: #9b7cb8;
-      --accent-amber: #d8b4fe;
-      --accent-cyan: #5ea3a3;
+      --dark-900: 26 26 34;
+      --dark-800: 34 34 48;
+      --dark-700: 44 44 58;
+      --dark-600: 53 53 66;
+      --dark-500: 66 66 79;
+      --dark-400: 82 82 94;
+      --dark-300: 104 104 116;
+      --accent-green: 192 132 252;
+      --accent-red: 255 71 87;
+      --accent-blue: 107 138 174;
+      --accent-purple: 155 124 184;
+      --accent-amber: 216 180 254;
+      --accent-cyan: 94 163 163;
       --body-bg: #1a1a22;
       --body-text: #e5e7eb;
     }
     html.light {
-      --dark-900: #f5f5f7;
-      --dark-800: #eaeaef;
-      --dark-700: #dddde5;
-      --dark-600: #d0d0da;
-      --dark-500: #b8b8c4;
-      --dark-400: #9a9aaa;
-      --dark-300: #78788a;
-      --accent-green: #9333ea;
-      --accent-red: #dc2626;
-      --accent-blue: #4a6f94;
-      --accent-purple: #7c5ca0;
-      --accent-amber: #a855f7;
-      --accent-cyan: #0f766e;
+      --dark-900: 245 245 247;
+      --dark-800: 234 234 239;
+      --dark-700: 221 221 229;
+      --dark-600: 208 208 218;
+      --dark-500: 184 184 196;
+      --dark-400: 154 154 170;
+      --dark-300: 120 120 138;
+      --accent-green: 147 51 234;
+      --accent-red: 220 38 38;
+      --accent-blue: 74 111 148;
+      --accent-purple: 124 92 160;
+      --accent-amber: 168 85 247;
+      --accent-cyan: 15 118 110;
       --body-bg: #f5f5f7;
       --body-text: #1a1a2e;
     }
@@ -125,21 +125,21 @@
           },
           colors: {
             dark: {
-              900: 'var(--dark-900)',
-              800: 'var(--dark-800)',
-              700: 'var(--dark-700)',
-              600: 'var(--dark-600)',
-              500: 'var(--dark-500)',
-              400: 'var(--dark-400)',
-              300: 'var(--dark-300)',
+              900: 'rgb(var(--dark-900) / <alpha-value>)',
+              800: 'rgb(var(--dark-800) / <alpha-value>)',
+              700: 'rgb(var(--dark-700) / <alpha-value>)',
+              600: 'rgb(var(--dark-600) / <alpha-value>)',
+              500: 'rgb(var(--dark-500) / <alpha-value>)',
+              400: 'rgb(var(--dark-400) / <alpha-value>)',
+              300: 'rgb(var(--dark-300) / <alpha-value>)',
             },
             accent: {
-              green: 'var(--accent-green)',
-              red: 'var(--accent-red)',
-              blue: 'var(--accent-blue)',
-              purple: 'var(--accent-purple)',
-              amber: 'var(--accent-amber)',
-              cyan: 'var(--accent-cyan)',
+              green: 'rgb(var(--accent-green) / <alpha-value>)',
+              red: 'rgb(var(--accent-red) / <alpha-value>)',
+              blue: 'rgb(var(--accent-blue) / <alpha-value>)',
+              purple: 'rgb(var(--accent-purple) / <alpha-value>)',
+              amber: 'rgb(var(--accent-amber) / <alpha-value>)',
+              cyan: 'rgb(var(--accent-cyan) / <alpha-value>)',
             }
           }
         }
