@@ -53,8 +53,8 @@ const defaultState = {
     photo: ''
   },
   bankNames: {
-    primary: 'CIC',
-    secondary: 'Trade Republic'
+    primary: 'Banque principale',
+    secondary: 'Banque secondaire'
   },
   parametres: {
     inflationRate: 0.02,
@@ -65,13 +65,13 @@ const defaultState = {
     rendementPlacements: 0.05,
     rendementGroupes: {},
     rendementEpargne: 0.02,
-    ageFinAnnee: 30,
+    ageFinAnnee: 35,
     ageRetraite: 64,
-    ageRetraiteTauxPlein: 65,
+    ageRetraiteTauxPlein: 67,
     pensionTauxPlein: 0,
     ageRetraiteTauxLegal: 64,
     pensionTauxLegal: 0,
-    ageRetraiteSouhaitee: 62
+    ageRetraiteSouhaitee: 60
   },
   // Rendement profiles: Faible / Modéré / Élevé — taux par groupe d'enveloppe
   profilRendement: 'modere',
@@ -99,22 +99,22 @@ const defaultState = {
     }
   },
   // Scenarios: named configurations with overrides
-  scenarioActif: 'reel',
+  scenarioActif: 'base',
   scenarios: [
     {
-      id: 'reel', nom: 'Réel', color: 'blue',
-      description: '900€/mois investis. Pension État à 64 ans. Gap FIRE→pension : 3 ans.',
-      dcaMensuelTotal: 900, pensionAge: 64, rachatTrimestres: 0
+      id: 'base', nom: 'Base', color: 'blue',
+      description: 'Scénario de base — renseignez vos paramètres.',
+      dcaMensuelTotal: 0, pensionAge: 64, rachatTrimestres: 0
     },
     {
-      id: 'ideal', nom: 'Idéal', color: 'emerald',
-      description: '1 050€/mois investis. Même pension à 64 ans. 2e cycle donation CTO possible.',
-      dcaMensuelTotal: 1050, pensionAge: 64, rachatTrimestres: 0
+      id: 'optimiste', nom: 'Optimiste', color: 'emerald',
+      description: 'Scénario optimiste — à personnaliser.',
+      dcaMensuelTotal: 0, pensionAge: 64, rachatTrimestres: 0
     },
     {
-      id: 'liberte', nom: 'Liberté', color: 'amber',
-      description: 'Rachat 12 trimestres (~46 000€). Pension à ~62 ans (taux plein). Gap FIRE→pension : 1 an.',
-      dcaMensuelTotal: 900, pensionAge: 62, rachatTrimestres: 12, coutRachat: 46000
+      id: 'prudent', nom: 'Prudent', color: 'amber',
+      description: 'Scénario prudent — à personnaliser.',
+      dcaMensuelTotal: 0, pensionAge: 67, rachatTrimestres: 0
     }
   ]
 };
@@ -780,7 +780,7 @@ const Store = {
   },
 
   getBankNames() {
-    const names = this._state.bankNames || { primary: 'CIC', secondary: 'Trade Republic' };
+    const names = this._state.bankNames || { primary: 'Banque principale', secondary: 'Banque secondaire' };
     if (!names.extra) names.extra = [];
     return names;
   },

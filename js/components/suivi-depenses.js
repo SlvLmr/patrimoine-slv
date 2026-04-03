@@ -57,47 +57,13 @@ function getCurrentMonthKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-const DEPENSES_MENSUELLES_CIC = [
-  { id: 'mc-credit',     nom: 'Crédit maison',     montant: 652.55 },
-  { id: 'mc-assurance',  nom: 'Assurance habitat',  montant: 51.88 },
-  { id: 'mc-comptes',    nom: 'Comptes',            montant: 14.61 },
-  { id: 'mc-elec',       nom: 'Electricité',        montant: 64.21 },
-  { id: 'mc-gaz',        nom: 'Gaz',                montant: 116.95 },
-  { id: 'mc-eau',        nom: 'Eau',                montant: 32.32 },
-  { id: 'mc-taxe',       nom: 'Taxe foncière',      montant: 179.00 },
-  { id: 'mc-freebox',    nom: 'Freebox Internet',   montant: 39.99 },
-  { id: 'mc-tel-slv',    nom: 'Tél Sylvain',        montant: 15.99 },
-  { id: 'mc-tel-gsp',    nom: 'Tel Gaspard',        montant: 15.99 },
-  { id: 'mc-tel-agt',    nom: 'Tel Agathe',         montant: 15.99 },
-  { id: 'mc-youtube',    nom: 'Youtube Premium',    montant: 12.99 },
-  { id: 'mc-canal',      nom: 'Canal +',            montant: 19.99 },
-  { id: 'mc-pel-gsp',    nom: 'PEL Gsp /CIC',      montant: 50.00 },
-  { id: 'mc-pel-agt',    nom: 'PEL Agt /CIC',      montant: 50.00 },
-  { id: 'mc-vacances',   nom: 'Vacances - WE',      montant: 200.00 },
-  { id: 'mc-anniv',      nom: 'Anniv - Noël',       montant: 100.00 },
-  { id: 'mc-clubs',      nom: 'Clubs - Cantine',    montant: 70.00 },
-  { id: 'mc-quotidien',  nom: 'Quotidien /TRR',     montant: 700.00 },
-  { id: 'mc-pea-slv',    nom: 'PEA Slv /TRR',      montant: 300.00 },
-  { id: 'mc-btc-slv',    nom: 'BTC Slv /TRR',      montant: 50.00 },
-  { id: 'mc-pea-gsp',    nom: 'PEA Gsp /TRR',      montant: 50.00 },
-  { id: 'mc-pea-agt',    nom: 'PEA Agt /TRR',      montant: 50.00 },
-];
+const DEPENSES_MENSUELLES_CIC = [];
 
 // Recurring DCA/Invest expenses for TR (checked=pending, unchecked=debited)
-const DCA_MENSUELS_TR = [
-  { id: 'dca-pea-sp500',   nom: 'DCA ETF PEA S&P 500',     montant: 375.00 },
-  { id: 'dca-pea-stoxx',   nom: 'DCA ETF PEA Stoxx 600',   montant: 80.00 },
-  { id: 'dca-pea-emerging', nom: 'DCA ETF PEA Emerging',    montant: 35.00 },
-  { id: 'dca-bitcoin',     nom: 'DCA Bitcoin',              montant: 50.00 },
-  { id: 'dca-cto-gsp',     nom: 'DCA CTO Gaspard',         montant: 50.00 },
-  { id: 'dca-cto-agt',     nom: 'DCA CTO Agathe',          montant: 50.00 },
-];
+const DCA_MENSUELS_TR = [];
 
 // Recurring revenues for TR (checked=pending, unchecked=credited)
-const REVENUS_MENSUELS_TR = [
-  { id: 'rev-quotidien',    nom: 'Quotidien',          montant: 700.00 },
-  { id: 'rev-invest',       nom: 'Enveloppe Invest.',  montant: 450.00 },
-];
+const REVENUS_MENSUELS_TR = [];
 
 
 export function render(store) {

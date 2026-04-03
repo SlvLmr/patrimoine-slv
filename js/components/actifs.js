@@ -1,5 +1,5 @@
 import { formatCurrency, formatPercent, formatDate, openModal, getFormData, inputField, selectField } from '../utils.js?v=10';
-import { ENVELOPPES, CATEGORIES, openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=7';
+import { ENVELOPPES, CATEGORIES, openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=10';
 
 const ENVELOPE_COLORS = {
   PEA: 'accent-green',

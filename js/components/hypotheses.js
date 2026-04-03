@@ -166,9 +166,9 @@ const DEFAULT_PROFILES = {
 };
 
 const DEFAULT_SCENARIOS = [
-  { id: 'reel', nom: 'Réel', color: 'blue', description: '900€/mois investis. Pension État à 64 ans. Gap FIRE→pension : 3 ans.', dcaMensuelTotal: 900, pensionAge: 64, rachatTrimestres: 0 },
-  { id: 'ideal', nom: 'Idéal', color: 'emerald', description: '1 050€/mois investis. Même pension à 64 ans. 2e cycle donation CTO possible.', dcaMensuelTotal: 1050, pensionAge: 64, rachatTrimestres: 0 },
-  { id: 'liberte', nom: 'Liberté', color: 'amber', description: 'Rachat 12 trimestres (~46 000€). Pension à ~62 ans (taux plein). Gap FIRE→pension : 1 an.', dcaMensuelTotal: 900, pensionAge: 62, rachatTrimestres: 12, coutRachat: 46000 }
+  { id: 'base', nom: 'Base', color: 'blue', description: 'Scénario de base — renseignez vos paramètres.', dcaMensuelTotal: 0, pensionAge: 64, rachatTrimestres: 0 },
+  { id: 'optimiste', nom: 'Optimiste', color: 'emerald', description: 'Scénario optimiste — à personnaliser.', dcaMensuelTotal: 0, pensionAge: 64, rachatTrimestres: 0 },
+  { id: 'prudent', nom: 'Prudent', color: 'amber', description: 'Scénario prudent — à personnaliser.', dcaMensuelTotal: 0, pensionAge: 67, rachatTrimestres: 0 }
 ];
 
 const RENDEMENT_GROUP_LABELS = {
@@ -346,12 +346,14 @@ function renderScenarioSection(store) {
   const profileKeys = Object.keys(profiles);
   const profileColors = { faible: 'cyan', modere: 'amber', eleve: 'emerald' };
 
-  // Scenario subtitles
-  const scenarioSubtitles = {
-    reel: 'Invest. actuels · Retraite à 64 ans',
-    ideal: 'Invest. idéaux · Retraite à 64 ans',
-    liberte: 'Retraite à 61 ans'
-  };
+  // Scenario subtitles (generated from scenario data)
+  const scenarioSubtitles = {};
+  scenarios.forEach(sc => {
+    const parts = [];
+    if (sc.dcaMensuelTotal) parts.push(`${sc.dcaMensuelTotal}€/mois`);
+    if (sc.pensionAge) parts.push(`Retraite à ${sc.pensionAge} ans`);
+    scenarioSubtitles[sc.id] = parts.join(' · ') || sc.description || '';
+  });
 
   return `
     <div class="card-dark rounded-2xl border border-dark-400/15 p-3 sm:p-5">
@@ -444,7 +446,7 @@ function getScenarioFormHtml(scenario = null) {
     <div class="space-y-4">
       <div>
         <label class="block text-xs text-gray-500 mb-1.5">Nom du scénario *</label>
-        <input id="sc-form-nom" type="text" value="${scenario?.nom || ''}" placeholder="Ex: Réel, Idéal, Liberté financière..."
+        <input id="sc-form-nom" type="text" value="${scenario?.nom || ''}" placeholder="Ex: Base, Optimiste, Prudent..."
           class="w-full input-field placeholder-gray-600"/>
       </div>
       <div>

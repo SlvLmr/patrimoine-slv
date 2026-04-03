@@ -3,17 +3,17 @@ import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as fireba
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as RevenusDepenses from './components/revenus-depenses.js?v=20260330a';
-import * as Projection from './components/projection.js?v=20260402n';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20260402e';
+import * as Projection from './components/projection.js?v=20260403a';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20260403a';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Compte from './components/compte.js?v=20260329h';
-import * as Repartition from './components/repartition.js?v=20260331o';
+import * as Repartition from './components/repartition.js?v=20260403a';
 import * as SimulateurFire from './components/simulateur-fire.js?v=20260330a';
 import * as SimulateurCredit from './components/simulateur-credit.js?v=20260330a';
 import * as SimulateurInterets from './components/simulateur-interets.js?v=20260330a';
 import * as SimulateurAuto from './components/simulateur-auto.js?v=20260330a';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260330a';
-import * as Hypotheses from './components/hypotheses.js?v=20260402b';
+import * as Hypotheses from './components/hypotheses.js?v=20260403a';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260330a';
 import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
 
@@ -439,6 +439,21 @@ function initProfileSwitcher() {
     dropdown.id = 'profile-dropdown';
     dropdown.className = 'absolute left-0 right-0 bottom-full mb-1 bg-dark-700 border border-dark-400 rounded-xl shadow-2xl z-50 overflow-hidden';
     dropdown.innerHTML = `
+      <div class="px-4 py-2.5 border-b border-dark-400/30 flex items-center justify-between">
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Profil de ${active.name}</span>
+        <div class="flex items-center gap-1">
+          <button id="btn-rename-profile" class="p-1.5 rounded-lg hover:bg-dark-600 text-gray-500 hover:text-gray-300 transition" title="Renommer le profil">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+          </button>
+          <button id="btn-new-profile" class="p-1.5 rounded-lg hover:bg-dark-600 text-accent-blue hover:text-accent-blue/80 transition" title="Nouveau profil">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       <div class="max-h-48 overflow-y-auto">
         ${profiles.map(p => `
           <div class="flex items-center hover:bg-dark-600 transition group/prof">
@@ -452,20 +467,6 @@ function initProfileSwitcher() {
             </button>` : ''}
           </div>
         `).join('')}
-      </div>
-      <div class="border-t border-dark-400 space-y-0">
-        <button id="btn-rename-profile" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-          </svg>
-          Renommer le profil
-        </button>
-        <button id="btn-new-profile" class="w-full text-left px-4 py-2.5 text-sm text-accent-blue hover:bg-dark-600 transition flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-          Nouveau profil
-        </button>
       </div>
       <div class="border-t border-dark-400 space-y-0">
         <button id="dd-export" class="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-dark-600 transition flex items-center gap-2">

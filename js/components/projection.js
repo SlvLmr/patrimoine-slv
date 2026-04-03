@@ -1,6 +1,6 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=10';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=9';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=10';
 import * as ProjectionEnfants from './projection-enfants.js?v=20260331a';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
