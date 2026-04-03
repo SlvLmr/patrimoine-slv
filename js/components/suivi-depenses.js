@@ -545,14 +545,10 @@ export function render(store) {
         <div class="space-y-1">
           ${archives.sort((a, b) => b.mois.localeCompare(a.mois)).map(a => {
             const label = new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            const balance = (a.totalRevenus || 0) - (a.total || 0);
             return `
           <div class="flex items-center justify-between px-4 py-2.5 rounded-lg hover:bg-dark-600/30 transition cursor-pointer archive-row" data-mois="${a.mois}">
             <span class="text-sm text-gray-200 capitalize font-medium">${label}</span>
-            <div class="flex items-center gap-6">
-              <span class="text-xs font-medium ${balance >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${balance >= 0 ? '+' : ''}${formatCurrencyCents(balance)}</span>
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </div>
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </div>`;
           }).join('')}
         </div>

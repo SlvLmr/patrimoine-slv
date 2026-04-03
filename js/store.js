@@ -40,7 +40,6 @@ const defaultState = {
   },
   heritage: [],
   surplusAnnuel: [],
-  objectifs: [],
   revenus: [],
   depenses: [],
   suiviDepenses: [],
@@ -97,26 +96,7 @@ const defaultState = {
         'PEA ETF': 0.125, 'PEA Actions': 0.15, 'Crypto': 0.30, 'PEE': 0.09, 'Assurance Vie': 0.08, 'CTO': 0.125
       }
     }
-  },
-  // Scenarios: named configurations with overrides
-  scenarioActif: 'base',
-  scenarios: [
-    {
-      id: 'base', nom: 'Base', color: 'blue',
-      description: 'Scénario de base — renseignez vos paramètres.',
-      dcaMensuelTotal: 0, pensionAge: 64, rachatTrimestres: 0
-    },
-    {
-      id: 'optimiste', nom: 'Optimiste', color: 'emerald',
-      description: 'Scénario optimiste — à personnaliser.',
-      dcaMensuelTotal: 0, pensionAge: 64, rachatTrimestres: 0
-    },
-    {
-      id: 'prudent', nom: 'Prudent', color: 'amber',
-      description: 'Scénario prudent — à personnaliser.',
-      dcaMensuelTotal: 0, pensionAge: 67, rachatTrimestres: 0
-    }
-  ]
+  }
 };
 
 function generateId() {

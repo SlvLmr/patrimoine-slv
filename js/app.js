@@ -4,7 +4,7 @@ import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as RevenusDepenses from './components/revenus-depenses.js?v=20260330a';
 import * as Projection from './components/projection.js?v=20260403a';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20260403a';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20260403b';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Compte from './components/compte.js?v=20260329h';
 import * as Repartition from './components/repartition.js?v=20260403a';
@@ -13,7 +13,7 @@ import * as SimulateurCredit from './components/simulateur-credit.js?v=20260330a
 import * as SimulateurInterets from './components/simulateur-interets.js?v=20260330a';
 import * as SimulateurAuto from './components/simulateur-auto.js?v=20260330a';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260330a';
-import * as Hypotheses from './components/hypotheses.js?v=20260403a';
+import * as Hypotheses from './components/hypotheses.js?v=20260403b';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260330a';
 import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
 

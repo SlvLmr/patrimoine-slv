@@ -297,16 +297,8 @@ input[type="number"] {
   box-shadow: 0 0 20px rgba(150, 150, 160, 0.12);
 }
 
-.glow-purple {
-  box-shadow: 0 0 20px rgba(150, 150, 160, 0.12);
-}
-
 .glow-red {
   box-shadow: 0 0 20px rgba(150, 150, 160, 0.12);
-}
-
-.chart-glow {
-  box-shadow: 0 0 30px rgba(150, 150, 160, 0.10), 0 0 60px rgba(150, 150, 160, 0.06);
 }
 
 /* KPI card hover effect */
@@ -319,11 +311,6 @@ input[type="number"] {
 }
 
 /* Heritage net worth display */
-.net-worth-display {
-  background: linear-gradient(135deg, rgba(201, 167, 108, 0.1), rgba(107, 138, 174, 0.1));
-  border: 1px solid rgba(201, 167, 108, 0.2);
-}
-
 /* Progress bar */
 .progress-bar {
   background: rgba(56, 56, 66, 0.6);
@@ -512,16 +499,6 @@ input[type="number"] {
   display: block;
 }
 
-/* Left-aligned tooltip for cells near left edge */
-.proj-tip-left > .proj-tip {
-  left: 0;
-  transform: none;
-}
-.proj-tip-left > .proj-tip::after {
-  left: 24px;
-  transform: none;
-}
-
 /* Downward tooltip for first rows (avoid top clipping) */
 .proj-tip-below > .proj-tip {
   bottom: auto;
@@ -556,18 +533,6 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 /* Hide scrollbar utility */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-/* Hypotheses timeline glow */
-.hyp-timeline-glow {
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(150, 150, 160, 0.12) 20%,
-    rgba(150, 150, 160, 0.15) 50%,
-    rgba(150, 150, 160, 0.12) 80%,
-    transparent 100%
-  );
-  filter: blur(3px);
-}
 
 /* Range slider — dark theme */
 #strat-proj-slider {
