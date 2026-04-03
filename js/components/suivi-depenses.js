@@ -147,10 +147,10 @@ export function render(store) {
   const lblSoldeDebutTR = labels.soldeDebutMois_tr || 'Solde début de mois';
   const lblSoldeObligCIC = labels.soldeObligatoire_cic || 'Solde obligatoire';
   const lblSoldeObligTR = labels.soldeObligatoire_tr || 'Solde obligatoire';
-  const lblNDF = labels.aRecupererNDF || 'A récupérer NDF';
-  const lblEnveloppe = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
-  const lblRestantInvest = labels.restantInvestissement || 'Restant pour investissement';
-  const lblRestantPEA = labels.restantPEA || 'Restant pour PEA';
+  const lblNDF = labels.aRecupererNDF || 'Pocket 3';
+  const lblEnveloppe = labels.enveloppeQuotidien || 'Pocket 4';
+  const lblRestantInvest = labels.restantInvestissement || 'Pocket 1';
+  const lblRestantPEA = labels.restantPEA || 'Pocket 2';
 
   // Solde début de mois
   const soldePrecedent = store.get('soldeMoisPrecedent') || {};
@@ -778,10 +778,10 @@ export function mount(store, navigate) {
           lblSoldeDebutTR: labelsSnap.soldeDebutMois_tr || 'Solde début de mois',
           lblSoldeObligCIC: labelsSnap.soldeObligatoire_cic || 'Solde obligatoire',
           lblSoldeObligTR: labelsSnap.soldeObligatoire_tr || 'Solde obligatoire fin de mois',
-          lblRestantInvest: labelsSnap.restantInvestissement || '- Restant pour Invest.',
-          lblRestantPEA: labelsSnap.restantPEA || '- Restant pour PEA',
-          lblNDF: labelsSnap.aRecupererNDF || '- Restant NDF',
-          lblEnveloppe: labelsSnap.enveloppeQuotidien || '- Restant pour quotidien',
+          lblRestantInvest: labelsSnap.restantInvestissement || 'Pocket 1',
+          lblRestantPEA: labelsSnap.restantPEA || 'Pocket 2',
+          lblNDF: labelsSnap.aRecupererNDF || 'Pocket 3',
+          lblEnveloppe: labelsSnap.enveloppeQuotidien || 'Pocket 4',
           extraPrev: {},
           extraOblig: {},
         },
@@ -936,7 +936,7 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-restant-invest]').forEach(el => {
     el.addEventListener('click', () => {
       const labels = store.get('customLabels') || {};
-      const currentLabel = labels.restantInvestissement || 'Restant pour investissement';
+      const currentLabel = labels.restantInvestissement || 'Pocket 1';
       const invest = store.get('restantInvestissement') || {};
       const current = Number(invest.tr) || 0;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"');
@@ -957,7 +957,7 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-restant-pea]').forEach(el => {
     el.addEventListener('click', () => {
       const labels = store.get('customLabels') || {};
-      const currentLabel = labels.restantPEA || 'Restant pour PEA';
+      const currentLabel = labels.restantPEA || 'Pocket 2';
       const pea = store.get('restantPEA') || {};
       const current = Number(pea.tr) || 0;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"');
@@ -978,10 +978,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-budget-ndf]').forEach(el => {
     el.addEventListener('click', () => {
       const labels = store.get('customLabels') || {};
-      const currentLabel = labels.aRecupererNDF || 'A récupérer NDF';
+      const currentLabel = labels.aRecupererNDF || 'Pocket 3';
       const params = store.get('parametres') || {};
       const current = params.budgetNDF !== undefined ? Number(params.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 0);
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget NDF (€)', current, 'number', 'step="0.01"');
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         const p = store.get('parametres') || {};
@@ -1000,10 +1000,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-edit-budget-quotidien]').forEach(el => {
     el.addEventListener('click', () => {
       const labels = store.get('customLabels') || {};
-      const currentLabel = labels.enveloppeQuotidien || 'Enveloppe restante pour quotidien';
+      const currentLabel = labels.enveloppeQuotidien || 'Pocket 4';
       const paramsQ = store.get('parametres') || {};
       const current = paramsQ.budgetQuotidien !== undefined ? Number(paramsQ.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Budget quotidien (€)', current, 'number', 'step="0.01"');
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         const pQ = store.get('parametres') || {};
@@ -1088,11 +1088,12 @@ export function mount(store, navigate) {
         const pea = store.get('restantPEA') || {};
         const params = store.get('parametres') || {};
         const trFeats = store.get('trFeatures') || {};
+        const lbls = store.get('customLabels') || {};
         const options = [];
-        if (!Number(inv.tr)) options.push({ key: 'invest', label: 'Enveloppe investissement' });
-        if (!Number(pea.tr)) options.push({ key: 'pea', label: 'Enveloppe PEA' });
-        if (!Number(params.budgetNDF)) options.push({ key: 'ndf', label: 'Budget NDF' });
-        if (!Number(params.budgetQuotidien)) options.push({ key: 'quotidien', label: 'Budget quotidien' });
+        if (!Number(inv.tr)) options.push({ key: 'invest', label: lbls.restantInvestissement || 'Pocket 1' });
+        if (!Number(pea.tr)) options.push({ key: 'pea', label: lbls.restantPEA || 'Pocket 2' });
+        if (!Number(params.budgetNDF)) options.push({ key: 'ndf', label: lbls.aRecupererNDF || 'Pocket 3' });
+        if (!Number(params.budgetQuotidien)) options.push({ key: 'quotidien', label: lbls.enveloppeQuotidien || 'Pocket 4' });
         if (!Number(trFeats.interets)) options.push({ key: 'feat-interets', label: 'Intérêts' });
         if (!Number(trFeats.saveback)) options.push({ key: 'feat-saveback', label: 'Saveback' });
         if (!Number(trFeats.roundup)) options.push({ key: 'feat-roundup', label: 'Round-up' });
@@ -1858,10 +1859,10 @@ export function mount(store, navigate) {
         subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', m.soldePrevTR || 0);
         const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + (m.budgetQuotidien || 0);
         if (soldeObligTR) subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
-        if (m.restantInvestTR) subLines += subLine(m.lblRestantInvest || '- Restant pour Invest.', m.restantInvestTR);
-        if (m.restantPEATR) subLines += subLine(m.lblRestantPEA || '- Restant pour PEA', m.restantPEATR);
-        if (m.budgetNDF) subLines += subLine(m.lblNDF || '- Restant NDF', m.budgetNDF, 'text-purple-400');
-        if (m.budgetQuotidien) subLines += subLine(m.lblEnveloppe || '- Restant pour quotidien', m.budgetQuotidien);
+        if (m.restantInvestTR) subLines += subLine(m.lblRestantInvest || 'Pocket 1', m.restantInvestTR);
+        if (m.restantPEATR) subLines += subLine(m.lblRestantPEA || 'Pocket 2', m.restantPEATR);
+        if (m.budgetNDF) subLines += subLine(m.lblNDF || 'Pocket 3', m.budgetNDF, 'text-purple-400');
+        if (m.budgetQuotidien) subLines += subLine(m.lblEnveloppe || 'Pocket 4', m.budgetQuotidien);
       } else if (isExtra && extraBankObj) {
         const prevExtra = (m.extraPrev || {})[extraBankObj.id] || 0;
         const obligExtra = (m.extraOblig || {})[extraBankObj.id] || 0;
