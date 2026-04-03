@@ -777,6 +777,13 @@ function showConfirmModal({ title, message, icon, confirmLabel = 'Confirmer', co
   modal.addEventListener('click', (e) => { if (e.target === modal) closeChoiceModal(); });
 }
 
+function driveErrMsg(err) {
+  if (err?.message) return err.message;
+  if (err?.result?.error?.message) return err.result.error.message;
+  if (typeof err === 'string') return err;
+  return JSON.stringify(err);
+}
+
 // --- Export to Google Drive ---
 async function exportToDrive() {
   const data = store.exportData();
@@ -789,7 +796,7 @@ async function exportToDrive() {
     showToast('Exporté sur Google Drive ✓', 'success', 4000);
   } catch (err) {
     console.error('Google Drive export error:', err);
-    showToast('Erreur Drive : ' + err.message, 'error', 6000);
+    showToast('Erreur Drive : ' + driveErrMsg(err), 'error', 6000);
   }
 }
 
@@ -849,13 +856,13 @@ async function importFromDrive() {
           }
         } catch (err) {
           console.error('Drive import error:', err);
-          showToast('Erreur Drive : ' + err.message, 'error', 6000);
+          showToast('Erreur Drive : ' + driveErrMsg(err), 'error', 6000);
         }
       });
     });
   } catch (err) {
     console.error('Drive list error:', err);
-    showToast('Erreur Drive : ' + err.message, 'error', 6000);
+    showToast('Erreur Drive : ' + driveErrMsg(err), 'error', 6000);
   }
 }
 
