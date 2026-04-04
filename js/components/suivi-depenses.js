@@ -187,8 +187,8 @@ export function render(store) {
   const pocketsTRTotal = pocketsTR.reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const pocketsCICTotal = pocketsCIC.reduce((s, p) => s + (Number(p.amount) || 0), 0);
 
-  // Solde obligatoire TR = sum of all active budget lines + custom pockets
-  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + budgetQuotidien + pocketsTRTotal;
+  // Solde obligatoire TR = sum of all active budget lines (hors quotidien)
+  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + pocketsTRTotal;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -1864,7 +1864,7 @@ export function mount(store, navigate) {
       } else if (isSecondary) {
         subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', m.soldePrevTR || 0);
         const archPocketsTR = ((m.budgetPockets || {}).tr || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
-        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + (m.budgetQuotidien || 0) + archPocketsTR;
+        const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + archPocketsTR;
         if (soldeObligTR) subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
         if (m.restantInvestTR) subLines += subLine(m.lblRestantInvest || 'Pocket 1', m.restantInvestTR);
         if (m.restantPEATR) subLines += subLine(m.lblRestantPEA || 'Pocket 2', m.restantPEATR);
