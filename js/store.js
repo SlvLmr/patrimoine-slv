@@ -672,9 +672,17 @@ const Store = {
     const trInterets = Number(trFeatures.interets) || 0;
     const trRoundup = Number(trFeatures.roundup) || 0;
 
+    // TR recurring confirmed (DCA + apports)
+    const trConfirmed = this._state.trRecurringConfirmed || {};
+    const trConfirmedThisMonth = trConfirmed[monthKey] || { expenses: [], revenues: [] };
+    const dcaTR = this._state.dcaMensuelsTR || [];
+    const revMensuelsTR = this._state.revenusMensuelsTR || [];
+    const totalDcaConfirmed = dcaTR.filter(d => (trConfirmedThisMonth.expenses || []).includes(d.id)).reduce((s, d) => s + d.montant, 0);
+    const totalRevConfirmed = revMensuelsTR.filter(r => (trConfirmedThisMonth.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0);
+
     const result = {
       cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
-      tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup
+      tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed
     };
 
     // Extra banks
