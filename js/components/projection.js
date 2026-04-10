@@ -110,22 +110,19 @@ export function render(store) {
   const fireSwr = (params.swr || 4) / 100;
   const fireDepBase = (params.fireDepensesMensuelles || 1750) * 12;
   const fireInflation = params.inflationRate || 0.02;
-  const firePensionLegal = (params.pensionTauxLegal || 2442) * 12;
-  const firePensionPlein = (params.pensionTauxPlein || 2642) * 12;
-  const fireAgeLegal = params.ageRetraiteTauxLegal || 64;
-  const fireAgePlein = params.ageRetraiteTauxPlein || 65;
+  const salairesParAnnee = store.get('salairesParAnnee') || {};
+  const pensionsParAnnee = store.get('pensionsParAnnee') || {};
   let fireFirstIdx = -1;
   const fireData = snapshots.map((s, idx) => {
     const depenses = fireDepBase * Math.pow(1 + fireInflation, s.annee);
     const rente = s.totalLiquiditesNettes * fireSwr;
-    let pension = 0;
-    if (s.age >= fireAgePlein) pension = firePensionPlein;
-    else if (s.age >= fireAgeLegal) pension = firePensionLegal;
-    const totalRevenu = rente + pension;
+    const salaire = Number(salairesParAnnee[s.calendarYear]) || 0;
+    const pension = Number(pensionsParAnnee[s.calendarYear]) || 0;
+    const totalRevenu = rente + salaire + pension;
     const couverture = depenses > 0 ? totalRevenu / depenses : 0;
     const isFire = couverture >= 1;
     if (isFire && fireFirstIdx === -1) fireFirstIdx = idx;
-    return { rente, pension, depenses, couverture, isFire };
+    return { rente, salaire, pension, depenses, couverture, isFire };
   });
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
@@ -605,22 +602,6 @@ export function render(store) {
                 class="param-input w-12 px-0 py-0 text-[11px] bg-transparent border-0 text-purple-400/80 focus:ring-0 text-center font-semibold">
               <span class="text-[9px] text-gray-500">€</span>
             </div>
-            <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-400/5 border border-amber-400/20 shrink-0">
-              <span class="text-[10px] text-amber-400/80">Légal</span>
-              <input type="number" id="param-retraite-legal-age" value="${params.ageRetraiteTauxLegal || 64}" min="55" max="70" step="1"
-                class="param-input w-8 px-0 py-0 text-[11px] bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
-              <input type="number" id="param-pension-legal" value="${params.pensionTauxLegal || 2442}" min="0" max="20000" step="10"
-                class="param-input w-12 px-0 py-0 text-[11px] bg-transparent border-0 text-amber-400/80 focus:ring-0 text-center font-semibold">
-              <span class="text-[9px] text-gray-500">€</span>
-            </div>
-            <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-400/5 border border-cyan-400/20 shrink-0">
-              <span class="text-[10px] text-cyan-400/80">Plein</span>
-              <input type="number" id="param-retraite-plein-age" value="${params.ageRetraiteTauxPlein || 65}" min="55" max="70" step="1"
-                class="param-input w-8 px-0 py-0 text-[11px] bg-transparent border-0 text-gray-300 focus:ring-0 text-center">
-              <input type="number" id="param-pension-plein" value="${params.pensionTauxPlein || 2642}" min="0" max="20000" step="10"
-                class="param-input w-12 px-0 py-0 text-[11px] bg-transparent border-0 text-cyan-400/80 focus:ring-0 text-center font-semibold">
-              <span class="text-[9px] text-gray-500">€</span>
-            </div>
             <div class="w-px h-3 bg-dark-400/30 shrink-0"></div>
             <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/8 border border-orange-500/25 shrink-0">
               <span class="text-[10px] text-orange-400">🔥</span>
@@ -684,8 +665,9 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Immo.</th>
                 <th class="px-1 py-1.5 text-center font-semibold">Liq.</th>
                 <th class="px-1 py-1.5 text-center">Donation</th>
-                <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-orange-400/70">🔥 Rente</th>
+                <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-purple-400/70">Salaire</th>
                 <th class="px-1 py-1.5 text-center text-amber-400/70">Pension</th>
+                <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-orange-400/70">🔥 Rente</th>
                 <th class="px-1 py-1.5 text-center text-orange-400/50">Dép.</th>
                 <th class="px-1 py-1.5 text-center text-orange-400/70">FIRE</th>
               </tr>
@@ -738,8 +720,9 @@ export function render(store) {
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[9px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
+                <td class="px-0 py-0 text-center text-[11px] border-l-2 border-dark-300/40 ${bt}"><input type="number" class="salaire-input w-full bg-transparent text-center text-[11px] text-purple-400 border-0 outline-none focus:bg-dark-600/50 focus:text-purple-300 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${salairesParAnnee[s.calendarYear] || ''}" placeholder="-" step="100" min="0"></td>
+                <td class="px-0 py-0 text-center text-[11px] ${bt}"><input type="number" class="pension-input w-full bg-transparent text-center text-[11px] text-amber-400 border-0 outline-none focus:bg-dark-600/50 focus:text-amber-300 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${pensionsParAnnee[s.calendarYear] || ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[9px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${fire.rente > 0 ? formatCurrency(fire.rente) : '<span class="text-gray-700">-</span>'}</td>
-                <td class="px-1 py-1 text-center text-[9px] ${bt} ${fire.pension > 0 ? 'text-amber-400' : 'text-gray-700'}">${fire.pension > 0 ? formatCurrency(fire.pension) : '-'}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-500 ${bt}">${formatCurrency(fire.depenses)}</td>
                 <td class="px-1 py-1 text-center text-[9px] font-bold ${bt} ${fire.couverture >= 1 ? 'text-orange-400' : fire.couverture >= 0.8 ? 'text-yellow-400/80' : 'text-gray-500'}">${Math.round(fire.couverture * 100)}%${isFireFirst ? ' 🔥' : ''}</td>
               </tr>`;
@@ -958,9 +941,9 @@ export function render(store) {
               <p class="text-[10px] text-gray-500">${fireSnap ? `Couverture ${Math.round(fireFd.couverture * 100)}%` : ''}</p>
             </div>
             <div class="rounded-lg bg-dark-700/50 p-3 text-center">
-              <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Rente annuelle</p>
-              <p class="text-lg font-bold text-purple-400">${fireSnap ? formatCurrency(fireFd.rente + fireFd.pension) : formatCurrency(lastFire.rente)}</p>
-              <p class="text-[10px] text-gray-500">${fireSnap && fireFd.pension > 0 ? `dont ${formatCurrency(fireFd.pension)} pension` : 'SWR uniquement'}</p>
+              <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Revenus annuels</p>
+              <p class="text-lg font-bold text-purple-400">${fireSnap ? formatCurrency(fireFd.rente + fireFd.salaire + fireFd.pension) : formatCurrency(lastFire.rente)}</p>
+              <p class="text-[10px] text-gray-500">${fireSnap ? [fireFd.salaire > 0 ? `${formatCurrency(fireFd.salaire)} salaire` : '', fireFd.pension > 0 ? `${formatCurrency(fireFd.pension)} pension` : '', `${formatCurrency(fireFd.rente)} rente`].filter(Boolean).join(' + ') : 'SWR uniquement'}</p>
             </div>
           </div>
 
@@ -1073,12 +1056,11 @@ export function render(store) {
               const calYear = startSnap.calendarYear + y;
               const depenses = fireDepBase * Math.pow(1 + fireInflation, startSnap.annee + y);
 
-              // Pension
-              let pension = 0;
-              if (age >= fireAgePlein) pension = firePensionPlein;
-              else if (age >= fireAgeLegal) pension = firePensionLegal;
+              // Salaire + Pension from year-based data
+              const salaire = Number(salairesParAnnee[calYear]) || 0;
+              const pension = Number(pensionsParAnnee[calYear]) || 0;
 
-              let besoinNet = Math.max(0, depenses - pension);
+              let besoinNet = Math.max(0, depenses - salaire - pension);
               const withdrawals = {};
               allKeys.forEach(k => { withdrawals[k] = 0; });
 
@@ -1111,7 +1093,7 @@ export function render(store) {
               const totalPatrimoine = allKeys.reduce((s, k) => s + Math.max(0, balances[k]), 0);
 
               simRows.push({
-                age, calYear, depenses, pension, besoinNet,
+                age, calYear, depenses, salaire, pension, besoinNet,
                 withdrawals: { ...withdrawals },
                 balances: { ...balances },
                 totalPatrimoine,
@@ -1151,6 +1133,7 @@ export function render(store) {
             simHtml += '<th class="px-1.5 py-1.5 text-center">Année</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-center">Âge</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right">Dépenses</th>';
+            simHtml += '<th class="px-1.5 py-1.5 text-right">Salaire</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right">Pension</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right border-r border-dark-300/40">Besoin net</th>';
             visibleKeys.forEach(k => {
@@ -1159,17 +1142,18 @@ export function render(store) {
             simHtml += '<th class="px-1.5 py-1.5 text-right border-l border-dark-300/40 font-semibold">Total</th>';
             simHtml += '</tr></thead><tbody class="divide-y divide-dark-400/20">';
 
-            const firstPensionIdx = simRows.findIndex(x => x.age >= fireAgeLegal);
+            const firstRevenueIdx = simRows.findIndex(x => (x.salaire > 0 || x.pension > 0));
             simRows.forEach((r, i) => {
-              const isPension = r.age >= fireAgeLegal;
+              const hasRevenue = r.salaire > 0 || r.pension > 0;
               const isDepleted = r.depleted;
               const isFiveYear = i > 0 && i % 5 === 0;
-              const rowCls = isDepleted ? 'bg-red-500/10' : (isPension && i === firstPensionIdx) ? 'bg-amber-500/5' : '';
+              const rowCls = isDepleted ? 'bg-red-500/10' : (hasRevenue && i === firstRevenueIdx) ? 'bg-amber-500/5' : '';
               const bt = isFiveYear ? 'border-t border-dark-300/30' : '';
               simHtml += '<tr class="hover:bg-dark-600/30 transition ' + rowCls + '">';
               simHtml += '<td class="px-1.5 py-1 text-center text-gray-400 ' + bt + '">' + r.calYear + '</td>';
-              simHtml += '<td class="px-1.5 py-1 text-center font-medium ' + bt + ' ' + (isPension && r.age === fireAgeLegal ? 'text-amber-400' : 'text-gray-200') + '">' + r.age + '</td>';
+              simHtml += '<td class="px-1.5 py-1 text-center font-medium ' + bt + ' text-gray-200">' + r.age + '</td>';
               simHtml += '<td class="px-1.5 py-1 text-right text-gray-400 ' + bt + '">' + formatCurrency(r.depenses) + '</td>';
+              simHtml += '<td class="px-1.5 py-1 text-right ' + bt + ' ' + (r.salaire > 0 ? 'text-purple-400/80' : 'text-gray-700') + '">' + (r.salaire > 0 ? formatCurrency(r.salaire) : '—') + '</td>';
               simHtml += '<td class="px-1.5 py-1 text-right ' + bt + ' ' + (r.pension > 0 ? 'text-amber-400/80' : 'text-gray-700') + '">' + (r.pension > 0 ? formatCurrency(r.pension) : '—') + '</td>';
               simHtml += '<td class="px-1.5 py-1 text-right font-medium text-gray-300 border-r border-dark-300/40 ' + bt + '">' + formatCurrency(r.besoinNet) + '</td>';
               visibleKeys.forEach(k => {
@@ -1913,11 +1897,7 @@ export function mount(store, navigate) {
     // Salaire
     store.set('parametres.salaireNet', parseInt(document.getElementById('param-salaire').value) || 1650);
 
-    // Retirement milestones
-    store.set('parametres.ageRetraiteTauxLegal', parseInt(document.getElementById('param-retraite-legal-age').value) || 64);
-    store.set('parametres.pensionTauxLegal', parseInt(document.getElementById('param-pension-legal').value) || 2442);
-    store.set('parametres.ageRetraiteTauxPlein', parseInt(document.getElementById('param-retraite-plein-age').value) || 65);
-    store.set('parametres.pensionTauxPlein', parseInt(document.getElementById('param-pension-plein').value) || 2642);
+    // Retirement
     store.set('parametres.ageRetraiteSouhaitee', parseInt(document.getElementById('param-retraite-souhaitee').value) || 60);
 
     const cashOutVal = document.getElementById('param-cashout-year')?.value;
@@ -2142,6 +2122,38 @@ export function mount(store, navigate) {
         if (idx >= 0) surplus.splice(idx, 1);
       }
       store.set('surplusAnnuel', surplus);
+      navigate('projection');
+    });
+  });
+
+  // --- Salaire par année inline editing ---
+  document.querySelectorAll('.salaire-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const year = parseInt(input.dataset.year);
+      const montant = Number(input.value) || 0;
+      const data = store.get('salairesParAnnee') || {};
+      if (montant > 0) {
+        data[year] = montant;
+      } else {
+        delete data[year];
+      }
+      store.set('salairesParAnnee', data);
+      navigate('projection');
+    });
+  });
+
+  // --- Pension par année inline editing ---
+  document.querySelectorAll('.pension-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const year = parseInt(input.dataset.year);
+      const montant = Number(input.value) || 0;
+      const data = store.get('pensionsParAnnee') || {};
+      if (montant > 0) {
+        data[year] = montant;
+      } else {
+        delete data[year];
+      }
+      store.set('pensionsParAnnee', data);
       navigate('projection');
     });
   });
