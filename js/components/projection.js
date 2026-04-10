@@ -721,8 +721,8 @@ export function render(store) {
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[9px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
-                <td class="px-0 py-0 text-center text-[11px] border-l-2 border-dark-300/40 ${bt}"><input type="number" class="salaire-input w-full bg-transparent text-center text-[11px] text-purple-400 border-0 outline-none focus:bg-dark-600/50 focus:text-purple-300 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${salairesParAnnee[s.calendarYear] || ''}" placeholder="-" step="100" min="0"></td>
-                <td class="px-0 py-0 text-center text-[11px] ${bt}"><input type="number" class="pension-input w-full bg-transparent text-center text-[11px] text-amber-400 border-0 outline-none focus:bg-dark-600/50 focus:text-amber-300 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${pensionsParAnnee[s.calendarYear] || ''}" placeholder="-" step="100" min="0"></td>
+                <td class="px-0 py-0 text-center text-[9px] border-l-2 border-dark-300/40 ${bt}"><input type="number" class="salaire-input w-full bg-transparent text-center text-[9px] ${salairesParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-purple-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${salairesParAnnee[s.calendarYear] != null ? salairesParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
+                <td class="px-0 py-0 text-center text-[9px] ${bt}"><input type="number" class="pension-input w-full bg-transparent text-center text-[9px] ${pensionsParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-amber-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${pensionsParAnnee[s.calendarYear] != null ? pensionsParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[9px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${fire.rente > 0 ? formatCurrency(fire.rente) : '<span class="text-gray-700">-</span>'}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-500 ${bt}">${formatCurrency(fire.depenses)}</td>
                 <td class="px-1 py-1 text-center text-[9px] font-bold ${bt} ${fire.couvertureFire >= 1 ? 'text-orange-400' : fire.couvertureFire >= 0.8 ? 'text-yellow-400/80' : 'text-gray-500'}">${Math.round(fire.couvertureFire * 100)}%${isFireFirst ? ' 🔥' : ''}</td>
@@ -2131,10 +2131,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('.salaire-input').forEach(input => {
     input.addEventListener('change', () => {
       const year = parseInt(input.dataset.year);
-      const montant = Number(input.value) || 0;
+      const raw = input.value.trim();
       const data = store.get('salairesParAnnee') || {};
-      if (montant > 0) {
-        data[year] = montant;
+      if (raw !== '') {
+        data[year] = Number(raw) || 0;
       } else {
         delete data[year];
       }
@@ -2147,10 +2147,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('.pension-input').forEach(input => {
     input.addEventListener('change', () => {
       const year = parseInt(input.dataset.year);
-      const montant = Number(input.value) || 0;
+      const raw = input.value.trim();
       const data = store.get('pensionsParAnnee') || {};
-      if (montant > 0) {
-        data[year] = montant;
+      if (raw !== '') {
+        data[year] = Number(raw) || 0;
       } else {
         delete data[year];
       }
