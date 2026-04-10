@@ -120,9 +120,10 @@ export function render(store) {
     const pension = Number(pensionsParAnnee[s.calendarYear]) || 0;
     const totalRevenu = rente + salaire + pension;
     const couverture = depenses > 0 ? totalRevenu / depenses : 0;
-    const isFire = couverture >= 1;
+    const couvertureFire = depenses > 0 ? rente / depenses : 0;
+    const isFire = couvertureFire >= 1;
     if (isFire && fireFirstIdx === -1) fireFirstIdx = idx;
-    return { rente, salaire, pension, depenses, couverture, isFire };
+    return { rente, salaire, pension, depenses, couverture, couvertureFire, isFire };
   });
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
@@ -724,7 +725,7 @@ export function render(store) {
                 <td class="px-0 py-0 text-center text-[11px] ${bt}"><input type="number" class="pension-input w-full bg-transparent text-center text-[11px] text-amber-400 border-0 outline-none focus:bg-dark-600/50 focus:text-amber-300 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${pensionsParAnnee[s.calendarYear] || ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[9px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${fire.rente > 0 ? formatCurrency(fire.rente) : '<span class="text-gray-700">-</span>'}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-500 ${bt}">${formatCurrency(fire.depenses)}</td>
-                <td class="px-1 py-1 text-center text-[9px] font-bold ${bt} ${fire.couverture >= 1 ? 'text-orange-400' : fire.couverture >= 0.8 ? 'text-yellow-400/80' : 'text-gray-500'}">${Math.round(fire.couverture * 100)}%${isFireFirst ? ' 🔥' : ''}</td>
+                <td class="px-1 py-1 text-center text-[9px] font-bold ${bt} ${fire.couvertureFire >= 1 ? 'text-orange-400' : fire.couvertureFire >= 0.8 ? 'text-yellow-400/80' : 'text-gray-500'}">${Math.round(fire.couvertureFire * 100)}%${isFireFirst ? ' 🔥' : ''}</td>
               </tr>`;
               }).join('')}
             </tbody>
@@ -938,7 +939,7 @@ export function render(store) {
             <div class="rounded-lg bg-dark-700/50 p-3 text-center">
               <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Patrimoine au FIRE</p>
               <p class="text-lg font-bold text-accent-green">${fireSnap ? formatCurrency(fireSnap.totalLiquiditesNettes) : '—'}</p>
-              <p class="text-[10px] text-gray-500">${fireSnap ? `Couverture ${Math.round(fireFd.couverture * 100)}%` : ''}</p>
+              <p class="text-[10px] text-gray-500">${fireSnap ? `Couverture FIRE ${Math.round(fireFd.couvertureFire * 100)}%` : ''}</p>
             </div>
             <div class="rounded-lg bg-dark-700/50 p-3 text-center">
               <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Revenus annuels</p>
