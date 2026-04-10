@@ -2127,6 +2127,16 @@ export function mount(store, navigate) {
     });
   });
 
+  // --- Auto-save Souhaité fields on change ---
+  document.getElementById('param-retraite-souhaitee')?.addEventListener('change', (e) => {
+    store.set('parametres.ageRetraiteSouhaitee', parseInt(e.target.value) || 60);
+    navigate('projection');
+  });
+  document.getElementById('param-salaire')?.addEventListener('change', (e) => {
+    store.set('parametres.salaireNet', parseInt(e.target.value) || 1650);
+    navigate('projection');
+  });
+
   // --- Salaire par année inline editing ---
   document.querySelectorAll('.salaire-input').forEach(input => {
     input.addEventListener('change', () => {
