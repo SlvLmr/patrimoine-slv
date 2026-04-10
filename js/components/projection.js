@@ -103,6 +103,7 @@ export function render(store) {
   const surplusAnnuel = store.get('surplusAnnuel') || [];
   const surplusByYear = {};
   surplusAnnuel.forEach(s => { surplusByYear[Number(s.year)] = Number(s.montant) || 0; });
+  const mouvementsParAnnee = store.get('mouvementsParAnnee') || {};
   const currentCalendarYear = new Date().getFullYear();
   const last = snapshots[snapshots.length - 1];
 
@@ -656,7 +657,7 @@ export function render(store) {
                 <th class="w-[72px] px-1 py-1.5 text-center">Année</th>
                 <th class="w-[28px] px-0 py-1.5 text-center">An</th>
                 <th class="w-[32px] px-0 py-1.5 text-center border-r-2 border-dark-300/40">Âge</th>
-                ${groupKeys.map((gk, i) => `<th class="px-1 py-1.5 text-center ${i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : ''}">${gk}</th>`).join('')}
+                ${groupKeys.map((gk, i) => { const shortName = { 'Assurance Vie': 'Ass. Vie' }; return `<th class="px-1 py-1.5 text-center ${i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : ''}">${shortName[gk] || gk}</th>`; }).join('')}
                 <th class="px-1 py-1.5 text-center font-semibold text-gray-400">Apports</th>
                 <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
                 <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
@@ -665,7 +666,7 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center">Hérit.</th>
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Immo.</th>
                 <th class="px-1 py-1.5 text-center font-semibold">Liq.</th>
-                <th class="px-1 py-1.5 text-center">Donation</th>
+                <th class="px-1 py-1.5 text-center">Mouv.</th>
                 <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-purple-400/70">Salaire</th>
                 <th class="px-1 py-1.5 text-center text-amber-400/70">Pension</th>
                 <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-orange-400/70">🔥 Rente</th>
@@ -720,7 +721,13 @@ export function render(store) {
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 ${bt}">${formatCurrency(s.heritage)}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[9px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
-                <td class="px-1 py-1 text-center text-[9px] text-pink-300/70 ${bt}">${s.donation > 0 ? formatCurrency(s.donation) : '<span class="text-gray-700">-</span>'}</td>
+                <td class="px-0 py-0 text-center text-[9px] ${bt} relative group/mouv">
+                  <div class="flex items-center">
+                    <input type="number" class="mouvement-input w-full bg-transparent text-center text-[9px] ${(mouvementsParAnnee[s.calendarYear]?.montant || 0) < 0 ? 'text-red-400' : (mouvementsParAnnee[s.calendarYear]?.montant || 0) > 0 ? 'text-pink-300/70' : 'text-gray-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${mouvementsParAnnee[s.calendarYear]?.montant != null ? mouvementsParAnnee[s.calendarYear].montant : ''}" placeholder="-" step="100">
+                    <button class="mouvement-note-btn text-[8px] ${mouvementsParAnnee[s.calendarYear]?.note ? 'text-accent-cyan' : 'text-gray-700 opacity-0 group-hover/mouv:opacity-100'} hover:text-accent-cyan transition shrink-0 pr-0.5" data-year="${s.calendarYear}" title="${mouvementsParAnnee[s.calendarYear]?.note ? mouvementsParAnnee[s.calendarYear].note.replace(/"/g, '&quot;') : 'Ajouter une note'}">&#9998;</button>
+                  </div>
+                  ${mouvementsParAnnee[s.calendarYear]?.note ? `<div class="proj-tip">${mouvementsParAnnee[s.calendarYear].note.replace(/</g, '&lt;')}</div>` : ''}
+                </td>
                 <td class="px-0 py-0 text-center text-[9px] border-l-2 border-dark-300/40 ${bt}"><input type="number" class="salaire-input w-full bg-transparent text-center text-[9px] ${salairesParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-purple-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${salairesParAnnee[s.calendarYear] != null ? salairesParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-0 py-0 text-center text-[9px] ${bt}"><input type="number" class="pension-input w-full bg-transparent text-center text-[9px] ${pensionsParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-amber-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${pensionsParAnnee[s.calendarYear] != null ? pensionsParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[9px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${fire.rente > 0 ? formatCurrency(fire.rente) : '<span class="text-gray-700">-</span>'}</td>
@@ -2166,6 +2173,47 @@ export function mount(store, navigate) {
       }
       store.set('pensionsParAnnee', data);
       navigate('projection');
+    });
+  });
+
+  // --- Mouvements par année inline editing ---
+  document.querySelectorAll('.mouvement-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const year = parseInt(input.dataset.year);
+      const raw = input.value.trim();
+      const data = store.get('mouvementsParAnnee') || {};
+      if (raw !== '') {
+        data[year] = { ...(data[year] || {}), montant: Number(raw) || 0 };
+      } else {
+        if (data[year]?.note) {
+          data[year].montant = null;
+        } else {
+          delete data[year];
+        }
+      }
+      store.set('mouvementsParAnnee', data);
+      navigate('projection');
+    });
+  });
+
+  // --- Mouvements note buttons ---
+  document.querySelectorAll('.mouvement-note-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const year = parseInt(btn.dataset.year);
+      const data = store.get('mouvementsParAnnee') || {};
+      const current = data[year]?.note || '';
+      const note = prompt(`Note pour ${year} :`, current);
+      if (note !== null) {
+        if (!data[year]) data[year] = {};
+        if (note.trim()) {
+          data[year].note = note.trim();
+        } else {
+          delete data[year].note;
+          if (data[year].montant == null) delete data[year];
+        }
+        store.set('mouvementsParAnnee', data);
+        navigate('projection');
+      }
     });
   });
 
