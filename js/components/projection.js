@@ -2,6 +2,7 @@ import { formatCurrency, formatPercent, computeProjection, inputField, selectFie
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=10';
 import * as ProjectionEnfants from './projection-enfants.js?v=20260331a';
+import { calculerFiscaliteDonation } from '../fiscal.js';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -100,11 +101,55 @@ export function render(store) {
   const placements = (store.getAll().actifs?.placements || []);
   const heritageItems = store.get('heritage') || [];
   const capitalTransfers = params.capitalTransfers || [];
-  const surplusAnnuel = store.get('surplusAnnuel') || [];
-  const surplusByYear = {};
-  surplusAnnuel.forEach(s => { surplusByYear[Number(s.year)] = Number(s.montant) || 0; });
-  const mouvementsParAnnee = store.get('mouvementsParAnnee') || {};
   const currentCalendarYear = new Date().getFullYear();
+
+  // --- Migration: surplus + old mouvements → new mouvements array format ---
+  let mouvementsParAnnee = store.get('mouvementsParAnnee') || {};
+  let needsMigration = false;
+
+  // Migrate old format (object {montant, note}) to new array format
+  for (const yr of Object.keys(mouvementsParAnnee)) {
+    if (!Array.isArray(mouvementsParAnnee[yr])) {
+      const old = mouvementsParAnnee[yr];
+      mouvementsParAnnee[yr] = [];
+      if (old && old.montant != null && old.montant !== '') {
+        const m = Number(old.montant);
+        if (m !== 0) {
+          mouvementsParAnnee[yr].push({
+            id: 'mvt-m-' + yr, type: m > 0 ? 'entree' : 'depense',
+            montant: Math.abs(m), source: m > 0 ? 'Autre' : 'Autre',
+            destination: m > 0 ? 'Autre' : 'Autre', note: old.note || ''
+          });
+        }
+      }
+      if (mouvementsParAnnee[yr].length === 0) delete mouvementsParAnnee[yr];
+      needsMigration = true;
+    }
+  }
+
+  // Migrate surplusAnnuel → mouvements of type 'entree'
+  const surplusAnnuel = store.get('surplusAnnuel') || [];
+  if (surplusAnnuel.length > 0) {
+    surplusAnnuel.forEach(s => {
+      const yr = Number(s.year);
+      const montant = Number(s.montant) || 0;
+      if (montant > 0) {
+        if (!mouvementsParAnnee[yr]) mouvementsParAnnee[yr] = [];
+        mouvementsParAnnee[yr].push({
+          id: 'mvt-s-' + yr, type: 'entree', montant,
+          source: 'Autre', destination: 'Épargne', note: 'Surplus annuel'
+        });
+      }
+    });
+    store.set('surplusAnnuel', []);
+    needsMigration = true;
+  }
+
+  if (needsMigration) store.set('mouvementsParAnnee', mouvementsParAnnee);
+
+  // Available sources/destinations for mouvements modal
+  const mouvSources = ['Autre', ...snapshots.groupKeys || [], 'Épargne', 'Héritage', 'Immo'];
+  const mouvDests = [...mouvSources];
   const last = snapshots[snapshots.length - 1];
 
   // FIRE computation
@@ -661,12 +706,11 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center font-semibold text-gray-400">Apports</th>
                 <th class="px-1 py-1.5 text-center font-semibold text-accent-green/70">Gain</th>
                 <th class="px-1 py-1.5 text-center font-semibold border-r-2 border-dark-300/40">Net imp.</th>
-                <th class="px-1 py-1.5 text-center">Surplus</th>
                 <th class="px-1 py-1.5 text-center">Épargne</th>
                 <th class="px-1 py-1.5 text-center">Hérit.</th>
                 <th class="px-1 py-1.5 text-center border-r-2 border-dark-300/40">Immo.</th>
                 <th class="px-1 py-1.5 text-center font-semibold">Liq.</th>
-                <th class="px-1 py-1.5 text-center">Mouv.</th>
+                <th class="px-1 py-1.5 text-center text-pink-300/70">Mouv.</th>
                 <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-purple-400/70">Salaire</th>
                 <th class="px-1 py-1.5 text-center text-amber-400/70">Pension</th>
                 <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-orange-400/70">🔥 Rente</th>
@@ -716,18 +760,35 @@ export function render(store) {
                 <td class="px-1 py-0.5 text-center text-[9px] text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-[9px] ${bt} ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[9px] ${bt} proj-tip-wrap ${tipDir}">${formatCurrency(s.cashApresImpot)}<div class="text-[7px] text-gray-500 leading-tight font-normal">${formatCurrency(s.totalApports)}</div><div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Placements</span><span class="text-gray-200">${formatCurrency(s.placements)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(s.totalApports)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts</span><span class="text-red-400">-${formatCurrency(s.totalTaxes)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(s.cashApresImpot)}</span></div></div></td>
-                <td class="px-0 py-0 text-center text-[11px] ${bt}"><input type="number" class="surplus-input w-full bg-transparent text-center text-[11px] text-gray-200 border-0 outline-none focus:bg-dark-600/50 focus:text-accent-cyan px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${surplusByYear[s.calendarYear] || ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 ${bt}">${formatCurrency(s.epargne)}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 ${bt}">${formatCurrency(s.heritage)}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
                 <td class="px-1 py-1 text-center font-semibold text-accent-green text-[9px] ${bt}">${formatCurrency(s.totalLiquiditesNettes)}</td>
-                <td class="px-0 py-0 text-center text-[9px] ${bt} relative group/mouv">
-                  <div class="flex items-center">
-                    <input type="number" class="mouvement-input w-full bg-transparent text-center text-[9px] ${(mouvementsParAnnee[s.calendarYear]?.montant || 0) < 0 ? 'text-red-400' : (mouvementsParAnnee[s.calendarYear]?.montant || 0) > 0 ? 'text-pink-300/70' : 'text-gray-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${mouvementsParAnnee[s.calendarYear]?.montant != null ? mouvementsParAnnee[s.calendarYear].montant : ''}" placeholder="-" step="100">
-                    <button class="mouvement-note-btn text-[8px] ${mouvementsParAnnee[s.calendarYear]?.note ? 'text-accent-cyan' : 'text-gray-700 opacity-0 group-hover/mouv:opacity-100'} hover:text-accent-cyan transition shrink-0 pr-0.5" data-year="${s.calendarYear}" title="${mouvementsParAnnee[s.calendarYear]?.note ? mouvementsParAnnee[s.calendarYear].note.replace(/"/g, '&quot;') : 'Ajouter une note'}">&#9998;</button>
-                  </div>
-                  ${mouvementsParAnnee[s.calendarYear]?.note ? `<div class="proj-tip">${mouvementsParAnnee[s.calendarYear].note.replace(/</g, '&lt;')}</div>` : ''}
-                </td>
+                ${(() => {
+                  const mvts = mouvementsParAnnee[s.calendarYear] || [];
+                  const hasEntree = mvts.some(m => m.type === 'entree');
+                  const hasDepense = mvts.some(m => m.type === 'depense');
+                  const hasDonation = mvts.some(m => m.type === 'donation');
+                  const netTotal = mvts.reduce((acc, m) => {
+                    const v = Math.abs(Number(m.montant) || 0);
+                    return acc + (m.type === 'depense' || m.type === 'donation' ? -v : v);
+                  }, 0);
+                  const indicators = [
+                    hasDonation ? '<span class="text-yellow-400" title="Donation">&#9733;</span>' : '',
+                    hasDepense ? '<span class="text-red-400" title="Dépense">&#9679;</span>' : '',
+                    hasEntree ? '<span class="text-green-400" title="Entrée">&#9679;</span>' : ''
+                  ].filter(Boolean).join('');
+                  const tipContent = mvts.length > 0 ? mvts.map(m => {
+                    const icon = m.type === 'donation' ? '⭐' : m.type === 'depense' ? '🔴' : '🟢';
+                    const sign = m.type === 'depense' || m.type === 'donation' ? '-' : '+';
+                    const src = m.source || '?';
+                    const dst = m.destination || '?';
+                    const note = m.note ? `<div class="text-gray-500 text-[9px] italic ml-3">${m.note.replace(/</g, '&lt;')}</div>` : '';
+                    const donInfo = m.type === 'donation' && m.donationType ? `<div class="text-yellow-400/60 text-[9px] ml-3">${{abattement_100k: 'Abattement 100k€', don_sarkozy: 'Don Sarkozy', demembrement: 'Démembrement NP', purge_pv_cto: 'Purge PV CTO', donation_av: 'Donation AV'}[m.donationType] || m.donationType}${m.beneficiaire ? ' → ' + m.beneficiaire : ''}</div>` : '';
+                    return `<div class="flex justify-between gap-3"><span>${icon} ${sign}${formatCurrency(Math.abs(m.montant))}</span><span class="text-gray-500">${src} → ${dst}</span></div>${donInfo}${note}`;
+                  }).join('<div class="border-t border-dark-400/30 my-1"></div>') : '';
+                  return `<td class="px-1 py-1 text-center text-[9px] ${bt} ${mvts.length > 0 ? 'proj-tip-wrap cursor-pointer' : ''} ${tipDir} mouv-cell" data-year="${s.calendarYear}"><div class="flex items-center justify-center gap-0.5"><span class="text-[7px] leading-none">${indicators}</span>${mvts.length > 0 ? `<span class="${netTotal > 0 ? 'text-green-400' : netTotal < 0 ? 'text-red-400' : 'text-gray-400'}">${netTotal > 0 ? '+' : ''}${formatCurrency(netTotal)}</span>` : '<span class="text-gray-700">-</span>'}</div>${tipContent ? `<div class="proj-tip" style="min-width:220px">${tipContent}</div>` : ''}</td>`;
+                })()}
                 <td class="px-0 py-0 text-center text-[9px] border-l-2 border-dark-300/40 ${bt}"><input type="number" class="salaire-input w-full bg-transparent text-center text-[9px] ${salairesParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-purple-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${salairesParAnnee[s.calendarYear] != null ? salairesParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-0 py-0 text-center text-[9px] ${bt}"><input type="number" class="pension-input w-full bg-transparent text-center text-[9px] ${pensionsParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-amber-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${pensionsParAnnee[s.calendarYear] != null ? pensionsParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[9px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${fire.rente > 0 ? formatCurrency(fire.rente) : '<span class="text-gray-700">-</span>'}</td>
@@ -2112,28 +2173,6 @@ export function mount(store, navigate) {
     });
   });
 
-  // --- Surplus annuel inline editing ---
-  document.querySelectorAll('.surplus-input').forEach(input => {
-    input.addEventListener('change', () => {
-      const year = parseInt(input.dataset.year);
-      const montant = Number(input.value) || 0;
-      const surplus = store.get('surplusAnnuel') || [];
-      const existing = surplus.find(s => Number(s.year) === year);
-      if (montant > 0) {
-        if (existing) {
-          existing.montant = montant;
-        } else {
-          surplus.push({ year, montant });
-        }
-      } else {
-        const idx = surplus.findIndex(s => Number(s.year) === year);
-        if (idx >= 0) surplus.splice(idx, 1);
-      }
-      store.set('surplusAnnuel', surplus);
-      navigate('projection');
-    });
-  });
-
   // --- Auto-save Souhaité fields on change ---
   document.getElementById('param-retraite-souhaitee')?.addEventListener('change', (e) => {
     store.set('parametres.ageRetraiteSouhaitee', parseInt(e.target.value) || 60);
@@ -2176,44 +2215,134 @@ export function mount(store, navigate) {
     });
   });
 
-  // --- Mouvements par année inline editing ---
-  document.querySelectorAll('.mouvement-input').forEach(input => {
-    input.addEventListener('change', () => {
-      const year = parseInt(input.dataset.year);
-      const raw = input.value.trim();
-      const data = store.get('mouvementsParAnnee') || {};
-      if (raw !== '') {
-        data[year] = { ...(data[year] || {}), montant: Number(raw) || 0 };
-      } else {
-        if (data[year]?.note) {
-          data[year].montant = null;
-        } else {
-          delete data[year];
-        }
+  // --- Mouvements modal ---
+  const mouvSourceOptions = ['Autre', ...(snapshots.groupKeys || []), 'Épargne', 'Héritage', 'Immo'];
+  const mouvDestOptions = [...mouvSourceOptions];
+  const donationTypes = [
+    { value: 'abattement_100k', label: 'Abattement 100 000 € (ligne directe)' },
+    { value: 'don_sarkozy', label: 'Don Sarkozy (+ abattement 31 865 €)' },
+    { value: 'demembrement', label: 'Démembrement nue-propriété' },
+    { value: 'purge_pv_cto', label: 'Don CTO avec purge PV' },
+    { value: 'donation_av', label: 'Donation Assurance Vie' }
+  ];
+
+  function openMouvementModal(year) {
+    const data = store.get('mouvementsParAnnee') || {};
+    const mvts = data[year] || [];
+
+    const listHtml = mvts.map((m, i) => {
+      const icon = m.type === 'donation' ? '⭐' : m.type === 'depense' ? '🔴' : '🟢';
+      const sign = m.type === 'depense' || m.type === 'donation' ? '-' : '+';
+      return `<div class="flex items-center gap-2 py-1.5 border-b border-dark-400/20 text-sm">
+        <span>${icon}</span>
+        <span class="${m.type === 'entree' ? 'text-green-400' : 'text-red-400'} font-medium">${sign}${formatCurrency(Math.abs(m.montant))}</span>
+        <span class="text-gray-500 text-[10px]">${m.source || '?'} → ${m.destination || '?'}</span>
+        ${m.note ? `<span class="text-gray-600 text-[10px] italic truncate max-w-[120px]">${m.note}</span>` : ''}
+        <button class="ml-auto text-red-400/50 hover:text-red-400 text-sm mouv-del-btn" data-idx="${i}">&times;</button>
+      </div>`;
+    }).join('');
+
+    const typeOptions = `<option value="entree">Entrée</option><option value="depense">Dépense</option><option value="donation">Donation</option>`;
+    const srcOptions = mouvSourceOptions.map(s => `<option value="${s}">${s}</option>`).join('');
+    const dstOptions = mouvDestOptions.map(d => `<option value="${d}">${d}</option>`).join('');
+    const donTypeOpts = donationTypes.map(d => `<option value="${d.value}">${d.label}</option>`).join('');
+
+    const body = `
+      <div class="mb-4">${mvts.length > 0 ? listHtml : '<p class="text-gray-600 text-sm italic">Aucun mouvement</p>'}</div>
+      <div class="border-t border-dark-400/30 pt-4">
+        <p class="text-xs text-gray-400 font-medium mb-3">Ajouter un mouvement</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] text-gray-500">Type</label>
+            <select id="mvt-type" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200">${typeOptions}</select>
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-500">Montant (€/an)</label>
+            <input type="number" id="mvt-montant" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200" step="100" min="0" placeholder="0">
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-500">Source</label>
+            <select id="mvt-source" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200">${srcOptions}</select>
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-500">Destination</label>
+            <select id="mvt-dest" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200">${dstOptions}</select>
+          </div>
+        </div>
+        <div id="mvt-donation-fields" class="hidden mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] text-gray-500">Type de donation</label>
+            <select id="mvt-don-type" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-yellow-400">${donTypeOpts}</select>
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-500">Bénéficiaire</label>
+            <input type="text" id="mvt-beneficiaire" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200" placeholder="Enfant 1">
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="text-[10px] text-gray-500">Note</label>
+          <input type="text" id="mvt-note" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200" placeholder="Optionnel...">
+        </div>
+      </div>`;
+
+    const modal = openModal(`Mouvements — ${year}`, body, () => {
+      const montant = Number(document.getElementById('mvt-montant')?.value) || 0;
+      if (montant <= 0) return;
+      const type = document.getElementById('mvt-type').value;
+      const newMvt = {
+        id: 'mvt-' + Date.now(),
+        type,
+        montant,
+        source: document.getElementById('mvt-source').value,
+        destination: document.getElementById('mvt-dest').value,
+        note: document.getElementById('mvt-note')?.value?.trim() || ''
+      };
+      if (type === 'donation') {
+        newMvt.donationType = document.getElementById('mvt-don-type')?.value || 'abattement_100k';
+        newMvt.beneficiaire = document.getElementById('mvt-beneficiaire')?.value?.trim() || '';
       }
-      store.set('mouvementsParAnnee', data);
+      const d = store.get('mouvementsParAnnee') || {};
+      if (!d[year]) d[year] = [];
+      d[year].push(newMvt);
+      store.set('mouvementsParAnnee', d);
       navigate('projection');
     });
-  });
 
-  // --- Mouvements note buttons ---
-  document.querySelectorAll('.mouvement-note-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const year = parseInt(btn.dataset.year);
-      const data = store.get('mouvementsParAnnee') || {};
-      const current = data[year]?.note || '';
-      const note = prompt(`Note pour ${year} :`, current);
-      if (note !== null) {
-        if (!data[year]) data[year] = {};
-        if (note.trim()) {
-          data[year].note = note.trim();
-        } else {
-          delete data[year].note;
-          if (data[year].montant == null) delete data[year];
+    // Show/hide donation fields based on type
+    const typeSelect = modal.querySelector('#mvt-type');
+    const donFields = modal.querySelector('#mvt-donation-fields');
+    typeSelect?.addEventListener('change', () => {
+      donFields.classList.toggle('hidden', typeSelect.value !== 'donation');
+    });
+
+    // Auto-set source/destination based on type
+    typeSelect?.addEventListener('change', () => {
+      const src = modal.querySelector('#mvt-source');
+      const dst = modal.querySelector('#mvt-dest');
+      if (typeSelect.value === 'entree') { src.value = 'Autre'; }
+      else if (typeSelect.value === 'depense') { dst.value = 'Autre'; }
+      else if (typeSelect.value === 'donation') { dst.value = 'Autre'; }
+    });
+
+    // Delete buttons
+    modal.querySelectorAll('.mouv-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        const d = store.get('mouvementsParAnnee') || {};
+        if (d[year] && Array.isArray(d[year])) {
+          d[year].splice(idx, 1);
+          if (d[year].length === 0) delete d[year];
+          store.set('mouvementsParAnnee', d);
+          navigate('projection');
         }
-        store.set('mouvementsParAnnee', data);
-        navigate('projection');
-      }
+      });
+    });
+  }
+
+  document.querySelectorAll('.mouv-cell').forEach(cell => {
+    cell.addEventListener('click', (e) => {
+      if (e.target.closest('.proj-tip')) return;
+      openMouvementModal(parseInt(cell.dataset.year));
     });
   });
 

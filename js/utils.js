@@ -182,6 +182,9 @@ export function computeProjection(store, overrides = {}) {
   const surplusByYear = {};
   surplusAnnuel.forEach(s => { surplusByYear[Number(s.year)] = Number(s.montant) || 0; });
 
+  // Mouvements par année (new system: array of transfers per year)
+  const mouvementsParAnnee = state.mouvementsParAnnee || {};
+
   // Build per-placement simulation state
   const rendementPlacements = params.rendementPlacements || {};
   const cashInjectionsParams = params.cashInjections || {};
@@ -586,6 +589,72 @@ export function computeProjection(store, overrides = {}) {
             destSim.totalApports += amount;
             if (destIsPEA) peaApportsCumules += amount;
           }
+        }
+      }
+    }
+
+    // Process mouvements for this year
+    const mouvementsThisYear = mouvementsParAnnee[calYear];
+    if (mouvementsThisYear && Array.isArray(mouvementsThisYear)) {
+      for (const mvt of mouvementsThisYear) {
+        let amount = Math.abs(Number(mvt.montant) || 0);
+        if (amount <= 0) continue;
+
+        // Helper: find placSim by groupKey
+        const findPlacSim = (gk) => {
+          if (gk === 'PEA') return placSims.find(ps => ps.groupKey.startsWith('PEA'));
+          return placSims.find(ps => ps.groupKey === gk);
+        };
+
+        // Debit from source
+        if (mvt.source && mvt.source !== 'Autre') {
+          if (mvt.source === 'Épargne') {
+            amount = Math.min(amount, Math.max(0, epar));
+            epar -= amount;
+          } else if (mvt.source === 'Héritage') {
+            amount = Math.min(amount, Math.max(0, heritage));
+            heritage -= amount;
+          } else if (mvt.source === 'Immo') {
+            amount = Math.min(amount, Math.max(0, immo));
+            immo -= amount;
+          } else {
+            // Placement group key (PEA ETF, CTO TR, Ass. Vie, etc.)
+            const srcSim = findPlacSim(mvt.source);
+            if (srcSim) {
+              amount = Math.min(amount, Math.max(0, srcSim.value));
+              srcSim.value -= amount;
+            }
+          }
+        }
+
+        // Credit to destination
+        if (amount > 0 && mvt.destination && mvt.destination !== 'Autre') {
+          if (mvt.destination === 'Épargne') {
+            epar += amount;
+            surplus += amount;
+          } else if (mvt.destination === 'Héritage') {
+            heritage += amount;
+          } else if (mvt.destination === 'Immo') {
+            immo += amount;
+          } else {
+            const destSim = findPlacSim(mvt.destination);
+            if (destSim) {
+              // Respect PEA ceiling
+              if (destSim.groupKey.startsWith('PEA')) {
+                amount = Math.min(amount, Math.max(0, PEA_PLAFOND - peaApportsCumules));
+                if (amount > 0) peaApportsCumules += amount;
+              }
+              if (amount > 0) {
+                destSim.value += amount;
+                destSim.totalApports += amount;
+              }
+            }
+          }
+        }
+
+        // Track donations
+        if (mvt.type === 'donation') {
+          donation += amount;
         }
       }
     }
