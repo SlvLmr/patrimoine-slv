@@ -776,7 +776,7 @@ export function render(store) {
                   const indicators = [
                     hasDonation ? '<span class="text-yellow-400" title="Donation">&#9733;</span>' : '',
                     hasDepense ? '<span class="text-red-400" title="Dépense">&#9679;</span>' : '',
-                    hasEntree ? '<span class="text-green-400" title="Entrée">&#9679;</span>' : ''
+                    hasEntree ? '<span class="text-green-400" title="Rentrée">&#9679;</span>' : ''
                   ].filter(Boolean).join('');
                   const tipContent = mvts.length > 0 ? mvts.map(m => {
                     const icon = m.type === 'donation' ? '⭐' : m.type === 'depense' ? '🔴' : '🟢';
@@ -2216,7 +2216,7 @@ export function mount(store, navigate) {
   });
 
   // --- Mouvements modal ---
-  const mouvSourceOptions = ['Autre', ...(snapshots.groupKeys || []), 'Épargne', 'Héritage', 'Immo'];
+  const mouvSourceOptions = ['Autre', ...(snapshots.groupKeys || []), 'Épargne', 'Héritage', 'Immo', 'Donation', 'Rente FIRE'];
   const mouvDestOptions = [...mouvSourceOptions];
   const donationTypes = [
     { value: 'abattement_100k', label: 'Abattement 100 000 € (ligne directe)' },
@@ -2242,7 +2242,7 @@ export function mount(store, navigate) {
       </div>`;
     }).join('');
 
-    const typeOptions = `<option value="entree">Entrée</option><option value="depense">Dépense</option><option value="donation">Donation</option>`;
+    const typeOptions = `<option value="entree">Rentrée</option><option value="depense">Dépense</option><option value="donation">Donation</option>`;
     const srcOptions = mouvSourceOptions.map(s => `<option value="${s}">${s}</option>`).join('');
     const dstOptions = mouvDestOptions.map(d => `<option value="${d}">${d}</option>`).join('');
     const donTypeOpts = donationTypes.map(d => `<option value="${d.value}">${d.label}</option>`).join('');
@@ -2281,7 +2281,7 @@ export function mount(store, navigate) {
         </div>
         <div class="mt-3">
           <label class="text-[10px] text-gray-500">Note</label>
-          <input type="text" id="mvt-note" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200" placeholder="Optionnel...">
+          <input type="text" id="mvt-note" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-2.5 text-sm text-gray-200" placeholder="Optionnel...">
         </div>
       </div>`;
 
