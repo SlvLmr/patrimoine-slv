@@ -2276,7 +2276,12 @@ export function mount(store, navigate) {
           </div>
           <div>
             <label class="text-[10px] text-gray-500">Bénéficiaire</label>
-            <input type="text" id="mvt-beneficiaire" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200" placeholder="Enfant 1">
+            <select id="mvt-beneficiaire" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200">${(() => {
+              const enfants = (store.get('donationConfig') || {}).enfants || [];
+              const opts = enfants.map((e, i) => `<option value="${e.prenom || 'Enfant ' + (i + 1)}">${e.prenom || 'Enfant ' + (i + 1)}</option>`);
+              opts.push('<option value="">Autre...</option>');
+              return opts.join('');
+            })()}</select>
           </div>
         </div>
         <div class="mt-3">
