@@ -2230,6 +2230,8 @@ export function mount(store, navigate) {
     const data = store.get('mouvementsParAnnee') || {};
     const mvts = data[year] || [];
 
+    let editingIdx = -1; // Track which movement is being edited
+
     const listHtml = mvts.map((m, i) => {
       const icon = m.type === 'donation' ? '⭐' : m.type === 'depense' ? '🔴' : '🟢';
       const sign = m.type === 'depense' || m.type === 'donation' ? '-' : '+';
@@ -2238,7 +2240,8 @@ export function mount(store, navigate) {
         <span class="${m.type === 'entree' ? 'text-green-400' : 'text-red-400'} font-medium">${sign}${formatCurrency(Math.abs(m.montant))}</span>
         <span class="text-gray-500 text-[10px]">${m.source || '?'} → ${m.destination || '?'}</span>
         ${m.note ? `<span class="text-gray-600 text-[10px] italic truncate max-w-[120px]">${m.note}</span>` : ''}
-        <button class="ml-auto text-red-400/50 hover:text-red-400 text-sm mouv-del-btn" data-idx="${i}">&times;</button>
+        <button class="ml-auto text-blue-400/50 hover:text-blue-400 text-sm mouv-edit-btn" data-idx="${i}" title="Modifier">✎</button>
+        <button class="text-red-400/50 hover:text-red-400 text-sm mouv-del-btn" data-idx="${i}">&times;</button>
       </div>`;
     }).join('');
 
@@ -2250,7 +2253,7 @@ export function mount(store, navigate) {
     const body = `
       <div class="mb-4">${mvts.length > 0 ? listHtml : '<p class="text-gray-600 text-sm italic">Aucun mouvement</p>'}</div>
       <div class="border-t border-dark-400/30 pt-4">
-        <p class="text-xs text-gray-400 font-medium mb-3">Ajouter un mouvement</p>
+        <p id="mvt-form-title" class="text-xs text-gray-400 font-medium mb-3">Ajouter un mouvement</p>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-[10px] text-gray-500">Type</label>
@@ -2279,6 +2282,7 @@ export function mount(store, navigate) {
             <select id="mvt-beneficiaire" class="w-full bg-dark-600 border border-dark-400/50 rounded px-2 py-1.5 text-sm text-gray-200">${(() => {
               const enfants = (store.get('donationConfig') || {}).enfants || [];
               const opts = enfants.map((e, i) => `<option value="${e.prenom || 'Enfant ' + (i + 1)}">${e.prenom || 'Enfant ' + (i + 1)}</option>`);
+              if (enfants.length >= 2) opts.push('<option value="Les deux">Les deux</option>');
               opts.push('<option value="">Autre...</option>');
               return opts.join('');
             })()}</select>
@@ -2294,8 +2298,7 @@ export function mount(store, navigate) {
       const montant = Number(document.getElementById('mvt-montant')?.value) || 0;
       if (montant <= 0) return;
       const type = document.getElementById('mvt-type').value;
-      const newMvt = {
-        id: 'mvt-' + Date.now(),
+      const mvtData = {
         type,
         montant,
         source: document.getElementById('mvt-source').value,
@@ -2303,12 +2306,19 @@ export function mount(store, navigate) {
         note: document.getElementById('mvt-note')?.value?.trim() || ''
       };
       if (type === 'donation') {
-        newMvt.donationType = document.getElementById('mvt-don-type')?.value || 'abattement_100k';
-        newMvt.beneficiaire = document.getElementById('mvt-beneficiaire')?.value?.trim() || '';
+        mvtData.donationType = document.getElementById('mvt-don-type')?.value || 'abattement_100k';
+        mvtData.beneficiaire = document.getElementById('mvt-beneficiaire')?.value?.trim() || '';
       }
       const d = store.get('mouvementsParAnnee') || {};
       if (!d[year]) d[year] = [];
-      d[year].push(newMvt);
+      if (editingIdx >= 0 && editingIdx < d[year].length) {
+        // Update existing movement, preserve id
+        mvtData.id = d[year][editingIdx].id;
+        d[year][editingIdx] = mvtData;
+      } else {
+        mvtData.id = 'mvt-' + Date.now();
+        d[year].push(mvtData);
+      }
       store.set('mouvementsParAnnee', d);
       navigate('projection');
     });
@@ -2327,6 +2337,32 @@ export function mount(store, navigate) {
       if (typeSelect.value === 'entree') { src.value = 'Autre'; }
       else if (typeSelect.value === 'depense') { dst.value = 'Autre'; }
       else if (typeSelect.value === 'donation') { dst.value = 'Autre'; }
+    });
+
+    // Edit buttons — pre-fill form with existing movement data
+    modal.querySelectorAll('.mouv-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        const m = mvts[idx];
+        if (!m) return;
+        editingIdx = idx;
+        modal.querySelector('#mvt-form-title').textContent = `Modifier le mouvement #${idx + 1}`;
+        modal.querySelector('#mvt-type').value = m.type || 'entree';
+        modal.querySelector('#mvt-montant').value = m.montant || 0;
+        modal.querySelector('#mvt-source').value = m.source || 'Autre';
+        modal.querySelector('#mvt-dest').value = m.destination || 'Autre';
+        modal.querySelector('#mvt-note').value = m.note || '';
+        // Show/hide donation fields
+        const donFields = modal.querySelector('#mvt-donation-fields');
+        donFields.classList.toggle('hidden', m.type !== 'donation');
+        if (m.type === 'donation') {
+          modal.querySelector('#mvt-don-type').value = m.donationType || 'abattement_100k';
+          modal.querySelector('#mvt-beneficiaire').value = m.beneficiaire || '';
+        }
+        // Update confirm button text
+        const confirmBtn = modal.querySelector('#modal-confirm');
+        if (confirmBtn) confirmBtn.textContent = 'Modifier';
+      });
     });
 
     // Delete buttons
