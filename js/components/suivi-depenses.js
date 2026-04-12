@@ -254,16 +254,16 @@ export function render(store) {
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
-  // Merge revenus + depenses into unified operations per bank (no sort — manual order via arrows)
+  // Merge revenus + depenses into unified operations per bank, sorted by date desc
   const opsCIC = [
     ...items.filter(i => i.compte === bankNames.primary).map(i => ({ ...i, type: 'depense' })),
     ...revenus.filter(r => r.compte === bankNames.primary).map(r => ({ ...r, type: 'revenu' }))
-  ];
+  ].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const opsTR = [
     ...items.filter(i => i.compte === bankNames.secondary).map(i => ({ ...i, type: 'depense' })),
     ...revenus.filter(r => r.compte === bankNames.secondary).map(r => ({ ...r, type: 'revenu' }))
-  ];
+  ].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const renderOp = (op) => {
     const isRevenu = op.type === 'revenu';
