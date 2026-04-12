@@ -21,6 +21,7 @@ const AFFECTATIONS = [
   { value: 'investissement',  label: 'Invest.',       border: 'border-blue-500',    bg: 'bg-blue-500/10',       text: 'text-blue-400',    ring: 'focus:ring-blue-500/40',    radio: 'text-blue-500' },
   { value: 'virement',        label: 'Virement',      border: 'border-amber-500',   bg: 'bg-amber-500/10',      text: 'text-amber-400',   ring: 'focus:ring-amber-500/40',   radio: 'text-amber-500' },
   { value: 'ndf',             label: 'NDF',           border: 'border-purple-500',  bg: 'bg-purple-500/10',     text: 'text-purple-400',  ring: 'focus:ring-purple-500/40',  radio: 'text-purple-500' },
+  { value: 'autre',           label: 'Autre',         border: 'border-gray-500',    bg: 'bg-gray-500/10',       text: 'text-gray-400',    ring: 'focus:ring-gray-500/40',    radio: 'text-gray-500' },
   { value: 'revenu',          label: 'Revenu',        border: 'border-emerald-500', bg: 'bg-emerald-500/10',    text: 'text-emerald-400', ring: 'focus:ring-emerald-500/40', radio: 'text-emerald-500' },
 ];
 
@@ -45,6 +46,7 @@ function getCurrentAffectation(item) {
   if (cat === 'investissement') return 'investissement';
   if (cat === 'virement') return 'virement';
   if (cat === 'ndf') return 'ndf';
+  if (cat === 'autre') return 'autre';
   return 'depense';
 }
 
@@ -219,7 +221,7 @@ export function render(store) {
   const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
   // Enveloppe restante pour quotidien
-  const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+  const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement' && (i.categorie || '') !== 'Autre').reduce((s, i) => s + (Number(i.montant) || 0), 0);
   const resteADepenser = budgetQuotidien - depensesRougesTR;
 
   // Trade Republic features (editable values)
@@ -270,7 +272,8 @@ export function render(store) {
     const isVirement = !isRevenu && (op.categorie || '') === 'Virement';
     const isNDF = !isRevenu && (op.categorie || '') === 'NDF';
     const isInvest = !isRevenu && (op.categorie || '') === 'Investissement';
-    const arrowColor = isRevenu ? 'text-emerald-400' : isInvest ? 'text-blue-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : 'text-accent-red';
+    const isAutre = !isRevenu && (op.categorie || '') === 'Autre';
+    const arrowColor = isRevenu ? 'text-emerald-400' : isInvest ? 'text-blue-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : isAutre ? 'text-gray-400' : 'text-accent-red';
     const icon = isRevenu
       ? `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
       : `<svg class="w-3.5 h-3.5 ${arrowColor} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
@@ -1238,6 +1241,7 @@ export function mount(store, navigate) {
           if (newAff === 'investissement') data.categorie = 'Investissement';
           else if (newAff === 'virement') data.categorie = 'Virement';
           else if (newAff === 'ndf') data.categorie = 'NDF';
+          else if (newAff === 'autre') data.categorie = 'Autre';
           Object.assign(item, data);
           store.set('suiviDepenses', items);
         }
@@ -1286,6 +1290,7 @@ export function mount(store, navigate) {
           if (newAff === 'investissement') data.categorie = 'Investissement';
           else if (newAff === 'virement') data.categorie = 'Virement';
           else if (newAff === 'ndf') data.categorie = 'NDF';
+          else if (newAff === 'autre') data.categorie = 'Autre';
           const items = store.get('suiviDepenses') || [];
           items.unshift({ id: rev.id, date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie });
           store.set('suiviDepenses', items);
@@ -1822,7 +1827,9 @@ export function mount(store, navigate) {
       const isRev = op.type === 'revenu';
       const isVirement = !isRev && (op.categorie || '') === 'Virement';
       const isNDF = !isRev && (op.categorie || '') === 'NDF';
-      const color = isRev ? 'text-emerald-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : 'text-accent-red';
+      const isInvest = !isRev && (op.categorie || '') === 'Investissement';
+      const isAutre = !isRev && (op.categorie || '') === 'Autre';
+      const color = isRev ? 'text-emerald-400' : isInvest ? 'text-blue-400' : isVirement ? 'text-amber-400' : isNDF ? 'text-purple-400' : isAutre ? 'text-gray-400' : 'text-accent-red';
       const icon = isRev
         ? `<svg class="w-3 h-3 ${color} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>`
         : `<svg class="w-3 h-3 ${color} flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>`;
