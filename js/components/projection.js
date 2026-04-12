@@ -158,18 +158,20 @@ export function render(store) {
   const fireInflation = params.inflationRate || 0.02;
   const salairesParAnnee = store.get('salairesParAnnee') || {};
   const pensionsParAnnee = store.get('pensionsParAnnee') || {};
+  const autresRevenusParAnnee = store.get('autresRevenusParAnnee') || {};
   let fireFirstIdx = -1;
   const fireData = snapshots.map((s, idx) => {
     const depenses = fireDepBase * Math.pow(1 + fireInflation, s.annee);
     const rente = s.totalLiquiditesNettes * fireSwr;
     const salaire = Number(salairesParAnnee[s.calendarYear]) || 0;
     const pension = Number(pensionsParAnnee[s.calendarYear]) || 0;
-    const totalRevenu = rente + salaire + pension;
+    const autre = Number(autresRevenusParAnnee[s.calendarYear]) || 0;
+    const totalRevenu = rente + salaire + pension + autre;
     const couverture = depenses > 0 ? totalRevenu / depenses : 0;
     const couvertureFire = depenses > 0 ? rente / depenses : 0;
     const isFire = couvertureFire >= 1;
     if (isFire && fireFirstIdx === -1) fireFirstIdx = idx;
-    return { rente, salaire, pension, depenses, couverture, couvertureFire, isFire };
+    return { rente, salaire, pension, autre, depenses, couverture, couvertureFire, isFire };
   });
   const first = snapshots[0];
   const evolution = (last?.patrimoineNet || 0) - (first?.patrimoineNet || 0);
@@ -712,6 +714,7 @@ export function render(store) {
                 <th class="px-1 py-1.5 text-center font-semibold">Liq.</th>
                 <th class="px-1 py-1.5 text-center text-pink-300/70">Mouv.</th>
                 <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-purple-400/70">Salaire</th>
+                <th class="px-1 py-1.5 text-center" style="color: rgb(163,190,100)">Autre</th>
                 <th class="px-1 py-1.5 text-center text-amber-400/70">Pension</th>
                 <th class="px-1 py-1.5 text-center border-l-2 border-dark-300/40 text-orange-400/70">🔥 Rente</th>
                 <th class="px-1 py-1.5 text-center text-orange-400/50">Dép.</th>
@@ -783,13 +786,14 @@ export function render(store) {
                     const sign = m.type === 'depense' || m.type === 'donation' ? '-' : '+';
                     const src = m.source || '?';
                     const dst = m.destination || '?';
-                    const note = m.note ? `<div class="text-gray-500 text-[9px] italic ml-3">${m.note.replace(/</g, '&lt;')}</div>` : '';
+                    const note = m.note ? `<div class="text-cyan-400/80 text-[9px] italic ml-3">📝 ${m.note.replace(/</g, '&lt;')}</div>` : '';
                     const donInfo = m.type === 'donation' && m.donationType ? `<div class="text-yellow-400/60 text-[9px] ml-3">${{abattement_100k: 'Abattement 100k€', don_sarkozy: 'Don Sarkozy', demembrement: 'Démembrement NP', purge_pv_cto: 'Purge PV CTO', donation_av: 'Donation AV'}[m.donationType] || m.donationType}${m.beneficiaire ? ' → ' + m.beneficiaire : ''}</div>` : '';
                     return `<div class="flex justify-between gap-3"><span>${icon} ${sign}${formatCurrency(Math.abs(m.montant))}</span><span class="text-gray-500">${src} → ${dst}</span></div>${donInfo}${note}`;
                   }).join('<div class="border-t border-dark-400/30 my-1"></div>') : '';
                   return `<td class="px-1 py-1 text-center text-[9px] ${bt} ${mvts.length > 0 ? 'proj-tip-wrap cursor-pointer' : ''} ${tipDir} mouv-cell" data-year="${s.calendarYear}"><div class="flex items-center justify-center gap-0.5"><span class="text-[7px] leading-none">${indicators}</span>${mvts.length > 0 ? `<span class="${netTotal > 0 ? 'text-green-400' : netTotal < 0 ? 'text-red-400' : 'text-gray-400'}">${netTotal > 0 ? '+' : ''}${formatCurrency(netTotal)}</span>` : '<span class="text-gray-700">-</span>'}</div>${tipContent ? `<div class="proj-tip" style="min-width:220px">${tipContent}</div>` : ''}</td>`;
                 })()}
                 <td class="px-0 py-0 text-center text-[9px] border-l-2 border-dark-300/40 ${bt}"><input type="number" class="salaire-input w-full bg-transparent text-center text-[9px] ${salairesParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-purple-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${salairesParAnnee[s.calendarYear] != null ? salairesParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
+                <td class="px-0 py-0 text-center text-[9px] ${bt}"><input type="number" class="autre-revenu-input w-full bg-transparent text-center text-[9px] ${autresRevenusParAnnee[s.calendarYear] === 0 ? 'text-red-400' : ''} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${autresRevenusParAnnee[s.calendarYear] != null ? autresRevenusParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" style="${autresRevenusParAnnee[s.calendarYear] !== 0 ? 'color: rgb(163,190,100)' : ''}"></td>
                 <td class="px-0 py-0 text-center text-[9px] ${bt}"><input type="number" class="pension-input w-full bg-transparent text-center text-[9px] ${pensionsParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-amber-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${pensionsParAnnee[s.calendarYear] != null ? pensionsParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-1 py-1 text-center text-[9px] border-l-2 border-dark-300/40 ${bt} ${fire.isFire ? 'text-orange-400 font-semibold' : 'text-gray-400'}">${fire.rente > 0 ? formatCurrency(fire.rente) : '<span class="text-gray-700">-</span>'}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-500 ${bt}">${formatCurrency(fire.depenses)}</td>
@@ -1011,8 +1015,8 @@ export function render(store) {
             </div>
             <div class="rounded-lg bg-dark-700/50 p-3 text-center">
               <p class="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Revenus annuels</p>
-              <p class="text-lg font-bold text-purple-400">${fireSnap ? formatCurrency(fireFd.rente + fireFd.salaire + fireFd.pension) : formatCurrency(lastFire.rente)}</p>
-              <p class="text-[10px] text-gray-500">${fireSnap ? [fireFd.salaire > 0 ? `${formatCurrency(fireFd.salaire)} salaire` : '', fireFd.pension > 0 ? `${formatCurrency(fireFd.pension)} pension` : '', `${formatCurrency(fireFd.rente)} rente`].filter(Boolean).join(' + ') : 'SWR uniquement'}</p>
+              <p class="text-lg font-bold text-purple-400">${fireSnap ? formatCurrency(fireFd.rente + fireFd.salaire + fireFd.pension + fireFd.autre) : formatCurrency(lastFire.rente)}</p>
+              <p class="text-[10px] text-gray-500">${fireSnap ? [fireFd.salaire > 0 ? `${formatCurrency(fireFd.salaire)} salaire` : '', fireFd.autre > 0 ? `${formatCurrency(fireFd.autre)} autre` : '', fireFd.pension > 0 ? `${formatCurrency(fireFd.pension)} pension` : '', `${formatCurrency(fireFd.rente)} rente`].filter(Boolean).join(' + ') : 'SWR uniquement'}</p>
             </div>
           </div>
 
@@ -1125,11 +1129,12 @@ export function render(store) {
               const calYear = startSnap.calendarYear + y;
               const depenses = fireDepBase * Math.pow(1 + fireInflation, startSnap.annee + y);
 
-              // Salaire + Pension from year-based data
+              // Salaire + Autre + Pension from year-based data
               const salaire = Number(salairesParAnnee[calYear]) || 0;
               const pension = Number(pensionsParAnnee[calYear]) || 0;
+              const autre = Number(autresRevenusParAnnee[calYear]) || 0;
 
-              let besoinNet = Math.max(0, depenses - salaire - pension);
+              let besoinNet = Math.max(0, depenses - salaire - pension - autre);
               const withdrawals = {};
               allKeys.forEach(k => { withdrawals[k] = 0; });
 
@@ -1162,7 +1167,7 @@ export function render(store) {
               const totalPatrimoine = allKeys.reduce((s, k) => s + Math.max(0, balances[k]), 0);
 
               simRows.push({
-                age, calYear, depenses, salaire, pension, besoinNet,
+                age, calYear, depenses, salaire, autre, pension, besoinNet,
                 withdrawals: { ...withdrawals },
                 balances: { ...balances },
                 totalPatrimoine,
@@ -1203,6 +1208,7 @@ export function render(store) {
             simHtml += '<th class="px-1.5 py-1.5 text-center">Âge</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right">Dépenses</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right">Salaire</th>';
+            simHtml += '<th class="px-1.5 py-1.5 text-right" style="color:rgb(163,190,100)">Autre</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right">Pension</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right border-r border-dark-300/40">Besoin net</th>';
             visibleKeys.forEach(k => {
@@ -1211,9 +1217,9 @@ export function render(store) {
             simHtml += '<th class="px-1.5 py-1.5 text-right border-l border-dark-300/40 font-semibold">Total</th>';
             simHtml += '</tr></thead><tbody class="divide-y divide-dark-400/20">';
 
-            const firstRevenueIdx = simRows.findIndex(x => (x.salaire > 0 || x.pension > 0));
+            const firstRevenueIdx = simRows.findIndex(x => (x.salaire > 0 || x.autre > 0 || x.pension > 0));
             simRows.forEach((r, i) => {
-              const hasRevenue = r.salaire > 0 || r.pension > 0;
+              const hasRevenue = r.salaire > 0 || r.autre > 0 || r.pension > 0;
               const isDepleted = r.depleted;
               const isFiveYear = i > 0 && i % 5 === 0;
               const rowCls = isDepleted ? 'bg-red-500/10' : (hasRevenue && i === firstRevenueIdx) ? 'bg-amber-500/5' : '';
@@ -1223,6 +1229,7 @@ export function render(store) {
               simHtml += '<td class="px-1.5 py-1 text-center font-medium ' + bt + ' text-gray-200">' + r.age + '</td>';
               simHtml += '<td class="px-1.5 py-1 text-right text-gray-400 ' + bt + '">' + formatCurrency(r.depenses) + '</td>';
               simHtml += '<td class="px-1.5 py-1 text-right ' + bt + ' ' + (r.salaire > 0 ? 'text-purple-400/80' : 'text-gray-700') + '">' + (r.salaire > 0 ? formatCurrency(r.salaire) : '—') + '</td>';
+              simHtml += '<td class="px-1.5 py-1 text-right ' + bt + '" style="' + (r.autre > 0 ? 'color:rgb(163,190,100)' : 'color:rgb(55,65,81)') + '">' + (r.autre > 0 ? formatCurrency(r.autre) : '—') + '</td>';
               simHtml += '<td class="px-1.5 py-1 text-right ' + bt + ' ' + (r.pension > 0 ? 'text-amber-400/80' : 'text-gray-700') + '">' + (r.pension > 0 ? formatCurrency(r.pension) : '—') + '</td>';
               simHtml += '<td class="px-1.5 py-1 text-right font-medium text-gray-300 border-r border-dark-300/40 ' + bt + '">' + formatCurrency(r.besoinNet) + '</td>';
               visibleKeys.forEach(k => {
@@ -1400,7 +1407,17 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
   const snapshot = snapshots.find(s => s.calendarYear === calendarYear);
   if (!snapshot) return;
 
-  const placementRows = placements.map(p => {
+  // Sort placements by table column order (GROUP_KEY_ORDER)
+  const GROUP_KEY_ORDER = ['PEA Actions', 'PEA ETF', 'PEA Autre', 'CTO TR', 'CTO BB', 'CTO', 'Crypto', 'Assurance Vie', 'PEE', 'PER', 'Livrets'];
+  const sortedPlacements = [...placements].sort((a, b) => {
+    const ga = getPlacementGroupKey(a);
+    const gb = getPlacementGroupKey(b);
+    const ia = GROUP_KEY_ORDER.indexOf(ga);
+    const ib = GROUP_KEY_ORDER.indexOf(gb);
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+  });
+
+  const placementRows = sortedPlacements.map(p => {
     const projValue = snapshot.placementById?.[p.id] || 0;
     const realValue = existingPlac[p.id] !== undefined ? existingPlac[p.id] : '';
     const env = p.enveloppe || '';
@@ -1447,22 +1464,22 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
           step="1">
       </div>
       <div class="flex items-center gap-2">
-        <label class="text-sm text-gray-300 flex-1">Surplus</label>
-        <input type="number" name="actu-surplus" value="${existing.surplus !== undefined ? existing.surplus : ''}"
-          placeholder="${formatCurrency(snapshot.surplus || 0).replace(/[^\d\s]/g, '').trim()}"
+        <label class="text-sm text-gray-300 flex-1">Héritage</label>
+        <input type="number" name="actu-heritage" value="${existing.heritage !== undefined ? existing.heritage : ''}"
+          placeholder="${formatCurrency(snapshot.heritage || 0).replace(/[^\d\s]/g, '').trim()}"
           class="input-field w-28 placeholder-gray-700"
           step="1">
       </div>
       <div class="flex items-center gap-2">
-        <label class="text-sm text-gray-300 flex-1">Donation</label>
-        <input type="number" name="actu-donation" value="${existing.donation !== undefined ? existing.donation : ''}"
-          placeholder="${formatCurrency(snapshot.donation || 0).replace(/[^\d\s]/g, '').trim()}"
+        <label class="text-sm text-gray-300 flex-1">Mouvements</label>
+        <input type="number" name="actu-mouvements" value="${existing.mouvements !== undefined ? existing.mouvements : ''}"
+          placeholder="0"
           class="input-field w-28 placeholder-gray-700"
           step="1">
       </div>
     </div>
 
-    ${Object.keys(existingPlac).length > 0 || existing.epargne !== undefined || existing.immobilier !== undefined || existing.surplus !== undefined || existing.donation !== undefined
+    ${Object.keys(existingPlac).length > 0 || existing.epargne !== undefined || existing.immobilier !== undefined || existing.heritage !== undefined || existing.mouvements !== undefined
       ? '<div class="mt-4 pt-3 border-t border-dark-400/30"><button id="actu-clear" class="text-xs text-red-400 hover:text-red-300 transition">Supprimer cette actualisation</button></div>'
       : ''}
   `;
@@ -1492,14 +1509,14 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
       actu.immobilier = Number(immoInput.value);
       hasAny = true;
     }
-    const surplusInput = modalBody.querySelector('[name="actu-surplus"]');
-    if (surplusInput && surplusInput.value !== '') {
-      actu.surplus = Number(surplusInput.value);
+    const heritageInput = modalBody.querySelector('[name="actu-heritage"]');
+    if (heritageInput && heritageInput.value !== '') {
+      actu.heritage = Number(heritageInput.value);
       hasAny = true;
     }
-    const donationInput = modalBody.querySelector('[name="actu-donation"]');
-    if (donationInput && donationInput.value !== '') {
-      actu.donation = Number(donationInput.value);
+    const mouvementsInput = modalBody.querySelector('[name="actu-mouvements"]');
+    if (mouvementsInput && mouvementsInput.value !== '') {
+      actu.mouvements = Number(mouvementsInput.value);
       hasAny = true;
     }
 
@@ -2215,6 +2232,22 @@ export function mount(store, navigate) {
     });
   });
 
+  // --- Autre revenu par année inline editing ---
+  document.querySelectorAll('.autre-revenu-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const year = parseInt(input.dataset.year);
+      const raw = input.value.trim();
+      const data = store.get('autresRevenusParAnnee') || {};
+      if (raw !== '') {
+        data[year] = Number(raw) || 0;
+      } else {
+        delete data[year];
+      }
+      store.set('autresRevenusParAnnee', data);
+      navigate('projection');
+    });
+  });
+
   // --- Mouvements modal ---
   const mouvSourceOptions = ['Autre', ...(snapshots.groupKeys || []), 'Épargne', 'Héritage', 'Immo', 'Donation', 'Rente FIRE'];
   const mouvDestOptions = [...mouvSourceOptions];
@@ -2239,7 +2272,7 @@ export function mount(store, navigate) {
         <span>${icon}</span>
         <span class="${m.type === 'entree' ? 'text-green-400' : 'text-red-400'} font-medium">${sign}${formatCurrency(Math.abs(m.montant))}</span>
         <span class="text-gray-500 text-[10px]">${m.source || '?'} → ${m.destination || '?'}</span>
-        ${m.note ? `<span class="text-gray-600 text-[10px] italic truncate max-w-[120px]">${m.note}</span>` : ''}
+        ${m.note ? `<span class="text-cyan-400/70 text-[10px] italic truncate max-w-[150px]">📝 ${m.note}</span>` : ''}
         <button class="ml-auto text-blue-400/50 hover:text-blue-400 text-sm mouv-edit-btn" data-idx="${i}" title="Modifier">✎</button>
         <button class="text-red-400/50 hover:text-red-400 text-sm mouv-del-btn" data-idx="${i}">&times;</button>
       </div>`;
