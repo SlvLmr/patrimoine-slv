@@ -99,6 +99,9 @@ export function render(store) {
   const groupKeys = snapshots.groupKeys || [];
   const rendementPlacements = params.rendementPlacements || {};
   const placements = (store.getAll().actifs?.placements || []);
+  const PFU_RATE = params.tauxPFU || 0.314;
+  const PS_RATE = params.tauxPS || 0.186;
+  const AV_IR = params.tauxAVIR || 0.075;
   const heritageItems = store.get('heritage') || [];
   const capitalTransfers = params.capitalTransfers || [];
   const currentCalendarYear = new Date().getFullYear();
@@ -695,7 +698,7 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-3 sm:p-5 border-b border-dark-400/30">
           <h2 class="text-base sm:text-lg font-semibold text-gray-200">Détail année par année</h2>
-          <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5 ans: 31,4% · PEA &gt;5 ans: 17,2% · AV &lt;8 ans: 31,4% · AV &gt;8 ans: 24,7% · CTO/Crypto: 31,4% · PEE: 17,2%</p>
+          <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5a: ${(PFU_RATE*100).toFixed(1)}% · PEA &gt;5a: ${(PS_RATE*100).toFixed(1)}% · AV &lt;8a: ${(PFU_RATE*100).toFixed(1)}% · AV &gt;8a: ${((PS_RATE+AV_IR)*100).toFixed(1)}% · CTO: ${(PFU_RATE*100).toFixed(1)}% · PEE: ${(PS_RATE*100).toFixed(1)}%</p>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm table-fixed min-w-[1000px]">
@@ -743,7 +746,7 @@ export function render(store) {
                   const ga = s.placementGains[gk] || 0;
                   const tx = s.placementTaxes?.[gk] || 0;
                   const rate = s.placementTaxRates?.[gk] || 0;
-                  const rateStr = rate > 0 ? ` <span class="text-gray-500">(${Math.round(rate * 100)}%)</span>` : '';
+                  const ratePct = rate * 100; const rateStr = rate > 0 ? ` <span class="text-gray-500">(${ratePct % 1 === 0 ? ratePct.toFixed(0) : ratePct.toFixed(1)}%)</span>` : '';
                   const tip = val > 0 ? `<div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(ap)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Gains</span><span class="${ga >= 0 ? 'text-accent-green' : 'text-red-400'}">${ga >= 0 ? '+' : ''}${formatCurrency(ga)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts${rateStr}</span><span class="text-red-400">-${formatCurrency(tx)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(val - tx)}</span></div></div>` : '';
                   return `<td class="px-1 py-0.5 text-center text-[9px] text-gray-200 ${bt} ${extraClass} ${val > 0 ? `proj-tip-wrap ${tipDir}` : ''}">${val > 0 ? `${formatCurrency(val)}<div class="text-[7px] text-gray-500 leading-tight">${formatCurrency(ap)}</div>${tip}` : '<span class="text-gray-700">-</span>'}</td>`;
                 };
@@ -810,9 +813,8 @@ export function render(store) {
         const fiscalSnap = snapshots[snapshots.length - 1];
         if (!fiscalSnap || groupKeys.length === 0) return '';
 
-        const PFU = params.tauxPFU || 0.314;
-        const PS = params.tauxPS || 0.172;
-        const AV_IR = params.tauxAVIR || 0.075;
+        const PFU = PFU_RATE;
+        const PS = PS_RATE;
         const AV_ABAT = 4600;
 
         // Build fiscal rows from snapshot data
@@ -827,19 +829,34 @@ export function render(store) {
           // Determine regime label
           let regime = '';
           const gkLow = gk.toLowerCase();
+          const psLabel = (PS * 100).toFixed(1).replace('.', ',') + '%';
+
+          const pfuLabel = (PFU * 100).toFixed(1).replace('.', ',') + '%';
+
           if (gkLow.includes('pea')) {
-            regime = rate <= PS + 0.01 ? 'PS seul (17,2%)' : 'PFU (30%)';
+
+            regime = rate <= PS + 0.01 ? `PS seul (${psLabel})` : `PFU (${pfuLabel})`;
+
           } else if (gkLow.includes('assurance') || gkLow === 'av') {
+
             regime = rate <= (PS + AV_IR + 0.01) && rate > PS + 0.01
-              ? 'PS + IR 7,5% (abat. 4 600\u00a0\u20ac)'
-              : rate <= PS + 0.01 ? 'PS seul (17,2%)' : 'PFU (30%)';
+
+              ? `PS + IR 7,5% (abat. 4 600 €)`
+
+              : rate <= PS + 0.01 ? `PS seul (${psLabel})` : `PFU (${pfuLabel})`;
+
           } else if (gkLow.includes('pee')) {
-            regime = 'PS seul (17,2%)';
+
+            regime = `PS seul (${psLabel})`;
+
           } else if (gkLow.includes('livret') || gkLow.includes('épargne')) {
-            regime = 'Exon\u00e9r\u00e9';
+
+            regime = 'Exonéré';
+
           } else {
-            regime = 'PFU (30%)';
-          }
+
+            regime = `PFU (${pfuLabel})`;
+
 
           const net = valeur - impot;
           return { gk, valeur, apports, gains, regime, impot, net };
@@ -937,24 +954,24 @@ export function render(store) {
           rate: refSnap.placementTaxRates?.[gk] || 0
         })).filter(d => d.valeur > 0);
 
-        // 2. PEE (PS seuls 17.2% après déblocage retraite)
+        const psStr = (PS_RATE * 100).toFixed(1).replace('.', ',') + '%';
+        const pfuStr = (PFU_RATE * 100).toFixed(1).replace('.', ',') + '%';
+        const avStr = ((PS_RATE + AV_IR) * 100).toFixed(1).replace('.', ',') + '%';
+
         gkData.filter(d => d.gk === 'PEE').forEach(d => {
-          withdrawalOrder.push({ priority: 2, source: d.gk, valeur: d.valeur, regime: 'PS seuls', taux: '17,2%', raison: 'Déblocable à la retraite, fiscalité réduite' });
+          withdrawalOrder.push({ priority: 2, source: d.gk, valeur: d.valeur, regime: 'PS seuls', taux: psStr, raison: 'Déblocable à la retraite, fiscalité réduite' });
         });
 
-        // 3. PEA > 5 ans (PS seuls 17.2%)
         gkData.filter(d => d.gk.startsWith('PEA')).forEach(d => {
-          withdrawalOrder.push({ priority: 3, source: d.gk, valeur: d.valeur, regime: 'PS seuls (>5 ans)', taux: '17,2%', raison: 'PEA mature : seuls les PS s\'appliquent' });
+          withdrawalOrder.push({ priority: 3, source: d.gk, valeur: d.valeur, regime: 'PS seuls (>5 ans)', taux: psStr, raison: 'PEA mature : seuls les PS s\'appliquent' });
         });
 
-        // 4. AV > 8 ans (PS + IR 7.5% avec abattement)
         gkData.filter(d => d.gk === 'Assurance Vie').forEach(d => {
-          withdrawalOrder.push({ priority: 4, source: d.gk, valeur: d.valeur, regime: 'PS + IR 7,5%', taux: '24,7%', raison: 'Abattement 4 600 €/an sur les gains, puis IR 7,5%' });
+          withdrawalOrder.push({ priority: 4, source: d.gk, valeur: d.valeur, regime: 'PS + IR 7,5%', taux: avStr, raison: 'Abattement 4 600 €/an sur les gains, puis IR 7,5%' });
         });
 
-        // 5. CTO / Crypto (PFU 30%)
         gkData.filter(d => d.gk.startsWith('CTO') || d.gk === 'Crypto').forEach(d => {
-          withdrawalOrder.push({ priority: 5, source: d.gk, valeur: d.valeur, regime: 'PFU', taux: '30%', raison: 'Flat tax sur les plus-values' });
+          withdrawalOrder.push({ priority: 5, source: d.gk, valeur: d.valeur, regime: 'PFU', taux: pfuStr, raison: 'Flat tax sur les plus-values' });
         });
 
         // Any remaining
@@ -1104,11 +1121,11 @@ export function render(store) {
             const taxRates = {};
             groupKeys.forEach(gk => {
               const gkL = gk.toLowerCase();
-              if (gkL.includes('pea')) taxRates[gk] = 0.172; // PEA >5 ans
-              else if (gkL.includes('assurance') || gkL === 'av') taxRates[gk] = 0.247; // AV >8 ans
-              else if (gkL.includes('pee')) taxRates[gk] = 0.172;
+              if (gkL.includes('pea')) taxRates[gk] = PS_RATE;
+              else if (gkL.includes('assurance') || gkL === 'av') taxRates[gk] = PS_RATE + AV_IR;
+              else if (gkL.includes('pee')) taxRates[gk] = PS_RATE;
               else if (gkL.includes('livret') || gkL.includes('épargne')) taxRates[gk] = 0;
-              else taxRates[gk] = 0.314; // CTO, Crypto → PFU
+              else taxRates[gk] = PFU_RATE;
             });
             taxRates['Épargne'] = 0;
 
@@ -1342,27 +1359,28 @@ export function render(store) {
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-accent-cyan font-semibold mb-1">Fiscalité PEA (après 5 ans)</h3>
-              <p>Prélèvements sociaux seuls : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 17.2%</code></p>
-              <p class="mt-1 text-xs text-gray-500">Avant 5 ans, c'est la flat tax complète (31,4%). Après 5 ans, exonération d'impôt sur le revenu → seulement 17.2% de cotisations sociales.</p>
+              <p>Prélèvements sociaux seuls : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PS_RATE*100).toFixed(1)}%</code></p>
+              <p class="mt-1 text-xs text-gray-500">Avant 5 ans, c'est la flat tax complète (\${(PFU_RATE*100).toFixed(1)}%). Après 5 ans, exonération d'IR → seuls les PS (\${(PS_RATE*100).toFixed(1)}%) s'appliquent.</p>
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
-              <h3 class="text-blue-400 font-semibold mb-1">Flat Tax CTO / Crypto (31,4%)</h3>
-              <p>Sur les plus-values : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 31,4%</code></p>
-              <p class="mt-1 text-xs text-gray-500">Le PFU (Prélèvement Forfaitaire Unique) = 14.2% d'IR + 17.2% de prélèvements sociaux. Appliqué uniquement sur les gains, pas sur le capital investi.</p>
+              <h3 class="text-blue-400 font-semibold mb-1">Flat Tax CTO / Crypto (\${(PFU_RATE*100).toFixed(1)}%)</h3>
+              <p>Sur les plus-values : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PFU_RATE*100).toFixed(1)}%</code></p>
+              <p class="mt-1 text-xs text-gray-500">Le PFU = 12,8% d'IR + \${(PS_RATE*100).toFixed(1)}% de prélèvements sociaux. Appliqué uniquement sur les gains, pas sur le capital investi.</p>
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-teal-400 font-semibold mb-1">Assurance Vie</h3>
-              <p>Avant 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 31,4% (PFU)</code></p>
-              <p>Après 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 24.7% (17.2% PS + 7.5% IR)</code></p>
-              <p class="mt-1 text-xs text-gray-500">Après 8 ans, abattement de 4 600 € (célibataire) ou 9 200 € (couple) sur les gains avant le calcul du 7.5%. Non modélisé ici pour simplifier.</p>
+              <p>Avant 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PFU_RATE*100).toFixed(1)}% (PFU)</code></p>
+              <p>Après 8 ans (versements &lt;150k€) : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${((PS_RATE+AV_IR)*100).toFixed(1)}% (\${(PS_RATE*100).toFixed(1)}% PS + 7,5% IR)</code></p>
+              <p>Après 8 ans (versements &gt;150k€) : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PFU_RATE*100).toFixed(1)}% (PFU)</code></p>
+              <p class="mt-1 text-xs text-gray-500">Abattement de 4 600 € (célibataire) ou 9 200 € (couple) sur les gains avant IR. Au-delà de 150 000 € de versements, le taux d'IR passe à 12,8%.</p>
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-emerald-400 font-semibold mb-1">PEE</h3>
-              <p>Prélèvements sociaux uniquement : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × 17.2%</code></p>
-              <p class="mt-1 text-xs text-gray-500">Le PEE est exonéré d'impôt sur le revenu après 5 ans de blocage. Seuls les prélèvements sociaux (17.2%) s'appliquent sur les gains.</p>
+              <p>Prélèvements sociaux uniquement : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PS_RATE*100).toFixed(1)}%</code></p>
+              <p class="mt-1 text-xs text-gray-500">Le PEE est exonéré d'IR après 5 ans de blocage. Seuls les PS (\${(PS_RATE*100).toFixed(1)}%) s'appliquent.</p>
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
@@ -1386,7 +1404,7 @@ export function render(store) {
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-gray-300 font-semibold mb-1">Net d'impôts (toutes enveloppes)</h3>
               <p><code class="text-gray-300 bg-dark-900/60 px-1 rounded">Σ valeur placements − Σ impôts sur gains (par enveloppe)</code></p>
-              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui. Chaque enveloppe est taxée selon sa fiscalité propre : PEA (17.2% ou 31.4%), AV (24.7% ou 31.4%), CTO/Crypto (31.4%), PEE (17.2%).</p>
+              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui. Chaque enveloppe est taxée selon sa fiscalité propre : PEA (${(PS_RATE*100).toFixed(1)}% ou ${(PFU_RATE*100).toFixed(1)}%), AV (${((PS_RATE+AV_IR)*100).toFixed(1)}% ou ${(PFU_RATE*100).toFixed(1)}%), CTO/Crypto (${(PFU_RATE*100).toFixed(1)}%), PEE (${(PS_RATE*100).toFixed(1)}%).</p>
             </div>
           </div>
 
