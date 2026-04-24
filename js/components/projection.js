@@ -575,7 +575,7 @@ export function render(store) {
 
       <!-- Summary -->
       ${(() => {
-        const targetYears = [20, 25, 30];
+        const targetYears = params.kpiYears || [20, 25, 30];
         const firstNet = first?.patrimoineNet || 0;
         const firstImmo = first?.immobilier || 0;
         const firstFin = first?.totalLiquiditesNettes || 0;
@@ -600,8 +600,8 @@ export function render(store) {
           const evolPct = firstNet ? evol / Math.abs(firstNet) : 0;
           const glows = ['glow-blue', 'glow-green', 'glow-blue'];
           return `
-        <div class="card-dark rounded-xl p-4 sm:p-5 kpi-card ${glows[i]}">
-          <p class="text-sm text-gray-400 mb-2">Fin ${targetCalYear} <span class="text-gray-600">(+${targetYr} ans)</span></p>
+        <div class="card-dark rounded-xl p-4 sm:p-5 kpi-card ${glows[i % 3]}">
+          <p class="text-sm text-gray-400 mb-2">Fin ${targetCalYear} <span class="text-gray-600">(+<input type="number" class="kpi-year-input bg-transparent border-b border-dashed border-gray-600 w-8 text-center text-gray-400 focus:border-accent-cyan focus:text-gray-200 outline-none" value="${targetYr}" min="1" max="50" data-kpi-idx="${i}"> ans)</span></p>
           <p class="text-2xl font-bold gradient-text">${formatCurrency(net)}</p>
           <div class="flex gap-3 mt-2 text-xs">
             <span class="text-pink-400">Immo ${formatCurrency(immo)}</span>
@@ -1958,6 +1958,18 @@ export function mount(store, navigate) {
         e.preventDefault();
         document.getElementById('btn-update-projection')?.click();
       }
+    });
+  });
+
+  // KPI milestone year inputs — auto-save on change
+  document.querySelectorAll('.kpi-year-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const idx = parseInt(input.dataset.kpiIdx);
+      const val = parseInt(input.value) || 1;
+      const current = store.get('parametres.kpiYears') || [20, 25, 30];
+      current[idx] = Math.max(1, Math.min(50, val));
+      store.set('parametres.kpiYears', current);
+      navigate('projection');
     });
   });
 
