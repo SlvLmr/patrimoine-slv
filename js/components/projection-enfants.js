@@ -402,7 +402,7 @@ export function render(store, { embedded = false } = {}) {
                             <span class="text-[11px] text-gray-200 truncate flex-1 min-w-0 font-medium pe-edit-plac cursor-pointer" data-child-idx="${idx}" data-placement-id="${p.id}" title="${p.nom}">${p.nom}</span>
                             ${dca > 0 ? `<span class="text-[9px] text-gray-600">${dca}\u20ac/m</span>` : ''}
                             <input type="number" class="pe-plac-rend input-field w-14 text-center font-medium"
-                              value="${(rend * 100).toFixed(1)}" min="-20" max="50" step="0.5" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()">
+                              value="${(rend * 100).toFixed(1)}" min="-20" max="50" step="any" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()">
                             <span class="text-[10px] text-gray-500">%</span>
                             <button class="pe-del-plac btn-delete" data-child-idx="${idx}" data-placement-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">\u2715</button>
                           </div>`;
@@ -1015,7 +1015,8 @@ export function mount(store, navigate, { embedded = false } = {}) {
       const enfs = getEnfants(store);
       if (!enfs[ci]) return;
       if (!enfs[ci].rendementPlacements) enfs[ci].rendementPlacements = {};
-      enfs[ci].rendementPlacements[pid] = parseFloat(inp.value) / 100;
+      const rv = parseFloat(inp.value);
+      enfs[ci].rendementPlacements[pid] = (isNaN(rv) ? 5 : rv) / 100;
       saveEnfants(store, enfs);
       refresh();
     });

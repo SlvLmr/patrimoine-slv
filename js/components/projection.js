@@ -1,7 +1,7 @@
 import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=10';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
 import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=10';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260331a';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260424a';
 import { calculerFiscaliteDonation } from '../fiscal.js';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
@@ -36,7 +36,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260331a';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260424a';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -229,7 +229,7 @@ export function render(store) {
               ${[
                 ['param-years', 'Horizon', params.projectionYears, '1', '50', '1', ''],
                 ['param-age', 'Âge', params.ageFinAnnee || 43, '18', '100', '1', ''],
-                ['param-inflation', 'Inflation', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', '0.5', '%'],
+                ['param-inflation', 'Inflation', ((params.inflationRate || 0) * 100).toFixed(1), '0', '20', 'any', '%'],
               ].map(([id, label, val, min, max, step, suffix]) => `
               <div class="flex items-center gap-1">
                 <span class="text-xs text-gray-500">${label}</span>
@@ -300,7 +300,7 @@ export function render(store) {
                     <span class="text-[11px] text-gray-100 whitespace-nowrap font-medium proj-edit-plac flex-1 min-w-0 truncate" data-id="${p.id}" title="${p.nom}">${p.nom}</span>
                     ${dcaLabel}
                     <input type="number" class="param-input plac-rend input-field w-14 text-center font-medium"
-                      value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="0.5" onclick="event.stopPropagation()">
+                      value="${(currentRend * 100).toFixed(1)}" min="-20" max="50" step="any" onclick="event.stopPropagation()">
                     <span class="text-[10px] text-gray-500">%</span>
                     <button class="proj-del-plac btn-delete" data-id="${p.id}" onclick="event.stopPropagation()" title="Supprimer">✕</button>
                   </div>`;
@@ -655,7 +655,7 @@ export function render(store) {
             <div class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-orange-500/8 border border-orange-500/25 shrink-0">
               <span class="text-[10px] text-orange-400">🔥</span>
               <span class="text-[9px] text-gray-500">SWR</span>
-              <input type="number" id="param-swr" value="${params.swr || 4}" min="1" max="10" step="0.5"
+              <input type="number" id="param-swr" value="${params.swr || 4}" min="1" max="10" step="any"
                 class="param-input w-8 px-0 py-0 text-[11px] bg-transparent border-0 text-orange-400 focus:ring-0 text-center font-semibold">
               <span class="text-[9px] text-gray-500">%</span>
               <span class="text-[9px] text-gray-500">Dép.</span>
@@ -1966,7 +1966,8 @@ export function mount(store, navigate) {
     store.set('parametres.projectionYears', parseInt(document.getElementById('param-years').value) || 30);
     store.set('parametres.ageFinAnnee', parseInt(document.getElementById('param-age').value) || 43);
     store.set('parametres.ageRetraite', parseInt(document.getElementById('param-retraite').value) || 64);
-    store.set('parametres.inflationRate', (parseFloat(document.getElementById('param-inflation').value) || 2) / 100);
+    const inflVal = parseFloat(document.getElementById('param-inflation').value);
+    store.set('parametres.inflationRate', (isNaN(inflVal) ? 2 : inflVal) / 100);
     // Global envelope rendements removed — now controlled per-placement via .plac-rend inputs
 
     // Per-placement rendement overrides
@@ -1975,7 +1976,8 @@ export function mount(store, navigate) {
       const pid = row.dataset.placementId;
       const rendInput = row.querySelector('.plac-rend');
       if (rendInput) {
-        rendementPlacements[pid] = (parseFloat(rendInput.value) || 5) / 100;
+        const v = parseFloat(rendInput.value);
+        rendementPlacements[pid] = (isNaN(v) ? 5 : v) / 100;
       }
     });
     store.set('parametres.rendementPlacements', rendementPlacements);
@@ -1990,7 +1992,8 @@ export function mount(store, navigate) {
     store.set('parametres.cashOutYear', cashOutVal ? parseInt(cashOutVal) : null);
 
     // FIRE params
-    store.set('parametres.swr', parseFloat(document.getElementById('param-swr')?.value) || 4);
+    const swrVal = parseFloat(document.getElementById('param-swr')?.value);
+    store.set('parametres.swr', isNaN(swrVal) ? 4 : swrVal);
     store.set('parametres.fireDepensesMensuelles', parseInt(document.getElementById('param-fire-depenses')?.value) || 1750);
 
     navigate('projection');

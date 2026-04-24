@@ -97,7 +97,7 @@ function renderChildCard(child, index) {
                     <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">\u20ac</span>
                   </div>
                   <div class="relative w-16 flex-shrink-0">
-                    <input type="number" step="0.1" min="0" max="100" value="${Number(l.taux) || 0}"
+                    <input type="number" step="any" min="0" max="100" value="${Number(l.taux) || 0}"
                       class="livret-taux input-field w-full pr-5"
                       data-child-idx="${index}" data-livret-idx="${li}"/>
                     <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
@@ -295,7 +295,7 @@ export function render(store) {
                   <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">\u20ac</span>
                 </div>
                 <div class="relative w-16 flex-shrink-0">
-                  <input type="number" step="0.1" min="-10" max="100" value="${((Number(i.tauxRevalorisation) || 0.02) * 100).toFixed(1)}"
+                  <input type="number" step="any" min="-10" max="100" value="${((Number(i.tauxRevalorisation) || 0.02) * 100).toFixed(1)}"
                     data-immo-taux-id="${i.id}"
                     class="immo-taux input-field w-full pr-5"/>
                   <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
@@ -331,7 +331,7 @@ export function render(store) {
                   <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">\u20ac</span>
                 </div>
                 <div class="relative w-16 flex-shrink-0">
-                  <input type="number" step="0.1" min="0" max="100" value="${((Number(e.tauxInteret) || 0) * 100).toFixed(1)}"
+                  <input type="number" step="any" min="0" max="100" value="${((Number(e.tauxInteret) || 0) * 100).toFixed(1)}"
                     data-epar-taux-id="${e.id}"
                     class="epar-taux input-field w-full pr-5"/>
                   <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">%</span>
@@ -370,7 +370,7 @@ export function render(store) {
                 <div class="flex items-center gap-1">
                   <span class="text-[11px] text-gray-500 whitespace-nowrap">${label}</span>
                   <div class="relative">
-                    <input id="${id}" type="number" step="0.1" min="0" max="50" value="${val}"
+                    <input id="${id}" type="number" step="any" min="0" max="50" value="${val}"
                       class="input-field w-16 text-center pr-5"/>
                     <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">${suffix}</span>
                   </div>
