@@ -413,8 +413,8 @@ export function computeProjection(store, overrides = {}) {
   const getAvTotalValue = () => placSims.filter(p => p.groupKey === 'Assurance Vie').reduce((sum, p) => sum + p.value, 0);
   let cumulInterets = 0;
   let fraisCumules = 0;
-  const PFU_RATE = params.tauxPFU || 0.30;   // Prélèvement Forfaitaire Unique: 12.8% IR + 17.2% PS
-  const PS_RATE = params.tauxPS || 0.172;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE)
+  const PFU_RATE = params.tauxPFU || 0.314;  // Prélèvement Forfaitaire Unique: 12.8% IR + 18.6% PS (2026)
+  const PS_RATE = params.tauxPS || 0.186;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE) (2026)
   const AV_IR_AFTER8 = params.tauxAVIR || 0.075; // AV après 8 ans: 7.5% IR (versements < 150k€)
   const AV_IR_AFTER8_OVER150K = 0.128;     // AV après 8 ans: 12.8% IR (versements > 150k€)
   const AV_VERSEMENTS_SEUIL = 150000;      // Seuil versements AV pour taux réduit

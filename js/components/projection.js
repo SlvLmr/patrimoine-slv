@@ -99,8 +99,8 @@ export function render(store) {
   const groupKeys = snapshots.groupKeys || [];
   const rendementPlacements = params.rendementPlacements || {};
   const placements = (store.getAll().actifs?.placements || []);
-  const PFU_RATE = params.tauxPFU || 0.30;
-  const PS_RATE = params.tauxPS || 0.172;
+  const PFU_RATE = params.tauxPFU || 0.314;
+  const PS_RATE = params.tauxPS || 0.186;
   const AV_IR = params.tauxAVIR || 0.075;
   const heritageItems = store.get('heritage') || [];
   const capitalTransfers = params.capitalTransfers || [];
