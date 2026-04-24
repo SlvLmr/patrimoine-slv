@@ -830,33 +830,20 @@ export function render(store) {
           let regime = '';
           const gkLow = gk.toLowerCase();
           const psLabel = (PS * 100).toFixed(1).replace('.', ',') + '%';
-
           const pfuLabel = (PFU * 100).toFixed(1).replace('.', ',') + '%';
-
           if (gkLow.includes('pea')) {
-
             regime = rate <= PS + 0.01 ? `PS seul (${psLabel})` : `PFU (${pfuLabel})`;
-
           } else if (gkLow.includes('assurance') || gkLow === 'av') {
-
             regime = rate <= (PS + AV_IR + 0.01) && rate > PS + 0.01
-
               ? `PS + IR 7,5% (abat. 4 600 €)`
-
               : rate <= PS + 0.01 ? `PS seul (${psLabel})` : `PFU (${pfuLabel})`;
-
           } else if (gkLow.includes('pee')) {
-
             regime = `PS seul (${psLabel})`;
-
           } else if (gkLow.includes('livret') || gkLow.includes('épargne')) {
-
             regime = 'Exonéré';
-
           } else {
-
             regime = `PFU (${pfuLabel})`;
-
+          }
 
           const net = valeur - impot;
           return { gk, valeur, apports, gains, regime, impot, net };
