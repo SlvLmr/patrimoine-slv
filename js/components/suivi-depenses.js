@@ -461,21 +461,21 @@ export function render(store) {
               <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
             </div>
           </div>`).join('')}
-          ${trInterets > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="interets">
+          ${trFeatures.lblInterets || trInterets > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="interets">
             <span class="text-[11px] text-gray-500">${lblInterets}</span>
             <div class="flex items-center gap-1.5">
               <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
               <button data-del-budget="feat-interets" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
             </div>
           </div>` : ''}
-          ${trSaveback > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="saveback">
+          ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="saveback">
             <span class="text-[11px] text-gray-500">${lblSaveback}</span>
             <div class="flex items-center gap-1.5">
               <span class="text-[11px] font-medium text-amber-400">${formatCurrencyCents(trSaveback)}</span>
               <button data-del-budget="feat-saveback" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
             </div>
           </div>` : ''}
-          ${trRoundup > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="roundup">
+          ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="roundup">
             <span class="text-[11px] text-gray-500">${lblRoundup}</span>
             <div class="flex items-center gap-1.5">
               <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
