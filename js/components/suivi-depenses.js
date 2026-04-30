@@ -788,9 +788,9 @@ export function mount(store, navigate) {
         revenus: JSON.parse(JSON.stringify(revenus)),
         cochees: [...cocheesThisMonth],
         depMensuelles: JSON.parse(JSON.stringify(depMensuelles)),
-        dcaTR: JSON.parse(JSON.stringify(dcaTR)),
-        revMensuelsTR: JSON.parse(JSON.stringify(revMensuelsTR)),
-        trRecurringConfirmed: JSON.parse(JSON.stringify(trConfirmedThisMonth)),
+        dcaTR: JSON.parse(JSON.stringify(store.get('dcaMensuelsTR') || [])),
+        revMensuelsTR: JSON.parse(JSON.stringify(store.get('revenusMensuelsTR') || [])),
+        trRecurringConfirmed: JSON.parse(JSON.stringify((store.get('trRecurringConfirmed') || {})[monthKey] || { expenses: [], revenues: [] })),
         // Sub-line snapshots
         meta: {
           soldePrevCIC, soldePrevTR,
