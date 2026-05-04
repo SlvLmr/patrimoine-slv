@@ -351,18 +351,20 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutCIC}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
-          <div class="flex flex-wrap items-center gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
-            ${hasSoldeObligCIC ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-oblig="cic">
-              <span class="text-gray-500">${lblSoldeObligCIC}</span>
-              <span class="font-semibold text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
-              <button data-del-budget="oblig-cic" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
+            ${hasSoldeObligCIC ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-oblig="cic">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblSoldeObligCIC}</span>
+              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
+              <button data-del-budget="oblig-cic" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${pocketsCIC.map(p => `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-pocket="${p.id}" data-pocket-bank="cic">
-              <span class="text-gray-500">${p.label}</span>
-              <span class="font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="cic" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${pocketsCIC.map(p => `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-pocket="${p.id}" data-pocket-bank="cic">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${p.label}</span>
+              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="cic" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>`).join('')}
-            <button data-add-budget="cic" class="inline-flex items-center px-2 py-0.5 rounded-md border border-dashed border-dark-400/30 text-[10px] text-gray-600 hover:text-accent-blue hover:border-accent-blue/40 transition" title="Ajouter une ligne">+</button>
+            <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="cic" title="Ajouter une ligne">
+              <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
+            </div>
           </div>
           ${opsCIC.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-cic">
@@ -423,48 +425,50 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
-          <div class="flex flex-wrap items-center gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
-            ${hasRestantInvest ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-restant-invest>
-              <span class="text-gray-500 truncate max-w-[100px]">${lblRestantInvest}</span>
-              <span class="font-semibold text-accent-blue whitespace-nowrap">${formatCurrencyCents(restantInvestTR)}</span>
-              <button data-del-budget="invest" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
+            ${hasRestantInvest ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-invest>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantInvest}</span>
+              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
+              <button data-del-budget="invest" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${hasRestantPEA ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-restant-pea>
-              <span class="text-gray-500 truncate max-w-[100px]">${lblRestantPEA}</span>
-              <span class="font-semibold text-accent-blue whitespace-nowrap">${formatCurrencyCents(restantPEATR)}</span>
-              <button data-del-budget="pea" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${hasRestantPEA ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-pea>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantPEA}</span>
+              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
+              <button data-del-budget="pea" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${hasBudgetNDF ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-budget-ndf>
-              <span class="text-gray-500 truncate max-w-[100px]">${lblNDF}</span>
-              <span class="font-semibold text-purple-400 whitespace-nowrap">${formatCurrencyCents(aRecupererNDF)}</span>
-              <button data-del-budget="ndf" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${hasBudgetNDF ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-budget-ndf>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblNDF}</span>
+              <span class="text-[10px] font-semibold text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
+              <button data-del-budget="ndf" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${hasBudgetQuotidien ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-budget-quotidien>
-              <span class="text-gray-500 truncate max-w-[100px]">${lblEnveloppe}</span>
-              <span class="font-semibold ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'} whitespace-nowrap">${formatCurrencyCents(resteADepenser)}</span>
-              <button data-del-budget="quotidien" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${hasBudgetQuotidien ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-budget-quotidien>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblEnveloppe}</span>
+              <span class="text-[10px] font-semibold ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
+              <button data-del-budget="quotidien" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${pocketsTR.map(p => `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-pocket="${p.id}" data-pocket-bank="tr">
-              <span class="text-gray-500 truncate max-w-[100px]">${p.label}</span>
-              <span class="font-semibold text-accent-blue whitespace-nowrap">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${pocketsTR.map(p => `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-pocket="${p.id}" data-pocket-bank="tr">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${p.label}</span>
+              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>`).join('')}
-            ${trFeatures.lblInterets || trInterets > 0 ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[10px] cursor-pointer hover:bg-emerald-500/20 transition group/pk" data-edit-tr-feature="interets">
-              <span class="text-gray-500 truncate max-w-[100px]">${lblInterets}</span>
-              <span class="font-semibold text-emerald-400 whitespace-nowrap">+${formatCurrencyCents(trInterets)}</span>
-              <button data-del-budget="feat-interets" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${trFeatures.lblInterets || trInterets > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition group/pk relative" data-edit-tr-feature="interets">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblInterets}</span>
+              <span class="text-[10px] font-semibold text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
+              <button data-del-budget="feat-interets" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-[10px] cursor-pointer hover:bg-amber-500/20 transition group/pk" data-edit-tr-feature="saveback">
-              <span class="text-gray-500 truncate max-w-[100px]">${lblSaveback}</span>
-              <span class="font-semibold text-amber-400 whitespace-nowrap">${formatCurrencyCents(trSaveback)}</span>
-              <button data-del-budget="feat-saveback" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition group/pk relative" data-edit-tr-feature="saveback">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblSaveback}</span>
+              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(trSaveback)}</span>
+              <button data-del-budget="feat-saveback" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/20 text-[10px] cursor-pointer hover:bg-red-500/20 transition group/pk" data-edit-tr-feature="roundup">
-              <span class="text-gray-500 truncate max-w-[100px]">${lblRoundup}</span>
-              <span class="font-semibold text-accent-red whitespace-nowrap">-${formatCurrencyCents(trRoundup)}</span>
-              <button data-del-budget="feat-roundup" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-red-500/10 border border-red-500/20 cursor-pointer hover:bg-red-500/20 transition group/pk relative" data-edit-tr-feature="roundup">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRoundup}</span>
+              <span class="text-[10px] font-semibold text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
+              <button data-del-budget="feat-roundup" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            <button data-add-budget="tr" class="inline-flex items-center px-2 py-0.5 rounded-md border border-dashed border-dark-400/30 text-[10px] text-gray-600 hover:text-accent-blue hover:border-accent-blue/40 transition" title="Ajouter une ligne">+</button>
+            <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="tr" title="Ajouter une ligne">
+              <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
+            </div>
           </div>
 
           ${opsTR.length > 0 ? `
@@ -559,18 +563,20 @@ export function render(store) {
             <span class="text-xs text-gray-500">${bank.lblPrev}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
           </div>
-          <div class="flex flex-wrap items-center gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
-            ${bank.obligSolde > 0 || soldeObligatoire[bank.id] !== undefined ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-oblig="${bank.id}">
-              <span class="text-gray-500">${bank.lblOblig}</span>
-              <span class="font-semibold text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
-              <button data-del-budget="oblig-${bank.id}" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
+            ${bank.obligSolde > 0 || soldeObligatoire[bank.id] !== undefined ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-oblig="${bank.id}">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${bank.lblOblig}</span>
+              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
+              <button data-del-budget="oblig-${bank.id}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${(allPockets[bank.id] || []).map(p => `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-pocket="${p.id}" data-pocket-bank="${bank.id}">
-              <span class="text-gray-500">${p.label}</span>
-              <span class="font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="${bank.id}" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            ${(allPockets[bank.id] || []).map(p => `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-pocket="${p.id}" data-pocket-bank="${bank.id}">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${p.label}</span>
+              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="${bank.id}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>`).join('')}
-            <button data-add-budget="${bank.id}" class="inline-flex items-center px-2 py-0.5 rounded-md border border-dashed border-dark-400/30 text-[10px] text-gray-600 hover:text-accent-blue hover:border-accent-blue/40 transition" title="Ajouter une ligne">+</button>
+            <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="${bank.id}" title="Ajouter une ligne">
+              <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
+            </div>
           </div>
           ${bank.ops.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-${bank.id}">
