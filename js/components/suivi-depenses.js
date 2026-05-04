@@ -194,8 +194,8 @@ export function render(store) {
   const hasBudgetQuotidien = budgetQuotidien > 0 || 'budgetQuotidien' in paramètres;
   const hasSoldeObligCIC = soldeObligCIC > 0 || 'cic' in soldeObligatoire;
 
-  // Solde obligatoire TR = sum of all active budget lines (hors quotidien)
-  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + pocketsTRTotal;
+  // Solde obligatoire TR = sum of all pocket amounts (hors saveback/interets/roundup)
+  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + budgetQuotidien + pocketsTRTotal;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -425,6 +425,10 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
+          ${soldeObligTR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
+            <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
+            <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
+          </div>` : ''}
           <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
             ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition group/pk relative" data-edit-tr-feature="saveback">
               <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblSaveback}</span>
