@@ -188,6 +188,11 @@ export function render(store) {
   const pocketsCIC = allPockets.cic || [];
   const pocketsTRTotal = pocketsTR.reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const pocketsCICTotal = pocketsCIC.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const hasRestantInvest = 'tr' in restantInvest;
+  const hasRestantPEA = 'tr' in restantPEA;
+  const hasBudgetNDF = budgetNDF > 0 || 'budgetNDF' in paramètres;
+  const hasBudgetQuotidien = budgetQuotidien > 0 || 'budgetQuotidien' in paramètres;
+  const hasSoldeObligCIC = soldeObligCIC > 0 || 'cic' in soldeObligatoire;
 
   // Solde obligatoire TR = sum of all active budget lines (hors quotidien)
   const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + pocketsTRTotal;
@@ -346,22 +351,18 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutCIC}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
-          ${soldeObligCIC > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/oblig" data-edit-oblig="cic">
-            <span class="text-xs text-gray-500">${lblSoldeObligCIC}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
-              <button data-del-budget="oblig-cic" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/oblig:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${pocketsCIC.map(p => `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-pocket="${p.id}" data-pocket-bank="cic">
-            <span class="text-xs text-gray-500">- ${p.label}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="cic" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>`).join('')}
-          <div class="flex items-center justify-end px-3 py-0.5 mb-3">
-            <button data-add-budget="cic" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
+          <div class="flex flex-wrap items-center gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
+            ${hasSoldeObligCIC ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-oblig="cic">
+              <span class="text-gray-500">${lblSoldeObligCIC}</span>
+              <span class="font-semibold text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
+              <button data-del-budget="oblig-cic" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${pocketsCIC.map(p => `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-pocket="${p.id}" data-pocket-bank="cic">
+              <span class="text-gray-500">${p.label}</span>
+              <span class="font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="cic" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>`).join('')}
+            <button data-add-budget="cic" class="inline-flex items-center px-2 py-0.5 rounded-md border border-dashed border-dark-400/30 text-[10px] text-gray-600 hover:text-accent-blue hover:border-accent-blue/40 transition" title="Ajouter une ligne">+</button>
           </div>
           ${opsCIC.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-cic">
@@ -422,68 +423,48 @@ export function render(store) {
             <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
-          ${soldeObligTR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
-            <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
-            <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
-          </div>` : ''}
-          ${restantInvestTR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-restant-invest>
-            <span class="text-xs text-gray-500">- ${lblRestantInvest}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
-              <button data-del-budget="invest" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${restantPEATR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-restant-pea>
-            <span class="text-xs text-gray-500">- ${lblRestantPEA}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
-              <button data-del-budget="pea" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${budgetNDF > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-budget-ndf>
-            <span class="text-xs text-gray-500">- ${lblNDF}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium"><span class="text-[9px] italic text-gray-600">(${formatCurrencyCents(sommeARecuperer)})</span> <span class="text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span></span>
-              <button data-del-budget="ndf" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${budgetQuotidien > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-budget-quotidien>
-            <span class="text-xs text-gray-500">- ${lblEnveloppe}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
-              <button data-del-budget="quotidien" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${pocketsTR.map(p => `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-pocket="${p.id}" data-pocket-bank="tr">
-            <span class="text-xs text-gray-500">- ${p.label}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>`).join('')}
-          ${trFeatures.lblInterets || trInterets > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="interets">
-            <span class="text-[11px] text-gray-500">${lblInterets}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
-              <button data-del-budget="feat-interets" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="saveback">
-            <span class="text-[11px] text-gray-500">${lblSaveback}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[11px] font-medium text-amber-400">${formatCurrencyCents(trSaveback)}</span>
-              <button data-del-budget="feat-saveback" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="flex items-center justify-between px-4 py-0.5 bg-dark-700/20 border-b border-dark-400/10 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-tr-feature="roundup">
-            <span class="text-[11px] text-gray-500">${lblRoundup}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[11px] font-medium text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
-              <button data-del-budget="feat-roundup" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          <div class="flex items-center justify-end px-3 py-0.5 mb-3">
-            <button data-add-budget="tr" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
+          <div class="flex flex-wrap items-center gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
+            ${hasRestantInvest ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-restant-invest>
+              <span class="text-gray-500 truncate max-w-[100px]">${lblRestantInvest}</span>
+              <span class="font-semibold text-accent-blue whitespace-nowrap">${formatCurrencyCents(restantInvestTR)}</span>
+              <button data-del-budget="invest" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${hasRestantPEA ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-restant-pea>
+              <span class="text-gray-500 truncate max-w-[100px]">${lblRestantPEA}</span>
+              <span class="font-semibold text-accent-blue whitespace-nowrap">${formatCurrencyCents(restantPEATR)}</span>
+              <button data-del-budget="pea" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${hasBudgetNDF ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-budget-ndf>
+              <span class="text-gray-500 truncate max-w-[100px]">${lblNDF}</span>
+              <span class="font-semibold text-purple-400 whitespace-nowrap">${formatCurrencyCents(aRecupererNDF)}</span>
+              <button data-del-budget="ndf" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${hasBudgetQuotidien ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-budget-quotidien>
+              <span class="text-gray-500 truncate max-w-[100px]">${lblEnveloppe}</span>
+              <span class="font-semibold ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'} whitespace-nowrap">${formatCurrencyCents(resteADepenser)}</span>
+              <button data-del-budget="quotidien" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${pocketsTR.map(p => `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-pocket="${p.id}" data-pocket-bank="tr">
+              <span class="text-gray-500 truncate max-w-[100px]">${p.label}</span>
+              <span class="font-semibold text-accent-blue whitespace-nowrap">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>`).join('')}
+            ${trFeatures.lblInterets || trInterets > 0 ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[10px] cursor-pointer hover:bg-emerald-500/20 transition group/pk" data-edit-tr-feature="interets">
+              <span class="text-gray-500 truncate max-w-[100px]">${lblInterets}</span>
+              <span class="font-semibold text-emerald-400 whitespace-nowrap">+${formatCurrencyCents(trInterets)}</span>
+              <button data-del-budget="feat-interets" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-[10px] cursor-pointer hover:bg-amber-500/20 transition group/pk" data-edit-tr-feature="saveback">
+              <span class="text-gray-500 truncate max-w-[100px]">${lblSaveback}</span>
+              <span class="font-semibold text-amber-400 whitespace-nowrap">${formatCurrencyCents(trSaveback)}</span>
+              <button data-del-budget="feat-saveback" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/20 text-[10px] cursor-pointer hover:bg-red-500/20 transition group/pk" data-edit-tr-feature="roundup">
+              <span class="text-gray-500 truncate max-w-[100px]">${lblRoundup}</span>
+              <span class="font-semibold text-accent-red whitespace-nowrap">-${formatCurrencyCents(trRoundup)}</span>
+              <button data-del-budget="feat-roundup" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            <button data-add-budget="tr" class="inline-flex items-center px-2 py-0.5 rounded-md border border-dashed border-dark-400/30 text-[10px] text-gray-600 hover:text-accent-blue hover:border-accent-blue/40 transition" title="Ajouter une ligne">+</button>
           </div>
 
           ${opsTR.length > 0 ? `
@@ -578,22 +559,18 @@ export function render(store) {
             <span class="text-xs text-gray-500">${bank.lblPrev}</span>
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
           </div>
-          ${bank.obligSolde > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/oblig" data-edit-oblig="${bank.id}">
-            <span class="text-xs text-gray-500">${bank.lblOblig}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
-              <button data-del-budget="oblig-${bank.id}" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/oblig:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>` : ''}
-          ${(allPockets[bank.id] || []).map(p => `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition group/bl" data-edit-pocket="${p.id}" data-pocket-bank="${bank.id}">
-            <span class="text-xs text-gray-500">- ${p.label}</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-medium text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="${bank.id}" class="text-gray-600 hover:text-accent-red text-[10px] opacity-0 group-hover/bl:opacity-100 transition" title="Supprimer">✕</button>
-            </div>
-          </div>`).join('')}
-          <div class="flex items-center justify-end px-3 py-0.5 mb-3">
-            <button data-add-budget="${bank.id}" class="text-[10px] text-gray-600 hover:text-accent-blue transition flex items-center gap-1" title="Ajouter une ligne">+ Ajouter ligne</button>
+          <div class="flex flex-wrap items-center gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
+            ${bank.obligSolde > 0 || soldeObligatoire[bank.id] !== undefined ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-oblig="${bank.id}">
+              <span class="text-gray-500">${bank.lblOblig}</span>
+              <span class="font-semibold text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
+              <button data-del-budget="oblig-${bank.id}" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>` : ''}
+            ${(allPockets[bank.id] || []).map(p => `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-dark-600/40 border border-dark-400/20 text-[10px] cursor-pointer hover:bg-dark-500/40 transition group/pk" data-edit-pocket="${p.id}" data-pocket-bank="${bank.id}">
+              <span class="text-gray-500">${p.label}</span>
+              <span class="font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
+              <button data-del-pocket="${p.id}" data-pocket-bank="${bank.id}" class="text-gray-600 hover:text-accent-red opacity-0 group-hover/pk:opacity-100 transition-opacity flex-shrink-0">✕</button>
+            </div>`).join('')}
+            <button data-add-budget="${bank.id}" class="inline-flex items-center px-2 py-0.5 rounded-md border border-dashed border-dark-400/30 text-[10px] text-gray-600 hover:text-accent-blue hover:border-accent-blue/40 transition" title="Ajouter une ligne">+</button>
           </div>
           ${bank.ops.length > 0 ? `
           <div class="divide-y divide-dark-400/20" id="ops-drop-${bank.id}">
@@ -1082,28 +1059,30 @@ export function mount(store, navigate) {
       if (key.startsWith('oblig-')) {
         const bankKey = key.replace('oblig-', '');
         const oblig = store.get('soldeObligatoire') || {};
-        oblig[bankKey] = 0;
+        delete oblig[bankKey];
         store.set('soldeObligatoire', oblig);
       } else if (key === 'invest') {
         const inv = store.get('restantInvestissement') || {};
-        inv.tr = 0;
+        delete inv.tr;
         store.set('restantInvestissement', inv);
       } else if (key === 'pea') {
         const pea = store.get('restantPEA') || {};
-        pea.tr = 0;
+        delete pea.tr;
         store.set('restantPEA', pea);
       } else if (key === 'ndf') {
         const p = store.get('parametres') || {};
-        p.budgetNDF = 0;
+        delete p.budgetNDF;
         store.set('parametres', p);
       } else if (key === 'quotidien') {
         const p = store.get('parametres') || {};
-        p.budgetQuotidien = 0;
+        delete p.budgetQuotidien;
         store.set('parametres', p);
       } else if (key.startsWith('feat-')) {
         const feat = key.replace('feat-', '');
         const trFeatures = store.get('trFeatures') || {};
-        trFeatures[feat] = 0;
+        delete trFeatures[feat];
+        const lblKey = 'lbl' + feat.charAt(0).toUpperCase() + feat.slice(1);
+        delete trFeatures[lblKey];
         store.set('trFeatures', trFeatures);
       }
       navigate('suivi-depenses');
@@ -1119,7 +1098,7 @@ export function mount(store, navigate) {
         const data = getFormData(document.getElementById('modal-body'));
         const label = (data.libelle || '').trim();
         const amount = Number(data.montant) || 0;
-        if (!label || !amount) return;
+        if (!label) return;
         const pockets = store.get('budgetPockets') || {};
         if (!pockets[bankKey]) pockets[bankKey] = [];
         pockets[bankKey].push({ id: 'pocket-' + Date.now(), label, amount });
