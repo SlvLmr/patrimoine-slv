@@ -194,8 +194,8 @@ export function render(store) {
   const hasBudgetQuotidien = budgetQuotidien > 0 || 'budgetQuotidien' in paramètres;
   const hasSoldeObligCIC = soldeObligCIC > 0 || 'cic' in soldeObligatoire;
 
-  // Solde obligatoire TR = sum of all pocket amounts (hors saveback/interets/roundup)
-  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + budgetQuotidien + pocketsTRTotal;
+  // Solde obligatoire TR = sum of all pocket amounts (hors quotidien, saveback/interets/roundup)
+  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + pocketsTRTotal;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
