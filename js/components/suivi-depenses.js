@@ -59,6 +59,118 @@ function getCurrentMonthKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function getBankPockets(store, bankNames, bankName) {
+  const pockets = [];
+  const allPockets = store.get('budgetPockets') || {};
+  const labels = store.get('customLabels') || {};
+  const extraBanks = bankNames.extra || [];
+
+  if (bankName === bankNames.primary) {
+    const soldeObligatoire = store.get('soldeObligatoire') || {};
+    if ('cic' in soldeObligatoire) {
+      pockets.push({ id: 'oblig-cic', label: labels.soldeObligatoire_cic || 'Solde obligatoire' });
+    }
+    (allPockets.cic || []).forEach(p => pockets.push({ id: p.id, label: p.label }));
+  } else if (bankName === bankNames.secondary) {
+    const parametres = store.get('parametres') || {};
+    const restantInvest = store.get('restantInvestissement') || {};
+    const restantPEA = store.get('restantPEA') || {};
+    if ('budgetQuotidien' in parametres) pockets.push({ id: 'quotidien', label: labels.enveloppeQuotidien || 'Pocket Quotidien' });
+    if ('budgetNDF' in parametres) pockets.push({ id: 'ndf', label: labels.aRecupererNDF || 'Pocket NDF' });
+    if ('tr' in restantPEA) pockets.push({ id: 'pea', label: labels.restantPEA || 'Pocket PEA' });
+    if ('tr' in restantInvest) pockets.push({ id: 'invest', label: labels.restantInvestissement || 'Pocket Invest' });
+    (allPockets.tr || []).forEach(p => pockets.push({ id: p.id, label: p.label }));
+  } else {
+    const bank = extraBanks.find(b => b.name === bankName);
+    if (bank) {
+      const soldeObligatoire = store.get('soldeObligatoire') || {};
+      if (bank.id in soldeObligatoire) {
+        pockets.push({ id: `oblig-${bank.id}`, label: labels[`soldeObligatoire_${bank.id}`] || 'Solde obligatoire' });
+      }
+      (allPockets[bank.id] || []).forEach(p => pockets.push({ id: p.id, label: p.label }));
+    }
+  }
+  return pockets;
+}
+
+function deductFromPocket(store, bankNames, bankName, pocketId, amount) {
+  if (!pocketId || pocketId === 'aucun') return;
+  const amt = Number(amount) || 0;
+  if (amt <= 0) return;
+
+  if (bankName === bankNames.primary) {
+    if (pocketId === 'oblig-cic') {
+      const oblig = store.get('soldeObligatoire') || {};
+      oblig.cic = (Number(oblig.cic) || 0) - amt;
+      store.set('soldeObligatoire', oblig);
+    } else {
+      const ap = store.get('budgetPockets') || {};
+      const p = (ap.cic || []).find(x => x.id === pocketId);
+      if (p) { p.amount = (Number(p.amount) || 0) - amt; store.set('budgetPockets', ap); }
+    }
+  } else if (bankName === bankNames.secondary) {
+    if (pocketId === 'quotidien') {
+      const params = store.get('parametres') || {};
+      params.budgetQuotidien = (Number(params.budgetQuotidien) || 0) - amt;
+      store.set('parametres', params);
+    } else if (pocketId === 'ndf') {
+      const params = store.get('parametres') || {};
+      params.budgetNDF = (Number(params.budgetNDF) || 0) - amt;
+      store.set('parametres', params);
+    } else if (pocketId === 'pea') {
+      const pea = store.get('restantPEA') || {};
+      pea.tr = (Number(pea.tr) || 0) - amt;
+      store.set('restantPEA', pea);
+    } else if (pocketId === 'invest') {
+      const inv = store.get('restantInvestissement') || {};
+      inv.tr = (Number(inv.tr) || 0) - amt;
+      store.set('restantInvestissement', inv);
+    } else {
+      const ap = store.get('budgetPockets') || {};
+      const p = (ap.tr || []).find(x => x.id === pocketId);
+      if (p) { p.amount = (Number(p.amount) || 0) - amt; store.set('budgetPockets', ap); }
+    }
+  } else {
+    const bank = (bankNames.extra || []).find(b => b.name === bankName);
+    if (!bank) return;
+    if (pocketId === `oblig-${bank.id}`) {
+      const oblig = store.get('soldeObligatoire') || {};
+      oblig[bank.id] = (Number(oblig[bank.id]) || 0) - amt;
+      store.set('soldeObligatoire', oblig);
+    } else {
+      const ap = store.get('budgetPockets') || {};
+      const p = (ap[bank.id] || []).find(x => x.id === pocketId);
+      if (p) { p.amount = (Number(p.amount) || 0) - amt; store.set('budgetPockets', ap); }
+    }
+  }
+}
+
+function pocketSelectHtml(pockets, selected = 'aucun') {
+  const opts = pockets.map(p => `<option value="${p.id}" ${p.id === selected ? 'selected' : ''}>${p.label}</option>`).join('');
+  return `
+    <div class="mb-4" id="pocket-selector-wrap">
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Déduire du pocket</label>
+      <select name="pocket" id="pocket-select"
+        class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200
+        focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+        <option value="aucun">Aucun</option>
+        ${opts}
+      </select>
+    </div>`;
+}
+
+function setupPocketBankSync(store, bankNames) {
+  const radios = document.querySelectorAll('#modal-body input[name="compte"]');
+  radios.forEach(r => {
+    r.addEventListener('change', () => {
+      const sel = document.getElementById('pocket-select');
+      if (!sel) return;
+      const pockets = getBankPockets(store, bankNames, r.value);
+      sel.innerHTML = '<option value="aucun">Aucun</option>' + pockets.map(p => `<option value="${p.id}">${p.label}</option>`).join('');
+    });
+  });
+}
+
 const DEPENSES_MENSUELLES_CIC = [];
 
 // Recurring DCA/Invest expenses for TR (checked=pending, unchecked=debited)
@@ -1156,6 +1268,8 @@ export function mount(store, navigate) {
 
   // Add expense
   document.getElementById('btn-add-expense')?.addEventListener('click', () => {
+    const defaultBank = COMPTES[0];
+    const defaultPockets = getBankPockets(store, bankNames, defaultBank);
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
       ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Courses Carrefour"')}
@@ -1172,16 +1286,19 @@ export function mount(store, navigate) {
           `).join('')}
         </div>
       </div>
+      ${pocketSelectHtml(defaultPockets)}
     `;
     openModal('Ajouter une dépense', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.primary;
+      const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
-      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
-
+      deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
       navigate('suivi-depenses');
     });
+    setupPocketBankSync(store, bankNames);
   });
 
   // Edit expense
@@ -1192,6 +1309,7 @@ export function mount(store, navigate) {
       const item = items.find(i => i.id === id);
       if (!item) return;
       const curAff = getCurrentAffectation(item);
+      const editPockets = getBankPockets(store, bankNames, item.compte || bankNames.primary);
       const body = `
         ${affectationField(curAff)}
         <div class="grid grid-cols-2 gap-2">
@@ -1213,17 +1331,19 @@ export function mount(store, navigate) {
             </div>
           </div>
         </div>
+        ${pocketSelectHtml(editPockets, item.pocket || 'aucun')}
       `;
       openModal('Modifier l\'opération', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         data.compte = document.querySelector('input[name="compte"]:checked')?.value || item.compte;
         const newAff = document.querySelector('input[name="affectation"]:checked')?.value || curAff;
+        const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
 
         // If switched to revenu → move from suiviDepenses to suiviRevenus
         if (newAff === 'revenu') {
           store.set('suiviDepenses', items.filter(i => i.id !== id));
           const revenus = store.get('suiviRevenus') || [];
-          revenus.unshift({ id: item.id, type: 'revenu', date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie });
+          revenus.unshift({ id: item.id, type: 'revenu', date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie, pocket: pocketId !== 'aucun' ? pocketId : undefined });
           store.set('suiviRevenus', revenus);
         } else {
           // Map affectation to categorie
@@ -1231,11 +1351,13 @@ export function mount(store, navigate) {
           else if (newAff === 'virement') data.categorie = 'Virement';
           else if (newAff === 'ndf') data.categorie = 'NDF';
           else if (newAff === 'autre') data.categorie = 'Autre';
+          data.pocket = pocketId !== 'aucun' ? pocketId : undefined;
           Object.assign(item, data);
           store.set('suiviDepenses', items);
         }
         navigate('suivi-depenses');
       });
+      setupPocketBankSync(store, bankNames);
     });
   });
 
@@ -1688,6 +1810,8 @@ export function mount(store, navigate) {
 
   // Add virement (shortcut)
   document.getElementById('btn-add-virement')?.addEventListener('click', () => {
+    const virDefaultBank = bankNames.secondary;
+    const virPockets = getBankPockets(store, bankNames, virDefaultBank);
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
       ${inputField('description', 'Description', '', 'text', `placeholder="Ex: Virement vers ${bankNames.primary}"`)}
@@ -1697,26 +1821,32 @@ export function mount(store, navigate) {
         <div class="flex gap-3">
           ${COMPTES.map(c => `
             <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-amber-400/40 transition has-[:checked]:border-amber-400 has-[:checked]:bg-amber-400/10">
-              <input type="radio" name="compte" value="${c}" ${c === bankNames.secondary ? 'checked' : ''} class="w-4 h-4 text-amber-400 bg-dark-800 border-dark-400 focus:ring-amber-400/40">
+              <input type="radio" name="compte" value="${c}" ${c === virDefaultBank ? 'checked' : ''} class="w-4 h-4 text-amber-400 bg-dark-800 border-dark-400 focus:ring-amber-400/40">
               <span class="text-sm text-gray-200">${c}</span>
             </label>
           `).join('')}
         </div>
       </div>
+      ${pocketSelectHtml(virPockets)}
     `;
     openModal('Ajouter un virement', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'Virement';
+      const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
-      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
+      deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
       navigate('suivi-depenses');
     });
+    setupPocketBankSync(store, bankNames);
   });
 
   // Add Investissement (shortcut)
   document.getElementById('btn-add-invest')?.addEventListener('click', () => {
+    const invDefaultBank = bankNames.secondary;
+    const invPockets = getBankPockets(store, bankNames, invDefaultBank);
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
       ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: DCA PEA, Achat Bitcoin..."')}
@@ -1726,26 +1856,32 @@ export function mount(store, navigate) {
         <div class="flex gap-3">
           ${COMPTES.map(c => `
             <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-blue-400/40 transition has-[:checked]:border-blue-400 has-[:checked]:bg-blue-400/10">
-              <input type="radio" name="compte" value="${c}" ${c === bankNames.secondary ? 'checked' : ''} class="w-4 h-4 text-blue-400 bg-dark-800 border-dark-400 focus:ring-blue-400/40">
+              <input type="radio" name="compte" value="${c}" ${c === invDefaultBank ? 'checked' : ''} class="w-4 h-4 text-blue-400 bg-dark-800 border-dark-400 focus:ring-blue-400/40">
               <span class="text-sm text-gray-200">${c}</span>
             </label>
           `).join('')}
         </div>
       </div>
+      ${pocketSelectHtml(invPockets)}
     `;
     openModal('Ajouter un investissement', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'Investissement';
+      const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
-      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
+      deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
       navigate('suivi-depenses');
     });
+    setupPocketBankSync(store, bankNames);
   });
 
   // Add NDF (shortcut)
   document.getElementById('btn-add-ndf')?.addEventListener('click', () => {
+    const ndfDefaultBank = bankNames.secondary;
+    const ndfPockets = getBankPockets(store, bankNames, ndfDefaultBank);
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
       ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Restaurant client"')}
@@ -1755,22 +1891,26 @@ export function mount(store, navigate) {
         <div class="flex gap-3">
           ${COMPTES.map(c => `
             <label class="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-purple-400/40 transition has-[:checked]:border-purple-400 has-[:checked]:bg-purple-400/10">
-              <input type="radio" name="compte" value="${c}" ${c === bankNames.secondary ? 'checked' : ''} class="w-4 h-4 text-purple-400 bg-dark-800 border-dark-400 focus:ring-purple-400/40">
+              <input type="radio" name="compte" value="${c}" ${c === ndfDefaultBank ? 'checked' : ''} class="w-4 h-4 text-purple-400 bg-dark-800 border-dark-400 focus:ring-purple-400/40">
               <span class="text-sm text-gray-200">${c}</span>
             </label>
           `).join('')}
         </div>
       </div>
+      ${pocketSelectHtml(ndfPockets)}
     `;
     openModal('Ajouter une NDF', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'NDF';
+      const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
-      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
+      deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
       navigate('suivi-depenses');
     });
+    setupPocketBankSync(store, bankNames);
   });
 
   document.querySelectorAll('[data-del-expense]').forEach(btn => {
