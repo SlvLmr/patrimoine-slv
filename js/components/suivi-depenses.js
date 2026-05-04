@@ -445,31 +445,31 @@ export function render(store) {
               <span class="text-[10px] font-semibold text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
               <button data-del-budget="feat-interets" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${hasRestantInvest ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-invest>
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantInvest}</span>
-              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
-              <button data-del-budget="invest" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${hasRestantPEA ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-pea>
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantPEA}</span>
-              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
-              <button data-del-budget="pea" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
+            ${hasBudgetQuotidien ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-budget-quotidien>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblEnveloppe}</span>
+              <span class="text-[10px] font-semibold ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
+              <button data-del-budget="quotidien" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
             ${hasBudgetNDF ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-budget-ndf>
               <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblNDF}</span>
               <span class="text-[10px] font-semibold text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
               <button data-del-budget="ndf" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
-            ${hasBudgetQuotidien ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-budget-quotidien>
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblEnveloppe}</span>
-              <span class="text-[10px] font-semibold ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
-              <button data-del-budget="quotidien" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
+            ${hasRestantPEA ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-pea>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantPEA}</span>
+              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
+              <button data-del-budget="pea" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>` : ''}
             ${pocketsTR.map(p => `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-pocket="${p.id}" data-pocket-bank="tr">
               <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${p.label}</span>
               <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
               <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>`).join('')}
+            ${hasRestantInvest ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-invest>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantInvest}</span>
+              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
+              <button data-del-budget="invest" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
+            </div>` : ''}
             <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="tr" title="Ajouter une ligne">
               <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
             </div>
