@@ -490,12 +490,12 @@ export function render(store) {
               <div class="flex items-center gap-2">
                 <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollDep ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 <svg class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                <span class="text-xs font-semibold text-gray-300 cursor-text" data-section-rename="depMensuelles">${secNameDep}</span>
+                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="depMensuelles">${secNameDep}</span>
                 <span class="text-[10px] text-gray-500">${cocheesThisMonth.length}/${depMensuelles.length}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-medium text-accent-red">${formatCurrencyCents(totalCochees)}</span>
-                <button id="btn-add-mensuel-cic" class="text-accent-amber hover:text-accent-amber/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
+                <span class="text-[11px] font-medium text-accent-red">${formatCurrencyCents(totalCochees)}</span>
+                <button id="btn-add-mensuel-cic" class="text-accent-amber hover:text-accent-amber/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
             <div class="divide-y divide-dark-400/10 ${secCollDep ? 'hidden' : ''}" data-section-body="depMensuelles">
@@ -513,7 +513,7 @@ export function render(store) {
                   <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[11px] font-medium ${checked ? 'text-gray-600' : 'text-gray-300'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
+                  <span class="text-[11px] font-medium ${checked ? 'text-gray-600' : 'text-gray-100'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
                   <button data-mc-del="${d.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
@@ -599,12 +599,12 @@ export function render(store) {
               <div class="flex items-center gap-2">
                 <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollDca ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>
-                <span class="text-xs font-semibold text-gray-300 cursor-text" data-section-rename="dcaTR">${secNameDca}</span>
+                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="dcaTR">${secNameDca}</span>
                 <span class="text-[10px] text-gray-500">${confirmedDcaIds.length}/${dcaTR.length}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-medium text-blue-400">-${formatCurrencyCents(totalDcaConfirmed)}</span>
-                <button id="btn-add-dca-tr" class="text-blue-400 hover:text-blue-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
+                <span class="text-[11px] font-medium text-blue-400">-${formatCurrencyCents(totalDcaConfirmed)}</span>
+                <button id="btn-add-dca-tr" class="text-blue-400 hover:text-blue-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
             <div class="divide-y divide-dark-400/10 ${secCollDca ? 'hidden' : ''}" data-section-body="dcaTR">
@@ -618,7 +618,7 @@ export function render(store) {
                   <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[11px] font-medium ${confirmed ? 'text-gray-300' : 'text-gray-600 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
+                  <span class="text-[11px] font-medium ${confirmed ? 'text-gray-100' : 'text-gray-600 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
                   <button data-tr-dca-del="${d.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
@@ -632,12 +632,12 @@ export function render(store) {
               <div class="flex items-center gap-2">
                 <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollRev ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
-                <span class="text-xs font-semibold text-gray-300 cursor-text" data-section-rename="revMensuels">${secNameRev}</span>
+                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="revMensuels">${secNameRev}</span>
                 <span class="text-[10px] text-gray-500">${confirmedRevIds.length}/${revMensuelsTR.length}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-medium text-emerald-400">+${formatCurrencyCents(totalRevConfirmed)}</span>
-                <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-sm font-bold transition ml-2" title="Ajouter">+</button>
+                <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(totalRevConfirmed)}</span>
+                <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
             <div class="divide-y divide-dark-400/10 ${secCollRev ? 'hidden' : ''}" data-section-body="revMensuels">
