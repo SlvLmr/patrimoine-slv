@@ -347,9 +347,9 @@ export function render(store) {
             <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeCIC)}</p>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
-            <span class="text-xs text-gray-500">${lblSoldeDebutCIC}</span>
-            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
+          <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
+            <span class="text-[10px] text-gray-500">${lblSoldeDebutCIC}</span>
+            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
           <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
             ${hasSoldeObligCIC ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-oblig="cic">
@@ -421,13 +421,13 @@ export function render(store) {
             <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeTR)}</p>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
-            <span class="text-xs text-gray-500">${lblSoldeDebutTR}</span>
-            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
+          <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
+            <span class="text-[10px] text-gray-500">${lblSoldeDebutTR}</span>
+            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
-          ${soldeObligTR > 0 ? `<div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20">
-            <span class="text-xs text-gray-500">${lblSoldeObligTR}</span>
-            <span class="text-xs font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
+          ${soldeObligTR > 0 ? `<div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20">
+            <span class="text-[10px] text-gray-500">${lblSoldeObligTR}</span>
+            <span class="text-[10px] font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>` : ''}
           <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
             ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition group/pk relative" data-edit-tr-feature="saveback">
@@ -563,9 +563,9 @@ export function render(store) {
               <button data-remove-bank="${bank.id}" class="text-xs text-gray-500 hover:text-accent-red transition px-2 py-1 rounded hover:bg-dark-600/50" title="Supprimer cette banque">✕</button>
             </div>
           </div>
-          <div class="flex items-center justify-between px-4 py-1 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="${bank.id}">
-            <span class="text-xs text-gray-500">${bank.lblPrev}</span>
-            <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
+          <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="${bank.id}">
+            <span class="text-[10px] text-gray-500">${bank.lblPrev}</span>
+            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
           </div>
           <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
             ${bank.obligSolde > 0 || soldeObligatoire[bank.id] !== undefined ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-oblig="${bank.id}">
