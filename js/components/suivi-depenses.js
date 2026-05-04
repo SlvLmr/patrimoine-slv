@@ -426,6 +426,21 @@ export function render(store) {
             <span class="text-xs font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
           </div>
           <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
+            ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition group/pk relative" data-edit-tr-feature="saveback">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblSaveback}</span>
+              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(trSaveback)}</span>
+              <button data-del-budget="feat-saveback" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
+            </div>` : ''}
+            ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-red-500/10 border border-red-500/20 cursor-pointer hover:bg-red-500/20 transition group/pk relative" data-edit-tr-feature="roundup">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRoundup}</span>
+              <span class="text-[10px] font-semibold text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
+              <button data-del-budget="feat-roundup" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
+            </div>` : ''}
+            ${trFeatures.lblInterets || trInterets > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition group/pk relative" data-edit-tr-feature="interets">
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblInterets}</span>
+              <span class="text-[10px] font-semibold text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
+              <button data-del-budget="feat-interets" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
+            </div>` : ''}
             ${hasRestantInvest ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-invest>
               <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantInvest}</span>
               <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
@@ -451,21 +466,6 @@ export function render(store) {
               <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
               <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
             </div>`).join('')}
-            ${trFeatures.lblInterets || trInterets > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition group/pk relative" data-edit-tr-feature="interets">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblInterets}</span>
-              <span class="text-[10px] font-semibold text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
-              <button data-del-budget="feat-interets" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition group/pk relative" data-edit-tr-feature="saveback">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblSaveback}</span>
-              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(trSaveback)}</span>
-              <button data-del-budget="feat-saveback" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-red-500/10 border border-red-500/20 cursor-pointer hover:bg-red-500/20 transition group/pk relative" data-edit-tr-feature="roundup">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRoundup}</span>
-              <span class="text-[10px] font-semibold text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
-              <button data-del-budget="feat-roundup" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
             <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="tr" title="Ajouter une ligne">
               <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
             </div>
