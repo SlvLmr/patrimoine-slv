@@ -227,88 +227,51 @@ export function render(store) {
       </div>
 
       <!-- KPI -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div class="card-dark rounded-xl p-3 kpi-card glow-green">
-          <div class="flex items-center gap-2 mb-2">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="card-dark rounded-xl p-4 border-l-2 border-emerald-500/40">
+          <div class="flex items-center gap-2 mb-2.5">
             <div class="w-7 h-7 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
               <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19V5m0 0l-5 5m5-5l5 5"/>
               </svg>
             </div>
-            <p class="text-xs text-gray-400">Revenus mensuels</p>
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Revenus</span>
           </div>
-          <p class="text-lg font-bold text-accent-green">${formatCurrencyCents(revMensuelDirect)}</p>
-        </div>
-        <div class="card-dark rounded-xl p-3 kpi-card glow-green">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-7 h-7 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-              </svg>
-            </div>
-            <p class="text-xs text-gray-400">Revenus mensuels lissés</p>
+          <p class="text-xl font-bold text-accent-green">${formatCurrencyCents(revMensuelDirect)}<span class="text-[10px] font-normal text-gray-500 ml-1">/mois</span></p>
+          <div class="flex items-center gap-3 mt-1.5">
+            <span class="text-[10px] text-accent-amber/70">${formatCurrencyCents(totalR)} lissé</span>
+            <span class="text-[10px] text-gray-500">${formatCurrencyCents(totalR * 12)}/an</span>
           </div>
-          <p class="text-lg font-bold text-accent-green">${formatCurrencyCents(totalR)}</p>
         </div>
-        <div class="card-dark rounded-xl p-3 kpi-card glow-green">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-7 h-7 rounded-lg bg-accent-green/20 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3.5 h-3.5 text-accent-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-              </svg>
-            </div>
-            <p class="text-xs text-gray-400">Revenus annuels</p>
-          </div>
-          <p class="text-lg font-bold text-accent-green">${formatCurrencyCents(totalR * 12)}</p>
-        </div>
-        <div class="card-dark rounded-xl p-3 kpi-card glow-red">
-          <div class="flex items-center gap-2 mb-2">
+        <div class="card-dark rounded-xl p-4 border-l-2 border-red-500/40">
+          <div class="flex items-center gap-2 mb-2.5">
             <div class="w-7 h-7 rounded-lg bg-accent-red/20 flex items-center justify-center flex-shrink-0">
               <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 5v14m0 0l5-5m-5 5l-5-5"/>
               </svg>
             </div>
-            <p class="text-xs text-gray-400">Dépenses mensuelles</p>
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Dépenses</span>
           </div>
-          <p class="text-lg font-bold text-accent-red">${formatCurrencyCents(depMensuelDirect)}</p>
+          <p class="text-xl font-bold text-accent-red">${formatCurrencyCents(depMensuelDirect)}<span class="text-[10px] font-normal text-gray-500 ml-1">/mois</span></p>
+          <div class="flex items-center gap-3 mt-1.5">
+            <span class="text-[10px] text-accent-amber/70">${formatCurrencyCents(totalD)} lissé</span>
+            <span class="text-[10px] text-gray-500">${formatCurrencyCents(totalD * 12)}/an</span>
+          </div>
         </div>
-        <div class="card-dark rounded-xl p-3 kpi-card glow-red">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-7 h-7 rounded-lg bg-accent-red/20 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        <div class="card-dark rounded-xl p-4 border-l-2 ${balance >= 0 ? 'border-purple-500/40' : 'border-orange-500/40'}">
+          <div class="flex items-center gap-2 mb-2.5">
+            <div class="w-7 h-7 rounded-lg ${balance >= 0 ? 'bg-purple-500/20' : 'bg-orange-500/20'} flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
               </svg>
             </div>
-            <p class="text-xs text-gray-400">Dépenses mensuelles lissées</p>
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Balance</span>
           </div>
-          <p class="text-lg font-bold text-accent-red">${formatCurrencyCents(totalD)}</p>
-        </div>
-        <div class="card-dark rounded-xl p-3 kpi-card glow-red">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-7 h-7 rounded-lg bg-accent-red/20 flex items-center justify-center flex-shrink-0">
-              <svg class="w-3.5 h-3.5 text-accent-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
-              </svg>
-            </div>
-            <p class="text-xs text-gray-400">Dépenses annuelles</p>
+          <p class="text-xl font-bold ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}">${formatCurrencyCents(Math.abs(revMensuelDirect - depMensuelDirect))}<span class="text-[10px] font-normal text-gray-500 ml-1">/mois</span></p>
+          <div class="flex items-center gap-3 mt-1.5">
+            <span class="text-[10px] ${balance >= 0 ? 'text-purple-400/60' : 'text-orange-400/60'}">${formatCurrencyCents(Math.abs(balance))} lissé</span>
+            <span class="text-[10px] text-gray-500">${formatCurrencyCents(Math.abs(balance * 12))}/an</span>
           </div>
-          <p class="text-lg font-bold text-accent-red">${formatCurrencyCents(totalD * 12)}</p>
-        </div>
-      </div>
-
-      <!-- Balances -->
-      <div class="flex items-center justify-center gap-8 -mt-1">
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 ${(revMensuelDirect - depMensuelDirect) >= 0 ? 'text-purple-400' : 'text-orange-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
-          </svg>
-          <p class="text-sm font-semibold ${(revMensuelDirect - depMensuelDirect) >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance mensuelle : ${formatCurrencyCents(revMensuelDirect - depMensuelDirect)}</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
-          </svg>
-          <p class="text-sm font-semibold ${balance >= 0 ? 'text-purple-400' : 'text-orange-400'}">Balance annuelle : ${formatCurrencyCents(balance * 12)}</p>
         </div>
       </div>
 
