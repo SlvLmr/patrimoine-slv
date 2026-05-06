@@ -942,7 +942,15 @@ export function mount(store, navigate) {
     const trFeats = store.get('trFeatures') || {};
     const trInt = Number(trFeats.interets) || 0;
     const trRnd = Number(trFeats.roundup) || 0;
-    const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR + trInt - depTR - trRnd;
+    const trConfirmedStore = store.get('trRecurringConfirmed') || {};
+    const trConfMonth = trConfirmedStore[monthKey] || { expenses: [], revenues: [], prelevements: [] };
+    const dcaList = store.get('dcaMensuelsTR') || [];
+    const revMensList = store.get('revenusMensuelsTR') || [];
+    const prelevList = store.get('prelevementsTR') || [];
+    const archDcaConfirmed = dcaList.filter(d => (trConfMonth.expenses || []).includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+    const archRevConfirmed = revMensList.filter(r => (trConfMonth.revenues || []).includes(r.id)).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+    const archPrelevConfirmed = prelevList.filter(p => (trConfMonth.prelevements || []).includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0);
+    const finalSoldeTR = baseSoldeTR + soldePrevTR + revTR + trInt - depTR - trRnd - archDcaConfirmed + archRevConfirmed - archPrelevConfirmed;
 
     // Extra banks final soldes
     const extraFinals = {};
@@ -1061,6 +1069,11 @@ export function mount(store, navigate) {
       const allCochees = store.get('cicMensuellesCochees') || {};
       delete allCochees[monthKey];
       store.set('cicMensuellesCochees', allCochees);
+
+      // Clear TR recurring confirmed for this month
+      const allTrConf = store.get('trRecurringConfirmed') || {};
+      delete allTrConf[monthKey];
+      store.set('trRecurringConfirmed', allTrConf);
 
       // Reset TR features (monthly values already baked into soldePrev)
       const trF = store.get('trFeatures') || {};
