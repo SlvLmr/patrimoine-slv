@@ -493,6 +493,7 @@ export function render(store) {
             <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
           </svg>
           ${icon}
+          <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
           <span class="text-[11px] text-gray-200 truncate">${op.description || '—'}</span>
           ${op.categorie ? `<span class="text-[9px] font-light text-gray-500 flex-shrink-0">${op.categorie}</span>` : ''}
         </div>
@@ -501,33 +502,6 @@ export function render(store) {
           <button ${delAttr} class="btn-delete text-xs" onclick="event.stopPropagation()">✕</button>
         </div>
       </div>`;
-  };
-
-  const renderOpsGrouped = (ops, containerId) => {
-    if (ops.length === 0) return `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`;
-    const dayTotals = {};
-    ops.forEach(op => {
-      const d = op.date || '';
-      if (!dayTotals[d]) dayTotals[d] = { dep: 0, rev: 0 };
-      if (op.type === 'revenu') dayTotals[d].rev += Number(op.montant) || 0;
-      else dayTotals[d].dep += Number(op.montant) || 0;
-    });
-    let lastDate = null;
-    const parts = [];
-    ops.forEach(op => {
-      const d = op.date || '';
-      if (d !== lastDate) {
-        const t = dayTotals[d];
-        const net = t.rev - t.dep;
-        parts.push(`<div class="flex items-center justify-between px-3 py-0.5 bg-dark-800/80 border-b border-dark-400/10 ${lastDate !== null ? 'border-t border-dark-400/20 mt-px' : ''}">
-          <span class="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">${d ? formatDate(d) : 'Sans date'}</span>
-          <span class="text-[9px] font-medium ${net >= 0 ? 'text-emerald-400/70' : 'text-accent-red/70'}">${net >= 0 ? '+' : '-'}${formatCurrencyCents(Math.abs(net))}</span>
-        </div>`);
-        lastDate = d;
-      }
-      parts.push(renderOp(op));
-    });
-    return `<div id="${containerId}">${parts.join('')}</div>`;
   };
 
   const noOps = opsCIC.length === 0 && opsTR.length === 0 && extraBankData.every(b => b.ops.length === 0) && archives.length === 0;
@@ -592,7 +566,11 @@ export function render(store) {
               <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
             </div>
           </div>
-          ${renderOpsGrouped(opsCIC, 'ops-drop-cic')}
+          ${opsCIC.length > 0 ? `
+          <div class="divide-y divide-dark-400/20" id="ops-drop-cic">
+            ${opsCIC.map(renderOp).join('')}
+          </div>
+          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
 
           <!-- Dépenses mensuelles fixes -->
           <div class="border-t border-dark-400/30">
@@ -669,7 +647,11 @@ export function render(store) {
             </div>
           </div>
 
-          ${renderOpsGrouped(opsTR, 'ops-drop-tr')}
+          ${opsTR.length > 0 ? `
+          <div class="divide-y divide-dark-400/20" id="ops-drop-tr">
+            ${opsTR.map(renderOp).join('')}
+          </div>
+          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
 
           <!-- Abonnements TR -->
           <div class="border-t border-dark-400/30">
@@ -825,7 +807,11 @@ export function render(store) {
               <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
             </div>
           </div>
-          ${renderOpsGrouped(bank.ops, 'ops-drop-' + bank.id)}
+          ${bank.ops.length > 0 ? `
+          <div class="divide-y divide-dark-400/20" id="ops-drop-${bank.id}">
+            ${bank.ops.map(renderOp).join('')}
+          </div>
+          ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
         </div>
         `).join('')}
 
