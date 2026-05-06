@@ -343,7 +343,7 @@ export function render(store) {
   // Pocket colors
   const pocketColorsStore = store.get('pocketColors') || {};
 
-  const soldeObligTR = budgetNDF + pocketsTRTotal;
+  const soldeObligTR = aRecupererNDF + pocketsTRTotal;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
