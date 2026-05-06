@@ -333,6 +333,7 @@ export function render(store) {
   const pocketsTR = allPockets.tr || [];
   const pocketsCIC = allPockets.cic || [];
   const pocketsTRTotal = pocketsTR.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const pocketsTROblig = pocketsTR.filter(p => p.obligatoire !== false).reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const pocketsCICTotal = pocketsCIC.reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const hasRestantInvest = 'tr' in restantInvest;
   const hasRestantPEA = 'tr' in restantPEA;
@@ -343,7 +344,7 @@ export function render(store) {
   // Pocket colors
   const pocketColorsStore = store.get('pocketColors') || {};
 
-  const soldeObligTR = aRecupererNDF + pocketsTRTotal;
+  const soldeObligTR = aRecupererNDF + pocketsTROblig;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -1374,6 +1375,7 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       const bankKey = btn.dataset.addBudget;
       const body = inputField('libelle', 'Nom', '', 'text', 'placeholder="Ex: Vacances, Épargne..."') + inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 500"')
+        + `<div class="mb-3 flex items-center gap-2"><input type="checkbox" name="obligatoire" id="field-obligatoire" checked class="w-4 h-4 rounded bg-dark-800 border-dark-400/50 text-amber-500 focus:ring-amber-500/40"><label for="field-obligatoire" class="text-xs text-gray-300">Inclure dans le solde obligatoire</label></div>`
         + colorPickerHtml('Couleur fond', 'color_bg', 'gray')
         + colorPickerHtml('Couleur contenu', 'color_text', 'blue');
       openModal('Nouveau pocket', body, () => {
@@ -1384,7 +1386,8 @@ export function mount(store, navigate) {
         const pockets = store.get('budgetPockets') || {};
         if (!pockets[bankKey]) pockets[bankKey] = [];
         const newId = 'pocket-' + Date.now();
-        pockets[bankKey].push({ id: newId, label, amount });
+        const oblig = document.getElementById('field-obligatoire')?.checked !== false;
+        pockets[bankKey].push({ id: newId, label, amount, obligatoire: oblig });
         store.set('budgetPockets', pockets);
         const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || 'gray';
         const txVal = document.querySelector('input[name="color_text"]:checked')?.value || 'blue';
@@ -1409,13 +1412,16 @@ export function mount(store, navigate) {
       const pc = store.get('pocketColors') || {};
       const curBg = (pc[pocketId] || {}).bg || 'gray';
       const curTx = (pc[pocketId] || {}).text || 'blue';
+      const isOblig = pocket.obligatoire !== false;
       const body = inputField('libelle', 'Nom', pocket.label) + inputField('montant', 'Montant (€)', pocket.amount, 'number', 'step="0.01"')
+        + `<div class="mb-3 flex items-center gap-2"><input type="checkbox" name="obligatoire" id="field-obligatoire" ${isOblig ? 'checked' : ''} class="w-4 h-4 rounded bg-dark-800 border-dark-400/50 text-amber-500 focus:ring-amber-500/40"><label for="field-obligatoire" class="text-xs text-gray-300">Inclure dans le solde obligatoire</label></div>`
         + colorPickerHtml('Couleur fond', 'color_bg', curBg)
         + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal('Modifier le pocket', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         pocket.label = (data.libelle || '').trim() || pocket.label;
         pocket.amount = Number(data.montant) || 0;
+        pocket.obligatoire = document.getElementById('field-obligatoire')?.checked !== false;
         store.set('budgetPockets', pockets);
         const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
         const txVal = document.querySelector('input[name="color_text"]:checked')?.value || curTx;
