@@ -243,7 +243,7 @@ export function render(store) {
   const secNameDep = sectionNames.depMensuelles || 'Dépenses mensuelles';
   const secNameDca = sectionNames.dcaTR || 'DCA & Investissements';
   const secNameRev = sectionNames.revMensuels || 'Apports mensuels';
-  const secNamePrelev = sectionNames.prelevTR || 'Prélèvements automatiques';
+  const secNamePrelev = sectionNames.prelevTR || 'Abonnements';
   const secCollDep = !!sectionCollapsed.depMensuelles;
   const secCollDca = !!sectionCollapsed.dcaTR;
   const secCollRev = !!sectionCollapsed.revMensuels;
@@ -600,73 +600,7 @@ export function render(store) {
           </div>
           ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
 
-          <!-- DCA & Investissements récurrents TR -->
-          <div class="border-t border-dark-400/30">
-            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="dcaTR">
-              <div class="flex items-center gap-2">
-                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollDca ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>
-                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="dcaTR">${secNameDca}</span>
-                <span class="text-[10px] text-gray-500">${confirmedDcaIds.length}/${dcaTR.length}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-medium text-blue-400">-${formatCurrencyCents(totalDcaConfirmed)}</span>
-                <button id="btn-add-dca-tr" class="text-blue-400 hover:text-blue-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
-              </div>
-            </div>
-            <div class="divide-y divide-dark-400/10 ${secCollDca ? 'hidden' : ''}" data-section-body="dcaTR">
-              ${dcaTR.map(d => {
-                const confirmed = confirmedDcaIds.includes(d.id);
-                return `
-              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-dca cursor-grab active:cursor-grabbing tr-dca-drag-row" draggable="true" data-drag-dca-id="${d.id}">
-                <div class="flex items-center gap-2 min-w-0">
-                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
-                  <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
-                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
-                </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[11px] font-medium ${confirmed ? 'text-gray-100' : 'text-gray-600 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
-                  <button data-tr-dca-del="${d.id}" class="btn-delete text-xs">✕</button>
-                </div>
-              </div>`;
-              }).join('')}
-            </div>
-          </div>
-
-          <!-- Apports mensuels récurrents TR -->
-          <div class="border-t border-dark-400/30">
-            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="revMensuels">
-              <div class="flex items-center gap-2">
-                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollRev ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
-                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="revMensuels">${secNameRev}</span>
-                <span class="text-[10px] text-gray-500">${confirmedRevIds.length}/${revMensuelsTR.length}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(totalRevConfirmed)}</span>
-                <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
-              </div>
-            </div>
-            <div class="divide-y divide-dark-400/10 ${secCollRev ? 'hidden' : ''}" data-section-body="revMensuels">
-              ${revMensuelsTR.map(r => {
-                const confirmed = confirmedRevIds.includes(r.id);
-                return `
-              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev cursor-grab active:cursor-grabbing tr-rev-drag-row" draggable="true" data-drag-rev-id="${r.id}">
-                <div class="flex items-center gap-2 min-w-0">
-                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
-                  <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
-                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
-                </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  <span class="text-[11px] font-medium ${confirmed ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">+${formatCurrencyCents(r.montant)}</span>
-                  <button data-tr-rev-del="${r.id}" class="btn-delete text-xs">✕</button>
-                </div>
-              </div>`;
-              }).join('')}
-            </div>
-          </div>
-
-          <!-- Prélèvements automatiques TR -->
+          <!-- Abonnements TR -->
           <div class="border-t border-dark-400/30">
             <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="prelevTR">
               <div class="flex items-center gap-2">
@@ -699,6 +633,84 @@ export function render(store) {
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <span class="text-[11px] font-medium ${confirmed ? 'text-gray-100' : 'text-gray-600 line-through'} cursor-pointer" data-tr-prelev-edit="${p.id}">-${formatCurrencyCents(p.montant)}</span>
                   <button data-tr-prelev-del="${p.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- DCA & Investissements récurrents TR -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="dcaTR">
+              <div class="flex items-center gap-2">
+                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollDca ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l5-5m-5 5l-5-5"/></svg>
+                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="dcaTR">${secNameDca}</span>
+                <span class="text-[10px] text-gray-500">${confirmedDcaIds.length}/${dcaTR.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-medium text-blue-400">-${formatCurrencyCents(totalDcaConfirmed)}</span>
+                <button id="btn-add-dca-tr" class="text-blue-400 hover:text-blue-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10 ${secCollDca ? 'hidden' : ''}" data-section-body="dcaTR">
+              ${dcaTR.map(d => {
+                const confirmed = confirmedDcaIds.includes(d.id);
+                const dcaPocketLabel = d.pocket && d.pocket !== 'aucun' ? (() => {
+                  const pks = getBankPockets(store, bankNames, bankNames.secondary);
+                  const pk = pks.find(x => x.id === d.pocket);
+                  return pk ? pk.label : '';
+                })() : '';
+                return `
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-dca cursor-grab active:cursor-grabbing tr-dca-drag-row" draggable="true" data-drag-dca-id="${d.id}">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
+                  <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
+                  ${dcaPocketLabel ? `<span class="text-[9px] text-gray-600">${dcaPocketLabel}</span>` : ''}
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[11px] font-medium ${confirmed ? 'text-gray-100' : 'text-gray-600 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">-${formatCurrencyCents(d.montant)}</span>
+                  <button data-tr-dca-del="${d.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Apports mensuels récurrents TR -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="revMensuels">
+              <div class="flex items-center gap-2">
+                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollRev ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="revMensuels">${secNameRev}</span>
+                <span class="text-[10px] text-gray-500">${confirmedRevIds.length}/${revMensuelsTR.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(totalRevConfirmed)}</span>
+                <button id="btn-add-rev-tr" class="text-emerald-400 hover:text-emerald-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10 ${secCollRev ? 'hidden' : ''}" data-section-body="revMensuels">
+              ${revMensuelsTR.map(r => {
+                const confirmed = confirmedRevIds.includes(r.id);
+                const revPocketLabel = r.pocket && r.pocket !== 'aucun' ? (() => {
+                  const pks = getBankPockets(store, bankNames, bankNames.secondary);
+                  const pk = pks.find(x => x.id === r.pocket);
+                  return pk ? pk.label : '';
+                })() : '';
+                return `
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev cursor-grab active:cursor-grabbing tr-rev-drag-row" draggable="true" data-drag-rev-id="${r.id}">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
+                  <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
+                  ${revPocketLabel ? `<span class="text-[9px] text-gray-600">${revPocketLabel}</span>` : ''}
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[11px] font-medium ${confirmed ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">+${formatCurrencyCents(r.montant)}</span>
+                  <button data-tr-rev-del="${r.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
               }).join('')}
@@ -834,7 +846,7 @@ export function mount(store, navigate) {
       e.stopPropagation();
       const key = span.dataset.sectionRename;
       const names = store.get('sectionNames') || {};
-      const defaults = { depMensuelles: 'Dépenses mensuelles', dcaTR: 'DCA & Investissements', revMensuels: 'Apports mensuels', prelevTR: 'Prélèvements automatiques' };
+      const defaults = { depMensuelles: 'Dépenses mensuelles', dcaTR: 'DCA & Investissements', revMensuels: 'Apports mensuels', prelevTR: 'Abonnements' };
       const current = names[key] || defaults[key] || '';
       const body = inputField('nom', 'Nom de la section', current);
       openModal('Renommer la section', body, () => {
@@ -1569,12 +1581,14 @@ export function mount(store, navigate) {
       const monthKey = getCurrentMonthKey();
       const all = store.get('trRecurringConfirmed') || {};
       const month = all[monthKey] || { expenses: [], revenues: [] };
+      const dcaList = store.get('dcaMensuelsTR') || [];
+      const dcaItem = dcaList.find(d => d.id === id);
       if (cb.checked) {
-        // Checked = confirmed = debited
         if (!month.expenses.includes(id)) month.expenses.push(id);
+        if (dcaItem && dcaItem.pocket) deductFromPocket(store, bankNames, bankNames.secondary, dcaItem.pocket, dcaItem.montant);
       } else {
-        // Unchecked = back to pending
         month.expenses = month.expenses.filter(x => x !== id);
+        if (dcaItem && dcaItem.pocket) deductFromPocket(store, bankNames, bankNames.secondary, dcaItem.pocket, -dcaItem.montant);
       }
       all[monthKey] = month;
       store.set('trRecurringConfirmed', all);
@@ -1589,10 +1603,14 @@ export function mount(store, navigate) {
       const monthKey = getCurrentMonthKey();
       const all = store.get('trRecurringConfirmed') || {};
       const month = all[monthKey] || { expenses: [], revenues: [] };
+      const revList = store.get('revenusMensuelsTR') || [];
+      const revItem = revList.find(r => r.id === id);
       if (cb.checked) {
         if (!month.revenues.includes(id)) month.revenues.push(id);
+        if (revItem && revItem.pocket) deductFromPocket(store, bankNames, bankNames.secondary, revItem.pocket, -revItem.montant);
       } else {
         month.revenues = month.revenues.filter(x => x !== id);
+        if (revItem && revItem.pocket) deductFromPocket(store, bankNames, bankNames.secondary, revItem.pocket, revItem.montant);
       }
       all[monthKey] = month;
       store.set('trRecurringConfirmed', all);
@@ -1607,14 +1625,18 @@ export function mount(store, navigate) {
       const list = store.get('dcaMensuelsTR') || [];
       const item = list.find(d => d.id === id);
       if (!item) return;
+      const pockets = getBankPockets(store, bankNames, bankNames.secondary);
       const body = `
         ${inputField('nom', 'Nom', item.nom)}
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+        ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
       `;
       openModal('Modifier le DCA', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
+        const pk = document.getElementById('pocket-select')?.value || 'aucun';
+        if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
         store.set('dcaMensuelsTR', list);
         navigate('suivi-depenses');
       });
@@ -1628,14 +1650,18 @@ export function mount(store, navigate) {
       const list = store.get('revenusMensuelsTR') || [];
       const item = list.find(r => r.id === id);
       if (!item) return;
+      const pockets = getBankPockets(store, bankNames, bankNames.secondary);
       const body = `
         ${inputField('nom', 'Nom', item.nom)}
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+        ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
       `;
       openModal('Modifier le revenu mensuel', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
+        const pk = document.getElementById('pocket-select')?.value || 'aucun';
+        if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
         store.set('revenusMensuelsTR', list);
         navigate('suivi-depenses');
       });
@@ -1664,15 +1690,20 @@ export function mount(store, navigate) {
 
   // Add new TR DCA recurring
   document.getElementById('btn-add-dca-tr')?.addEventListener('click', () => {
+    const pockets = getBankPockets(store, bankNames, bankNames.secondary);
     const body = `
       ${inputField('nom', 'Nom', '')}
-      ${inputField('montant', 'Montant (€)', '', 'number', '0.01')}
+      ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+      ${pocketSelectHtml(pockets)}
     `;
     openModal('Ajouter un DCA mensuel', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       if (!data.nom || !data.montant) return;
+      const pk = document.getElementById('pocket-select')?.value || 'aucun';
       const list = store.get('dcaMensuelsTR') || [];
-      list.push({ id: 'dca-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) });
+      const entry = { id: 'dca-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) };
+      if (pk !== 'aucun') entry.pocket = pk;
+      list.push(entry);
       store.set('dcaMensuelsTR', list);
       navigate('suivi-depenses');
     });
@@ -1680,15 +1711,20 @@ export function mount(store, navigate) {
 
   // Add new TR Revenue recurring
   document.getElementById('btn-add-rev-tr')?.addEventListener('click', () => {
+    const pockets = getBankPockets(store, bankNames, bankNames.secondary);
     const body = `
       ${inputField('nom', 'Nom', '')}
-      ${inputField('montant', 'Montant (€)', '', 'number', '0.01')}
+      ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+      ${pocketSelectHtml(pockets)}
     `;
     openModal('Ajouter un revenu mensuel', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       if (!data.nom || !data.montant) return;
+      const pk = document.getElementById('pocket-select')?.value || 'aucun';
       const list = store.get('revenusMensuelsTR') || [];
-      list.push({ id: 'rev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) });
+      const entry = { id: 'rev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) };
+      if (pk !== 'aucun') entry.pocket = pk;
+      list.push(entry);
       store.set('revenusMensuelsTR', list);
       navigate('suivi-depenses');
     });
