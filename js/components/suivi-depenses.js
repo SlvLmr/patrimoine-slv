@@ -343,8 +343,7 @@ export function render(store) {
   // Pocket colors
   const pocketColorsStore = store.get('pocketColors') || {};
 
-  // Solde obligatoire TR = sum of all pocket amounts (hors quotidien, saveback/interets/roundup)
-  const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + pocketsTRTotal;
+  const soldeObligTR = budgetNDF + pocketsTRTotal;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
