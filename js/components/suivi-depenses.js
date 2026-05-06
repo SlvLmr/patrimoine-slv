@@ -96,7 +96,7 @@ function getBankPockets(store, bankNames, bankName) {
 function deductFromPocket(store, bankNames, bankName, pocketId, amount) {
   if (!pocketId || pocketId === 'aucun') return;
   const amt = Number(amount) || 0;
-  if (amt <= 0) return;
+  if (amt === 0) return;
 
   if (bankName === bankNames.primary) {
     if (pocketId === 'oblig-cic') {
@@ -235,6 +235,7 @@ export function render(store) {
   }
   const dcaTR = store.get('dcaMensuelsTR') || [];
   const revMensuelsTR = store.get('revenusMensuelsTR') || [];
+  const prelevTR = store.get('prelevementsTR') || [];
 
   // Section names & collapsed state
   const sectionNames = store.get('sectionNames') || {};
@@ -242,9 +243,11 @@ export function render(store) {
   const secNameDep = sectionNames.depMensuelles || 'Dépenses mensuelles';
   const secNameDca = sectionNames.dcaTR || 'DCA & Investissements';
   const secNameRev = sectionNames.revMensuels || 'Apports mensuels';
+  const secNamePrelev = sectionNames.prelevTR || 'Prélèvements automatiques';
   const secCollDep = !!sectionCollapsed.depMensuelles;
   const secCollDca = !!sectionCollapsed.dcaTR;
   const secCollRev = !!sectionCollapsed.revMensuels;
+  const secCollPrelev = !!sectionCollapsed.prelevTR;
 
   const items = store.get('suiviDepenses') || [];
   const revenus = store.get('suiviRevenus') || [];
@@ -322,12 +325,16 @@ export function render(store) {
   const trConfirmedThisMonth = trConfirmed[monthKey] || { expenses: [], revenues: [] };
   const confirmedDcaIds = trConfirmedThisMonth.expenses || [];
   const confirmedRevIds = trConfirmedThisMonth.revenues || [];
+  const confirmedPrelevIds = trConfirmedThisMonth.prelevements || [];
   const totalDcaConfirmed = dcaTR
     .filter(d => confirmedDcaIds.includes(d.id))
     .reduce((s, d) => s + d.montant, 0);
   const totalRevConfirmed = revMensuelsTR
     .filter(r => confirmedRevIds.includes(r.id))
     .reduce((s, r) => s + r.montant, 0);
+  const totalPrelevConfirmed = prelevTR
+    .filter(p => confirmedPrelevIds.includes(p.id))
+    .reduce((s, p) => s + (Number(p.montant) || 0), 0);
 
   // Compute live solde = base + revenus - depenses - checked monthly
   const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
@@ -350,7 +357,7 @@ export function render(store) {
   const trRoundup = Number(trFeatures.roundup) || 0;
   const lblRoundup = trFeatures.lblRoundup || 'Round-up → CTO';
 
-  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed;
+  const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed - totalPrelevConfirmed;
 
   // Extra banks computation
   const extraBankData = extraBanks.map(bank => {
@@ -658,6 +665,45 @@ export function render(store) {
               }).join('')}
             </div>
           </div>
+
+          <!-- Prélèvements automatiques TR -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30 cursor-pointer select-none" data-section-toggle="prelevTR">
+              <div class="flex items-center gap-2">
+                <svg class="w-3 h-3 text-gray-500 flex-shrink-0 transition-transform ${secCollPrelev ? '-rotate-90' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                <svg class="w-3.5 h-3.5 text-orange-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"/></svg>
+                <span class="text-[11px] font-semibold text-gray-300 cursor-text" data-section-rename="prelevTR">${secNamePrelev}</span>
+                <span class="text-[10px] text-gray-500">${confirmedPrelevIds.length}/${prelevTR.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-medium text-orange-400">-${formatCurrencyCents(totalPrelevConfirmed)}</span>
+                <button id="btn-add-prelev-tr" class="text-orange-400 hover:text-orange-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10 ${secCollPrelev ? 'hidden' : ''}" data-section-body="prelevTR">
+              ${prelevTR.map(p => {
+                const confirmed = confirmedPrelevIds.includes(p.id);
+                const pocketLabel = p.pocket && p.pocket !== 'aucun' ? (() => {
+                  const pks = getBankPockets(store, bankNames, bankNames.secondary);
+                  const pk = pks.find(x => x.id === p.pocket);
+                  return pk ? pk.label : '';
+                })() : '';
+                return `
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-prelev cursor-grab active:cursor-grabbing tr-prelev-drag-row" draggable="true" data-drag-prelev-id="${p.id}">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
+                  <input type="checkbox" data-tr-prelev-recurring="${p.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-orange-500 focus:ring-orange-500/40 cursor-pointer">
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-prelev-edit="${p.id}">${p.nom}</span>
+                  ${pocketLabel ? `<span class="text-[9px] text-gray-600">${pocketLabel}</span>` : ''}
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[11px] font-medium ${confirmed ? 'text-gray-100' : 'text-gray-600 line-through'} cursor-pointer" data-tr-prelev-edit="${p.id}">-${formatCurrencyCents(p.montant)}</span>
+                  <button data-tr-prelev-del="${p.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>
         </div>
 
         ${extraBankData.map(bank => `
@@ -788,7 +834,7 @@ export function mount(store, navigate) {
       e.stopPropagation();
       const key = span.dataset.sectionRename;
       const names = store.get('sectionNames') || {};
-      const defaults = { depMensuelles: 'Dépenses mensuelles', dcaTR: 'DCA & Investissements', revMensuels: 'Apports mensuels' };
+      const defaults = { depMensuelles: 'Dépenses mensuelles', dcaTR: 'DCA & Investissements', revMensuels: 'Apports mensuels', prelevTR: 'Prélèvements automatiques' };
       const current = names[key] || defaults[key] || '';
       const body = inputField('nom', 'Nom de la section', current);
       openModal('Renommer la section', body, () => {
@@ -889,6 +935,7 @@ export function mount(store, navigate) {
         depMensuelles: JSON.parse(JSON.stringify(depMensuelles)),
         dcaTR: JSON.parse(JSON.stringify(store.get('dcaMensuelsTR') || [])),
         revMensuelsTR: JSON.parse(JSON.stringify(store.get('revenusMensuelsTR') || [])),
+        prelevTR: JSON.parse(JSON.stringify(store.get('prelevementsTR') || [])),
         trRecurringConfirmed: JSON.parse(JSON.stringify((store.get('trRecurringConfirmed') || {})[monthKey] || { expenses: [], revenues: [] })),
         // Sub-line snapshots
         meta: {
@@ -1690,6 +1737,109 @@ export function mount(store, navigate) {
         const [moved] = list.splice(fromIdx, 1);
         list.splice(toIdx, 0, moved);
         store.set('revenusMensuelsTR', list);
+        navigate('suivi-depenses');
+      });
+    });
+  }
+
+  // --- Prélèvements automatiques toggle (checked=debited, unchecked=pending/barré) ---
+  document.querySelectorAll('[data-tr-prelev-recurring]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.trPrelevRecurring;
+      const monthKey = getCurrentMonthKey();
+      const all = store.get('trRecurringConfirmed') || {};
+      const month = all[monthKey] || { expenses: [], revenues: [], prelevements: [] };
+      if (!month.prelevements) month.prelevements = [];
+      const list = store.get('prelevementsTR') || [];
+      const item = list.find(p => p.id === id);
+      if (cb.checked) {
+        if (!month.prelevements.includes(id)) month.prelevements.push(id);
+        if (item && item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, item.montant);
+      } else {
+        month.prelevements = month.prelevements.filter(x => x !== id);
+        if (item && item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, -item.montant);
+      }
+      all[monthKey] = month;
+      store.set('trRecurringConfirmed', all);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Edit prélèvement
+  document.querySelectorAll('[data-tr-prelev-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.trPrelevEdit;
+      const list = store.get('prelevementsTR') || [];
+      const item = list.find(p => p.id === id);
+      if (!item) return;
+      const pockets = getBankPockets(store, bankNames, bankNames.secondary);
+      const body = `
+        ${inputField('nom', 'Nom', item.nom)}
+        ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+        ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
+      `;
+      openModal('Modifier le prélèvement', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        item.nom = data.nom || item.nom;
+        item.montant = Number(data.montant) || item.montant;
+        item.pocket = document.getElementById('pocket-select')?.value || 'aucun';
+        if (item.pocket === 'aucun') delete item.pocket;
+        store.set('prelevementsTR', list);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  // Delete prélèvement
+  document.querySelectorAll('[data-tr-prelev-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.trPrelevDel;
+      const list = store.get('prelevementsTR') || [];
+      store.set('prelevementsTR', list.filter(p => p.id !== id));
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Add new prélèvement
+  document.getElementById('btn-add-prelev-tr')?.addEventListener('click', () => {
+    const pockets = getBankPockets(store, bankNames, bankNames.secondary);
+    const body = `
+      ${inputField('nom', 'Nom', '', 'text', 'placeholder="Ex: Netflix, Assurance..."')}
+      ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+      ${pocketSelectHtml(pockets)}
+    `;
+    openModal('Ajouter un prélèvement', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      if (!data.nom || !data.montant) return;
+      const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
+      const list = store.get('prelevementsTR') || [];
+      const entry = { id: 'prelev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) };
+      if (pocketId !== 'aucun') entry.pocket = pocketId;
+      list.push(entry);
+      store.set('prelevementsTR', list);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // Drag-and-drop reorder prélèvements
+  {
+    let draggedId = null;
+    document.querySelectorAll('.tr-prelev-drag-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => { draggedId = row.dataset.dragPrelevId; row.style.opacity = '0.4'; e.dataTransfer.effectAllowed = 'move'; });
+      row.addEventListener('dragend', () => { row.style.opacity = ''; document.querySelectorAll('.tr-prelev-drag-row').forEach(r => r.classList.remove('drag-over')); });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const targetId = row.dataset.dragPrelevId;
+        if (!draggedId || draggedId === targetId) return;
+        const list = store.get('prelevementsTR') || [];
+        const fromIdx = list.findIndex(p => p.id === draggedId);
+        const toIdx = list.findIndex(p => p.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = list.splice(fromIdx, 1);
+        list.splice(toIdx, 0, moved);
+        store.set('prelevementsTR', list);
         navigate('suivi-depenses');
       });
     });
