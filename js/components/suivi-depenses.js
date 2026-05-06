@@ -1061,6 +1061,18 @@ export function mount(store, navigate) {
       }
       store.set('soldeMoisPrecedent', newPrev);
 
+      // Carry forward pocket remaining balances before clearing ops
+      const carryParams = store.get('parametres') || {};
+      if (carryParams.budgetNDF !== undefined) {
+        const ndfExp = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+        carryParams.budgetNDF = (Number(carryParams.budgetNDF) || 0) - ndfExp;
+      }
+      if (carryParams.budgetQuotidien !== undefined) {
+        const depRouges = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement' && (i.categorie || '') !== 'Autre').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+        carryParams.budgetQuotidien = (Number(carryParams.budgetQuotidien) || 0) - depRouges;
+      }
+      store.set('parametres', carryParams);
+
       // Clear operations
       store.set('suiviDepenses', []);
       store.set('suiviRevenus', []);
