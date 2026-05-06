@@ -59,6 +59,37 @@ function getCurrentMonthKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+const POCKET_COLORS = [
+  { name: 'gray',    bg: 'bg-dark-600/40',       border: 'border-dark-400/20',     text: 'text-gray-400',    dot: '#9ca3af' },
+  { name: 'blue',    bg: 'bg-blue-500/10',       border: 'border-blue-500/20',     text: 'text-blue-400',    dot: '#60a5fa' },
+  { name: 'emerald', bg: 'bg-emerald-500/10',    border: 'border-emerald-500/20',  text: 'text-emerald-400', dot: '#34d399' },
+  { name: 'amber',   bg: 'bg-amber-500/10',      border: 'border-amber-500/20',    text: 'text-amber-400',   dot: '#fbbf24' },
+  { name: 'red',     bg: 'bg-red-500/10',        border: 'border-red-500/20',      text: 'text-red-400',     dot: '#f87171' },
+  { name: 'purple',  bg: 'bg-purple-500/10',     border: 'border-purple-500/20',   text: 'text-purple-400',  dot: '#c084fc' },
+  { name: 'orange',  bg: 'bg-orange-500/10',     border: 'border-orange-500/20',   text: 'text-orange-400',  dot: '#fb923c' },
+  { name: 'cyan',    bg: 'bg-cyan-500/10',       border: 'border-cyan-500/20',     text: 'text-cyan-400',    dot: '#22d3ee' },
+  { name: 'pink',    bg: 'bg-pink-500/10',       border: 'border-pink-500/20',     text: 'text-pink-400',    dot: '#f472b6' },
+  { name: 'yellow',  bg: 'bg-yellow-500/10',     border: 'border-yellow-500/20',   text: 'text-yellow-400',  dot: '#facc15' },
+];
+
+function getPocketColor(name) {
+  return POCKET_COLORS.find(c => c.name === name) || POCKET_COLORS[0];
+}
+
+function colorPickerHtml(label, fieldName, selected) {
+  return `<div class="mb-3">
+    <label class="block text-xs font-medium text-gray-300 mb-1.5">${label}</label>
+    <div class="flex gap-2 flex-wrap">
+      ${POCKET_COLORS.map(c => `
+        <label class="cursor-pointer">
+          <input type="radio" name="${fieldName}" value="${c.name}" ${c.name === selected ? 'checked' : ''} class="sr-only peer">
+          <div class="w-6 h-6 rounded-full border-2 peer-checked:border-white border-transparent transition" style="background:${c.dot}"></div>
+        </label>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
 function getBankPockets(store, bankNames, bankName) {
   const pockets = [];
   const allPockets = store.get('budgetPockets') || {};
@@ -309,6 +340,9 @@ export function render(store) {
   const hasBudgetQuotidien = budgetQuotidien > 0 || 'budgetQuotidien' in paramètres;
   const hasSoldeObligCIC = soldeObligCIC > 0 || 'cic' in soldeObligatoire;
 
+  // Pocket colors
+  const pocketColorsStore = store.get('pocketColors') || {};
+
   // Solde obligatoire TR = sum of all pocket amounts (hors quotidien, saveback/interets/roundup)
   const soldeObligTR = restantInvestTR + restantPEATR + budgetNDF + pocketsTRTotal;
 
@@ -359,6 +393,40 @@ export function render(store) {
 
   const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed - totalPrelevConfirmed;
 
+  // Build unified TR pocket items for ordered rendering
+  const pocketOrderTR = store.get('pocketOrderTR') || [];
+  const trPocketItems = [];
+  if (trFeatures.lblSaveback || trSaveback > 0) trPocketItems.push({ id: 'saveback', label: lblSaveback, amount: trSaveback, prefix: '', editAttr: 'data-edit-tr-feature="saveback"', delKey: 'feat-saveback', defaultBg: 'amber', defaultText: 'amber' });
+  if (trFeatures.lblRoundup || trRoundup > 0) trPocketItems.push({ id: 'roundup', label: lblRoundup, amount: trRoundup, prefix: '-', editAttr: 'data-edit-tr-feature="roundup"', delKey: 'feat-roundup', defaultBg: 'red', defaultText: 'red' });
+  if (trFeatures.lblInterets || trInterets > 0) trPocketItems.push({ id: 'interets', label: lblInterets, amount: trInterets, prefix: '+', editAttr: 'data-edit-tr-feature="interets"', delKey: 'feat-interets', defaultBg: 'emerald', defaultText: 'emerald' });
+  if (hasBudgetQuotidien) trPocketItems.push({ id: 'quotidien', label: lblEnveloppe, amount: resteADepenser, prefix: '', editAttr: 'data-edit-budget-quotidien', delKey: 'quotidien', defaultBg: 'gray', defaultText: resteADepenser >= 0 ? 'emerald' : 'red' });
+  if (hasBudgetNDF) trPocketItems.push({ id: 'ndf', label: lblNDF, amount: aRecupererNDF, prefix: '', editAttr: 'data-edit-budget-ndf', delKey: 'ndf', defaultBg: 'gray', defaultText: 'purple' });
+  if (hasRestantPEA) trPocketItems.push({ id: 'pea', label: lblRestantPEA, amount: restantPEATR, prefix: '', editAttr: 'data-edit-restant-pea', delKey: 'pea', defaultBg: 'gray', defaultText: 'blue' });
+  pocketsTR.forEach(p => trPocketItems.push({ id: p.id, label: p.label, amount: p.amount, prefix: '', editAttr: `data-edit-pocket="${p.id}" data-pocket-bank="tr"`, delKey: null, delPocket: p.id, defaultBg: 'gray', defaultText: 'blue' }));
+  if (hasRestantInvest) trPocketItems.push({ id: 'invest', label: lblRestantInvest, amount: restantInvestTR, prefix: '', editAttr: 'data-edit-restant-invest', delKey: 'invest', defaultBg: 'gray', defaultText: 'blue' });
+
+  // Sort by stored order
+  if (pocketOrderTR.length > 0) {
+    trPocketItems.sort((a, b) => {
+      const ia = pocketOrderTR.indexOf(a.id);
+      const ib = pocketOrderTR.indexOf(b.id);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+  }
+
+  // Build CIC pocket items for ordered rendering
+  const pocketOrderCIC = store.get('pocketOrderCIC') || [];
+  const cicPocketItems = [];
+  if (hasSoldeObligCIC) cicPocketItems.push({ id: 'oblig-cic', label: lblSoldeObligCIC, amount: soldeObligCIC, editAttr: 'data-edit-oblig="cic"', delKey: 'oblig-cic', defaultBg: 'gray', defaultText: 'amber' });
+  pocketsCIC.forEach(p => cicPocketItems.push({ id: p.id, label: p.label, amount: p.amount, editAttr: `data-edit-pocket="${p.id}" data-pocket-bank="cic"`, delKey: null, delPocket: p.id, defaultBg: 'gray', defaultText: 'blue' }));
+  if (pocketOrderCIC.length > 0) {
+    cicPocketItems.sort((a, b) => {
+      const ia = pocketOrderCIC.indexOf(a.id);
+      const ib = pocketOrderCIC.indexOf(b.id);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+  }
+
   // Extra banks computation
   const extraBankData = extraBanks.map(bank => {
     const ccId = 'cc-' + bank.id;
@@ -374,7 +442,19 @@ export function render(store) {
     ];
     const lblPrev = labels[`soldeDebutMois_${bank.id}`] || 'Solde début de mois';
     const lblOblig = labels[`soldeObligatoire_${bank.id}`] || 'Solde obligatoire';
-    return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig };
+    const orderKey = 'pocketOrder_' + bank.id;
+    const bankOrder = store.get(orderKey) || [];
+    const bankPocketItems = [];
+    if (obligSolde > 0 || soldeObligatoire[bank.id] !== undefined) bankPocketItems.push({ id: 'oblig-' + bank.id, label: lblOblig, amount: obligSolde, editAttr: `data-edit-oblig="${bank.id}"`, delKey: 'oblig-' + bank.id, defaultBg: 'gray', defaultText: 'amber' });
+    (allPockets[bank.id] || []).forEach(p => bankPocketItems.push({ id: p.id, label: p.label, amount: p.amount, editAttr: `data-edit-pocket="${p.id}" data-pocket-bank="${bank.id}"`, delKey: null, delPocket: p.id, defaultBg: 'gray', defaultText: 'blue' }));
+    if (bankOrder.length > 0) {
+      bankPocketItems.sort((a, b) => {
+        const ia = bankOrder.indexOf(a.id);
+        const ib = bankOrder.indexOf(b.id);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      });
+    }
+    return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig, pocketItems: bankPocketItems };
   });
 
   // Archive data
@@ -470,17 +550,19 @@ export function render(store) {
             <span class="text-[10px] text-gray-500">${lblSoldeDebutCIC}</span>
             <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
           </div>
-          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
-            ${hasSoldeObligCIC ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-oblig="cic">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblSoldeObligCIC}</span>
-              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(soldeObligCIC)}</span>
-              <button data-del-budget="oblig-cic" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${pocketsCIC.map(p => `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-pocket="${p.id}" data-pocket-bank="cic">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${p.label}</span>
-              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="cic" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>`).join('')}
+          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20" id="pocket-grid-cic">
+            ${cicPocketItems.map(pk => {
+              const bgC = getPocketColor((pocketColorsStore[pk.id] || {}).bg || pk.defaultBg);
+              const txC = getPocketColor((pocketColorsStore[pk.id] || {}).text || pk.defaultText);
+              const delBtn = pk.delPocket
+                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="cic" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
+                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
+              return `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md ${bgC.bg} ${bgC.border} cursor-pointer hover:bg-dark-500/40 transition group/pk relative pk-drag-item" draggable="true" data-pk-drag-id="${pk.id}" ${pk.editAttr}>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${pk.label}</span>
+              <span class="text-[10px] font-semibold ${txC.text}">${formatCurrencyCents(pk.amount)}</span>
+              ${delBtn}
+            </div>`;
+            }).join('')}
             <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="cic" title="Ajouter une ligne">
               <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
             </div>
@@ -548,47 +630,19 @@ export function render(store) {
             <span class="text-[10px] text-gray-500">${lblSoldeObligTR}</span>
             <span class="text-[10px] font-medium text-amber-400">${formatCurrencyCents(soldeObligTR)}</span>
           </div>` : ''}
-          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
-            ${trFeatures.lblSaveback || trSaveback > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition group/pk relative" data-edit-tr-feature="saveback">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblSaveback}</span>
-              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(trSaveback)}</span>
-              <button data-del-budget="feat-saveback" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${trFeatures.lblRoundup || trRoundup > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-red-500/10 border border-red-500/20 cursor-pointer hover:bg-red-500/20 transition group/pk relative" data-edit-tr-feature="roundup">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRoundup}</span>
-              <span class="text-[10px] font-semibold text-accent-red">-${formatCurrencyCents(trRoundup)}</span>
-              <button data-del-budget="feat-roundup" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${trFeatures.lblInterets || trInterets > 0 ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition group/pk relative" data-edit-tr-feature="interets">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblInterets}</span>
-              <span class="text-[10px] font-semibold text-emerald-400">+${formatCurrencyCents(trInterets)}</span>
-              <button data-del-budget="feat-interets" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${hasBudgetQuotidien ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-budget-quotidien>
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblEnveloppe}</span>
-              <span class="text-[10px] font-semibold ${resteADepenser >= 0 ? 'text-emerald-400' : 'text-accent-red'}">${formatCurrencyCents(resteADepenser)}</span>
-              <button data-del-budget="quotidien" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${hasBudgetNDF ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-budget-ndf>
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblNDF}</span>
-              <span class="text-[10px] font-semibold text-purple-400">${formatCurrencyCents(aRecupererNDF)}</span>
-              <button data-del-budget="ndf" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${hasRestantPEA ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-pea>
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantPEA}</span>
-              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantPEATR)}</span>
-              <button data-del-budget="pea" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${pocketsTR.map(p => `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-pocket="${p.id}" data-pocket-bank="tr">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${p.label}</span>
-              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="tr" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>`).join('')}
-            ${hasRestantInvest ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-restant-invest>
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${lblRestantInvest}</span>
-              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(restantInvestTR)}</span>
-              <button data-del-budget="invest" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
+          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20" id="pocket-grid-tr">
+            ${trPocketItems.map(pk => {
+              const bgC = getPocketColor((pocketColorsStore[pk.id] || {}).bg || pk.defaultBg);
+              const txC = getPocketColor((pocketColorsStore[pk.id] || {}).text || pk.defaultText);
+              const delBtn = pk.delPocket
+                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="tr" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
+                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
+              return `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md ${bgC.bg} ${bgC.border} cursor-pointer hover:bg-dark-500/40 transition group/pk relative pk-drag-item" draggable="true" data-pk-drag-id="${pk.id}" ${pk.editAttr}>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${pk.label}</span>
+              <span class="text-[10px] font-semibold ${txC.text}">${pk.prefix}${formatCurrencyCents(pk.amount)}</span>
+              ${delBtn}
+            </div>`;
+            }).join('')}
             <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="tr" title="Ajouter une ligne">
               <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
             </div>
@@ -737,17 +791,19 @@ export function render(store) {
             <span class="text-[10px] text-gray-500">${bank.lblPrev}</span>
             <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
           </div>
-          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20">
-            ${bank.obligSolde > 0 || soldeObligatoire[bank.id] !== undefined ? `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-oblig="${bank.id}">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${bank.lblOblig}</span>
-              <span class="text-[10px] font-semibold text-amber-400">${formatCurrencyCents(bank.obligSolde)}</span>
-              <button data-del-budget="oblig-${bank.id}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>` : ''}
-            ${(allPockets[bank.id] || []).map(p => `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md bg-dark-600/40 border border-dark-400/20 cursor-pointer hover:bg-dark-500/40 transition group/pk relative" data-edit-pocket="${p.id}" data-pocket-bank="${bank.id}">
-              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${p.label}</span>
-              <span class="text-[10px] font-semibold text-accent-blue">${formatCurrencyCents(p.amount)}</span>
-              <button data-del-pocket="${p.id}" data-pocket-bank="${bank.id}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>
-            </div>`).join('')}
+          <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20" id="pocket-grid-${bank.id}">
+            ${bank.pocketItems.map(pk => {
+              const bgC = getPocketColor((pocketColorsStore[pk.id] || {}).bg || pk.defaultBg);
+              const txC = getPocketColor((pocketColorsStore[pk.id] || {}).text || pk.defaultText);
+              const delBtn = pk.delPocket
+                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="${bank.id}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
+                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
+              return `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md ${bgC.bg} ${bgC.border} cursor-pointer hover:bg-dark-500/40 transition group/pk relative pk-drag-item" draggable="true" data-pk-drag-id="${pk.id}" ${pk.editAttr}>
+              <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${pk.label}</span>
+              <span class="text-[10px] font-semibold ${txC.text}">${formatCurrencyCents(pk.amount)}</span>
+              ${delBtn}
+            </div>`;
+            }).join('')}
             <div class="flex flex-col items-center justify-center px-1 py-1 rounded-md border border-dashed border-dark-400/30 cursor-pointer hover:border-accent-blue/40 hover:bg-dark-600/20 transition" data-add-budget="${bank.id}" title="Ajouter une ligne">
               <span class="text-[10px] text-gray-600 hover:text-accent-blue">+</span>
             </div>
@@ -1100,7 +1156,8 @@ export function mount(store, navigate) {
   // Edit solde obligatoire
   document.querySelectorAll('[data-edit-oblig]').forEach(el => {
     el.addEventListener('click', () => {
-      const key = el.dataset.editOblig; // 'cic', 'tr', or extra bank id
+      const key = el.dataset.editOblig;
+      const obligPkId = 'oblig-' + key;
       const extraBankO = extraBanks.find(b => b.id === key);
       const bankLabel = key === 'cic' ? bankNames.primary : key === 'tr' ? bankNames.secondary : (extraBankO?.name || 'Banque');
       const oblig = store.get('soldeObligatoire') || {};
@@ -1108,7 +1165,12 @@ export function mount(store, navigate) {
       const lblKey = `soldeObligatoire_${key}`;
       const currentLabel = labels[lblKey] || 'Solde obligatoire';
       const current = Number(oblig[key]) || 0;
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant ${bankLabel} (€)`, current, 'number', 'step="0.01"');
+      const pc = store.get('pocketColors') || {};
+      const curBg = (pc[obligPkId] || {}).bg || 'gray';
+      const curTx = (pc[obligPkId] || {}).text || 'amber';
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant ${bankLabel} (€)`, current, 'number', 'step="0.01"')
+        + colorPickerHtml('Couleur fond', 'color_bg', curBg)
+        + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankLabel}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         oblig[key] = Number(data.solde) || 0;
@@ -1117,6 +1179,11 @@ export function mount(store, navigate) {
           labels[lblKey] = data.libelle;
           store.set('customLabels', labels);
         }
+        const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
+        const txVal = document.querySelector('input[name="color_text"]:checked')?.value || curTx;
+        const colors = store.get('pocketColors') || {};
+        colors[obligPkId] = { bg: bgVal, text: txVal };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1129,15 +1196,19 @@ export function mount(store, navigate) {
       const currentLabel = labels.restantInvestissement || 'Pocket 1';
       const invest = store.get('restantInvestissement') || {};
       const current = Number(invest.tr) || 0;
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"');
+      const pc = store.get('pocketColors') || {};
+      const curBg = (pc.invest || {}).bg || 'gray';
+      const curTx = (pc.invest || {}).text || 'blue';
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"')
+        + colorPickerHtml('Couleur fond', 'color_bg', curBg) + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         invest.tr = Number(data.montant) || 0;
         store.set('restantInvestissement', invest);
-        if (data.libelle && data.libelle !== currentLabel) {
-          labels.restantInvestissement = data.libelle;
-          store.set('customLabels', labels);
-        }
+        if (data.libelle && data.libelle !== currentLabel) { labels.restantInvestissement = data.libelle; store.set('customLabels', labels); }
+        const colors = store.get('pocketColors') || {};
+        colors.invest = { bg: document.querySelector('input[name="color_bg"]:checked')?.value || curBg, text: document.querySelector('input[name="color_text"]:checked')?.value || curTx };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1150,15 +1221,19 @@ export function mount(store, navigate) {
       const currentLabel = labels.restantPEA || 'Pocket 2';
       const pea = store.get('restantPEA') || {};
       const current = Number(pea.tr) || 0;
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"');
+      const pc = store.get('pocketColors') || {};
+      const curBg = (pc.pea || {}).bg || 'gray';
+      const curTx = (pc.pea || {}).text || 'blue';
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"')
+        + colorPickerHtml('Couleur fond', 'color_bg', curBg) + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         pea.tr = Number(data.montant) || 0;
         store.set('restantPEA', pea);
-        if (data.libelle && data.libelle !== currentLabel) {
-          labels.restantPEA = data.libelle;
-          store.set('customLabels', labels);
-        }
+        if (data.libelle && data.libelle !== currentLabel) { labels.restantPEA = data.libelle; store.set('customLabels', labels); }
+        const colors = store.get('pocketColors') || {};
+        colors.pea = { bg: document.querySelector('input[name="color_bg"]:checked')?.value || curBg, text: document.querySelector('input[name="color_text"]:checked')?.value || curTx };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1171,16 +1246,20 @@ export function mount(store, navigate) {
       const currentLabel = labels.aRecupererNDF || 'Pocket 3';
       const params = store.get('parametres') || {};
       const current = params.budgetNDF !== undefined ? Number(params.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 0);
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"');
+      const pc = store.get('pocketColors') || {};
+      const curBg = (pc.ndf || {}).bg || 'gray';
+      const curTx = (pc.ndf || {}).text || 'purple';
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"')
+        + colorPickerHtml('Couleur fond', 'color_bg', curBg) + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         const p = store.get('parametres') || {};
         p.budgetNDF = Number(data.budget) || 0;
         store.set('parametres', p);
-        if (data.libelle && data.libelle !== currentLabel) {
-          labels.aRecupererNDF = data.libelle;
-          store.set('customLabels', labels);
-        }
+        if (data.libelle && data.libelle !== currentLabel) { labels.aRecupererNDF = data.libelle; store.set('customLabels', labels); }
+        const colors = store.get('pocketColors') || {};
+        colors.ndf = { bg: document.querySelector('input[name="color_bg"]:checked')?.value || curBg, text: document.querySelector('input[name="color_text"]:checked')?.value || curTx };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1193,7 +1272,12 @@ export function mount(store, navigate) {
       const currentLabel = labels.enveloppeQuotidien || 'Pocket 4';
       const paramsQ = store.get('parametres') || {};
       const current = paramsQ.budgetQuotidien !== undefined ? Number(paramsQ.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"');
+      const pc = store.get('pocketColors') || {};
+      const curBg = (pc.quotidien || {}).bg || 'gray';
+      const curTx = (pc.quotidien || {}).text || 'gray';
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"')
+        + colorPickerHtml('Couleur fond', 'color_bg', curBg)
+        + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         const pQ = store.get('parametres') || {};
@@ -1203,6 +1287,11 @@ export function mount(store, navigate) {
           labels.enveloppeQuotidien = data.libelle;
           store.set('customLabels', labels);
         }
+        const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
+        const txVal = document.querySelector('input[name="color_text"]:checked')?.value || curTx;
+        const colors = store.get('pocketColors') || {};
+        colors.quotidien = { bg: bgVal, text: txVal };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1221,12 +1310,23 @@ export function mount(store, navigate) {
       const trFeatures = store.get('trFeatures') || {};
       const currentLabel = trFeatures[meta.lblKey] || meta.defaultLbl;
       const currentValue = Number(trFeatures[meta.valueKey]) || 0;
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue, 'number', 'step="0.01"');
+      const pc = store.get('pocketColors') || {};
+      const defaultColors = { saveback: { bg: 'amber', text: 'amber' }, roundup: { bg: 'red', text: 'red' }, interets: { bg: 'emerald', text: 'emerald' } };
+      const curBg = (pc[feat] || defaultColors[feat] || {}).bg || 'gray';
+      const curTx = (pc[feat] || defaultColors[feat] || {}).text || 'gray';
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue, 'number', 'step="0.01"')
+        + colorPickerHtml('Couleur fond', 'color_bg', curBg)
+        + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(currentLabel, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         trFeatures[meta.valueKey] = Number(data.montant) || 0;
         if (data.libelle) trFeatures[meta.lblKey] = data.libelle;
         store.set('trFeatures', trFeatures);
+        const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
+        const txVal = document.querySelector('input[name="color_text"]:checked')?.value || curTx;
+        const colors = store.get('pocketColors') || {};
+        colors[feat] = { bg: bgVal, text: txVal };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1274,7 +1374,9 @@ export function mount(store, navigate) {
   document.querySelectorAll('[data-add-budget]').forEach(btn => {
     btn.addEventListener('click', () => {
       const bankKey = btn.dataset.addBudget;
-      const body = inputField('libelle', 'Nom', '', 'text', 'placeholder="Ex: Vacances, Épargne..."') + inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 500"');
+      const body = inputField('libelle', 'Nom', '', 'text', 'placeholder="Ex: Vacances, Épargne..."') + inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 500"')
+        + colorPickerHtml('Couleur fond', 'color_bg', 'gray')
+        + colorPickerHtml('Couleur contenu', 'color_text', 'blue');
       openModal('Nouveau pocket', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         const label = (data.libelle || '').trim();
@@ -1282,8 +1384,14 @@ export function mount(store, navigate) {
         if (!label) return;
         const pockets = store.get('budgetPockets') || {};
         if (!pockets[bankKey]) pockets[bankKey] = [];
-        pockets[bankKey].push({ id: 'pocket-' + Date.now(), label, amount });
+        const newId = 'pocket-' + Date.now();
+        pockets[bankKey].push({ id: newId, label, amount });
         store.set('budgetPockets', pockets);
+        const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || 'gray';
+        const txVal = document.querySelector('input[name="color_text"]:checked')?.value || 'blue';
+        const colors = store.get('pocketColors') || {};
+        colors[newId] = { bg: bgVal, text: txVal };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1299,12 +1407,22 @@ export function mount(store, navigate) {
       const arr = pockets[bankKey] || [];
       const pocket = arr.find(p => p.id === pocketId);
       if (!pocket) return;
-      const body = inputField('libelle', 'Nom', pocket.label) + inputField('montant', 'Montant (€)', pocket.amount, 'number', 'step="0.01"');
+      const pc = store.get('pocketColors') || {};
+      const curBg = (pc[pocketId] || {}).bg || 'gray';
+      const curTx = (pc[pocketId] || {}).text || 'blue';
+      const body = inputField('libelle', 'Nom', pocket.label) + inputField('montant', 'Montant (€)', pocket.amount, 'number', 'step="0.01"')
+        + colorPickerHtml('Couleur fond', 'color_bg', curBg)
+        + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal('Modifier le pocket', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         pocket.label = (data.libelle || '').trim() || pocket.label;
         pocket.amount = Number(data.montant) || 0;
         store.set('budgetPockets', pockets);
+        const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
+        const txVal = document.querySelector('input[name="color_text"]:checked')?.value || curTx;
+        const colors = store.get('pocketColors') || {};
+        colors[pocketId] = { bg: bgVal, text: txVal };
+        store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
     });
@@ -1967,6 +2085,50 @@ export function mount(store, navigate) {
   setupDragDrop('ops-drop-cic');
   setupDragDrop('ops-drop-tr');
   extraBanks.forEach(bank => setupDragDrop('ops-drop-' + bank.id));
+
+  // Pocket grid drag-and-drop
+  function setupPocketGridDrag(gridId, orderKey) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    let draggedPkId = null;
+    grid.querySelectorAll('.pk-drag-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        draggedPkId = item.dataset.pkDragId;
+        item.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      item.addEventListener('dragend', () => {
+        item.style.opacity = '';
+        grid.querySelectorAll('.pk-drag-item').forEach(i => i.classList.remove('ring-2', 'ring-accent-blue'));
+      });
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        item.classList.add('ring-2', 'ring-accent-blue');
+      });
+      item.addEventListener('dragleave', () => {
+        item.classList.remove('ring-2', 'ring-accent-blue');
+      });
+      item.addEventListener('drop', (e) => {
+        e.preventDefault();
+        item.classList.remove('ring-2', 'ring-accent-blue');
+        const targetId = item.dataset.pkDragId;
+        if (!draggedPkId || draggedPkId === targetId) return;
+        const items = [...grid.querySelectorAll('.pk-drag-item')];
+        const order = items.map(i => i.dataset.pkDragId);
+        const fromIdx = order.indexOf(draggedPkId);
+        const toIdx = order.indexOf(targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = order.splice(fromIdx, 1);
+        order.splice(toIdx, 0, moved);
+        store.set(orderKey, order);
+        navigate('suivi-depenses');
+      });
+    });
+  }
+  setupPocketGridDrag('pocket-grid-tr', 'pocketOrderTR');
+  setupPocketGridDrag('pocket-grid-cic', 'pocketOrderCIC');
+  extraBanks.forEach(bank => setupPocketGridDrag('pocket-grid-' + bank.id, 'pocketOrder_' + bank.id));
 
   // Add bank
   document.getElementById('btn-add-bank')?.addEventListener('click', () => {
