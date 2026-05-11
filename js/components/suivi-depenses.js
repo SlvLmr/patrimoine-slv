@@ -378,10 +378,6 @@ export function render(store) {
   const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
-  // Enveloppe restante pour quotidien
-  const depensesRougesTR = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement' && (i.categorie || '') !== 'Autre').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const resteADepenser = budgetQuotidien - depensesRougesTR;
-
   // Trade Republic features (editable values)
   const trFeatures = store.get('trFeatures') || {};
   const trInterets = Number(trFeatures.interets) || 0;
@@ -399,7 +395,7 @@ export function render(store) {
   if (trFeatures.lblSaveback || trSaveback > 0) trPocketItems.push({ id: 'saveback', label: lblSaveback, amount: trSaveback, prefix: '', editAttr: 'data-edit-tr-feature="saveback"', delKey: 'feat-saveback', defaultBg: 'amber', defaultText: 'amber' });
   if (trFeatures.lblRoundup || trRoundup > 0) trPocketItems.push({ id: 'roundup', label: lblRoundup, amount: trRoundup, prefix: '-', editAttr: 'data-edit-tr-feature="roundup"', delKey: 'feat-roundup', defaultBg: 'red', defaultText: 'red' });
   if (trFeatures.lblInterets || trInterets > 0) trPocketItems.push({ id: 'interets', label: lblInterets, amount: trInterets, prefix: '+', editAttr: 'data-edit-tr-feature="interets"', delKey: 'feat-interets', defaultBg: 'emerald', defaultText: 'emerald' });
-  if (hasBudgetQuotidien) trPocketItems.push({ id: 'quotidien', label: lblEnveloppe, amount: resteADepenser, prefix: '', editAttr: 'data-edit-budget-quotidien', delKey: 'quotidien', defaultBg: 'gray', defaultText: resteADepenser >= 0 ? 'emerald' : 'red' });
+  if (hasBudgetQuotidien) trPocketItems.push({ id: 'quotidien', label: lblEnveloppe, amount: budgetQuotidien, prefix: '', editAttr: 'data-edit-budget-quotidien', delKey: 'quotidien', defaultBg: 'gray', defaultText: budgetQuotidien >= 0 ? 'emerald' : 'red' });
   if (hasBudgetNDF) trPocketItems.push({ id: 'ndf', label: lblNDF, amount: aRecupererNDF, prefix: '', editAttr: 'data-edit-budget-ndf', delKey: 'ndf', defaultBg: 'gray', defaultText: 'purple' });
   if (hasRestantPEA) trPocketItems.push({ id: 'pea', label: lblRestantPEA, amount: restantPEATR, prefix: '', editAttr: 'data-edit-restant-pea', delKey: 'pea', defaultBg: 'gray', defaultText: 'blue' });
   pocketsTR.forEach(p => trPocketItems.push({ id: p.id, label: p.label, amount: p.amount, prefix: '', editAttr: `data-edit-pocket="${p.id}" data-pocket-bank="tr"`, delKey: null, delPocket: p.id, defaultBg: 'gray', defaultText: 'blue' }));
@@ -1067,10 +1063,7 @@ export function mount(store, navigate) {
         const ndfExp = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
         carryParams.budgetNDF = (Number(carryParams.budgetNDF) || 0) - ndfExp;
       }
-      if (carryParams.budgetQuotidien !== undefined) {
-        const depRouges = items.filter(i => i.compte === bankNames.secondary && (i.categorie || '') !== 'NDF' && (i.categorie || '') !== 'Investissement' && (i.categorie || '') !== 'Autre').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-        carryParams.budgetQuotidien = (Number(carryParams.budgetQuotidien) || 0) - depRouges;
-      }
+      // budgetQuotidien is already adjusted by deductFromPocket — carry as-is
       store.set('parametres', carryParams);
 
       // Clear operations
