@@ -141,9 +141,7 @@ function deductFromPocket(store, bankNames, bankName, pocketId, amount) {
     }
   } else if (bankName === bankNames.secondary) {
     if (pocketId === 'quotidien') {
-      const params = store.get('parametres') || {};
-      params.budgetQuotidien = (Number(params.budgetQuotidien) || 0) - amt;
-      store.set('parametres', params);
+      // no-op: quotidien balance is computed from items with pocket=quotidien
     } else if (pocketId === 'ndf') {
       const params = store.get('parametres') || {};
       params.budgetNDF = (Number(params.budgetNDF) || 0) - amt;
@@ -251,6 +249,23 @@ export function render(store) {
     _prev2._migratedTR = true;
     store.set('soldeMoisPrecedent', _prev2);
   }
+  // Migration v3: restore budgetQuotidien to initial budget (undo deductFromPocket modifications)
+  if (!store.get('_migQuotidienComputed')) {
+    const _p = store.get('parametres') || {};
+    if (_p.budgetQuotidien !== undefined) {
+      const _mitems = store.get('suiviDepenses') || [];
+      const _mqExp = _mitems.filter(i => i.pocket === 'quotidien').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+      const _mk = getCurrentMonthKey();
+      const _mconf = (store.get('trRecurringConfirmed') || {})[_mk] || {};
+      const _mqDca = (store.get('dcaMensuelsTR') || []).filter(d => d.pocket === 'quotidien' && (_mconf.expenses || []).includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+      const _mqPrelev = (store.get('prelevementsTR') || []).filter(p => p.pocket === 'quotidien' && (_mconf.prelevements || []).includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0);
+      const _mqRev = (store.get('revenusMensuelsTR') || []).filter(r => r.pocket === 'quotidien' && (_mconf.revenues || []).includes(r.id)).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+      _p.budgetQuotidien = (Number(_p.budgetQuotidien) || 0) + _mqExp + _mqDca + _mqPrelev - _mqRev;
+      store.set('parametres', _p);
+    }
+    store.set('_migQuotidienComputed', true);
+  }
+
   // Init depenses mensuelles from defaults if not present
   if (!store.get('depensesMensuellesCIC')) {
     store.set('depensesMensuellesCIC', JSON.parse(JSON.stringify(DEPENSES_MENSUELLES_CIC)));
@@ -370,6 +385,13 @@ export function render(store) {
     .filter(p => confirmedPrelevIds.includes(p.id))
     .reduce((s, p) => s + (Number(p.montant) || 0), 0);
 
+  // Pocket Quotidien: compute balance from items assigned to the pocket
+  const quotidienDeductions = items.filter(i => i.pocket === 'quotidien').reduce((s, i) => s + (Number(i.montant) || 0), 0)
+    + dcaTR.filter(d => d.pocket === 'quotidien' && confirmedDcaIds.includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0)
+    + prelevTR.filter(p => p.pocket === 'quotidien' && confirmedPrelevIds.includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0)
+    - revMensuelsTR.filter(r => r.pocket === 'quotidien' && confirmedRevIds.includes(r.id)).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+  const quotidienBalance = budgetQuotidien - quotidienDeductions;
+
   // Compute live solde = base + revenus - depenses - checked monthly
   const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
@@ -395,7 +417,7 @@ export function render(store) {
   if (trFeatures.lblSaveback || trSaveback > 0) trPocketItems.push({ id: 'saveback', label: lblSaveback, amount: trSaveback, prefix: '', editAttr: 'data-edit-tr-feature="saveback"', delKey: 'feat-saveback', defaultBg: 'amber', defaultText: 'amber' });
   if (trFeatures.lblRoundup || trRoundup > 0) trPocketItems.push({ id: 'roundup', label: lblRoundup, amount: trRoundup, prefix: '-', editAttr: 'data-edit-tr-feature="roundup"', delKey: 'feat-roundup', defaultBg: 'red', defaultText: 'red' });
   if (trFeatures.lblInterets || trInterets > 0) trPocketItems.push({ id: 'interets', label: lblInterets, amount: trInterets, prefix: '+', editAttr: 'data-edit-tr-feature="interets"', delKey: 'feat-interets', defaultBg: 'emerald', defaultText: 'emerald' });
-  if (hasBudgetQuotidien) trPocketItems.push({ id: 'quotidien', label: lblEnveloppe, amount: budgetQuotidien, prefix: '', editAttr: 'data-edit-budget-quotidien', delKey: 'quotidien', defaultBg: 'gray', defaultText: budgetQuotidien >= 0 ? 'emerald' : 'red' });
+  if (hasBudgetQuotidien) trPocketItems.push({ id: 'quotidien', label: lblEnveloppe, amount: quotidienBalance, prefix: '', editAttr: 'data-edit-budget-quotidien', delKey: 'quotidien', defaultBg: 'gray', defaultText: quotidienBalance >= 0 ? 'emerald' : 'red' });
   if (hasBudgetNDF) trPocketItems.push({ id: 'ndf', label: lblNDF, amount: aRecupererNDF, prefix: '', editAttr: 'data-edit-budget-ndf', delKey: 'ndf', defaultBg: 'gray', defaultText: 'purple' });
   if (hasRestantPEA) trPocketItems.push({ id: 'pea', label: lblRestantPEA, amount: restantPEATR, prefix: '', editAttr: 'data-edit-restant-pea', delKey: 'pea', defaultBg: 'gray', defaultText: 'blue' });
   pocketsTR.forEach(p => trPocketItems.push({ id: p.id, label: p.label, amount: p.amount, prefix: '', editAttr: `data-edit-pocket="${p.id}" data-pocket-bank="tr"`, delKey: null, delPocket: p.id, defaultBg: 'gray', defaultText: 'blue' }));
@@ -1016,7 +1038,16 @@ export function mount(store, navigate) {
           restantInvestTR: Number(restInvSnap.tr) || 0,
           restantPEATR: Number(restPeaSnap.tr) || 0,
           budgetNDF: paramsSnap.budgetNDF !== undefined ? Number(paramsSnap.budgetNDF) : 0,
-          budgetQuotidien: paramsSnap.budgetQuotidien !== undefined ? Number(paramsSnap.budgetQuotidien) : 0,
+          budgetQuotidien: (() => {
+            if (paramsSnap.budgetQuotidien === undefined) return 0;
+            const bq = Number(paramsSnap.budgetQuotidien) || 0;
+            const aqExp = items.filter(i => i.pocket === 'quotidien').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+            const aqConf = (store.get('trRecurringConfirmed') || {})[monthKey] || {};
+            const aqDca = (store.get('dcaMensuelsTR') || []).filter(d => d.pocket === 'quotidien' && (aqConf.expenses || []).includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+            const aqPrelev = (store.get('prelevementsTR') || []).filter(p => p.pocket === 'quotidien' && (aqConf.prelevements || []).includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0);
+            const aqRev = (store.get('revenusMensuelsTR') || []).filter(r => r.pocket === 'quotidien' && (aqConf.revenues || []).includes(r.id)).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+            return bq - aqExp - aqDca - aqPrelev + aqRev;
+          })(),
           trInterets: Number(trFeatsSnap.interets) || 0,
           trSaveback: Number(trFeatsSnap.saveback) || 0,
           trRoundup: Number(trFeatsSnap.roundup) || 0,
@@ -1063,7 +1094,15 @@ export function mount(store, navigate) {
         const ndfExp = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
         carryParams.budgetNDF = (Number(carryParams.budgetNDF) || 0) - ndfExp;
       }
-      // budgetQuotidien is already adjusted by deductFromPocket — carry as-is
+      if (carryParams.budgetQuotidien !== undefined) {
+        const qExp = items.filter(i => i.pocket === 'quotidien').reduce((s, i) => s + (Number(i.montant) || 0), 0);
+        const mk = getCurrentMonthKey();
+        const cConf = (store.get('trRecurringConfirmed') || {})[mk] || {};
+        const qDca = (store.get('dcaMensuelsTR') || []).filter(d => d.pocket === 'quotidien' && (cConf.expenses || []).includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+        const qPrelev = (store.get('prelevementsTR') || []).filter(p => p.pocket === 'quotidien' && (cConf.prelevements || []).includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0);
+        const qRev = (store.get('revenusMensuelsTR') || []).filter(r => r.pocket === 'quotidien' && (cConf.revenues || []).includes(r.id)).reduce((s, r) => s + (Number(r.montant) || 0), 0);
+        carryParams.budgetQuotidien = (Number(carryParams.budgetQuotidien) || 0) - qExp - qDca - qPrelev + qRev;
+      }
       store.set('parametres', carryParams);
 
       // Clear operations
