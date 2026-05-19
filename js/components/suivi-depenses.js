@@ -90,6 +90,10 @@ function colorPickerHtml(label, fieldName, selected) {
   </div>`;
 }
 
+function obligatoireCheckboxHtml(checked) {
+  return `<div class="mb-3 flex items-center gap-2"><input type="checkbox" name="obligatoire" id="field-obligatoire" ${checked ? 'checked' : ''} class="w-4 h-4 rounded bg-dark-800 border-dark-400/50 text-amber-500 focus:ring-amber-500/40"><label for="field-obligatoire" class="text-xs text-gray-300">Inclure dans le solde obligatoire</label></div>`;
+}
+
 function getBankPockets(store, bankNames, bankName) {
   const pockets = [];
   const allPockets = store.get('budgetPockets') || {};
@@ -176,11 +180,11 @@ function deductFromPocket(store, bankNames, bankName, pocketId, amount) {
   }
 }
 
-function pocketSelectHtml(pockets, selected = 'aucun') {
+function pocketSelectHtml(pockets, selected = 'aucun', label = 'Déduire du pocket') {
   const opts = pockets.map(p => `<option value="${p.id}" ${p.id === selected ? 'selected' : ''}>${p.label}</option>`).join('');
   return `
     <div class="mb-4" id="pocket-selector-wrap">
-      <label class="block text-sm font-medium text-gray-300 mb-1.5">Déduire du pocket</label>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">${label}</label>
       <select name="pocket" id="pocket-select"
         class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200
         focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
@@ -344,7 +348,12 @@ export function render(store) {
   // Pocket colors
   const pocketColorsStore = store.get('pocketColors') || {};
 
-  const soldeObligTR = aRecupererNDF + pocketsTROblig;
+  const pocketOblig = store.get('pocketObligatoire') || {};
+  const soldeObligTR = (pocketOblig.ndf !== false && hasBudgetNDF ? aRecupererNDF : 0)
+    + (pocketOblig.quotidien === true && hasBudgetQuotidien ? budgetQuotidien : 0)
+    + (pocketOblig.pea === true && hasRestantPEA ? restantPEATR : 0)
+    + (pocketOblig.invest === true && hasRestantInvest ? restantInvestTR : 0)
+    + pocketsTROblig;
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
@@ -1093,6 +1102,8 @@ export function mount(store, navigate) {
 
   // Add revenu
   document.getElementById('btn-add-revenu')?.addEventListener('click', () => {
+    const revDefaultBank = bankNames.primary;
+    const revPockets = getBankPockets(store, bankNames, revDefaultBank);
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
       ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Salaire mars"')}
@@ -1109,16 +1120,19 @@ export function mount(store, navigate) {
           `).join('')}
         </div>
       </div>
+      ${pocketSelectHtml(revPockets, 'aucun', 'Ajouter au pocket')}
     `;
     openModal('Ajouter un revenu', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.primary;
+      const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const revenus = store.get('suiviRevenus') || [];
-      revenus.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...data });
+      revenus.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviRevenus', revenus);
-
+      if (pocketId !== 'aucun') deductFromPocket(store, bankNames, data.compte, pocketId, -(Number(data.montant) || 0));
       navigate('suivi-depenses');
     });
+    setupPocketBankSync(store, bankNames);
   });
 
   // Edit bank solde
@@ -1217,13 +1231,19 @@ export function mount(store, navigate) {
       const pc = store.get('pocketColors') || {};
       const curBg = (pc.invest || {}).bg || 'gray';
       const curTx = (pc.invest || {}).text || 'blue';
+      const pOblig = store.get('pocketObligatoire') || {};
+      const isObligInvest = pOblig.invest === true;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"')
+        + obligatoireCheckboxHtml(isObligInvest)
         + colorPickerHtml('Couleur fond', 'color_bg', curBg) + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         invest.tr = Number(data.montant) || 0;
         store.set('restantInvestissement', invest);
         if (data.libelle && data.libelle !== currentLabel) { labels.restantInvestissement = data.libelle; store.set('customLabels', labels); }
+        const ob = store.get('pocketObligatoire') || {};
+        ob.invest = document.getElementById('field-obligatoire')?.checked === true;
+        store.set('pocketObligatoire', ob);
         const colors = store.get('pocketColors') || {};
         colors.invest = { bg: document.querySelector('input[name="color_bg"]:checked')?.value || curBg, text: document.querySelector('input[name="color_text"]:checked')?.value || curTx };
         store.set('pocketColors', colors);
@@ -1242,13 +1262,19 @@ export function mount(store, navigate) {
       const pc = store.get('pocketColors') || {};
       const curBg = (pc.pea || {}).bg || 'gray';
       const curTx = (pc.pea || {}).text || 'blue';
+      const pOblig = store.get('pocketObligatoire') || {};
+      const isObligPea = pOblig.pea === true;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', `Montant (€)`, current, 'number', 'step="0.01"')
+        + obligatoireCheckboxHtml(isObligPea)
         + colorPickerHtml('Couleur fond', 'color_bg', curBg) + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         pea.tr = Number(data.montant) || 0;
         store.set('restantPEA', pea);
         if (data.libelle && data.libelle !== currentLabel) { labels.restantPEA = data.libelle; store.set('customLabels', labels); }
+        const ob = store.get('pocketObligatoire') || {};
+        ob.pea = document.getElementById('field-obligatoire')?.checked === true;
+        store.set('pocketObligatoire', ob);
         const colors = store.get('pocketColors') || {};
         colors.pea = { bg: document.querySelector('input[name="color_bg"]:checked')?.value || curBg, text: document.querySelector('input[name="color_text"]:checked')?.value || curTx };
         store.set('pocketColors', colors);
@@ -1267,7 +1293,10 @@ export function mount(store, navigate) {
       const pc = store.get('pocketColors') || {};
       const curBg = (pc.ndf || {}).bg || 'gray';
       const curTx = (pc.ndf || {}).text || 'purple';
+      const pOblig = store.get('pocketObligatoire') || {};
+      const isObligNdf = pOblig.ndf !== false;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"')
+        + obligatoireCheckboxHtml(isObligNdf)
         + colorPickerHtml('Couleur fond', 'color_bg', curBg) + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -1275,6 +1304,9 @@ export function mount(store, navigate) {
         p.budgetNDF = Number(data.budget) || 0;
         store.set('parametres', p);
         if (data.libelle && data.libelle !== currentLabel) { labels.aRecupererNDF = data.libelle; store.set('customLabels', labels); }
+        const ob = store.get('pocketObligatoire') || {};
+        ob.ndf = document.getElementById('field-obligatoire')?.checked !== false;
+        store.set('pocketObligatoire', ob);
         const colors = store.get('pocketColors') || {};
         colors.ndf = { bg: document.querySelector('input[name="color_bg"]:checked')?.value || curBg, text: document.querySelector('input[name="color_text"]:checked')?.value || curTx };
         store.set('pocketColors', colors);
@@ -1293,7 +1325,10 @@ export function mount(store, navigate) {
       const pc = store.get('pocketColors') || {};
       const curBg = (pc.quotidien || {}).bg || 'gray';
       const curTx = (pc.quotidien || {}).text || 'gray';
+      const pOblig = store.get('pocketObligatoire') || {};
+      const isObligQuot = pOblig.quotidien === true;
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('budget', 'Montant (€)', current, 'number', 'step="0.01"')
+        + obligatoireCheckboxHtml(isObligQuot)
         + colorPickerHtml('Couleur fond', 'color_bg', curBg)
         + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(`${currentLabel} — ${bankNames.secondary}`, body, () => {
@@ -1301,6 +1336,9 @@ export function mount(store, navigate) {
         const pQ = store.get('parametres') || {};
         pQ.budgetQuotidien = Number(data.budget) || 0;
         store.set('parametres', pQ);
+        const ob = store.get('pocketObligatoire') || {};
+        ob.quotidien = document.getElementById('field-obligatoire')?.checked === true;
+        store.set('pocketObligatoire', ob);
         if (data.libelle && data.libelle !== currentLabel) {
           labels.enveloppeQuotidien = data.libelle;
           store.set('customLabels', labels);
@@ -1393,7 +1431,7 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       const bankKey = btn.dataset.addBudget;
       const body = inputField('libelle', 'Nom', '', 'text', 'placeholder="Ex: Vacances, Épargne..."') + inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 500"')
-        + `<div class="mb-3 flex items-center gap-2"><input type="checkbox" name="obligatoire" id="field-obligatoire" checked class="w-4 h-4 rounded bg-dark-800 border-dark-400/50 text-amber-500 focus:ring-amber-500/40"><label for="field-obligatoire" class="text-xs text-gray-300">Inclure dans le solde obligatoire</label></div>`
+        + obligatoireCheckboxHtml(true)
         + colorPickerHtml('Couleur fond', 'color_bg', 'gray')
         + colorPickerHtml('Couleur contenu', 'color_text', 'blue');
       openModal('Nouveau pocket', body, () => {
@@ -1432,7 +1470,7 @@ export function mount(store, navigate) {
       const curTx = (pc[pocketId] || {}).text || 'blue';
       const isOblig = pocket.obligatoire !== false;
       const body = inputField('libelle', 'Nom', pocket.label) + inputField('montant', 'Montant (€)', pocket.amount, 'number', 'step="0.01"')
-        + `<div class="mb-3 flex items-center gap-2"><input type="checkbox" name="obligatoire" id="field-obligatoire" ${isOblig ? 'checked' : ''} class="w-4 h-4 rounded bg-dark-800 border-dark-400/50 text-amber-500 focus:ring-amber-500/40"><label for="field-obligatoire" class="text-xs text-gray-300">Inclure dans le solde obligatoire</label></div>`
+        + obligatoireCheckboxHtml(isOblig)
         + colorPickerHtml('Couleur fond', 'color_bg', curBg)
         + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal('Modifier le pocket', body, () => {
@@ -1578,6 +1616,7 @@ export function mount(store, navigate) {
       const revenus = store.get('suiviRevenus') || [];
       const rev = revenus.find(r => r.id === id);
       if (!rev) return;
+      const editRevPockets = getBankPockets(store, bankNames, rev.compte || bankNames.primary);
       const body = `
         ${affectationField('revenu')}
         <div class="grid grid-cols-2 gap-2">
@@ -1599,11 +1638,19 @@ export function mount(store, navigate) {
             </div>
           </div>
         </div>
+        ${pocketSelectHtml(editRevPockets, rev.pocket || 'aucun', 'Ajouter au pocket')}
       `;
       openModal('Modifier l\'opération', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         data.compte = document.querySelector('input[name="compte"]:checked')?.value || rev.compte;
         const newAff = document.querySelector('input[name="affectation"]:checked')?.value || 'revenu';
+        const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
+        const oldPocket = rev.pocket;
+        const oldMontant = Number(rev.montant) || 0;
+        const oldCompte = rev.compte || bankNames.primary;
+
+        // Reverse old pocket credit
+        if (oldPocket) deductFromPocket(store, bankNames, oldCompte, oldPocket, oldMontant);
 
         // If switched away from revenu → move to suiviDepenses
         if (newAff !== 'revenu') {
@@ -1613,14 +1660,18 @@ export function mount(store, navigate) {
           else if (newAff === 'ndf') data.categorie = 'NDF';
           else if (newAff === 'autre') data.categorie = 'Autre';
           const items = store.get('suiviDepenses') || [];
-          items.unshift({ id: rev.id, date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie });
+          items.unshift({ id: rev.id, date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie, pocket: pocketId !== 'aucun' ? pocketId : undefined });
           store.set('suiviDepenses', items);
+          if (pocketId !== 'aucun') deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
         } else {
+          data.pocket = pocketId !== 'aucun' ? pocketId : undefined;
           Object.assign(rev, data);
           store.set('suiviRevenus', revenus);
+          if (data.pocket) deductFromPocket(store, bankNames, data.compte, data.pocket, -(Number(data.montant) || 0));
         }
         navigate('suivi-depenses');
       });
+      setupPocketBankSync(store, bankNames);
     });
   });
 
@@ -2309,6 +2360,8 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.delRevenu;
       const revenus = store.get('suiviRevenus') || [];
+      const rev = revenus.find(r => r.id === id);
+      if (rev && rev.pocket) deductFromPocket(store, bankNames, rev.compte || bankNames.primary, rev.pocket, Number(rev.montant) || 0);
       store.set('suiviRevenus', revenus.filter(r => r.id !== id));
       navigate('suivi-depenses');
     });
