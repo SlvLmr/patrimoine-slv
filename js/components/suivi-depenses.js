@@ -1856,7 +1856,7 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Nom', item.nom)}
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
-        ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
+        ${pocketSelectHtml(pockets, item.pocket || 'aucun', 'Ajouter au pocket')}
       `;
       openModal('Modifier le revenu mensuel', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -1917,7 +1917,7 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('nom', 'Nom', '')}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
-      ${pocketSelectHtml(pockets)}
+      ${pocketSelectHtml(pockets, 'aucun', 'Ajouter au pocket')}
     `;
     openModal('Ajouter un revenu mensuel', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
