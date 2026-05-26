@@ -1835,10 +1835,18 @@ export function mount(store, navigate) {
       `;
       openModal('Modifier le DCA', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
+        const oldPocket = item.pocket;
+        const oldMontant = Number(item.montant) || 0;
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
         const pk = document.getElementById('pocket-select')?.value || 'aucun';
         if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
+        const mk = getCurrentMonthKey();
+        const conf = (store.get('trRecurringConfirmed') || {})[mk] || {};
+        if ((conf.expenses || []).includes(id)) {
+          if (oldPocket) deductFromPocket(store, bankNames, bankNames.secondary, oldPocket, -oldMontant);
+          if (item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, item.montant);
+        }
         store.set('dcaMensuelsTR', list);
         navigate('suivi-depenses');
       });
@@ -1860,10 +1868,19 @@ export function mount(store, navigate) {
       `;
       openModal('Modifier le revenu mensuel', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
+        const oldPocket = item.pocket;
+        const oldMontant = Number(item.montant) || 0;
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
         const pk = document.getElementById('pocket-select')?.value || 'aucun';
         if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
+        // If confirmed, adjust pocket balances
+        const mk = getCurrentMonthKey();
+        const conf = (store.get('trRecurringConfirmed') || {})[mk] || {};
+        if ((conf.revenues || []).includes(id)) {
+          if (oldPocket) deductFromPocket(store, bankNames, bankNames.secondary, oldPocket, oldMontant);
+          if (item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, -item.montant);
+        }
         store.set('revenusMensuelsTR', list);
         navigate('suivi-depenses');
       });
@@ -2018,10 +2035,18 @@ export function mount(store, navigate) {
       `;
       openModal('Modifier le prélèvement', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
+        const oldPocket = item.pocket;
+        const oldMontant = Number(item.montant) || 0;
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
-        item.pocket = document.getElementById('pocket-select')?.value || 'aucun';
-        if (item.pocket === 'aucun') delete item.pocket;
+        const pk = document.getElementById('pocket-select')?.value || 'aucun';
+        if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
+        const mk = getCurrentMonthKey();
+        const conf = (store.get('trRecurringConfirmed') || {})[mk] || {};
+        if ((conf.prelevements || []).includes(id)) {
+          if (oldPocket) deductFromPocket(store, bankNames, bankNames.secondary, oldPocket, -oldMontant);
+          if (item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, item.montant);
+        }
         store.set('prelevementsTR', list);
         navigate('suivi-depenses');
       });
