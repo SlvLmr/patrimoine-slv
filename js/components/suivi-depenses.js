@@ -398,6 +398,22 @@ export function render(store) {
 
   const soldeTR = baseSoldeTR + soldePrevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed - totalPrelevConfirmed;
 
+  // Debug: compare with last archive
+  const _dbgArchives = store.get('archiveDepenses') || [];
+  if (_dbgArchives.length > 0) {
+    const _last = _dbgArchives.sort((a, b) => b.mois.localeCompare(a.mois))[0];
+    console.log('=== DEBUG SOLDE ===');
+    console.log('Dernier mois archivé:', _last.mois);
+    console.log('Archive soldeFinalCIC:', _last.soldeFinalCIC, '| Archive soldeFinalTR:', _last.soldeFinalTR);
+    console.log('Mois actuel baseSoldeCIC:', baseSoldeCIC, '| soldePrevCIC:', soldePrevCIC, '| total début CIC:', baseSoldeCIC + soldePrevCIC);
+    console.log('Mois actuel baseSoldeTR:', baseSoldeTR, '| soldePrevTR:', soldePrevTR, '| total début TR:', baseSoldeTR + soldePrevTR);
+    console.log('Écart CIC:', (baseSoldeCIC + soldePrevCIC) - _last.soldeFinalCIC, '| Écart TR:', (baseSoldeTR + soldePrevTR) - _last.soldeFinalTR);
+    console.log('soldeTR actuel:', soldeTR, '| soldeCIC actuel:', baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees);
+    console.log('revTR:', revTR, 'depTR:', depTR, 'trInterets:', trInterets, 'trRoundup:', trRoundup);
+    console.log('totalDcaConfirmed:', totalDcaConfirmed, 'totalRevConfirmed:', totalRevConfirmed, 'totalPrelevConfirmed:', totalPrelevConfirmed);
+    console.log('==================');
+  }
+
   // Build unified TR pocket items for ordered rendering
   const pocketOrderTR = store.get('pocketOrderTR') || [];
   const trPocketItems = [];
