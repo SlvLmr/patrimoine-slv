@@ -553,7 +553,7 @@ export function render(store) {
           </div>
           <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
             <span class="text-[10px] text-gray-500">${lblSoldeDebutCIC}</span>
-            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(soldePrevCIC)}</span>
+            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(baseSoldeCIC + soldePrevCIC)}</span>
           </div>
           <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20" id="pocket-grid-cic">
             ${cicPocketItems.map(pk => {
@@ -629,7 +629,7 @@ export function render(store) {
           </div>
           <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
             <span class="text-[10px] text-gray-500">${lblSoldeDebutTR}</span>
-            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(soldePrevTR)}</span>
+            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(baseSoldeTR + soldePrevTR)}</span>
           </div>
           ${soldeObligTR > 0 ? `<div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20">
             <span class="text-[10px] text-gray-500">${lblSoldeObligTR}</span>
@@ -794,7 +794,7 @@ export function render(store) {
           </div>
           <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="${bank.id}">
             <span class="text-[10px] text-gray-500">${bank.lblPrev}</span>
-            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(bank.prevSolde)}</span>
+            <span class="text-[10px] font-medium text-gray-400">${formatCurrencyCents(bank.baseSolde + bank.prevSolde)}</span>
           </div>
           <div class="grid grid-cols-3 gap-1.5 px-3 py-1.5 border-b border-dark-400/20" id="pocket-grid-${bank.id}">
             ${bank.pocketItems.map(pk => {
@@ -1167,14 +1167,17 @@ export function mount(store, navigate) {
       const extraBank = extraBanks.find(b => b.id === key);
       const bankLabel = key === 'cic' ? bankNames.primary : key === 'tr' ? bankNames.secondary : (extraBank?.name || 'Banque');
       const prev = store.get('soldeMoisPrecedent') || {};
+      const comptes = store.get('actifs')?.comptesCourants || [];
+      const ccId = key === 'cic' ? 'cc-cic' : key === 'tr' ? 'cc-trade' : 'cc-' + key;
+      const baseSolde = Number(comptes.find(c => c.id === ccId)?.solde) || 0;
       const labels = store.get('customLabels') || {};
       const lblKey = `soldeDebutMois_${key}`;
       const currentLabel = labels[lblKey] || 'Solde début de mois';
-      const current = Number(prev[key]) || 0;
+      const current = baseSolde + (Number(prev[key]) || 0);
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('solde', `Montant ${bankLabel} (€)`, current, 'number', 'step="0.01"');
       openModal(`${currentLabel} — ${bankLabel}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
-        prev[key] = Number(data.solde) || 0;
+        prev[key] = (Number(data.solde) || 0) - baseSolde;
         store.set('soldeMoisPrecedent', prev);
         if (data.libelle && data.libelle !== currentLabel) {
           labels[lblKey] = data.libelle;
