@@ -172,7 +172,23 @@ export function computeProjection(store, overrides = {}) {
   const rendEpar = overrides.rendementEpargne ?? (eparWeightTotal > 0 ? eparRendTotal / eparWeightTotal : 0.02);
 
   // Actualisations: real values entered by user for past years
-  const actualisations = params.actualisations || {};
+  const rawActualisations = params.actualisations || {};
+  const actualisationsMensuelles = state.actualisationsMensuelles || {};
+  const effectiveActualisations = { ...rawActualisations };
+  const currentYearStr = String(currentCalendarYear);
+  const currentYearMonths = Object.keys(actualisationsMensuelles)
+    .filter(k => k.startsWith(currentYearStr + '-'))
+    .sort();
+  if (currentYearMonths.length > 0 && !effectiveActualisations[currentYearStr]) {
+    const latestMonthly = actualisationsMensuelles[currentYearMonths[currentYearMonths.length - 1]];
+    effectiveActualisations[currentYearStr] = {
+      placements: latestMonthly.placements || {},
+      ...(latestMonthly.epargne !== undefined ? { epargne: latestMonthly.epargne } : {}),
+      ...(latestMonthly.immobilier !== undefined ? { immobilier: latestMonthly.immobilier } : {}),
+      _fromMonthly: currentYearMonths[currentYearMonths.length - 1]
+    };
+  }
+  const actualisations = effectiveActualisations;
 
   // Capital transfers (épargne/héritage → placement)
   const capitalTransfers = params.capitalTransfers || [];
@@ -1167,6 +1183,7 @@ export function computeProjection(store, overrides = {}) {
       age: ageFinAnnee + year,
       isRetraite: (ageFinAnnee + year) === ageRetraite,
       isActualise: !!hasActu,
+      isActualiseMensuel: !!(hasActu && actu?._fromMonthly),
       placementById: Object.fromEntries(placSims.filter(ps => ps.id !== '__cto_overflow__').map(ps => [ps.id, Math.round(ps.value)])),
       immobilier: Math.round(immo),
       placementDetail: detail,

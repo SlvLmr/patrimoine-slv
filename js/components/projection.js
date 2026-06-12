@@ -206,10 +206,16 @@ export function render(store) {
             </svg>
           </div>
           Projection
-          <button id="btn-export-pdf" class="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-dark-700/60 text-gray-400 text-xs rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium border border-dark-400/20" title="Exporter en PDF">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            PDF
-          </button>
+          <div class="ml-auto flex items-center gap-2">
+            <button id="btn-actualisation-mensuelle" class="flex items-center gap-1.5 px-3 py-1.5 bg-dark-700/60 text-gray-400 text-xs rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium border border-dark-400/20" title="Actualisation mensuelle">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Actualiser
+            </button>
+            <button id="btn-export-pdf" class="flex items-center gap-1.5 px-3 py-1.5 bg-dark-700/60 text-gray-400 text-xs rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium border border-dark-400/20" title="Exporter en PDF">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              PDF
+            </button>
+          </div>
         </h2>
         <p class="text-gray-500 text-sm mt-1">Simule l'évolution de ton patrimoine dans le temps</p>
       </div>
@@ -756,7 +762,7 @@ export function render(store) {
                 <td class="px-1 py-1 text-center font-medium text-gray-200 truncate ${bt}">
                   <span class="inline-flex items-center gap-0.5">
                     ${s.label}${isRetirement ? ' <span class="text-[9px] text-accent-amber font-semibold">R</span>' : ''}
-                    ${s.isActualise ? '<span class="text-[8px] text-accent-green" title="Actualisé">&#10003;</span>' : ''}
+                    ${s.isActualiseMensuel ? '<span class="text-[8px] text-cyan-400" title="Actualisé (mensuel)">&#9783;</span>' : s.isActualise ? '<span class="text-[8px] text-accent-green" title="Actualisé">&#10003;</span>' : ''}
                     <button class="btn-actualiser text-[9px] text-gray-600 hover:text-accent-cyan transition opacity-0 group-hover/row:opacity-100 ml-0.5" data-year="${s.calendarYear}" title="Actualiser avec les valeurs réelles">&#9998;</button>
                   </span>
                 </td>
@@ -1547,6 +1553,154 @@ function openActualisationModal(store, navigate, calendarYear, snapshots) {
   });
 }
 
+function openActualisationMensuelleModal(store, navigate, snapshots) {
+  const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const now = new Date();
+  const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const monthLabel = MOIS_FR[now.getMonth()] + ' ' + now.getFullYear();
+
+  const placements = store.get('actifs.placements') || [];
+  const allMensuel = store.get('actualisationsMensuelles') || {};
+  const existing = allMensuel[monthKey] || {};
+  const existingPlac = existing.placements || {};
+
+  const snapshot = snapshots.find(s => s.annee === 0);
+  if (!snapshot) return;
+
+  const params = store.get('parametres') || {};
+  const hasYearlyActu = !!(params.actualisations || {})[String(now.getFullYear())];
+
+  const GROUP_KEY_ORDER = ['PEA Actions', 'PEA ETF', 'PEA Autre', 'CTO TR', 'CTO BB', 'CTO', 'Crypto', 'Assurance Vie', 'PEE', 'PER', 'Livrets'];
+  const sortedPlacements = [...placements].sort((a, b) => {
+    const ga = getPlacementGroupKey(a);
+    const gb = getPlacementGroupKey(b);
+    const ia = GROUP_KEY_ORDER.indexOf(ga);
+    const ib = GROUP_KEY_ORDER.indexOf(gb);
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+  });
+
+  const placementRows = sortedPlacements.map(p => {
+    const projValue = snapshot.placementById?.[p.id] || 0;
+    const realValue = existingPlac[p.id] !== undefined ? existingPlac[p.id] : '';
+    const env = p.enveloppe || '';
+    const cat = p.categorie || '';
+    const label = p.nom || `${env} ${cat}`.trim();
+    return `
+      <div class="flex items-center gap-2 py-2 border-b border-dark-400/20">
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-gray-200 truncate">${label}</div>
+          <div class="text-[10px] text-gray-500">${getPlacementGroupKey(p)} · Projeté : ${formatCurrency(projValue)}</div>
+        </div>
+        <input type="number" name="plac-${p.id}" value="${realValue}"
+          placeholder="${formatCurrency(projValue).replace(/[^\d\s]/g, '').trim()}"
+          class="input-field w-28 placeholder-gray-700"
+          step="1">
+      </div>
+    `;
+  }).join('');
+
+  // Monthly history for context
+  const pastMonths = Object.keys(allMensuel).filter(k => k < monthKey).sort().slice(-3);
+  const historyHtml = pastMonths.length > 0 ? `
+    <div class="mt-4 pt-3 border-t border-dark-400/30">
+      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Historique récent</h4>
+      ${pastMonths.map(mk => {
+        const m = allMensuel[mk];
+        const mDate = mk.split('-');
+        const mLabel = MOIS_FR[parseInt(mDate[1]) - 1] + ' ' + mDate[0];
+        const total = Object.values(m.placements || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+        return `<div class="flex justify-between text-[11px] py-0.5"><span class="text-gray-500">${mLabel}</span><span class="text-gray-300">${formatCurrency(total)} (placements)</span></div>`;
+      }).join('')}
+    </div>` : '';
+
+  const warningHtml = hasYearlyActu ? `
+    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-gray-300 mb-4">
+      Une actualisation annuelle existe pour ${now.getFullYear()}. Les valeurs mensuelles ne seront pas utilisées pour la projection tant qu'elle est en place.
+    </div>` : '';
+
+  const hasData = Object.keys(existingPlac).length > 0 || existing.epargne !== undefined || existing.immobilier !== undefined;
+  const clearBtn = hasData
+    ? '<div class="mt-4 pt-3 border-t border-dark-400/30"><button id="actu-mensuel-clear" class="text-xs text-red-400 hover:text-red-300 transition">Supprimer cette actualisation</button></div>'
+    : '';
+
+  const body = `
+    ${warningHtml}
+    <p class="text-xs text-gray-500 mb-4">Saisissez les valeurs réelles de vos placements pour ${monthLabel}. Les champs vides conservent la valeur projetée.</p>
+
+    <div class="mb-4">
+      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Placements</h4>
+      <div class="max-h-[40vh] overflow-y-auto pr-1">
+        ${placementRows}
+      </div>
+    </div>
+
+    <div class="border-t border-dark-400/30 pt-4 space-y-3">
+      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Autres actifs</h4>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-300 flex-1">Épargne</label>
+        <input type="number" name="actu-epargne" value="${existing.epargne !== undefined ? existing.epargne : ''}"
+          placeholder="${formatCurrency(snapshot.epargne).replace(/[^\d\s]/g, '').trim()}"
+          class="input-field w-28 placeholder-gray-700"
+          step="1">
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-300 flex-1">Immobilier</label>
+        <input type="number" name="actu-immobilier" value="${existing.immobilier !== undefined ? existing.immobilier : ''}"
+          placeholder="${formatCurrency(snapshot.immobilier).replace(/[^\d\s]/g, '').trim()}"
+          class="input-field w-28 placeholder-gray-700"
+          step="1">
+      </div>
+    </div>
+
+    ${historyHtml}
+    ${clearBtn}
+  `;
+
+  const modal = openModal(`Actualisation — ${monthLabel}`, body, () => {
+    const modalBody = document.getElementById('modal-body');
+    const actu = { placements: {} };
+    let hasAny = false;
+
+    placements.forEach(p => {
+      const input = modalBody.querySelector(`[name="plac-${p.id}"]`);
+      if (input && input.value !== '') {
+        actu.placements[p.id] = Number(input.value);
+        hasAny = true;
+      }
+    });
+
+    const eparInput = modalBody.querySelector('[name="actu-epargne"]');
+    if (eparInput && eparInput.value !== '') {
+      actu.epargne = Number(eparInput.value);
+      hasAny = true;
+    }
+    const immoInput = modalBody.querySelector('[name="actu-immobilier"]');
+    if (immoInput && immoInput.value !== '') {
+      actu.immobilier = Number(immoInput.value);
+      hasAny = true;
+    }
+
+    const updated = { ...allMensuel };
+    if (hasAny) {
+      if (Object.keys(actu.placements).length === 0) delete actu.placements;
+      actu.date = new Date().toISOString();
+      updated[monthKey] = actu;
+    } else {
+      delete updated[monthKey];
+    }
+    store.set('actualisationsMensuelles', updated);
+    navigate('projection');
+  });
+
+  modal.querySelector('#actu-mensuel-clear')?.addEventListener('click', () => {
+    const updated = { ...allMensuel };
+    delete updated[monthKey];
+    store.set('actualisationsMensuelles', updated);
+    modal.remove();
+    navigate('projection');
+  });
+}
+
 function openTransferModal(store, navigate, editItem = null) {
   const placements = store.get('actifs.placements') || [];
   const heritageItems = store.get('heritage') || [];
@@ -2208,6 +2362,11 @@ export function mount(store, navigate) {
       const year = parseInt(btn.dataset.year);
       openActualisationModal(store, navigate, year, snapshots);
     });
+  });
+
+  // Monthly actualisation button
+  document.getElementById('btn-actualisation-mensuelle')?.addEventListener('click', () => {
+    openActualisationMensuelleModal(store, navigate, snapshots);
   });
 
   // --- Auto-save Souhaité fields on change ---

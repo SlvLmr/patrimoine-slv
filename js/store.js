@@ -44,6 +44,7 @@ const defaultState = {
   depenses: [],
   suiviDepenses: [],
   archiveDepenses: [],
+  actualisationsMensuelles: {},
   userInfo: {
     prenom: '',
     nom: '',
