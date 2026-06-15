@@ -1141,6 +1141,8 @@ export function mount(store, navigate) {
       openModal(`Modifier le solde ${label}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         const newSolde = Number(data.solde) || 0;
+        const oldSolde = cc ? Number(cc.solde) || 0 : 0;
+        const delta = newSolde - oldSolde;
         if (cc) {
           cc.solde = newSolde;
         } else {
@@ -1148,6 +1150,12 @@ export function mount(store, navigate) {
         }
         actifs.comptesCourants = ccs;
         store.set('actifs', actifs);
+        if (delta !== 0) {
+          const prevKey = ccId === 'cc-cic' ? 'cic' : ccId === 'cc-trade' ? 'tr' : ccId.replace('cc-', '');
+          const prev = store.get('soldeMoisPrecedent') || {};
+          prev[prevKey] = (Number(prev[prevKey]) || 0) - delta;
+          store.set('soldeMoisPrecedent', prev);
+        }
         navigate('suivi-depenses');
       });
     });
