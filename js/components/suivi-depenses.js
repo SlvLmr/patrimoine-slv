@@ -322,12 +322,9 @@ export function render(store) {
   const restantPEA = store.get('restantPEA') || {};
   const restantPEATR = Number(restantPEA.tr) || 0;
 
-  // A récupérer NDF = budget NDF - somme NDF
+  // A récupérer NDF = running balance (adjusted by deductFromPocket)
   const paramètres = store.get('parametres') || {};
   const budgetNDF = paramètres.budgetNDF !== undefined ? Number(paramètres.budgetNDF) : (store.get('budgetNDF') !== undefined ? Number(store.get('budgetNDF')) : 0);
-  const ndfTR = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const aRecupererNDF = budgetNDF - ndfTR;
-  const sommeARecuperer = 39.99 + ndfTR;
 
   // Budget quotidien (moved up so soldeObligTR can use it)
   const budgetQuotidien = paramètres.budgetQuotidien !== undefined ? Number(paramètres.budgetQuotidien) : (store.get('budgetQuotidien') !== undefined ? Number(store.get('budgetQuotidien')) : 0);
@@ -349,7 +346,7 @@ export function render(store) {
   const pocketColorsStore = store.get('pocketColors') || {};
 
   const pocketOblig = store.get('pocketObligatoire') || {};
-  const soldeObligTR = (pocketOblig.ndf !== false && hasBudgetNDF ? aRecupererNDF : 0)
+  const soldeObligTR = (pocketOblig.ndf !== false && hasBudgetNDF ? budgetNDF : 0)
     + (pocketOblig.quotidien === true && hasBudgetQuotidien ? budgetQuotidien : 0)
     + (pocketOblig.pea === true && hasRestantPEA ? restantPEATR : 0)
     + (pocketOblig.invest === true && hasRestantInvest ? restantInvestTR : 0)
@@ -405,7 +402,7 @@ export function render(store) {
   if (trFeatures.lblRoundup || trRoundup > 0) trPocketItems.push({ id: 'roundup', label: lblRoundup, amount: trRoundup, prefix: '-', editAttr: 'data-edit-tr-feature="roundup"', delKey: 'feat-roundup', defaultBg: 'red', defaultText: 'red' });
   if (trFeatures.lblInterets || trInterets > 0) trPocketItems.push({ id: 'interets', label: lblInterets, amount: trInterets, prefix: '+', editAttr: 'data-edit-tr-feature="interets"', delKey: 'feat-interets', defaultBg: 'emerald', defaultText: 'emerald' });
   if (hasBudgetQuotidien) trPocketItems.push({ id: 'quotidien', label: lblEnveloppe, amount: budgetQuotidien, prefix: '', editAttr: 'data-edit-budget-quotidien', delKey: 'quotidien', defaultBg: 'gray', defaultText: budgetQuotidien >= 0 ? 'emerald' : 'red' });
-  if (hasBudgetNDF) trPocketItems.push({ id: 'ndf', label: lblNDF, amount: aRecupererNDF, prefix: '', editAttr: 'data-edit-budget-ndf', delKey: 'ndf', defaultBg: 'gray', defaultText: 'purple' });
+  if (hasBudgetNDF) trPocketItems.push({ id: 'ndf', label: lblNDF, amount: budgetNDF, prefix: '', editAttr: 'data-edit-budget-ndf', delKey: 'ndf', defaultBg: 'gray', defaultText: 'purple' });
   if (hasRestantPEA) trPocketItems.push({ id: 'pea', label: lblRestantPEA, amount: restantPEATR, prefix: '', editAttr: 'data-edit-restant-pea', delKey: 'pea', defaultBg: 'gray', defaultText: 'blue' });
   pocketsTR.forEach(p => trPocketItems.push({ id: p.id, label: p.label, amount: p.amount, prefix: '', editAttr: `data-edit-pocket="${p.id}" data-pocket-bank="tr"`, delKey: null, delPocket: p.id, defaultBg: 'gray', defaultText: 'blue' }));
   if (hasRestantInvest) trPocketItems.push({ id: 'invest', label: lblRestantInvest, amount: restantInvestTR, prefix: '', editAttr: 'data-edit-restant-invest', delKey: 'invest', defaultBg: 'gray', defaultText: 'blue' });
@@ -1067,12 +1064,8 @@ export function mount(store, navigate) {
       store.set('soldeMoisPrecedent', newPrev);
 
       // Carry forward pocket remaining balances before clearing ops
+      // budgetNDF and budgetQuotidien carry as-is (already adjusted by deductFromPocket)
       const carryParams = store.get('parametres') || {};
-      if (carryParams.budgetNDF !== undefined) {
-        const ndfExp = items.filter(i => i.compte === bankNames.secondary && i.categorie === 'NDF').reduce((s, i) => s + (Number(i.montant) || 0), 0);
-        carryParams.budgetNDF = (Number(carryParams.budgetNDF) || 0) - ndfExp;
-      }
-      // budgetQuotidien carries as-is (already adjusted by deductFromPocket)
       store.set('parametres', carryParams);
 
       // Clear operations
