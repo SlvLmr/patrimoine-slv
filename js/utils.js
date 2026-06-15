@@ -37,8 +37,9 @@ export function formatNumber(value) {
 }
 
 export function parseNumberInput(str) {
-  if (typeof str === 'number') return str;
-  return parseFloat(String(str).replace(/\s/g, '').replace(',', '.')) || 0;
+  if (typeof str === 'number') return Math.round(str * 100) / 100;
+  const n = parseFloat(String(str).replace(/\s/g, '').replace(',', '.')) || 0;
+  return Math.round(n * 100) / 100;
 }
 
 export function formatDate(dateStr) {
@@ -1298,10 +1299,11 @@ export async function computeTax(revenuImposable, nbParts) {
 
 // Input field helper - dark theme
 export function inputField(name, label, value = '', type = 'text', extra = '') {
+  const displayValue = type === 'number' && typeof value === 'number' ? Math.round(value * 100) / 100 : value;
   return `
     <div class="mb-4">
       <label for="${name}" class="block text-sm font-medium text-gray-300 mb-1.5">${label}</label>
-      <input type="${type}" name="${name}" id="field-${name}" value="${value}"
+      <input type="${type}" name="${name}" id="field-${name}" value="${displayValue}"
         class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 placeholder-gray-600
         focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition" ${extra}>
     </div>

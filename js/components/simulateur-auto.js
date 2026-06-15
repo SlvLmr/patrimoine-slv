@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, parseNumberInput } from '../utils.js?v=10';
+import { formatCurrency, formatCurrencyCents, parseNumberInput } from '../utils.js?v=11';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Auto : Crédit vs LOA vs LLD ─────────────────────────────────

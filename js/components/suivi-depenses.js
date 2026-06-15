@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=10';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=11';
 
 const CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
