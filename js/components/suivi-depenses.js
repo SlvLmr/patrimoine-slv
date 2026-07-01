@@ -354,9 +354,11 @@ export function render(store) {
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
+  const archives = store.get('archiveDepenses') || [];
+  const monthIsClosed = archives.some(a => a.mois === monthKey);
   const cicCochees = store.get('cicMensuellesCochees') || {};
   const cocheesThisMonth = cicCochees[monthKey] || [];
-  const totalCochees = depMensuelles
+  const totalCochees = monthIsClosed ? 0 : depMensuelles
     .filter(d => cocheesThisMonth.includes(d.id))
     .reduce((s, d) => s + d.montant, 0);
 
@@ -366,13 +368,13 @@ export function render(store) {
   const confirmedDcaIds = trConfirmedThisMonth.expenses || [];
   const confirmedRevIds = trConfirmedThisMonth.revenues || [];
   const confirmedPrelevIds = trConfirmedThisMonth.prelevements || [];
-  const totalDcaConfirmed = dcaTR
+  const totalDcaConfirmed = monthIsClosed ? 0 : dcaTR
     .filter(d => confirmedDcaIds.includes(d.id))
     .reduce((s, d) => s + d.montant, 0);
-  const totalRevConfirmed = revMensuelsTR
+  const totalRevConfirmed = monthIsClosed ? 0 : revMensuelsTR
     .filter(r => confirmedRevIds.includes(r.id))
     .reduce((s, r) => s + r.montant, 0);
-  const totalPrelevConfirmed = prelevTR
+  const totalPrelevConfirmed = monthIsClosed ? 0 : prelevTR
     .filter(p => confirmedPrelevIds.includes(p.id))
     .reduce((s, p) => s + (Number(p.montant) || 0), 0);
 
@@ -600,7 +602,7 @@ export function render(store) {
                     <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
                     <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                   </svg>
-                  <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
+                  <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
                   <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
@@ -682,7 +684,7 @@ export function render(store) {
               <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-prelev cursor-grab active:cursor-grabbing tr-prelev-drag-row" draggable="true" data-drag-prelev-id="${p.id}">
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
-                  <input type="checkbox" data-tr-prelev-recurring="${p.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-orange-500 focus:ring-orange-500/40 cursor-pointer">
+                  <input type="checkbox" data-tr-prelev-recurring="${p.id}" ${confirmed ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-orange-500 focus:ring-orange-500/40 cursor-pointer">
                   <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-prelev-edit="${p.id}">${p.nom}</span>
                   ${pocketLabel ? `<span class="text-[9px] text-gray-600">${pocketLabel}</span>` : ''}
                 </div>
@@ -721,7 +723,7 @@ export function render(store) {
               <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-dca cursor-grab active:cursor-grabbing tr-dca-drag-row" draggable="true" data-drag-dca-id="${d.id}">
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
-                  <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
+                  <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
                   <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
                   ${dcaPocketLabel ? `<span class="text-[9px] text-gray-600">${dcaPocketLabel}</span>` : ''}
                 </div>
@@ -760,7 +762,7 @@ export function render(store) {
               <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition group/tr-rev cursor-grab active:cursor-grabbing tr-rev-drag-row" draggable="true" data-drag-rev-id="${r.id}">
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
-                  <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
+                  <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
                   <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
                   ${revPocketLabel ? `<span class="text-[9px] text-gray-600">${revPocketLabel}</span>` : ''}
                 </div>
@@ -921,6 +923,11 @@ export function mount(store, navigate) {
   // Archive month (clôture)
   document.getElementById('btn-archive-month')?.addEventListener('click', () => {
     const monthKey = getCurrentMonthKey();
+    const existingArchives = store.get('archiveDepenses') || [];
+    if (existingArchives.some(a => a.mois === monthKey)) {
+      openModal('Mois déjà clôturé', '<p class="text-gray-300 text-sm">Ce mois a déjà été clôturé.</p>', null);
+      return;
+    }
     const label = new Date(monthKey + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
     // Compute current final soldes
@@ -1072,15 +1079,9 @@ export function mount(store, navigate) {
       store.set('suiviDepenses', []);
       store.set('suiviRevenus', []);
 
-      // Clear checked monthly items for this month
-      const allCochees = store.get('cicMensuellesCochees') || {};
-      delete allCochees[monthKey];
-      store.set('cicMensuellesCochees', allCochees);
-
-      // Clear TR recurring confirmed for this month
-      const allTrConf = store.get('trRecurringConfirmed') || {};
-      delete allTrConf[monthKey];
-      store.set('trRecurringConfirmed', allTrConf);
+      // Keep cicMensuellesCochees and trRecurringConfirmed for the closed month
+      // (their effects are baked into soldePrev; clearing them would allow
+      // double-crediting pockets if the user re-checks items before the monthKey changes)
 
       // Reset TR features (monthly values already baked into soldePrev)
       const trF = store.get('trFeatures') || {};

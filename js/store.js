@@ -661,10 +661,12 @@ const Store = {
 
     const now = new Date();
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const archives = this._state.archiveDepenses || [];
+    const monthIsClosed = archives.some(a => a.mois === monthKey);
     const depMensuelles = this._state.depensesMensuellesCIC || [];
     const cicCochees = this._state.cicMensuellesCochees || {};
     const cocheesThisMonth = cicCochees[monthKey] || [];
-    const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+    const totalCochees = monthIsClosed ? 0 : depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
 
     const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
@@ -678,8 +680,8 @@ const Store = {
     const trConfirmedThisMonth = trConfirmed[monthKey] || { expenses: [], revenues: [] };
     const dcaTR = this._state.dcaMensuelsTR || [];
     const revMensuelsTR = this._state.revenusMensuelsTR || [];
-    const totalDcaConfirmed = dcaTR.filter(d => (trConfirmedThisMonth.expenses || []).includes(d.id)).reduce((s, d) => s + d.montant, 0);
-    const totalRevConfirmed = revMensuelsTR.filter(r => (trConfirmedThisMonth.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0);
+    const totalDcaConfirmed = monthIsClosed ? 0 : dcaTR.filter(d => (trConfirmedThisMonth.expenses || []).includes(d.id)).reduce((s, d) => s + d.montant, 0);
+    const totalRevConfirmed = monthIsClosed ? 0 : revMensuelsTR.filter(r => (trConfirmedThisMonth.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0);
 
     const result = {
       cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
