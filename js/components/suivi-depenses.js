@@ -354,8 +354,8 @@ export function render(store) {
 
   // Monthly checklist state
   const monthKey = getCurrentMonthKey();
-  const archives = store.get('archiveDepenses') || [];
-  const monthIsClosed = archives.some(a => a.mois === monthKey);
+  const closedArchives = store.get('archiveDepenses') || [];
+  const monthIsClosed = closedArchives.some(a => a.mois === monthKey);
   const cicCochees = store.get('cicMensuellesCochees') || {};
   const cocheesThisMonth = cicCochees[monthKey] || [];
   const totalCochees = monthIsClosed ? 0 : depMensuelles
