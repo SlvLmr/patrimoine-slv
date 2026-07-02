@@ -310,7 +310,6 @@ const Store = {
     this._profileId = activeId;
     this._state = loadState(activeId);
     this._migrateInformatif();
-    this._applyMonthlyDCA();
     // Don't auto-archive past expenses — let the user close the month manually
     // via the "Clôturer le mois" button to avoid silent data loss
     return this;
@@ -332,64 +331,6 @@ const Store = {
       }
     });
     if (changed) saveState(this._profileId, this._state);
-  },
-
-  // Auto-apply DCA on the 2nd of each month
-  _applyMonthlyDCA() {
-    const now = new Date();
-    if (now.getDate() < 2) return; // before the 2nd, skip
-
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const lastDCA = this._state.parametres._lastDCAMonth;
-    if (lastDCA === monthKey) return; // already applied this month
-
-    const placements = this._state.actifs?.placements || [];
-    const comptesCourants = this._state.actifs?.comptesCourants || [];
-    const tradeCc = comptesCourants.find(c => c.id === 'cc-trade');
-    let changed = false;
-
-    placements.forEach(p => {
-      const dca = Number(p.dcaMensuel) || 0;
-      if (dca <= 0) return;
-
-      const pru = Number(p.pru) || 0;
-      const qty = Number(p.quantite) || 0;
-      const val = Number(p.valeur) || 0;
-      const env = (p.enveloppe || p.type || '').toUpperCase();
-      const isPEA = env.startsWith('PEA');
-
-      if (pru > 0) {
-        if (isPEA) {
-          // PEA: only whole shares, remainder goes to Live Trade
-          const wholeParts = Math.floor(dca / pru);
-          const remainder = dca - (wholeParts * pru);
-          if (wholeParts > 0) {
-            p.quantite = qty + wholeParts;
-            p.valeur = (qty + wholeParts) * pru;
-          }
-          if (remainder > 0 && tradeCc) {
-            tradeCc.solde = (Number(tradeCc.solde) || 0) + remainder;
-            const prev = this._state.soldeMoisPrecedent || {};
-            prev.tr = (Number(prev.tr) || 0) - remainder;
-            this._state.soldeMoisPrecedent = prev;
-          }
-        } else {
-          // CTO/Crypto: fractional shares allowed
-          const newParts = dca / pru;
-          p.quantite = qty + newParts;
-          p.valeur = (qty + newParts) * pru;
-        }
-      } else {
-        // No PRU: just add the amount
-        p.valeur = val + dca;
-      }
-      changed = true;
-    });
-
-    if (changed) {
-      this._state.parametres._lastDCAMonth = monthKey;
-      saveState(this._profileId, this._state);
-    }
   },
 
   // Archive past months' expenses into archiveDepenses summaries
