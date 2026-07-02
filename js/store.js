@@ -369,6 +369,9 @@ const Store = {
           }
           if (remainder > 0 && tradeCc) {
             tradeCc.solde = (Number(tradeCc.solde) || 0) + remainder;
+            const prev = this._state.soldeMoisPrecedent || {};
+            prev.tr = (Number(prev.tr) || 0) - remainder;
+            this._state.soldeMoisPrecedent = prev;
           }
         } else {
           // CTO/Crypto: fractional shares allowed
