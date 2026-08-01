@@ -673,15 +673,15 @@ export function render(store) {
           <p class="text-gray-500 text-sm mt-1">Suivi de tes opérations bancaires au quotidien</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-          <button id="btn-archive-month" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-xs sm:text-sm rounded-lg hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-            Clôturer le mois
-          </button>
           <button id="btn-add-revenu" class="px-2.5 sm:px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm rounded-lg hover:bg-emerald-500/30 transition font-medium">+ Revenu</button>
           <button id="btn-add-expense" class="px-2.5 sm:px-3 py-1.5 bg-accent-red/20 text-accent-red text-xs sm:text-sm rounded-lg hover:bg-accent-red/30 transition font-medium">+ Dépense</button>
           <button id="btn-add-virement" class="px-2.5 sm:px-3 py-1.5 bg-amber-500/20 text-amber-400 text-xs sm:text-sm rounded-lg hover:bg-amber-500/30 transition font-medium">+ Virement</button>
           <button id="btn-add-invest" class="px-2.5 sm:px-3 py-1.5 bg-blue-500/20 text-blue-400 text-xs sm:text-sm rounded-lg hover:bg-blue-500/30 transition font-medium">+ Invest.</button>
           <button id="btn-add-ndf" class="px-2.5 sm:px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs sm:text-sm rounded-lg hover:bg-purple-500/30 transition font-medium">+ NDF</button>
+          <button id="btn-archive-month" class="px-2 py-1 bg-dark-600/60 border border-dark-400/40 text-gray-500 text-[10px] sm:text-[11px] rounded-md hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            Clôturer le mois
+          </button>
         </div>
       </div>
 
