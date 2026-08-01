@@ -33,49 +33,36 @@ export function render(store) {
     }))
   ];
 
-  // Children's assets. Two sources:
-  // 1. Per-child data from the Enfants/Compte page (donationConfig.enfants[].placements/livrets)
-  // 2. Entries in actifs whose name contains a child's first name
-  const enfantsCfg = (store.get('donationConfig') || {}).enfants || [];
-  const enfantsNoms = enfantsCfg.map(e => (e.prenom || '').trim()).filter(Boolean);
-  const isChildAsset = (nom) => enfantsNoms.some(pn => (nom || '').toLowerCase().includes(pn.toLowerCase()));
-  const enfantsPlacCfg = enfantsCfg.flatMap(e => (e.placements || []).map(p => ({
-    nom: `${(e.prenom || '').trim() ? (e.prenom || '').trim() + ' · ' : ''}${p.nom || p.type || 'Placement'}`,
-    valeur: Number(p.valeur) || Number(p.apport) || 0
-  })));
-  const enfantsLivretsCfg = enfantsCfg.flatMap(e => (e.livrets || []).map(l => ({
-    nom: `${(e.prenom || '').trim() ? (e.prenom || '').trim() + ' · ' : ''}${l.nom || 'Livret'}`,
-    solde: Number(l.montant) || 0
-  })));
-  const enfantsPlacActifs = placements.filter(p => isChildAsset(p.nom));
-  const placAdultes = placements.filter(p => !enfantsPlacActifs.includes(p));
-  const epargneEnfantsActifs = epargne.filter(e => isChildAsset(e.nom));
-  const epargneAdultes = epargne.filter(e => !epargneEnfantsActifs.includes(e));
-  const enfantsPlac = [...enfantsPlacActifs, ...enfantsPlacCfg];
-  const epargneEnfants = [...epargneEnfantsActifs, ...enfantsLivretsCfg];
-  const totalEnfantsPlac = enfantsPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
-  const totalEpargneEnfants = epargneEnfants.reduce((s, e) => s + (Number(e.solde) || 0), 0);
-  const totalPlacCfgEnfants = enfantsPlacCfg.reduce((s, p) => s + p.valeur, 0);
-  const totalLivretsCfgEnfants = enfantsLivretsCfg.reduce((s, e) => s + e.solde, 0);
-
   const totalCC = comptesLive.reduce((s, c) => s + c.solde, 0);
-  // Épargne/placements enfants (page Enfants) inclus dans les totaux du portefeuille
-  const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0) + totalLivretsCfgEnfants;
-  const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0) + totalPlacCfgEnfants;
+  const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
+  const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const totalDette = emprunts.reduce((s, e) => s + (Number(e.capitalRestant) || 0), 0);
   const totalLiquidites = totalCC + totalEpargne;
   const totalActifs = totalLiquidites + totalPlac + totalImmo;
   const patrimoineNet = totalActifs - totalDette;
 
-  // Group placements by envelope (children's placements shown in their own block)
-  const peaPlac = placAdultes.filter(p => (p.enveloppe || '').startsWith('PEA'));
-  const ctoPlac = placAdultes.filter(p => (p.enveloppe || '').startsWith('CTO'));
-  const cryptoPlac = placAdultes.filter(p => (p.categorie || '') === 'Crypto' || (p.enveloppe || '') === 'Crypto');
-  const avPlac = placAdultes.filter(p => (p.enveloppe || '') === 'AV');
-  const peePlac = placAdultes.filter(p => (p.enveloppe || '') === 'PEE');
+  // DCA enfants : lignes récurrentes de la Vie quotidienne (TR + CIC)
+  // dont le nom contient le prénom d'un enfant (page Compte)
+  const enfantsNoms = ((store.get('donationConfig') || {}).enfants || [])
+    .map(e => (e.prenom || '').trim()).filter(Boolean);
+  const isChildAsset = (nom) => enfantsNoms.some(pn => (nom || '').toLowerCase().includes(pn.toLowerCase()));
+  const dcaTRList = store.get('dcaMensuelsTR') || [];
+  const depMensCICList = store.get('depensesMensuellesCIC') || [];
+  const enfantsDca = [
+    ...dcaTRList.filter(d => isChildAsset(d.nom)).map(d => ({ nom: d.nom, montant: Number(d.montant) || 0, banque: bankNames.secondary })),
+    ...depMensCICList.filter(d => isChildAsset(d.nom)).map(d => ({ nom: d.nom, montant: Number(d.montant) || 0, banque: bankNames.primary })),
+  ];
+  const totalEnfantsDca = enfantsDca.reduce((s, d) => s + d.montant, 0);
+
+  // Group placements by envelope
+  const peaPlac = placements.filter(p => (p.enveloppe || '').startsWith('PEA'));
+  const ctoPlac = placements.filter(p => (p.enveloppe || '').startsWith('CTO'));
+  const cryptoPlac = placements.filter(p => (p.categorie || '') === 'Crypto' || (p.enveloppe || '') === 'Crypto');
+  const avPlac = placements.filter(p => (p.enveloppe || '') === 'AV');
+  const peePlac = placements.filter(p => (p.enveloppe || '') === 'PEE');
   const categorizedEnv = new Set([...peaPlac, ...ctoPlac, ...cryptoPlac, ...avPlac, ...peePlac]);
-  const otherPlac = placAdultes.filter(p => !categorizedEnv.has(p));
+  const otherPlac = placements.filter(p => !categorizedEnv.has(p));
 
   // Sub-groups under PEA
   const peaActions = peaPlac.filter(p => (p.categorie || '').includes('Action'));
@@ -99,7 +86,7 @@ export function render(store) {
     { id: 'crypto', label: 'Crypto', total: totalCrypto },
     { id: 'av', label: 'Ass. Vie', total: totalAV },
     { id: 'pee', label: 'PEE', total: totalPEE },
-    { id: 'enfants', label: 'Enfants', total: totalEnfantsPlac },
+    { id: 'enfants', label: 'Enfants', total: totalEnfantsDca, isMonthly: true },
     { id: 'otherplac', label: 'Autres', total: totalOtherPlac },
   ].filter(e => ['pea', 'cto', 'crypto', 'av', 'pee'].includes(e.id) || e.total > 0);
 
@@ -263,39 +250,14 @@ export function render(store) {
                 <p class="text-xs font-bold text-indigo-400 text-center whitespace-nowrap">${fmt(b.solde)}</p>
               </div>`).join('')}
             </div>
-            <!-- Sous Épargne (livrets enfants regroupés) -->
-            ${(() => {
-              const nbCards = epargneAdultes.length + (epargneEnfants.length > 0 ? 1 : 0);
-              return `
-            <div class="grid grid-cols-${nbCards > 2 ? '3' : nbCards || 1} gap-1.5">
-              ${epargneAdultes.map((e, idx) => `
+            <!-- Sous Épargne -->
+            <div class="grid grid-cols-${epargne.length > 2 ? '3' : epargne.length || 1} gap-1.5">
+              ${epargne.length > 0 ? epargne.map((e, idx) => `
               <div id="ptf-card-ep-${idx}" class="card-dark rounded-xl p-2.5">
                 <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${e.nom}</p>
                 <p class="text-sm font-bold text-indigo-400 text-center">${fmt(Number(e.solde) || 0)}</p>
-              </div>`).join('')}
-              ${epargneEnfants.length > 0 ? `
-              <details id="ptf-card-ep-enfants" class="card-dark rounded-xl p-2.5 group/epenf">
-                <summary class="cursor-pointer select-none" style="list-style:none">
-                  <div class="flex items-center justify-between mb-0.5">
-                    <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">Enfants</p>
-                    <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/epenf:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                  </div>
-                  <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalEpargneEnfants)}</p>
-                </summary>
-                <div class="space-y-1 mt-1">
-                  ${epargneEnfants.map(e => `
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <div class="w-1 h-1 rounded-full bg-indigo-400/50 flex-shrink-0"></div>
-                      <span class="text-[10px] text-gray-400 truncate">${e.nom}</span>
-                    </div>
-                    <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(e.solde) || 0)}</span>
-                  </div>`).join('')}
-                </div>
-              </details>` : ''}
-              ${nbCards === 0 ? '<div class="card-dark rounded-xl p-2.5"><p class="text-[9px] text-gray-600">Aucun</p></div>' : ''}
-            </div>`;
-            })()}
+              </div>`).join('') : '<div class="card-dark rounded-xl p-2.5"><p class="text-[9px] text-gray-600">Aucun</p></div>'}
+            </div>
           </div>
         </div>
 
@@ -312,7 +274,15 @@ export function render(store) {
           <!-- Ligne 2 investissements: enveloppes -->
           <div id="ptf-L3C" class="grid grid-cols-${Math.min(l2Envelopes.length, 2) || 1} sm:grid-cols-${Math.min(l2Envelopes.length, 3) || 1} lg:grid-cols-${l2Envelopes.length || 1} gap-1">
             ${l2Envelopes.map(env => {
-              const envPlacMap = { cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, enfants: enfantsPlac, otherplac: otherPlac };
+              const envPlacMap = { cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
+              const enfantsListHtml = enfantsDca.map(d => `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-1 h-1 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
+                    <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
+                  </div>
+                  <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
+                </div>`).join('');
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
               <summary class="cursor-pointer select-none" style="list-style:none">
@@ -320,9 +290,10 @@ export function render(store) {
                   <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
                   <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/env:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
-                <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}</p>
+                <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}${env.isMonthly ? '<span class="text-[8px] text-gray-500 font-normal">/mois</span>' : ''}</p>
               </summary>
-              ${env.id !== 'pea' && envPlacMap[env.id] ? `<div class="space-y-1 mt-1">${placList(envPlacMap[env.id], 'bg-accent-amber/50')}</div>` : ''}
+              ${env.id === 'enfants' ? `<div class="space-y-1 mt-1">${enfantsListHtml}</div>`
+                : env.id !== 'pea' && envPlacMap[env.id] ? `<div class="space-y-1 mt-1">${placList(envPlacMap[env.id], 'bg-accent-amber/50')}</div>` : ''}
             </details>`;
             }).join('')}
           </div>
@@ -385,21 +356,11 @@ export function render(store) {
               <span>Épargne</span>
               <span class="text-indigo-400 font-medium">${fmt(totalEpargne)}</span>
             </div>
-            ${epargneAdultes.map(e => `
+            ${epargne.map(e => `
             <div class="flex items-center justify-between pl-3">
               <span class="text-[10px] text-gray-500">${e.nom}</span>
               <span class="text-[10px] text-gray-300 font-medium">${fmt(Number(e.solde) || 0)}</span>
             </div>`).join('')}
-            ${epargneEnfants.length > 0 ? `
-            <div class="flex items-center justify-between pl-3">
-              <span class="text-[10px] text-gray-400 font-semibold">Enfants</span>
-              <span class="text-[10px] text-indigo-400 font-semibold">${fmt(totalEpargneEnfants)}</span>
-            </div>
-            ${epargneEnfants.map(e => `
-            <div class="flex items-center justify-between pl-6">
-              <span class="text-[10px] text-gray-500">${e.nom}</span>
-              <span class="text-[10px] text-gray-300 font-medium">${fmt(Number(e.solde) || 0)}</span>
-            </div>`).join('')}` : ''}
           </div>
         </details>
 
@@ -419,15 +380,19 @@ export function render(store) {
           </summary>
           <div class="px-3 pb-3 space-y-1.5">
             ${l2Envelopes.map(env => {
-              const envPlacMap = { pea: peaPlac, cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, enfants: enfantsPlac, otherplac: otherPlac };
+              const envPlacMap = { pea: peaPlac, cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
               const items = env.id === 'pea' ? [...peaActions, ...peaETF, ...peaOther] : (envPlacMap[env.id] || []);
               return `
             <div class="border-b border-dark-400/15 pb-1.5">
               <div class="flex items-center justify-between text-xs">
                 <span class="text-gray-500 font-medium">${env.label}</span>
-                <span class="text-accent-amber font-bold">${fmt(env.total)}</span>
+                <span class="text-accent-amber font-bold">${fmt(env.total)}${env.isMonthly ? '<span class="text-[8px] text-gray-500 font-normal">/mois</span>' : ''}</span>
               </div>
-              ${items.length > 0 ? items.map(p => `
+              ${env.id === 'enfants' ? enfantsDca.map(d => `
+              <div class="flex items-center justify-between pl-3 mt-0.5">
+                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom}</span>
+                <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
+              </div>`).join('') : items.length > 0 ? items.map(p => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${p.nom}</span>
                 <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(Number(p.valeur) || Number(p.apport) || 0)}</span>

@@ -5,7 +5,7 @@ import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components
 import * as RevenusDepenses from './components/revenus-depenses.js?v=20260801d';
 import * as Projection from './components/projection.js?v=20260801d';
 import * as SuiviDepenses from './components/suivi-depenses.js?v=20260801f';
-import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260801e';
+import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260801g';
 import * as Compte from './components/compte.js?v=20260801d';
 import * as Repartition from './components/repartition.js?v=20260801d';
 import * as SimulateurFire from './components/simulateur-fire.js?v=20260801d';
