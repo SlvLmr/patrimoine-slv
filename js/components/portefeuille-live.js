@@ -300,54 +300,57 @@ export function render(store) {
             </details>`;
             }).join('')}
           </div>
-          ${totalPEA > 0 && l3PEA.length > 0 ? `
-          <!-- SVG PEA → Actions + ETF -->
-          <div id="ptf-svg-L3C-pea" class="hidden lg:block" style="height:30px;">
-            <svg id="ptf-svg-L3C-pea-svg" class="w-full" style="height:30px;" fill="none">
-              <defs><filter id="glow-amber3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
-            </svg>
-          </div>
-          <!-- Ligne 3 sous PEA: Actions + ETF (full width) -->
-          <div class="grid grid-cols-${l3PEA.length} gap-1">
-            ${l3PEA.map(sub => `
-            <details id="ptf-card-${sub.id}" class="card-dark rounded-xl p-2 group/sub">
-              <summary class="cursor-pointer select-none" style="list-style:none">
-                <div class="flex items-center justify-between mb-0.5">
-                  <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
-                  <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/sub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </div>
-                <p class="text-sm font-bold text-accent-amber text-center">${fmt(sub.total)}</p>
-              </summary>
-              <div class="space-y-1 mt-1">${placList(sub.items, 'bg-accent-amber/50')}</div>
-            </details>`).join('')}
-          </div>` : ''}
-          ${enfantsParEnfant.length > 0 ? `
-          <!-- SVG Enfants → cartes par enfant -->
-          <div id="ptf-svg-L3C-enf" class="hidden lg:block" style="height:30px;">
-            <svg id="ptf-svg-L3C-enf-svg" class="w-full" style="height:30px;" fill="none">
-              <defs><filter id="glow-amber4" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
-            </svg>
-          </div>
-          <!-- Ligne 3 sous Enfants : une carte par enfant (full width) -->
-          <div class="grid grid-cols-${enfantsParEnfant.length} gap-1">
-            ${enfantsParEnfant.map((e, i) => `
-            <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
-              <div class="flex items-center justify-between mb-1">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
-                <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}<span class="text-[8px] text-gray-500 font-normal">/mois</span></p>
+          ${(totalPEA > 0 && l3PEA.length > 0) || enfantsParEnfant.length > 0 ? `
+          <!-- Ligne 3 partagée : sous-niveau PEA (gauche) + détail Enfants (droite) -->
+          <div class="grid grid-cols-2 gap-1 items-start">
+            <div>
+              ${totalPEA > 0 && l3PEA.length > 0 ? `
+              <div id="ptf-svg-L3C-pea" class="hidden lg:block" style="height:30px;">
+                <svg id="ptf-svg-L3C-pea-svg" class="w-full" style="height:30px;" fill="none">
+                  <defs><filter id="glow-amber3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
+                </svg>
               </div>
-              <div class="space-y-1 border-t border-dark-400/20 pt-1">
-                ${e.lignes.map(d => `
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <div class="w-1 h-1 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
-                    <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
-                    <span class="text-[8px] px-1 py-px rounded bg-dark-600/60 text-gray-500 flex-shrink-0">${d.banque}</span>
+              <div class="grid grid-cols-${l3PEA.length} gap-1">
+                ${l3PEA.map(sub => `
+                <details id="ptf-card-${sub.id}" class="card-dark rounded-xl p-2 group/sub">
+                  <summary class="cursor-pointer select-none" style="list-style:none">
+                    <div class="flex items-center justify-between mb-0.5">
+                      <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
+                      <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/sub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                    <p class="text-sm font-bold text-accent-amber text-center">${fmt(sub.total)}</p>
+                  </summary>
+                  <div class="space-y-1 mt-1">${placList(sub.items, 'bg-accent-amber/50')}</div>
+                </details>`).join('')}
+              </div>` : ''}
+            </div>
+            <div>
+              ${enfantsParEnfant.length > 0 ? `
+              <div id="ptf-svg-L3C-enf" class="hidden lg:block" style="height:30px;">
+                <svg id="ptf-svg-L3C-enf-svg" class="w-full" style="height:30px;" fill="none">
+                  <defs><filter id="glow-amber4" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
+                </svg>
+              </div>
+              <div class="grid grid-cols-${enfantsParEnfant.length} gap-1">
+                ${enfantsParEnfant.map((e, i) => `
+                <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
+                  <div class="flex items-center justify-between mb-1">
+                    <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
+                    <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}<span class="text-[8px] text-gray-500 font-normal">/mois</span></p>
                   </div>
-                  <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
+                  <div class="space-y-1 border-t border-dark-400/20 pt-1">
+                    ${e.lignes.map(d => `
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <div class="w-1 h-1 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
+                        <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
+                      </div>
+                      <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
+                    </div>`).join('')}
+                  </div>
                 </div>`).join('')}
-              </div>
-            </div>`).join('')}
+              </div>` : ''}
+            </div>
           </div>` : ''}
         </div>
 
