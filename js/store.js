@@ -605,12 +605,18 @@ const Store = {
 
     const now = new Date();
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
     const archives = this._state.archiveDepenses || [];
     const monthIsClosed = archives.some(a => a.mois === monthKey);
+    const prevMonthIsClosed = archives.some(a => a.mois === prevMonthKey);
     const depMensuelles = this._state.depensesMensuellesCIC || [];
     const cicCochees = this._state.cicMensuellesCochees || {};
     const cocheesThisMonth = cicCochees[monthKey] || [];
-    const totalCochees = monthIsClosed ? 0 : depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+    // Prev-month unclosed: its coches still count until closure
+    const prevCocheesIds = prevMonthIsClosed ? [] : (cicCochees[prevMonthKey] || []);
+    const totalCochees = (monthIsClosed ? 0 : depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0))
+      + depMensuelles.filter(d => prevCocheesIds.includes(d.id)).reduce((s, d) => s + d.montant, 0);
 
     const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
@@ -622,10 +628,13 @@ const Store = {
     // TR recurring confirmed (DCA + apports)
     const trConfirmed = this._state.trRecurringConfirmed || {};
     const trConfirmedThisMonth = trConfirmed[monthKey] || { expenses: [], revenues: [] };
+    const trConfirmedPrev = prevMonthIsClosed ? {} : (trConfirmed[prevMonthKey] || {});
     const dcaTR = this._state.dcaMensuelsTR || [];
     const revMensuelsTR = this._state.revenusMensuelsTR || [];
-    const totalDcaConfirmed = monthIsClosed ? 0 : dcaTR.filter(d => (trConfirmedThisMonth.expenses || []).includes(d.id)).reduce((s, d) => s + d.montant, 0);
-    const totalRevConfirmed = monthIsClosed ? 0 : revMensuelsTR.filter(r => (trConfirmedThisMonth.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0);
+    const totalDcaConfirmed = (monthIsClosed ? 0 : dcaTR.filter(d => (trConfirmedThisMonth.expenses || []).includes(d.id)).reduce((s, d) => s + d.montant, 0))
+      + dcaTR.filter(d => (trConfirmedPrev.expenses || []).includes(d.id)).reduce((s, d) => s + d.montant, 0);
+    const totalRevConfirmed = (monthIsClosed ? 0 : revMensuelsTR.filter(r => (trConfirmedThisMonth.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0))
+      + revMensuelsTR.filter(r => (trConfirmedPrev.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0);
 
     const result = {
       cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,

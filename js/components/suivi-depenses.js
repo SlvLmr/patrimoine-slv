@@ -59,6 +59,12 @@ function getCurrentMonthKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function getPreviousMonthKey() {
+  const now = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+}
+
 const POCKET_COLORS = [
   { name: 'gray',    bg: 'bg-dark-600/40',       border: 'border-dark-400/20',     text: 'text-gray-400',    dot: '#9ca3af' },
   { name: 'blue',    bg: 'bg-blue-500/10',       border: 'border-blue-500/20',     text: 'text-blue-400',    dot: '#60a5fa' },
@@ -356,11 +362,30 @@ export function render(store) {
   const monthKey = getCurrentMonthKey();
   const closedArchives = store.get('archiveDepenses') || [];
   const monthIsClosed = closedArchives.some(a => a.mois === monthKey);
+  const prevMonthKey = getPreviousMonthKey();
+  const prevMonthIsClosed = closedArchives.some(a => a.mois === prevMonthKey);
+  // Previous month left unclosed: ops dated in a past month, or checkboxes recorded for prev month
+  const allCochees = store.get('cicMensuellesCochees') || {};
+  const allTrConfirmed = store.get('trRecurringConfirmed') || {};
+  const prevTrConf = allTrConfirmed[prevMonthKey] || {};
+  const hasPrevMonthData =
+    items.some(i => (i.date || '').slice(0, 7) <= prevMonthKey) ||
+    revenus.some(r => (r.date || '').slice(0, 7) <= prevMonthKey) ||
+    (allCochees[prevMonthKey] || []).length > 0 ||
+    (prevTrConf.expenses || []).length > 0 ||
+    (prevTrConf.revenues || []).length > 0 ||
+    (prevTrConf.prelevements || []).length > 0;
+  const needsPrevMonthClosure = !prevMonthIsClosed && hasPrevMonthData;
   const cicCochees = store.get('cicMensuellesCochees') || {};
   const cocheesThisMonth = cicCochees[monthKey] || [];
-  const totalCochees = monthIsClosed ? 0 : depMensuelles
-    .filter(d => cocheesThisMonth.includes(d.id))
+  // Prev-month unclosed: its coches still count in the live solde until closure
+  const prevCocheesIds = prevMonthIsClosed ? [] : (allCochees[prevMonthKey] || []);
+  const totalCocheesPrev = depMensuelles
+    .filter(d => prevCocheesIds.includes(d.id))
     .reduce((s, d) => s + d.montant, 0);
+  const totalCochees = (monthIsClosed ? 0 : depMensuelles
+    .filter(d => cocheesThisMonth.includes(d.id))
+    .reduce((s, d) => s + d.montant, 0)) + totalCocheesPrev;
 
   // TR recurring state: confirmed (unchecked) items are counted in balance
   const trConfirmed = store.get('trRecurringConfirmed') || {};
@@ -368,15 +393,22 @@ export function render(store) {
   const confirmedDcaIds = trConfirmedThisMonth.expenses || [];
   const confirmedRevIds = trConfirmedThisMonth.revenues || [];
   const confirmedPrelevIds = trConfirmedThisMonth.prelevements || [];
-  const totalDcaConfirmed = monthIsClosed ? 0 : dcaTR
+  const prevConf = prevMonthIsClosed ? {} : (allTrConfirmed[prevMonthKey] || {});
+  const prevDcaIds = prevConf.expenses || [];
+  const prevRevIds = prevConf.revenues || [];
+  const prevPrelevIds = prevConf.prelevements || [];
+  const totalDcaConfirmed = (monthIsClosed ? 0 : dcaTR
     .filter(d => confirmedDcaIds.includes(d.id))
-    .reduce((s, d) => s + d.montant, 0);
-  const totalRevConfirmed = monthIsClosed ? 0 : revMensuelsTR
+    .reduce((s, d) => s + d.montant, 0))
+    + dcaTR.filter(d => prevDcaIds.includes(d.id)).reduce((s, d) => s + d.montant, 0);
+  const totalRevConfirmed = (monthIsClosed ? 0 : revMensuelsTR
     .filter(r => confirmedRevIds.includes(r.id))
-    .reduce((s, r) => s + r.montant, 0);
-  const totalPrelevConfirmed = monthIsClosed ? 0 : prelevTR
+    .reduce((s, r) => s + r.montant, 0))
+    + revMensuelsTR.filter(r => prevRevIds.includes(r.id)).reduce((s, r) => s + r.montant, 0);
+  const totalPrelevConfirmed = (monthIsClosed ? 0 : prelevTR
     .filter(p => confirmedPrelevIds.includes(p.id))
-    .reduce((s, p) => s + (Number(p.montant) || 0), 0);
+    .reduce((s, p) => s + (Number(p.montant) || 0), 0))
+    + prelevTR.filter(p => prevPrelevIds.includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0);
 
   // Compute live solde = base + revenus - depenses - checked monthly
   const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
@@ -537,6 +569,13 @@ export function render(store) {
           <button id="btn-add-ndf" class="px-2.5 sm:px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs sm:text-sm rounded-lg hover:bg-purple-500/30 transition font-medium">+ NDF</button>
         </div>
       </div>
+
+      ${needsPrevMonthClosure ? `
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+        <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+        <p class="text-sm text-amber-300 flex-1">Le mois de <span class="font-semibold capitalize">${new Date(prevMonthKey + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</span> n'a pas été clôturé. Les coches de ce mois sont conservées et seront prises en compte.</p>
+        <button id="btn-archive-prev-month" class="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs sm:text-sm rounded-lg hover:bg-amber-500/30 transition font-medium whitespace-nowrap">Clôturer ${new Date(prevMonthKey + '-01').toLocaleDateString('fr-FR', { month: 'long' })}</button>
+      </div>` : ''}
 
       <div class="grid grid-cols-1 ${extraBanks.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-3">
         <!-- Primary bank -->
@@ -920,9 +959,9 @@ export function mount(store, navigate) {
     });
   });
 
-  // Archive month (clôture)
-  document.getElementById('btn-archive-month')?.addEventListener('click', () => {
-    const monthKey = getCurrentMonthKey();
+  // Archive month (clôture) — retroactive=true closes the previous month:
+  // only ops dated up to that month are archived, later ops are kept
+  const openClosureFlow = (monthKey, retroactive) => {
     const existingArchives = store.get('archiveDepenses') || [];
     if (existingArchives.some(a => a.mois === monthKey)) {
       openModal('Mois déjà clôturé', '<p class="text-gray-300 text-sm">Ce mois a déjà été clôturé.</p>', null);
@@ -931,8 +970,11 @@ export function mount(store, navigate) {
     const label = new Date(monthKey + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
     // Compute current final soldes
-    const items = store.get('suiviDepenses') || [];
-    const revenus = store.get('suiviRevenus') || [];
+    const allItems = store.get('suiviDepenses') || [];
+    const allRevenus = store.get('suiviRevenus') || [];
+    const inScope = (op) => !retroactive || (op.date || '').slice(0, 7) <= monthKey;
+    const items = allItems.filter(inScope);
+    const revenus = allRevenus.filter(inScope);
     const depMensuelles = store.get('depensesMensuellesCIC') || [];
     const cicCochees = store.get('cicMensuellesCochees') || {};
     const cocheesThisMonth = cicCochees[monthKey] || [];
@@ -992,7 +1034,7 @@ export function mount(store, navigate) {
           <div class="flex justify-between"><span class="text-gray-400">Solde final ${bankNames.secondary}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(finalSoldeTR)}</span></div>
           ${extraBanks.map(bank => `<div class="flex justify-between"><span class="text-gray-400">Solde final ${bank.name}</span><span class="text-gray-200 font-medium">${formatCurrencyCents(extraFinals[bank.id])}</span></div>`).join('')}
         </div>
-        <p class="text-[11px] text-gray-500">Les soldes finaux deviendront les "soldes mois précédent" du mois suivant. Les opérations et coches seront remises à zéro.</p>
+        <p class="text-[11px] text-gray-500">Les soldes finaux deviendront les "soldes mois précédent" du mois suivant. ${retroactive ? `Seules les opérations datées jusqu'à fin ${label} seront archivées — celles du mois en cours sont conservées.` : 'Les opérations et coches seront remises à zéro.'}</p>
       </div>
     `;
 
@@ -1075,9 +1117,9 @@ export function mount(store, navigate) {
       const carryParams = store.get('parametres') || {};
       store.set('parametres', carryParams);
 
-      // Clear operations
-      store.set('suiviDepenses', []);
-      store.set('suiviRevenus', []);
+      // Clear archived operations (retroactive: keep current-month ops)
+      store.set('suiviDepenses', retroactive ? allItems.filter(op => !inScope(op)) : []);
+      store.set('suiviRevenus', retroactive ? allRevenus.filter(op => !inScope(op)) : []);
 
       // Keep cicMensuellesCochees and trRecurringConfirmed for the closed month
       // (their effects are baked into soldePrev; clearing them would allow
@@ -1092,6 +1134,14 @@ export function mount(store, navigate) {
 
       navigate('suivi-depenses');
     });
+  };
+
+  document.getElementById('btn-archive-month')?.addEventListener('click', () => {
+    openClosureFlow(getCurrentMonthKey(), false);
+  });
+
+  document.getElementById('btn-archive-prev-month')?.addEventListener('click', () => {
+    openClosureFlow(getPreviousMonthKey(), true);
   });
 
   // Add revenu

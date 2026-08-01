@@ -1,10 +1,10 @@
-import { Store } from './store.js';
+import { Store } from './store.js?v=20260801a';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as RevenusDepenses from './components/revenus-depenses.js?v=20260506a';
 import * as Projection from './components/projection.js?v=20260612a';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20260701a';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20260801a';
 import * as PortefeuilleLive from './components/portefeuille-live.js';
 import * as Compte from './components/compte.js?v=20260424d';
 import * as Repartition from './components/repartition.js?v=20260403a';
