@@ -579,7 +579,7 @@ export function render(store) {
 
       <div class="grid grid-cols-1 ${extraBanks.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-3">
         <!-- Primary bank -->
-        <div class="card-dark rounded-xl overflow-hidden">
+        <div class="card-dark rounded-xl overflow-hidden order-2">
           <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
             ${BANK_ICON_PRIMARY}
             <div class="flex items-center gap-1.5 min-w-0">
@@ -655,7 +655,7 @@ export function render(store) {
         </div>
 
         <!-- Secondary bank -->
-        <div class="card-dark rounded-xl overflow-hidden">
+        <div class="card-dark rounded-xl overflow-hidden order-1">
           <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
             ${BANK_ICON_SECONDARY}
             <div class="flex items-center gap-1.5 min-w-0">
@@ -817,7 +817,7 @@ export function render(store) {
 
         ${extraBankData.map(bank => `
         <!-- Extra bank: ${bank.name} -->
-        <div class="card-dark rounded-xl overflow-hidden">
+        <div class="card-dark rounded-xl overflow-hidden order-3">
           <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
             ${BANK_ICON_EXTRA}
             <div class="flex items-center gap-1.5 min-w-0">
@@ -861,7 +861,7 @@ export function render(store) {
 
         ${extraBanks.length === 0 ? `
         <!-- Add bank button -->
-        <div id="btn-add-bank" class="card-dark rounded-xl overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:border-cyan-400/30 hover:bg-dark-600/20 transition min-h-[120px] border border-dashed border-dark-400/30">
+        <div id="btn-add-bank" class="card-dark rounded-xl overflow-hidden order-4 flex flex-col items-center justify-center cursor-pointer hover:border-cyan-400/30 hover:bg-dark-600/20 transition min-h-[120px] border border-dashed border-dark-400/30">
           <svg class="w-10 h-10 text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
           </svg>
