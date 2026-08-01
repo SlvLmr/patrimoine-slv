@@ -432,10 +432,8 @@ export function computeProjection(store, overrides = {}) {
   let fraisCumules = 0;
   const PFU_RATE = params.tauxPFU || 0.314;  // Prélèvement Forfaitaire Unique: 12.8% IR + 18.6% PS (2026)
   const PS_RATE = params.tauxPS || 0.186;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE) (2026)
-  const AV_IR_AFTER8 = params.tauxAVIR || 0.075; // AV après 8 ans: 7.5% IR (versements < 150k€)
-  const AV_IR_AFTER8_OVER150K = 0.128;     // AV après 8 ans: 12.8% IR (versements > 150k€)
-  const AV_VERSEMENTS_SEUIL = 150000;      // Seuil versements AV pour taux réduit
-  const AV_ABATTEMENT = 4600; // Abattement annuel AV > 8 ans (célibataire)
+  // AV : transmission au décès (jamais de rachat) → gains exonérés d'IR,
+  // seuls les prélèvements sociaux (PS_RATE) sont dus au dénouement
 
   // Compute tax rate for a placement based on envelope type and age
   function getPlacementTaxRate(ps, simulationYear) {
@@ -449,26 +447,14 @@ export function computeProjection(store, overrides = {}) {
       return envelopeAge >= 5 ? PS_RATE : PFU_RATE;
     }
     if (isAV) {
-      if (envelopeAge < 8) return PFU_RATE;
-      const totalAVApports = placSims.filter(p => p.groupKey === 'Assurance Vie').reduce((s, p) => s + p.totalApports, 0);
-      const irRate = totalAVApports > AV_VERSEMENTS_SEUIL ? AV_IR_AFTER8_OVER150K : AV_IR_AFTER8;
-      return PS_RATE + irRate;
+      // Transmission au décès (jamais de rachat) : gains exonérés d'IR,
+      // seuls les prélèvements sociaux sont dus au dénouement du contrat
+      return PS_RATE;
     }
     if (isPEE) {
       return PS_RATE;
     }
     return PFU_RATE;
-  }
-
-  // Compute AV tax with abattement (€4,600 single / €9,200 couple)
-  function computeAVTax(gains, envelopeAge, totalAVApports) {
-    if (gains <= 0) return gains * PFU_RATE;
-    if (envelopeAge < 8) return gains * PFU_RATE;
-    const irRate = totalAVApports > AV_VERSEMENTS_SEUIL ? AV_IR_AFTER8_OVER150K : AV_IR_AFTER8;
-    const ps = gains * PS_RATE;
-    const gainsAfterAbattement = Math.max(0, gains - AV_ABATTEMENT);
-    const ir = gainsAfterAbattement * irRate;
-    return ps + ir;
   }
 
   const cashOutYear = params.cashOutYear ? Number(params.cashOutYear) : null;
@@ -1054,31 +1040,12 @@ export function computeProjection(store, overrides = {}) {
     let totalGainsAllPlacements = 0;
     const groupTaxes = {};
     const groupTaxRates = {};
-    // Accumulate AV gains and apports across all AV placements for shared abattement
-    let totalAVGains = 0;
-    let totalAVApports = 0;
-    placSims.forEach(ps => {
-      if (ps.groupKey === 'Assurance Vie') {
-        totalAVGains += Math.max(0, ps.totalGains);
-        totalAVApports += ps.totalApports;
-      }
-    });
-    const avIrRate = totalAVApports > AV_VERSEMENTS_SEUIL ? AV_IR_AFTER8_OVER150K : AV_IR_AFTER8;
-    let avAbattementRemaining = AV_ABATTEMENT;
 
     placSims.forEach(ps => {
       const gains = Math.max(0, ps.totalGains);
-      let tax;
-      if (ps.groupKey === 'Assurance Vie' && (ps.envelopeAgeAtStart + year) >= 8) {
-        const avShare = totalAVGains > 0 ? gains / totalAVGains : 0;
-        const abattementForThis = Math.min(gains, avAbattementRemaining * avShare);
-        const ps_tax = gains * PS_RATE;
-        const ir_tax = Math.max(0, gains - abattementForThis) * avIrRate;
-        tax = ps_tax + ir_tax;
-      } else {
-        const taxRate = getPlacementTaxRate(ps, year);
-        tax = gains * taxRate;
-      }
+      // AV incluse : PS seuls via getPlacementTaxRate (transmission au décès)
+      const taxRate = getPlacementTaxRate(ps, year);
+      let tax = gains * taxRate;
       totalTaxes += tax;
       totalApports += ps.totalApports;
       totalGainsAllPlacements += gains;

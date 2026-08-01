@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=11';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=12';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -992,18 +992,33 @@ export function render(store) {
       ` : ''}
 
       ${archives.length > 0 ? `
-      <!-- Archives -->
+      <!-- Archives groupées par année -->
       <div class="card-dark rounded-xl px-5 py-4">
         <h2 class="text-sm font-semibold text-gray-400 mb-3">Archives mensuelles</h2>
-        <div class="space-y-1">
-          ${archives.sort((a, b) => b.mois.localeCompare(a.mois)).map(a => {
-            const label = new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            return `
-          <div class="flex items-center justify-between px-4 py-2.5 rounded-lg hover:bg-dark-600/30 transition cursor-pointer archive-row" data-mois="${a.mois}">
-            <span class="text-sm text-gray-200 capitalize font-medium">${label}</span>
-            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </div>`;
-          }).join('')}
+        <div class="space-y-2">
+          ${(() => {
+            const sorted = [...archives].sort((a, b) => b.mois.localeCompare(a.mois));
+            const byYear = {};
+            sorted.forEach(a => {
+              const y = a.mois.slice(0, 4);
+              (byYear[y] = byYear[y] || []).push(a);
+            });
+            const years = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
+            return years.map((y, yi) => `
+          <details class="group/arch" ${yi === 0 ? 'open' : ''}>
+            <summary class="flex items-center gap-2 cursor-pointer select-none py-1" style="list-style:none">
+              <svg class="w-3 h-3 text-gray-600 transition-transform group-open/arch:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-sm font-semibold text-gray-300">${y}</span>
+              <span class="text-[10px] text-gray-600">${byYear[y].length} mois</span>
+            </summary>
+            <div class="flex flex-wrap gap-1.5 pl-5 pt-1.5 pb-1">
+              ${byYear[y].map(a => `
+              <button class="archive-row px-3 py-1.5 rounded-lg bg-dark-600/40 border border-dark-400/20 text-xs text-gray-300 capitalize hover:bg-dark-600 hover:text-gray-100 hover:border-dark-300/40 transition" data-mois="${a.mois}">
+                ${new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long' })}
+              </button>`).join('')}
+            </div>
+          </details>`).join('');
+          })()}
         </div>
       </div>
       ` : ''}

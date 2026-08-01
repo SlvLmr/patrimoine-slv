@@ -1,7 +1,7 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=11';
+import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=12';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=10';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260424a';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=12';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260801d';
 import { calculerFiscaliteDonation } from '../fiscal.js';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
@@ -36,7 +36,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260424a';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260801d';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -704,7 +704,7 @@ export function render(store) {
       <div class="card-dark rounded-xl overflow-hidden">
         <div class="p-3 sm:p-5 border-b border-dark-400/30">
           <h2 class="text-base sm:text-lg font-semibold text-gray-200">Détail année par année</h2>
-          <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5a: ${(PFU_RATE*100).toFixed(1)}% · PEA &gt;5a: ${(PS_RATE*100).toFixed(1)}% · AV &lt;8a: ${(PFU_RATE*100).toFixed(1)}% · AV &gt;8a: ${((PS_RATE+AV_IR)*100).toFixed(1)}% · CTO: ${(PFU_RATE*100).toFixed(1)}% · PEE: ${(PS_RATE*100).toFixed(1)}%</p>
+          <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5a: ${(PFU_RATE*100).toFixed(1)}% · PEA &gt;5a: ${(PS_RATE*100).toFixed(1)}% · AV (transmission): ${(PS_RATE*100).toFixed(1)}% · CTO: ${(PFU_RATE*100).toFixed(1)}% · PEE: ${(PS_RATE*100).toFixed(1)}%</p>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm table-fixed min-w-[1000px]">
@@ -840,9 +840,7 @@ export function render(store) {
           if (gkLow.includes('pea')) {
             regime = rate <= PS + 0.01 ? `PS seul (${psLabel})` : `PFU (${pfuLabel})`;
           } else if (gkLow.includes('assurance') || gkLow === 'av') {
-            regime = rate <= (PS + AV_IR + 0.01) && rate > PS + 0.01
-              ? `PS + IR 7,5% (abat. 4 600 €)`
-              : rate <= PS + 0.01 ? `PS seul (${psLabel})` : `PFU (${pfuLabel})`;
+            regime = `PS seuls (${psLabel}) — transmission au décès`;
           } else if (gkLow.includes('pee')) {
             regime = `PS seul (${psLabel})`;
           } else if (gkLow.includes('livret') || gkLow.includes('épargne')) {
@@ -949,7 +947,7 @@ export function render(store) {
 
         const psStr = (PS_RATE * 100).toFixed(1).replace('.', ',') + '%';
         const pfuStr = (PFU_RATE * 100).toFixed(1).replace('.', ',') + '%';
-        const avStr = ((PS_RATE + AV_IR) * 100).toFixed(1).replace('.', ',') + '%';
+        const avStr = (PS_RATE * 100).toFixed(1).replace('.', ',') + '%';
 
         gkData.filter(d => d.gk === 'PEE').forEach(d => {
           withdrawalOrder.push({ priority: 2, source: d.gk, valeur: d.valeur, regime: 'PS seuls', taux: psStr, raison: 'Déblocable à la retraite, fiscalité réduite' });
@@ -960,7 +958,7 @@ export function render(store) {
         });
 
         gkData.filter(d => d.gk === 'Assurance Vie').forEach(d => {
-          withdrawalOrder.push({ priority: 4, source: d.gk, valeur: d.valeur, regime: 'PS + IR 7,5%', taux: avStr, raison: 'Abattement 4 600 €/an sur les gains, puis IR 7,5%' });
+          withdrawalOrder.push({ priority: 4, source: d.gk, valeur: d.valeur, regime: 'PS seuls', taux: avStr, raison: 'Transmission au décès : gains exonérés d\'IR, PS dus au dénouement' });
         });
 
         gkData.filter(d => d.gk.startsWith('CTO') || d.gk === 'Crypto').forEach(d => {
@@ -1115,7 +1113,7 @@ export function render(store) {
             groupKeys.forEach(gk => {
               const gkL = gk.toLowerCase();
               if (gkL.includes('pea')) taxRates[gk] = PS_RATE;
-              else if (gkL.includes('assurance') || gkL === 'av') taxRates[gk] = PS_RATE + AV_IR;
+              else if (gkL.includes('assurance') || gkL === 'av') taxRates[gk] = PS_RATE;
               else if (gkL.includes('pee')) taxRates[gk] = PS_RATE;
               else if (gkL.includes('livret') || gkL.includes('épargne')) taxRates[gk] = 0;
               else taxRates[gk] = PFU_RATE;
@@ -1364,10 +1362,8 @@ export function render(store) {
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-teal-400 font-semibold mb-1">Assurance Vie</h3>
-              <p>Avant 8 ans : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PFU_RATE*100).toFixed(1)}% (PFU)</code></p>
-              <p>Après 8 ans (versements &lt;150k€) : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${((PS_RATE+AV_IR)*100).toFixed(1)}% (\${(PS_RATE*100).toFixed(1)}% PS + 7,5% IR)</code></p>
-              <p>Après 8 ans (versements &gt;150k€) : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PFU_RATE*100).toFixed(1)}% (PFU)</code></p>
-              <p class="mt-1 text-xs text-gray-500">Abattement de 4 600 € (célibataire) ou 9 200 € (couple) sur les gains avant IR. Au-delà de 150 000 € de versements, le taux d'IR passe à 12,8%.</p>
+              <p>Transmission au décès : <code class="text-gray-300 bg-dark-900/60 px-1 rounded">gains × \${(PS_RATE*100).toFixed(1)}% (PS seuls)</code></p>
+              <p class="mt-1 text-xs text-gray-500">Hypothèse : le contrat n'est jamais racheté et est transmis aux enfants au décès. Les gains sont exonérés d'IR ; seuls les prélèvements sociaux sont dus au dénouement. Abattement transmission : 152 500 € par bénéficiaire (versements avant 70 ans), puis 20%.</p>
             </div>
 
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
@@ -1397,7 +1393,7 @@ export function render(store) {
             <div class="p-3 rounded-lg bg-dark-800/30 border border-dark-400/15">
               <h3 class="text-gray-300 font-semibold mb-1">Net d'impôts (toutes enveloppes)</h3>
               <p><code class="text-gray-300 bg-dark-900/60 px-1 rounded">Σ valeur placements − Σ impôts sur gains (par enveloppe)</code></p>
-              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui. Chaque enveloppe est taxée selon sa fiscalité propre : PEA (${(PS_RATE*100).toFixed(1)}% ou ${(PFU_RATE*100).toFixed(1)}%), AV (${((PS_RATE+AV_IR)*100).toFixed(1)}% ou ${(PFU_RATE*100).toFixed(1)}%), CTO/Crypto (${(PFU_RATE*100).toFixed(1)}%), PEE (${(PS_RATE*100).toFixed(1)}%).</p>
+              <p class="mt-1 text-xs text-gray-500">C'est ce que vous toucheriez si vous vendiez tout aujourd'hui. Chaque enveloppe est taxée selon sa fiscalité propre : PEA (${(PS_RATE*100).toFixed(1)}% ou ${(PFU_RATE*100).toFixed(1)}%), AV (${(PS_RATE*100).toFixed(1)}%), CTO/Crypto (${(PFU_RATE*100).toFixed(1)}%), PEE (${(PS_RATE*100).toFixed(1)}%).</p>
             </div>
           </div>
 

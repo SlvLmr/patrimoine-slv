@@ -42,14 +42,25 @@ export function render(store) {
   const totalActifs = totalLiquidites + totalPlac + totalImmo;
   const patrimoineNet = totalActifs - totalDette;
 
-  // Group placements by envelope
-  const peaPlac = placements.filter(p => (p.enveloppe || '').startsWith('PEA'));
-  const ctoPlac = placements.filter(p => (p.enveloppe || '').startsWith('CTO'));
-  const cryptoPlac = placements.filter(p => (p.categorie || '') === 'Crypto' || (p.enveloppe || '') === 'Crypto');
-  const avPlac = placements.filter(p => (p.enveloppe || '') === 'AV');
-  const peePlac = placements.filter(p => (p.enveloppe || '') === 'PEE');
+  // Children's assets: name contains a child's first name (donationConfig, page Compte)
+  const enfantsNoms = ((store.get('donationConfig') || {}).enfants || [])
+    .map(e => (e.prenom || '').trim()).filter(Boolean);
+  const isChildAsset = (nom) => enfantsNoms.some(pn => (nom || '').toLowerCase().includes(pn.toLowerCase()));
+  const enfantsPlac = placements.filter(p => isChildAsset(p.nom));
+  const placAdultes = placements.filter(p => !enfantsPlac.includes(p));
+  const epargneEnfants = epargne.filter(e => isChildAsset(e.nom));
+  const epargneAdultes = epargne.filter(e => !epargneEnfants.includes(e));
+  const totalEnfantsPlac = enfantsPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalEpargneEnfants = epargneEnfants.reduce((s, e) => s + (Number(e.solde) || 0), 0);
+
+  // Group placements by envelope (children's placements shown in their own block)
+  const peaPlac = placAdultes.filter(p => (p.enveloppe || '').startsWith('PEA'));
+  const ctoPlac = placAdultes.filter(p => (p.enveloppe || '').startsWith('CTO'));
+  const cryptoPlac = placAdultes.filter(p => (p.categorie || '') === 'Crypto' || (p.enveloppe || '') === 'Crypto');
+  const avPlac = placAdultes.filter(p => (p.enveloppe || '') === 'AV');
+  const peePlac = placAdultes.filter(p => (p.enveloppe || '') === 'PEE');
   const categorizedEnv = new Set([...peaPlac, ...ctoPlac, ...cryptoPlac, ...avPlac, ...peePlac]);
-  const otherPlac = placements.filter(p => !categorizedEnv.has(p));
+  const otherPlac = placAdultes.filter(p => !categorizedEnv.has(p));
 
   // Sub-groups under PEA
   const peaActions = peaPlac.filter(p => (p.categorie || '').includes('Action'));
@@ -73,6 +84,7 @@ export function render(store) {
     { id: 'crypto', label: 'Crypto', total: totalCrypto },
     { id: 'av', label: 'Ass. Vie', total: totalAV },
     { id: 'pee', label: 'PEE', total: totalPEE },
+    { id: 'enfants', label: 'Enfants', total: totalEnfantsPlac },
     { id: 'otherplac', label: 'Autres', total: totalOtherPlac },
   ].filter(e => ['pea', 'cto', 'crypto', 'av', 'pee'].includes(e.id) || e.total > 0);
 
@@ -236,14 +248,39 @@ export function render(store) {
                 <p class="text-xs font-bold text-indigo-400 text-center whitespace-nowrap">${fmt(b.solde)}</p>
               </div>`).join('')}
             </div>
-            <!-- Sous Épargne -->
-            <div class="grid grid-cols-${epargne.length > 2 ? '3' : epargne.length || 1} gap-1.5">
-              ${epargne.length > 0 ? epargne.map((e, idx) => `
+            <!-- Sous Épargne (livrets enfants regroupés) -->
+            ${(() => {
+              const nbCards = epargneAdultes.length + (epargneEnfants.length > 0 ? 1 : 0);
+              return `
+            <div class="grid grid-cols-${nbCards > 2 ? '3' : nbCards || 1} gap-1.5">
+              ${epargneAdultes.map((e, idx) => `
               <div id="ptf-card-ep-${idx}" class="card-dark rounded-xl p-2.5">
                 <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${e.nom}</p>
                 <p class="text-sm font-bold text-indigo-400 text-center">${fmt(Number(e.solde) || 0)}</p>
-              </div>`).join('') : '<div class="card-dark rounded-xl p-2.5"><p class="text-[9px] text-gray-600">Aucun</p></div>'}
-            </div>
+              </div>`).join('')}
+              ${epargneEnfants.length > 0 ? `
+              <details id="ptf-card-ep-enfants" class="card-dark rounded-xl p-2.5 group/epenf">
+                <summary class="cursor-pointer select-none" style="list-style:none">
+                  <div class="flex items-center justify-between mb-0.5">
+                    <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">Enfants</p>
+                    <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/epenf:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
+                  <p class="text-sm font-bold text-indigo-400 text-center">${fmt(totalEpargneEnfants)}</p>
+                </summary>
+                <div class="space-y-1 mt-1">
+                  ${epargneEnfants.map(e => `
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <div class="w-1 h-1 rounded-full bg-indigo-400/50 flex-shrink-0"></div>
+                      <span class="text-[10px] text-gray-400 truncate">${e.nom}</span>
+                    </div>
+                    <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(Number(e.solde) || 0)}</span>
+                  </div>`).join('')}
+                </div>
+              </details>` : ''}
+              ${nbCards === 0 ? '<div class="card-dark rounded-xl p-2.5"><p class="text-[9px] text-gray-600">Aucun</p></div>' : ''}
+            </div>`;
+            })()}
           </div>
         </div>
 
@@ -260,7 +297,7 @@ export function render(store) {
           <!-- Ligne 2 investissements: enveloppes -->
           <div id="ptf-L3C" class="grid grid-cols-${Math.min(l2Envelopes.length, 2) || 1} sm:grid-cols-${Math.min(l2Envelopes.length, 3) || 1} lg:grid-cols-${l2Envelopes.length || 1} gap-1">
             ${l2Envelopes.map(env => {
-              const envPlacMap = { cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
+              const envPlacMap = { cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, enfants: enfantsPlac, otherplac: otherPlac };
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
               <summary class="cursor-pointer select-none" style="list-style:none">
@@ -333,11 +370,21 @@ export function render(store) {
               <span>Épargne</span>
               <span class="text-indigo-400 font-medium">${fmt(totalEpargne)}</span>
             </div>
-            ${epargne.map(e => `
+            ${epargneAdultes.map(e => `
             <div class="flex items-center justify-between pl-3">
               <span class="text-[10px] text-gray-500">${e.nom}</span>
               <span class="text-[10px] text-gray-300 font-medium">${fmt(Number(e.solde) || 0)}</span>
             </div>`).join('')}
+            ${epargneEnfants.length > 0 ? `
+            <div class="flex items-center justify-between pl-3">
+              <span class="text-[10px] text-gray-400 font-semibold">Enfants</span>
+              <span class="text-[10px] text-indigo-400 font-semibold">${fmt(totalEpargneEnfants)}</span>
+            </div>
+            ${epargneEnfants.map(e => `
+            <div class="flex items-center justify-between pl-6">
+              <span class="text-[10px] text-gray-500">${e.nom}</span>
+              <span class="text-[10px] text-gray-300 font-medium">${fmt(Number(e.solde) || 0)}</span>
+            </div>`).join('')}` : ''}
           </div>
         </details>
 
@@ -357,7 +404,7 @@ export function render(store) {
           </summary>
           <div class="px-3 pb-3 space-y-1.5">
             ${l2Envelopes.map(env => {
-              const envPlacMap = { pea: peaPlac, cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
+              const envPlacMap = { pea: peaPlac, cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, enfants: enfantsPlac, otherplac: otherPlac };
               const items = env.id === 'pea' ? [...peaActions, ...peaETF, ...peaOther] : (envPlacMap[env.id] || []);
               return `
             <div class="border-b border-dark-400/15 pb-1.5">
