@@ -250,14 +250,14 @@ function navigate(page) {
 function renderPage() {
   destroyAllCharts();
 
-  let hash = window.location.hash.slice(1) || 'revenus-depenses';
+  let hash = window.location.hash.slice(1) || 'suivi-depenses';
   _currentHash = hash;
   // Redirect legacy routes
   if (hash === 'actifs' || hash === 'passifs' || hash === 'heritage') { hash = 'projection'; window.location.hash = 'projection'; return; }
   if (hash === 'dashboard') { hash = 'revenus-depenses'; window.location.hash = 'revenus-depenses'; return; }
   if (hash === 'enfants' || hash === 'fiscalite' || hash === 'objectifs' || hash === 'strategie') { hash = 'projection'; window.location.hash = 'projection'; return; }
   if (hash === 'projection-enfants') { hash = 'projection'; window.location.hash = 'projection'; store.set('_projTab', 'child-0'); return; }
-  const component = routes[hash] || routes['revenus-depenses'];
+  const component = routes[hash] || routes['suivi-depenses'];
   const contentEl = document.getElementById('app-content');
 
   contentEl.innerHTML = component.render(store);
@@ -647,18 +647,19 @@ function initLogo() {
       <span style="font-family:'Bodoni Moda',Georgia,serif;cursor:pointer" class="logo-icon hidden text-2xl font-bold logo-gradient-text">H</span>
     `;
     logoContainer.style.cursor = 'pointer';
-    logoContainer.addEventListener('click', () => navigate('revenus-depenses'));
+    logoContainer.addEventListener('click', () => navigate('suivi-depenses'));
   }
   // Mobile
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
-      <div class="logo-with-bars logo-with-bars-sm">
+      <div class="logo-with-bars logo-with-bars-sm" style="cursor:pointer">
         <span class="logo-bar logo-bar-left"></span>
         <span style="letter-spacing:-0.5px" class="text-lg font-bold logo-gradient-text logo-text-halo logo-heartbeat"><span style="font-family:'Bodoni Moda',Georgia,serif">H</span>orizon</span>
         <span class="logo-bar logo-bar-right"></span>
       </div>
     `;
+    mobileLogo.addEventListener('click', () => navigate('suivi-depenses'));
   }
 }
 
