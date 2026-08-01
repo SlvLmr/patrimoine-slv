@@ -33,25 +33,40 @@ export function render(store) {
     }))
   ];
 
+  // Children's assets. Two sources:
+  // 1. Per-child data from the Enfants/Compte page (donationConfig.enfants[].placements/livrets)
+  // 2. Entries in actifs whose name contains a child's first name
+  const enfantsCfg = (store.get('donationConfig') || {}).enfants || [];
+  const enfantsNoms = enfantsCfg.map(e => (e.prenom || '').trim()).filter(Boolean);
+  const isChildAsset = (nom) => enfantsNoms.some(pn => (nom || '').toLowerCase().includes(pn.toLowerCase()));
+  const enfantsPlacCfg = enfantsCfg.flatMap(e => (e.placements || []).map(p => ({
+    nom: `${(e.prenom || '').trim() ? (e.prenom || '').trim() + ' · ' : ''}${p.nom || p.type || 'Placement'}`,
+    valeur: Number(p.valeur) || Number(p.apport) || 0
+  })));
+  const enfantsLivretsCfg = enfantsCfg.flatMap(e => (e.livrets || []).map(l => ({
+    nom: `${(e.prenom || '').trim() ? (e.prenom || '').trim() + ' · ' : ''}${l.nom || 'Livret'}`,
+    solde: Number(l.montant) || 0
+  })));
+  const enfantsPlacActifs = placements.filter(p => isChildAsset(p.nom));
+  const placAdultes = placements.filter(p => !enfantsPlacActifs.includes(p));
+  const epargneEnfantsActifs = epargne.filter(e => isChildAsset(e.nom));
+  const epargneAdultes = epargne.filter(e => !epargneEnfantsActifs.includes(e));
+  const enfantsPlac = [...enfantsPlacActifs, ...enfantsPlacCfg];
+  const epargneEnfants = [...epargneEnfantsActifs, ...enfantsLivretsCfg];
+  const totalEnfantsPlac = enfantsPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  const totalEpargneEnfants = epargneEnfants.reduce((s, e) => s + (Number(e.solde) || 0), 0);
+  const totalPlacCfgEnfants = enfantsPlacCfg.reduce((s, p) => s + p.valeur, 0);
+  const totalLivretsCfgEnfants = enfantsLivretsCfg.reduce((s, e) => s + e.solde, 0);
+
   const totalCC = comptesLive.reduce((s, c) => s + c.solde, 0);
-  const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
-  const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
+  // Épargne/placements enfants (page Enfants) inclus dans les totaux du portefeuille
+  const totalEpargne = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0) + totalLivretsCfgEnfants;
+  const totalPlac = placements.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0) + totalPlacCfgEnfants;
   const totalImmo = immobilier.reduce((s, i) => s + (Number(i.valeurActuelle) || 0), 0);
   const totalDette = emprunts.reduce((s, e) => s + (Number(e.capitalRestant) || 0), 0);
   const totalLiquidites = totalCC + totalEpargne;
   const totalActifs = totalLiquidites + totalPlac + totalImmo;
   const patrimoineNet = totalActifs - totalDette;
-
-  // Children's assets: name contains a child's first name (donationConfig, page Compte)
-  const enfantsNoms = ((store.get('donationConfig') || {}).enfants || [])
-    .map(e => (e.prenom || '').trim()).filter(Boolean);
-  const isChildAsset = (nom) => enfantsNoms.some(pn => (nom || '').toLowerCase().includes(pn.toLowerCase()));
-  const enfantsPlac = placements.filter(p => isChildAsset(p.nom));
-  const placAdultes = placements.filter(p => !enfantsPlac.includes(p));
-  const epargneEnfants = epargne.filter(e => isChildAsset(e.nom));
-  const epargneAdultes = epargne.filter(e => !epargneEnfants.includes(e));
-  const totalEnfantsPlac = enfantsPlac.reduce((s, p) => s + (Number(p.valeur) || Number(p.apport) || 0), 0);
-  const totalEpargneEnfants = epargneEnfants.reduce((s, e) => s + (Number(e.solde) || 0), 0);
 
   // Group placements by envelope (children's placements shown in their own block)
   const peaPlac = placAdultes.filter(p => (p.enveloppe || '').startsWith('PEA'));
