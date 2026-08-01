@@ -54,6 +54,11 @@ export function render(store) {
     ...depMensCICList.filter(d => isChildAsset(d.nom)).map(d => ({ nom: d.nom, montant: Number(d.montant) || 0, banque: bankNames.primary })),
   ];
   const totalEnfantsDca = enfantsDca.reduce((s, d) => s + d.montant, 0);
+  // Regrouper les lignes DCA par enfant (pour la rangée détail sous les enveloppes)
+  const enfantsParEnfant = enfantsNoms.map(pn => {
+    const lignes = enfantsDca.filter(d => (d.nom || '').toLowerCase().includes(pn.toLowerCase()));
+    return { prenom: pn, lignes, total: lignes.reduce((s, d) => s + d.montant, 0) };
+  }).filter(e => e.lignes.length > 0);
 
   // Group placements by envelope
   const peaPlac = placements.filter(p => (p.enveloppe || '').startsWith('PEA'));
@@ -275,14 +280,13 @@ export function render(store) {
           <div id="ptf-L3C" class="grid grid-cols-${Math.min(l2Envelopes.length, 2) || 1} sm:grid-cols-${Math.min(l2Envelopes.length, 3) || 1} lg:grid-cols-${l2Envelopes.length || 1} gap-1">
             ${l2Envelopes.map(env => {
               const envPlacMap = { cto: ctoPlac, crypto: cryptoPlac, av: avPlac, pee: peePlac, otherplac: otherPlac };
-              const enfantsListHtml = enfantsDca.map(d => `
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <div class="w-1 h-1 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
-                    <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
-                  </div>
-                  <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
-                </div>`).join('');
+              if (env.id === 'enfants') return `
+            <div id="ptf-card-enfants" class="card-dark rounded-xl p-2">
+              <div class="flex items-center justify-between mb-0.5">
+                <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
+              </div>
+              <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}<span class="text-[8px] text-gray-500 font-normal">/mois</span></p>
+            </div>`;
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
               <summary class="cursor-pointer select-none" style="list-style:none">
@@ -290,10 +294,9 @@ export function render(store) {
                   <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
                   <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/env:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
-                <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}${env.isMonthly ? '<span class="text-[8px] text-gray-500 font-normal">/mois</span>' : ''}</p>
+                <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}</p>
               </summary>
-              ${env.id === 'enfants' ? `<div class="space-y-1 mt-1">${enfantsListHtml}</div>`
-                : env.id !== 'pea' && envPlacMap[env.id] ? `<div class="space-y-1 mt-1">${placList(envPlacMap[env.id], 'bg-accent-amber/50')}</div>` : ''}
+              ${env.id !== 'pea' && envPlacMap[env.id] ? `<div class="space-y-1 mt-1">${placList(envPlacMap[env.id], 'bg-accent-amber/50')}</div>` : ''}
             </details>`;
             }).join('')}
           </div>
@@ -317,6 +320,34 @@ export function render(store) {
               </summary>
               <div class="space-y-1 mt-1">${placList(sub.items, 'bg-accent-amber/50')}</div>
             </details>`).join('')}
+          </div>` : ''}
+          ${enfantsParEnfant.length > 0 ? `
+          <!-- SVG Enfants → cartes par enfant -->
+          <div id="ptf-svg-L3C-enf" class="hidden lg:block" style="height:30px;">
+            <svg id="ptf-svg-L3C-enf-svg" class="w-full" style="height:30px;" fill="none">
+              <defs><filter id="glow-amber4" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3"/></filter></defs>
+            </svg>
+          </div>
+          <!-- Ligne 3 sous Enfants : une carte par enfant (full width) -->
+          <div class="grid grid-cols-${enfantsParEnfant.length} gap-1">
+            ${enfantsParEnfant.map((e, i) => `
+            <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
+              <div class="flex items-center justify-between mb-1">
+                <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
+                <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}<span class="text-[8px] text-gray-500 font-normal">/mois</span></p>
+              </div>
+              <div class="space-y-1 border-t border-dark-400/20 pt-1">
+                ${e.lignes.map(d => `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="w-1 h-1 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
+                    <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
+                    <span class="text-[8px] px-1 py-px rounded bg-dark-600/60 text-gray-500 flex-shrink-0">${d.banque}</span>
+                  </div>
+                  <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
+                </div>`).join('')}
+              </div>
+            </div>`).join('')}
           </div>` : ''}
         </div>
 
@@ -388,11 +419,16 @@ export function render(store) {
                 <span class="text-gray-500 font-medium">${env.label}</span>
                 <span class="text-accent-amber font-bold">${fmt(env.total)}${env.isMonthly ? '<span class="text-[8px] text-gray-500 font-normal">/mois</span>' : ''}</span>
               </div>
-              ${env.id === 'enfants' ? enfantsDca.map(d => `
+              ${env.id === 'enfants' ? enfantsParEnfant.map(e => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
-                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom}</span>
+                <span class="text-[10px] text-gray-400 font-semibold">${e.prenom}</span>
+                <span class="text-[10px] text-accent-amber font-semibold">${fmt(e.total)}<span class="text-gray-600 font-normal">/mois</span></span>
+              </div>
+              ${e.lignes.map(d => `
+              <div class="flex items-center justify-between pl-6 mt-0.5">
+                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom} <span class="text-[8px] text-gray-600">(${d.banque})</span></span>
                 <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
-              </div>`).join('') : items.length > 0 ? items.map(p => `
+              </div>`).join('')}`).join('') : items.length > 0 ? items.map(p => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${p.nom}</span>
                 <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(Number(p.valeur) || Number(p.apport) || 0)}</span>
@@ -645,6 +681,17 @@ export function mount() {
         peaSubCards.map(() => '#c084fc'),
         peaSubCards.map(() => 'glow-purple3'),
         'ptf-card-pea'
+      );
+    }
+
+    // Level 3 → 4 Center: Enfants → une carte par enfant (dynamic)
+    const enfSubCards = [...document.querySelectorAll('[id^="ptf-card-enf-"]')].map(el => el.id);
+    if (enfSubCards.length > 0) {
+      drawConnectors('ptf-svg-L3C-enf-svg', 'ptf-svg-L3C-enf',
+        enfSubCards,
+        enfSubCards.map(() => '#c084fc'),
+        enfSubCards.map(() => 'glow-amber4'),
+        'ptf-card-enfants'
       );
     }
 
