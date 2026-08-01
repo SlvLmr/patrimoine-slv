@@ -1,14 +1,28 @@
 import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=11';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
   'Loisirs - Plaisirs', 'Petits travaux', 'Virement', 'NDF', 'Investissement', 'Autre - Imprévu'
 ];
 
-const CATEGORIES_REVENUS = [
+const DEFAULT_CATEGORIES_REVENUS = [
   'Salaire', 'Prime', 'Apport', 'Dividendes',
   'Remboursement', 'Vente', 'Autre'
 ];
+
+// User-editable categories (stored in customCategories.{depenses,revenus})
+function getCategories(store, type) {
+  const cc = store.get('customCategories') || {};
+  const list = cc[type];
+  if (Array.isArray(list) && list.length > 0) return list;
+  return type === 'revenus' ? DEFAULT_CATEGORIES_REVENUS : DEFAULT_CATEGORIES;
+}
+
+function saveCategories(store, type, list) {
+  const cc = store.get('customCategories') || {};
+  cc[type] = list;
+  store.set('customCategories', cc);
+}
 
 const BANK_ICON_SVG = `<path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/>`;
 const BANK_ICON_PRIMARY = `<svg class="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
@@ -48,6 +62,107 @@ function getCurrentAffectation(item) {
   if (cat === 'ndf') return 'ndf';
   if (cat === 'autre') return 'autre';
   return 'depense';
+}
+
+// Catégorie select + inline manager (add/rename/delete), type = 'depenses' | 'revenus'
+function categorieFieldHtml(store, type, selected = '') {
+  let cats = getCategories(store, type);
+  // Keep the current value visible even if it was removed from the list
+  if (selected && !cats.includes(selected)) cats = [selected, ...cats];
+  return `
+    <div class="mb-4" data-cat-field="${type}">
+      <div class="flex items-center justify-between mb-1.5">
+        <label for="field-categorie" class="block text-sm font-medium text-gray-300">Catégorie</label>
+        <button type="button" data-cat-manage class="text-[11px] text-gray-500 hover:text-accent-blue transition">✎ Gérer</button>
+      </div>
+      <select name="categorie" id="field-categorie"
+        class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200
+        focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition">
+        ${cats.map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join('')}
+      </select>
+      <div data-cat-panel class="hidden mt-2 p-2.5 bg-dark-800/60 border border-dark-400/30 rounded-lg">
+        <div data-cat-list class="space-y-1 mb-2"></div>
+        <div class="flex gap-1.5">
+          <input type="text" data-cat-new placeholder="Nouvelle catégorie" class="flex-1 px-2 py-1 bg-dark-900 border border-dark-400/40 rounded text-xs text-gray-200 focus:ring-1 focus:ring-accent-blue/40">
+          <button type="button" data-cat-add class="px-2.5 py-1 bg-accent-blue/20 text-accent-blue text-xs rounded hover:bg-accent-blue/30 transition">Ajouter</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function wireCategoryManager(modal, store, type) {
+  const field = modal.querySelector(`[data-cat-field="${type}"]`);
+  if (!field) return;
+  const select = field.querySelector('select[name="categorie"]');
+  const panel = field.querySelector('[data-cat-panel]');
+  const listEl = field.querySelector('[data-cat-list]');
+  const newInput = field.querySelector('[data-cat-new]');
+
+  const rebuildSelect = () => {
+    const current = select.value;
+    const cats = getCategories(store, type);
+    select.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    if (cats.includes(current)) select.value = current;
+  };
+
+  const rebuildList = () => {
+    const cats = getCategories(store, type);
+    listEl.innerHTML = cats.map((c, i) => `
+      <div class="flex items-center gap-1.5">
+        <span class="flex-1 text-xs text-gray-300 truncate">${c}</span>
+        <button type="button" data-cat-rename="${i}" class="text-gray-500 hover:text-accent-blue text-[11px] px-1 transition" title="Renommer">✎</button>
+        <button type="button" data-cat-del="${i}" class="text-gray-500 hover:text-accent-red text-[11px] px-1 transition" title="Supprimer">✕</button>
+      </div>`).join('');
+    listEl.querySelectorAll('[data-cat-rename]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cats = [...getCategories(store, type)];
+        const idx = Number(btn.dataset.catRename);
+        const oldName = cats[idx];
+        const newName = prompt('Nouveau nom de la catégorie :', oldName);
+        if (!newName || !newName.trim() || newName.trim() === oldName) return;
+        cats[idx] = newName.trim();
+        saveCategories(store, type, cats);
+        // Update current-month operations using the old name
+        const opsKey = type === 'revenus' ? 'suiviRevenus' : 'suiviDepenses';
+        const ops = store.get(opsKey) || [];
+        let touched = false;
+        ops.forEach(op => { if (op.categorie === oldName) { op.categorie = newName.trim(); touched = true; } });
+        if (touched) store.set(opsKey, ops);
+        rebuildSelect(); rebuildList();
+      });
+    });
+    listEl.querySelectorAll('[data-cat-del]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cats = [...getCategories(store, type)];
+        const idx = Number(btn.dataset.catDel);
+        if (cats.length <= 1) { alert('Il faut garder au moins une catégorie.'); return; }
+        if (!confirm(`Supprimer la catégorie "${cats[idx]}" ? Les opérations existantes la conservent.`)) return;
+        cats.splice(idx, 1);
+        saveCategories(store, type, cats);
+        rebuildSelect(); rebuildList();
+      });
+    });
+  };
+
+  field.querySelector('[data-cat-manage]')?.addEventListener('click', () => {
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) rebuildList();
+  });
+
+  field.querySelector('[data-cat-add]')?.addEventListener('click', () => {
+    const name = (newInput.value || '').trim();
+    if (!name) return;
+    const cats = [...getCategories(store, type)];
+    if (cats.includes(name)) { alert('Cette catégorie existe déjà.'); return; }
+    cats.push(name);
+    saveCategories(store, type, cats);
+    newInput.value = '';
+    rebuildSelect(); rebuildList();
+    select.value = name;
+  });
+  newInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); field.querySelector('[data-cat-add]')?.click(); }
+  });
 }
 
 function getToday() {
@@ -224,7 +339,7 @@ const REVENUS_MENSUELS_TR = [];
 export function render(store) {
   const bankNames = store.getBankNames();
   const extraBanks = bankNames.extra || [];
-  const COMPTES = [bankNames.primary, bankNames.secondary, ...extraBanks.map(b => b.name)];
+  const COMPTES = [bankNames.secondary, bankNames.primary, ...extraBanks.map(b => b.name)];
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
   if (!store.get('suiviRevenus')) store.set('suiviRevenus', []);
 
@@ -899,7 +1014,7 @@ export function render(store) {
 export function mount(store, navigate) {
   const bankNames = store.getBankNames();
   const extraBanks = bankNames.extra || [];
-  const COMPTES = [bankNames.primary, bankNames.secondary, ...extraBanks.map(b => b.name)];
+  const COMPTES = [bankNames.secondary, bankNames.primary, ...extraBanks.map(b => b.name)];
 
   // Rename bank
   document.querySelectorAll('[data-rename-bank]').forEach(btn => {
@@ -1146,12 +1261,12 @@ export function mount(store, navigate) {
 
   // Add revenu
   document.getElementById('btn-add-revenu')?.addEventListener('click', () => {
-    const revDefaultBank = bankNames.primary;
+    const revDefaultBank = COMPTES[0];
     const revPockets = getBankPockets(store, bankNames, revDefaultBank);
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
       ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Salaire mars"')}
-      ${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS)}
+      ${categorieFieldHtml(store, 'revenus')}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 2500"')}
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
@@ -1177,6 +1292,7 @@ export function mount(store, navigate) {
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
+    wireCategoryManager(document.getElementById('app-modal'), store, 'revenus');
   });
 
   // Edit bank solde
@@ -1566,7 +1682,7 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('date', 'Date', getToday(), 'date')}
       ${inputField('description', 'Description', '', 'text', 'placeholder="Ex: Courses Carrefour"')}
-      ${selectField('categorie', 'Catégorie', CATEGORIES)}
+      ${categorieFieldHtml(store, 'depenses')}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 45.50"')}
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-300 mb-1.5">Compte</label>
@@ -1592,6 +1708,7 @@ export function mount(store, navigate) {
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
+    wireCategoryManager(document.getElementById('app-modal'), store, 'depenses');
   });
 
   // Edit expense
@@ -1611,7 +1728,7 @@ export function mount(store, navigate) {
         </div>
         ${inputField('description', 'Description', item.description || '', 'text')}
         <div class="grid grid-cols-2 gap-2">
-          <div>${selectField('categorie', 'Catégorie', CATEGORIES, item.categorie)}</div>
+          <div>${categorieFieldHtml(store, 'depenses', item.categorie)}</div>
           <div class="mb-3">
             <label class="block text-xs font-medium text-gray-300 mb-1">Compte</label>
             <div class="flex gap-1.5">
@@ -1661,6 +1778,7 @@ export function mount(store, navigate) {
         navigate('suivi-depenses');
       });
       setupPocketBankSync(store, bankNames);
+      wireCategoryManager(document.getElementById('app-modal'), store, 'depenses');
     });
   });
 
@@ -1680,7 +1798,7 @@ export function mount(store, navigate) {
         </div>
         ${inputField('description', 'Description', rev.description || '', 'text')}
         <div class="grid grid-cols-2 gap-2">
-          <div>${selectField('categorie', 'Catégorie', CATEGORIES_REVENUS, rev.categorie)}</div>
+          <div>${categorieFieldHtml(store, 'revenus', rev.categorie)}</div>
           <div class="mb-3">
             <label class="block text-xs font-medium text-gray-300 mb-1">Compte</label>
             <div class="flex gap-1.5">
@@ -1727,6 +1845,7 @@ export function mount(store, navigate) {
         navigate('suivi-depenses');
       });
       setupPocketBankSync(store, bankNames);
+      wireCategoryManager(document.getElementById('app-modal'), store, 'revenus');
     });
   });
 

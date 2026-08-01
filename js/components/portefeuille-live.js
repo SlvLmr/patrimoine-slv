@@ -24,10 +24,10 @@ export function render(store) {
     return { ...c, solde: Number(c.solde) || 0 };
   });
 
-  // Build bank cards list: CIC, TR, then extra banks
+  // Build bank cards list: TR, CIC, then extra banks
   const bankCards = [
-    { id: 'cc-cic', label: bankNames.primary, solde: comptesLive.find(c => c.id === 'cc-cic')?.solde || 0 },
     { id: 'cc-trade', label: bankNames.secondary, solde: comptesLive.find(c => c.id === 'cc-trade')?.solde || 0 },
+    { id: 'cc-cic', label: bankNames.primary, solde: comptesLive.find(c => c.id === 'cc-cic')?.solde || 0 },
     ...extraBanks.map(b => ({
       id: 'cc-' + b.id, label: b.name, solde: comptesLive.find(c => c.id === 'cc-' + b.id)?.solde || 0
     }))
