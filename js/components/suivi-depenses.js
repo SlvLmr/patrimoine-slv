@@ -678,6 +678,7 @@ export function render(store) {
           <button id="btn-add-virement" class="px-2.5 sm:px-3 py-1.5 bg-amber-500/20 text-amber-400 text-xs sm:text-sm rounded-lg hover:bg-amber-500/30 transition font-medium">+ Virement</button>
           <button id="btn-add-invest" class="px-2.5 sm:px-3 py-1.5 bg-blue-500/20 text-blue-400 text-xs sm:text-sm rounded-lg hover:bg-blue-500/30 transition font-medium">+ Invest.</button>
           <button id="btn-add-ndf" class="px-2.5 sm:px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs sm:text-sm rounded-lg hover:bg-purple-500/30 transition font-medium">+ NDF</button>
+          <button id="btn-transfer" class="px-2.5 sm:px-3 py-1.5 bg-cyan-500/20 text-cyan-400 text-xs sm:text-sm rounded-lg hover:bg-cyan-500/30 transition font-medium">⇄ Transfert</button>
           <button id="btn-archive-month" class="px-2 py-1 bg-dark-600/60 border border-dark-400/40 text-gray-500 text-[10px] sm:text-[11px] rounded-md hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-1.5">
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
             Clôturer le mois
@@ -1086,6 +1087,60 @@ export function mount(store, navigate) {
         store.set('sectionNames', names);
         navigate('suivi-depenses');
       });
+    });
+  });
+
+  // Transfert d'argent : pocket → pocket, banque → banque, ou mixte
+  document.getElementById('btn-transfer')?.addEventListener('click', () => {
+    const selectClasses = 'w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500/40 transition';
+    const buildOptions = (selected) => {
+      let html = `<optgroup label="Comptes">${COMPTES.map(b => `<option value="bank::${b}" ${`bank::${b}` === selected ? 'selected' : ''}>${b}</option>`).join('')}</optgroup>`;
+      for (const b of COMPTES) {
+        const pk = getBankPockets(store, bankNames, b);
+        if (pk.length > 0) {
+          html += `<optgroup label="Pockets — ${b}">${pk.map(p => `<option value="pocket::${b}::${p.id}" ${`pocket::${b}::${p.id}` === selected ? 'selected' : ''}>${p.label}</option>`).join('')}</optgroup>`;
+        }
+      }
+      return html;
+    };
+    const body = `
+      ${inputField('date', 'Date', getToday(), 'date')}
+      ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01" placeholder="Ex: 100"')}
+      ${inputField('description', 'Description (optionnel)', '', 'text', 'placeholder="Ex: Réallocation budget"')}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">De</label>
+        <select name="src" id="field-src" class="${selectClasses}">${buildOptions()}</select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-300 mb-1.5">Vers</label>
+        <select name="dst" id="field-dst" class="${selectClasses}">${buildOptions()}</select>
+      </div>
+      <p class="text-[11px] text-gray-500">Entre deux banques : deux opérations "Virement" sont créées (débit / crédit). Entre pockets d'une même banque : seuls les pockets sont ajustés, le solde de la banque ne bouge pas.</p>
+    `;
+    openModal('Transférer de l\'argent', body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      const montant = Number(data.montant) || 0;
+      if (montant <= 0 || !data.src || !data.dst || data.src === data.dst) return;
+      const parse = (v) => {
+        const parts = v.split('::');
+        return parts[0] === 'bank' ? { bank: parts[1], pocket: null } : { bank: parts[1], pocket: parts[2] };
+      };
+      const src = parse(data.src);
+      const dst = parse(data.dst);
+      // Ajustements de pockets (montant positif = débit, négatif = crédit)
+      if (src.pocket) deductFromPocket(store, bankNames, src.bank, src.pocket, montant);
+      if (dst.pocket) deductFromPocket(store, bankNames, dst.bank, dst.pocket, -montant);
+      // Banques différentes : matérialiser le mouvement par deux opérations
+      if (src.bank !== dst.bank) {
+        const mkId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const items = store.get('suiviDepenses') || [];
+        items.unshift({ id: mkId(), date: data.date, description: data.description || `Transfert vers ${dst.bank}`, categorie: 'Virement', montant, compte: src.bank });
+        store.set('suiviDepenses', items);
+        const revenus = store.get('suiviRevenus') || [];
+        revenus.unshift({ id: mkId(), type: 'revenu', date: data.date, description: data.description || `Transfert depuis ${src.bank}`, categorie: 'Virement', montant, compte: dst.bank });
+        store.set('suiviRevenus', revenus);
+      }
+      navigate('suivi-depenses');
     });
   });
 
