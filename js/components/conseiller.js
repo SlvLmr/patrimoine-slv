@@ -84,7 +84,7 @@ export function render(store) {
                 </svg>
               </div>
               <div>
-                <h1 class="text-xl font-bold text-gray-100">Le conseiller</h1>
+                <h1 class="text-xl font-bold text-gray-100">Conseiller Horizon</h1>
                 <p class="text-xs text-gray-500 mt-0.5">${tous.length} recommandation${tous.length > 1 ? 's' : ''} générée${tous.length > 1 ? 's' : ''} depuis tes chiffres réels — mises à jour en continu</p>
               </div>
             </div>

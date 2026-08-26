@@ -8,7 +8,7 @@ import * as SuiviDepenses from './components/suivi-depenses.js?v=20260808f';
 import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260808f';
 import * as Contrats from './components/contrats.js?v=20260808f';
 import * as Liberte from './components/liberte.js?v=20260808f';
-import * as Conseiller from './components/conseiller.js?v=20260808g';
+import * as Conseiller from './components/conseiller.js?v=20260808h';
 import * as Compte from './components/compte.js?v=20260808f';
 import * as Repartition from './components/repartition.js?v=20260808f';
 import * as SimulateurFire from './components/simulateur-fire.js?v=20260808f';
@@ -60,7 +60,7 @@ const navItems = [
   { id: '_title_demain', sectionTitle: 'Demain' },
   { id: 'hypotheses', label: 'Transmission', icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7' },
   { id: 'liberte', label: 'Liberté financière', icon: 'M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z' },
-  { id: 'conseiller', label: 'Le conseiller', icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z' },
+  { id: 'conseiller', label: 'Conseiller Horizon', icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z' },
   { id: '_title_outils', sectionTitle: 'Outils', collapsible: true },
   { id: 'simulateur-interets', label: 'Intérêts composés', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', outilsGroup: true },
   { id: 'simulateur-succession', label: 'Cap Succession', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', outilsGroup: true },
