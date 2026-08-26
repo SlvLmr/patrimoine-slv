@@ -190,7 +190,7 @@ function profileToOverrides(profiles, profileId) {
 // ─── Timeline rendering ─────────────────────────────────────────────────────
 
 
-function renderTimeline(hypotheses, themes) {
+function renderTimeline(hypotheses, themes, ctx = {}) {
   if (hypotheses.length === 0) {
     return `
       <div class="px-6 py-10 text-center">
@@ -212,6 +212,17 @@ function renderTimeline(hypotheses, themes) {
   const TIMELINE_START = 2026;
   const TIMELINE_END = 2066;
   const TIMELINE_SPAN = TIMELINE_END - TIMELINE_START;
+
+  // ── Butoirs légaux et renouvellements, calculés depuis l'âge du donateur ──
+  const markers = [];
+  if (ctx.ageDonateur && ctx.currentYear) {
+    const yearAt = (age) => ctx.currentYear + (age - ctx.ageDonateur);
+    if (ctx.ageDonateur < 61) markers.push({ year: yearAt(61), color: '#fbbf24', label: '61 ans · début de la fenêtre démembrement (nue-propriété taxée à 60 %)' });
+    if (ctx.ageDonateur < AGE_MAX_DONATEUR_AV) markers.push({ year: yearAt(AGE_MAX_DONATEUR_AV), color: '#f87171', label: '70 ans · derniers versements AV à abattement plein (152 500 €/enfant)' });
+    if (ctx.ageDonateur < AGE_MAX_DONATEUR_TEPA) markers.push({ year: yearAt(AGE_MAX_DONATEUR_TEPA), color: '#f87171', label: '80 ans · fin du don familial Tepa (31 865 €/enfant)' });
+    if (ctx.premiereDonation) markers.push({ year: ctx.premiereDonation + RENOUVELLEMENT_ANNEES, color: '#34d399', label: `abattements 100 000 € renouvelés (15 ans après ta donation de ${ctx.premiereDonation})` });
+  }
+  const visibleMarkers = markers.filter(m => m.year >= TIMELINE_START && m.year <= TIMELINE_END);
 
   // Group by year for stacking
   const yearGroups = {};
@@ -266,6 +277,14 @@ function renderTimeline(hypotheses, themes) {
             </div>`;
           }).join('')}
 
+          ${visibleMarkers.map(m => {
+            const mPct = 3 + ((m.year - TIMELINE_START) / TIMELINE_SPAN) * 94;
+            return `<div class="absolute" style="left: ${mPct}%; top: 58px; transform: translateX(-50%);" title="${m.year} · ${m.label}">
+              <div style="width:2px;height:26px;background:${m.color};opacity:0.35;margin:0 auto;border-radius:1px;"></div>
+              <div class="w-2 h-2 rotate-45 mx-auto" style="background:${m.color};margin-top:-15px;"></div>
+            </div>`;
+          }).join('')}
+
           ${years.map((year, yi) => {
             const items = yearGroups[year];
             // Position based on absolute year within 2026-2066 range, mapped to 3%-97%
@@ -308,6 +327,14 @@ function renderTimeline(hypotheses, themes) {
           }).join('')}
         </div>
       </div>
+
+      ${visibleMarkers.length > 0 ? `
+      <div class="flex flex-wrap gap-2 mt-2">
+        ${visibleMarkers.map(m => `<span class="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border" style="color:${m.color};border-color:${m.color}44;background:${m.color}12">
+          <span class="w-1.5 h-1.5 rotate-45 flex-shrink-0" style="background:${m.color}"></span>
+          <span class="font-bold tabular-nums">${m.year}</span> · ${m.label}
+        </span>`).join('')}
+      </div>` : ''}
 
       <!-- Legend pills -->
       <div class="flex flex-wrap gap-2 mt-1">
@@ -850,7 +877,10 @@ export function render(store) {
       <div class="card-dark rounded-xl border border-purple-500/15 overflow-hidden shadow-2xl shadow-gray-500/5" style="background: linear-gradient(180deg, rgba(88,28,135,0.06) 0%, rgba(15,23,42,0) 40%);">
 
         <!-- ── Timeline Section ── -->
-        ${renderTimeline(sorted, themes)}
+        ${renderTimeline(sorted, themes, {
+          ageDonateur, currentYear,
+          premiereDonation: (() => { const d = sorted.filter(h => h.theme === 'donation').map(h => h.annee).filter(Boolean); return d.length ? Math.min(...d) : null; })()
+        })}
 
         <!-- ── Slider (directly under timeline, same block) ── -->
         ${enfants.length > 0 || snapshots.length > 0 ? `
@@ -955,6 +985,16 @@ export function render(store) {
           </div>
         </div>
         ` : ''}
+      </div>
+
+      <!-- ═══ LE CONSEILLER : recommandations générées depuis tes chiffres ═══ -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+          <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider">Le conseiller</h2>
+          <span class="text-[10px] text-gray-600">généré depuis ton patrimoine projeté</span>
+        </div>
+        <div id="tx-conseiller" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
       </div>
 
       <!-- Filter chips -->
@@ -1249,6 +1289,70 @@ export function mount(store, navigate) {
     };
 
     gaugeSlider.addEventListener('input', (e) => updateAll(parseInt(e.target.value)));
+
+    // ── Verdict : l'enjeu chiffré à l'horizon de projection ──
+    if (snapshotsData.length > 0) {
+      const lastIdx = snapshotsData.length - 1;
+      const sLast = snapshotsData[lastIdx];
+      const horsAVLast = sLast.immobilier + sLast.placementsHorsAV + sLast.epargne;
+      const sans = calcSuccession(horsAVLast, sLast.assuranceVie);
+      const avec = calcSuccessionOpti(horsAVLast, sLast.assuranceVie, lastIdx);
+      const eco = Math.max(0, sans - avec);
+      const el = (id) => document.getElementById(id);
+      if (el('tx-sans')) el('tx-sans').textContent = formatCurrency(sans);
+      if (el('tx-avec')) el('tx-avec').textContent = formatCurrency(avec);
+      if (el('tx-eco')) el('tx-eco').textContent = formatCurrency(eco);
+      if (el('tx-horizon-1')) el('tx-horizon-1').textContent = `à l'horizon ${currentYear + lastIdx} (${ageDonateur + lastIdx} ans)`;
+      const donsPlan = getHypotheses(store).filter(h => h.theme === 'donation');
+      if (el('tx-avec-detail')) el('tx-avec-detail').textContent = donsPlan.length > 0
+        ? `${donsPlan.length} donation${donsPlan.length > 1 ? 's' : ''} planifiée${donsPlan.length > 1 ? 's' : ''} déduite${donsPlan.length > 1 ? 's' : ''}`
+        : 'aucune donation planifiée pour l\'instant';
+
+      // ── Le conseiller : recommandations par règles depuis les chiffres réels ──
+      const consEl = el('tx-conseiller');
+      if (consEl) {
+        const sNow = snapshotsData[0];
+        const nbE = enfants.length || 1;
+        const recos = [];
+        const avCapacity = AV_ABATTEMENT_PAR_BENEFICIAIRE * nbE;
+        const year70 = currentYear + (AGE_MAX_DONATEUR_AV - ageDonateur);
+        if (ageDonateur < AGE_MAX_DONATEUR_AV && sNow.assuranceVie < avCapacity) {
+          recos.push({ prio: 1, titre: `L'assurance vie : ta niche n°1, jusqu'en ${year70}`,
+            texte: `Chaque euro versé avant tes 70 ans est transmis avec 152 500 € d'abattement par enfant, hors succession — soit ${formatCurrency(avCapacity)} de capacité au total. Ton encours actuel : ${formatCurrency(sNow.assuranceVie)}. C'est ta plus grosse marge inexploitée.` });
+        }
+        if (donsPlan.length === 0 && sans > 0) {
+          recos.push({ prio: 1, titre: 'Aucune donation planifiée',
+            texte: `Sans stratégie, ~${formatCurrency(sans)} de droits à l'horizon ${currentYear + lastIdx}. Commence par les 100 000 € par parent et par enfant (renouvelables tous les 15 ans) : planifier la première vague tôt démarre le compteur du renouvellement.` });
+        }
+        if (donsPlan.length > 0) {
+          const firstYear = Math.min(...donsPlan.map(h => h.annee).filter(Boolean));
+          const renou = firstYear + RENOUVELLEMENT_ANNEES;
+          if (isFinite(firstYear) && renou <= currentYear + snapshotsData.length) {
+            recos.push({ prio: 2, titre: `2ᵉ vague possible dès ${renou}`,
+              texte: `Tes abattements de 100 000 €/enfant se reconstituent 15 ans après ta donation de ${firstYear}. Planifie une nouvelle vague à partir de ${renou} pour les re-consommer en franchise de droits.` });
+          }
+        }
+        if (sNow.immobilier > 0 && ageDonateur <= 70) {
+          const y61 = currentYear + Math.max(0, 61 - ageDonateur);
+          recos.push({ prio: 2, titre: `Démembrement de l'immobilier : fenêtre ${Math.max(y61, currentYear)}–${year70}`,
+            texte: `Donner la nue-propriété de ta maison (${formatCurrency(sNow.immobilier)}) entre 61 et 70 ans n'est taxé que sur 60 % de sa valeur — et tu en gardes l'usage à vie. Avant 61 ans, l'assiette descend même à 50 %.` });
+        }
+        if (ageDonateur < AGE_MAX_DONATEUR_TEPA) {
+          recos.push({ prio: 3, titre: 'Don familial d\'argent : 31 865 € en plus',
+            texte: `En plus des 100 000 €, tu peux donner ${formatCurrency(DON_FAMILIAL_TEPA)} en argent par enfant majeur, totalement exonérés, tant que tu as moins de 80 ans. Renouvelable tous les 15 ans lui aussi.` });
+        }
+        const prioStyle = (pr) => pr === 1 ? { border: 'border-red-500/25', bg: 'bg-red-500/5', text: 'text-red-400' }
+          : pr === 2 ? { border: 'border-amber-500/25', bg: 'bg-amber-500/5', text: 'text-amber-400' }
+          : { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400' };
+        consEl.innerHTML = recos.sort((a, b) => a.prio - b.prio).map(r => {
+          const st = prioStyle(r.prio);
+          return `<div class="rounded-lg ${st.bg} border ${st.border} px-3.5 py-3">
+            <p class="text-xs font-semibold ${st.text}">${r.titre}</p>
+            <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">${r.texte}</p>
+          </div>`;
+        }).join('') || '<p class="text-xs text-gray-600">Rien à signaler — ta stratégie couvre les principaux leviers.</p>';
+      }
+    }
   }
 
   // ── Add hypothesis

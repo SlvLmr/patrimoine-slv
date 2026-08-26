@@ -14,7 +14,7 @@ import * as SimulateurCredit from './components/simulateur-credit.js?v=20260808a
 import * as SimulateurInterets from './components/simulateur-interets.js?v=20260808a';
 import * as SimulateurAuto from './components/simulateur-auto.js?v=20260808a';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260808a';
-import * as Hypotheses from './components/hypotheses.js?v=20260808a';
+import * as Hypotheses from './components/hypotheses.js?v=20260808b';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260808a';
 import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260808a';
 import { showToast, promptModal, confirmModal } from './utils.js?v=20260808a';
@@ -54,7 +54,7 @@ const navItems = [
   { id: 'portefeuille-live', label: 'Portefeuille', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
   { id: 'repartition', label: 'Répartition', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
   { id: '_title_demain', sectionTitle: 'Demain' },
-  { id: 'hypotheses', label: 'Hypothèses', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+  { id: 'hypotheses', label: 'Transmission', icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7' },
   { id: '_title_outils', sectionTitle: 'Outils', collapsible: true },
   { id: 'simulateur-interets', label: 'Intérêts composés', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6', outilsGroup: true },
   { id: 'simulateur-succession', label: 'Cap Succession', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', outilsGroup: true },
