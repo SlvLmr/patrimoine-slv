@@ -51,7 +51,10 @@ export function render(store) {
   const nowPtf = new Date();
   const monthKeyPtf = `${nowPtf.getFullYear()}-${String(nowPtf.getMonth() + 1).padStart(2, '0')}`;
   const cumulDcaEnfant = (prenom) => {
-    const matches = (nom) => (nom || '').toLowerCase().includes(prenom.toLowerCase());
+    // Uniquement les lignes d'INVESTISSEMENT (PEA, CTO, ETF, crypto…) —
+    // les livrets et abonnements au nom de l'enfant sont exclus
+    const isInvest = (nom) => /(dca|cto|pea|etf|crypto|bourse|invest)/i.test(nom || '') && !/(livret|abo)/i.test(nom || '');
+    const matches = (nom) => (nom || '').toLowerCase().includes(prenom.toLowerCase()) && isInvest(nom);
     const lines = {};
     const add = (nom, montant) => { lines[nom] = (lines[nom] || 0) + (Number(montant) || 0); };
     for (const a of archivesPtf) {
