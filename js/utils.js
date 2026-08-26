@@ -49,6 +49,30 @@ export function formatDate(dateStr) {
 }
 
 // Modal helper - dark Finary theme
+// ── DA « Conseiller Horizon » : badge de priorité + carte à liseré ──
+export const CONSEIL_PRIO = {
+  1: { color: '#f87171', label: 'Prioritaire', text: 'text-red-400', bg: 'bg-red-500/10' },
+  2: { color: '#fbbf24', label: 'Important', text: 'text-amber-400', bg: 'bg-amber-500/10' },
+  3: { color: '#60a5fa', label: 'Optimisation', text: 'text-blue-400', bg: 'bg-blue-500/10' },
+};
+
+export function conseilBadgeHtml(prio) {
+  const p = CONSEIL_PRIO[prio] || CONSEIL_PRIO[3];
+  return `<span class="inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider ${p.text} ${p.bg} px-2 py-0.5 rounded-full">
+    <span class="w-1.5 h-1.5 rounded-full" style="background:${p.color}"></span>${p.label}
+  </span>`;
+}
+
+export function conseilCardHtml(r, { tag = 'div', attrs = '', extraClass = '' } = {}) {
+  const p = CONSEIL_PRIO[r.prio] || CONSEIL_PRIO[3];
+  return `<${tag} ${attrs} class="text-left rounded-xl bg-dark-800/60 border border-dark-400/20 px-4 py-3.5 relative overflow-hidden ${extraClass}">
+    <span class="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style="background:${p.color};opacity:0.7"></span>
+    <div class="flex items-center gap-2 mb-1.5">${conseilBadgeHtml(r.prio)}</div>
+    <p class="text-sm font-semibold text-gray-100 leading-snug">${r.titre}</p>
+    <p class="text-[11px] text-gray-400 mt-1.5 leading-relaxed">${r.texte}</p>
+  </${tag}>`;
+}
+
 // Toast de notification — visible mobile et desktop
 export function showToast(message, type = 'error', duration = 8000) {
   document.getElementById('sync-toast')?.remove();

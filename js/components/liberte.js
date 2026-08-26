@@ -1,4 +1,4 @@
-import { formatCurrency, computeProjection, showToast } from '../utils.js?v=20260808f';
+import { formatCurrency, computeProjection, showToast, conseilCardHtml } from '../utils.js?v=20260809a';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================
@@ -376,15 +376,7 @@ export function render(store) {
           <span class="text-[10px] text-gray-600">depuis ton profil : investisseur, propriétaire${((store.get('donationConfig') || {}).enfants || []).length > 0 ? ', parent' : ''}</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          ${cartes.map(r => {
-            const st = r.prio === 1 ? { border: 'border-red-500/25', bg: 'bg-red-500/5', text: 'text-red-400' }
-              : r.prio === 2 ? { border: 'border-amber-500/25', bg: 'bg-amber-500/5', text: 'text-amber-400' }
-              : { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400' };
-            return `<div class="rounded-lg ${st.bg} border ${st.border} px-3.5 py-3">
-              <p class="text-xs font-semibold ${st.text}">${r.titre}</p>
-              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">${r.texte}</p>
-            </div>`;
-          }).join('')}
+          ${cartes.map(r => conseilCardHtml(r)).join('')}
         </div>
       </div>
 

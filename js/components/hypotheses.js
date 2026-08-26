@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal } from '../utils.js?v=20260808f';
+import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal, conseilCardHtml } from '../utils.js?v=20260809a';
 
 // ============================================================================
 // HYPOTHÈSES — Plan théorique éditable
@@ -1397,16 +1397,8 @@ export function mount(store, navigate) {
           recos.push({ prio: 3, titre: 'Don familial d\'argent : 31 865 € en plus',
             texte: `En plus des 100 000 €, tu peux donner ${formatCurrency(DON_FAMILIAL_TEPA)} en argent par enfant majeur, totalement exonérés, tant que tu as moins de 80 ans. Renouvelable tous les 15 ans lui aussi.` });
         }
-        const prioStyle = (pr) => pr === 1 ? { border: 'border-red-500/25', bg: 'bg-red-500/5', text: 'text-red-400' }
-          : pr === 2 ? { border: 'border-amber-500/25', bg: 'bg-amber-500/5', text: 'text-amber-400' }
-          : { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400' };
-        consEl.innerHTML = recos.sort((a, b) => a.prio - b.prio).map(r => {
-          const st = prioStyle(r.prio);
-          return `<div class="rounded-lg ${st.bg} border ${st.border} px-3.5 py-3">
-            <p class="text-xs font-semibold ${st.text}">${r.titre}</p>
-            <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">${r.texte}</p>
-          </div>`;
-        }).join('') || '<p class="text-xs text-gray-600">Rien à signaler — ta stratégie couvre les principaux leviers.</p>';
+        consEl.innerHTML = recos.sort((a, b) => a.prio - b.prio).map(r => conseilCardHtml(r)).join('')
+          || '<p class="text-xs text-gray-600">Rien à signaler — ta stratégie couvre les principaux leviers.</p>';
       }
     }
   }

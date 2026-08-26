@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError } from '../utils.js?v=20260808f';
+import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError, conseilCardHtml } from '../utils.js?v=20260809a';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================
@@ -549,14 +549,11 @@ export function render(store) {
           </div>` : ''}
         </div>`;
         }).join('')}
-        ${domRecos.map(r => {
-          const pc = prioColor(r.priorite);
-          return `
-        <div class="rounded-lg ${pc.bg} border ${pc.border} px-3 py-2.5">
-          <p class="text-xs font-semibold ${pc.text}">💡 ${r.titre}</p>
-          <p class="text-xs text-gray-300 mt-1 leading-relaxed">${r.texte}${r.prix ? ` <span class="text-gray-500">(${r.prix})</span>` : ''}</p>
-        </div>`;
-        }).join('')}
+        ${domRecos.map(r => conseilCardHtml({
+          prio: r.priorite || 3,
+          titre: r.titre,
+          texte: r.texte + (r.prix ? ` (${r.prix})` : '')
+        })).join('')}
       </div>
     </div>`;
   };
@@ -709,14 +706,10 @@ export function render(store) {
 
       ${topRecos.length > 0 || doublons.length > 0 ? `
       <div class="grid grid-cols-1 ${(topRecos.length + (doublons.length > 0 ? 1 : 0)) > 1 ? 'sm:grid-cols-2 lg:grid-cols-' + Math.min(topRecos.length + (doublons.length > 0 ? 1 : 0), 3) : ''} gap-2">
-        ${topRecos.map(r => {
-          const pc = prioColor(r.priorite);
-          return `
-        <button data-goto-domaine="${r.domaine}" class="text-left rounded-xl ${pc.bg} border ${pc.border} px-4 py-3 hover:brightness-125 transition">
-          <p class="text-xs font-semibold ${pc.text} flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full" style="background:${pc.dot}"></span>${r.titre}</p>
-          <p class="text-[11px] text-gray-400 mt-1 leading-snug">${r.texte.length > 110 ? r.texte.slice(0, 110) + '…' : r.texte}</p>
-        </button>`;
-        }).join('')}
+        ${topRecos.map(r => conseilCardHtml(
+          { prio: r.priorite || 3, titre: r.titre, texte: r.texte.length > 110 ? r.texte.slice(0, 110) + '…' : r.texte },
+          { tag: 'button', attrs: `data-goto-domaine="${r.domaine}"`, extraClass: 'w-full hover:border-dark-300/40 hover:bg-dark-700/60 transition-all' }
+        )).join('')}
         ${doublons.length > 0 ? `
         <div class="rounded-xl bg-purple-500/10 border border-purple-500/30 px-4 py-3">
           <p class="text-xs font-semibold text-purple-400">🔁 ${doublons.length} doublon${doublons.length > 1 ? 's' : ''} détecté${doublons.length > 1 ? 's' : ''}</p>
