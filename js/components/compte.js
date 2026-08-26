@@ -1,5 +1,5 @@
 import { getCurrentUser } from '../firebase-config.js';
-import { formatCurrency } from '../utils.js?v=12';
+import { formatCurrency, confirmModal, showToast } from '../utils.js?v=20260807b';
 
 function getUserInfo(store) {
   return store.get('userInfo') || { prenom: '', nom: '', telephone: '', dateNaissance: '', photo: '' };
@@ -531,20 +531,20 @@ export function mount(store, navigate) {
   // Inline delete immobilier
   document.querySelectorAll('[data-del-immo-inline]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (confirm('Supprimer ce bien immobilier ?')) {
+      confirmModal('Supprimer ce bien immobilier ?', '', () => {
         store.removeItem('actifs.immobilier', btn.dataset.delImmoInline);
         refresh();
-      }
+      });
     });
   });
 
   // Inline delete épargne
   document.querySelectorAll('[data-del-epar-inline]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (confirm('Supprimer ce compte d\'épargne ?')) {
+      confirmModal('Supprimer ce compte d\'épargne ?', '', () => {
         store.removeItem('actifs.epargne', btn.dataset.delEparInline);
         refresh();
-      }
+      });
     });
   });
 
@@ -624,11 +624,11 @@ export function mount(store, navigate) {
       const idx = parseInt(e.currentTarget.dataset.idx);
       const enfants = getEnfants(store);
       const child = enfants[idx];
-      if (child && confirm(`Supprimer ${child.prenom || 'cet enfant'} ?`)) {
+      if (child) confirmModal(`Supprimer ${child.prenom || 'cet enfant'} ?`, 'Ses livrets et placements saisis dans cette page seront supprimés aussi.', () => {
         enfants.splice(idx, 1);
         saveEnfants(store, enfants);
         refresh();
-      }
+      });
     });
   });
 
@@ -727,7 +727,7 @@ export function mount(store, navigate) {
 
 function resizeAndSavePhoto(file, callback) {
   if (file.size > 2000000) {
-    alert('Image trop lourde (max 2 Mo)');
+    showToast('Image trop lourde (max 2 Mo)', 'warning', 5000);
     return;
   }
   const reader = new FileReader();

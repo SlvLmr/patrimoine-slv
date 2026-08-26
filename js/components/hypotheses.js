@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, computeProjection, getPlacementGroupKey } from '../utils.js?v=12';
+import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal } from '../utils.js?v=20260807b';
 
 // ============================================================================
 // HYPOTHÈSES — Plan théorique éditable
@@ -1305,10 +1305,10 @@ export function mount(store, navigate) {
       const id = btn.dataset.id;
       const items = getHypotheses(store);
       const item = items.find(i => i.id === id);
-      if (item && confirm(`Supprimer « ${item.titre} » ?`)) {
+      if (item) confirmModal(`Supprimer « ${item.titre} » ?`, '', () => {
         saveHypotheses(store, items.filter(i => i.id !== id));
         refresh();
-      }
+      });
     });
   });
 

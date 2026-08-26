@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData } from '../utils.js?v=12';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20260807b';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -118,28 +118,30 @@ function wireCategoryManager(modal, store, type) {
         const cats = [...getCategories(store, type)];
         const idx = Number(btn.dataset.catRename);
         const oldName = cats[idx];
-        const newName = prompt('Nouveau nom de la catégorie :', oldName);
-        if (!newName || !newName.trim() || newName.trim() === oldName) return;
-        cats[idx] = newName.trim();
-        saveCategories(store, type, cats);
-        // Update current-month operations using the old name
-        const opsKey = type === 'revenus' ? 'suiviRevenus' : 'suiviDepenses';
-        const ops = store.get(opsKey) || [];
-        let touched = false;
-        ops.forEach(op => { if (op.categorie === oldName) { op.categorie = newName.trim(); touched = true; } });
-        if (touched) store.set(opsKey, ops);
-        rebuildSelect(); rebuildList();
+        promptModal('Renommer la catégorie', oldName, (newName) => {
+          if (newName === oldName) return;
+          cats[idx] = newName;
+          saveCategories(store, type, cats);
+          // Update current-month operations using the old name
+          const opsKey = type === 'revenus' ? 'suiviRevenus' : 'suiviDepenses';
+          const ops = store.get(opsKey) || [];
+          let touched = false;
+          ops.forEach(op => { if (op.categorie === oldName) { op.categorie = newName; touched = true; } });
+          if (touched) store.set(opsKey, ops);
+          rebuildSelect(); rebuildList();
+        });
       });
     });
     listEl.querySelectorAll('[data-cat-del]').forEach(btn => {
       btn.addEventListener('click', () => {
         const cats = [...getCategories(store, type)];
         const idx = Number(btn.dataset.catDel);
-        if (cats.length <= 1) { alert('Il faut garder au moins une catégorie.'); return; }
-        if (!confirm(`Supprimer la catégorie "${cats[idx]}" ? Les opérations existantes la conservent.`)) return;
-        cats.splice(idx, 1);
-        saveCategories(store, type, cats);
-        rebuildSelect(); rebuildList();
+        if (cats.length <= 1) { showToast('Il faut garder au moins une catégorie.', 'warning', 4000); return; }
+        confirmModal(`Supprimer la catégorie « ${cats[idx]} » ?`, 'Les opérations existantes la conservent.', () => {
+          cats.splice(idx, 1);
+          saveCategories(store, type, cats);
+          rebuildSelect(); rebuildList();
+        });
       });
     });
   };
@@ -153,7 +155,7 @@ function wireCategoryManager(modal, store, type) {
     const name = (newInput.value || '').trim();
     if (!name) return;
     const cats = [...getCategories(store, type)];
-    if (cats.includes(name)) { alert('Cette catégorie existe déjà.'); return; }
+    if (cats.includes(name)) { showToast('Cette catégorie existe déjà.', 'warning', 4000); return; }
     cats.push(name);
     saveCategories(store, type, cats);
     newInput.value = '';
@@ -1120,7 +1122,8 @@ export function mount(store, navigate) {
     openModal('Transférer de l\'argent', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       const montant = Number(data.montant) || 0;
-      if (montant <= 0 || !data.src || !data.dst || data.src === data.dst) return;
+      if (montant <= 0) { showModalError('Indique un montant supérieur à 0.'); return false; }
+      if (!data.src || !data.dst || data.src === data.dst) { showModalError('Choisis une source et une destination différentes.'); return false; }
       const parse = (v) => {
         const parts = v.split('::');
         return parts[0] === 'bank' ? { bank: parts[1], pocket: null } : { bank: parts[1], pocket: parts[2] };
@@ -1140,6 +1143,7 @@ export function mount(store, navigate) {
         revenus.unshift({ id: mkId(), type: 'revenu', date: data.date, description: data.description || `Transfert depuis ${src.bank}`, categorie: 'Virement', montant, compte: dst.bank });
         store.set('suiviRevenus', revenus);
       }
+      showToast('Transfert effectué ✓', 'success', 2500);
       navigate('suivi-depenses');
     });
   });
@@ -1317,6 +1321,7 @@ export function mount(store, navigate) {
       trF.roundup = 0;
       store.set('trFeatures', trF);
 
+      showToast(`Mois de ${label} clôturé ✓`, 'success', 3500);
       navigate('suivi-depenses');
     });
   };
@@ -1353,12 +1358,14 @@ export function mount(store, navigate) {
     `;
     openModal('Ajouter un revenu', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
+      if (!(Number(data.montant) > 0)) { showModalError('Indique un montant supérieur à 0.'); return false; }
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.primary;
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const revenus = store.get('suiviRevenus') || [];
       revenus.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviRevenus', revenus);
       if (pocketId !== 'aucun') deductFromPocket(store, bankNames, data.compte, pocketId, -(Number(data.montant) || 0));
+      showToast('Revenu ajouté ✓', 'success', 2000);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
@@ -1769,12 +1776,14 @@ export function mount(store, navigate) {
     `;
     openModal('Ajouter une dépense', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
+      if (!(Number(data.montant) > 0)) { showModalError('Indique un montant supérieur à 0.'); return false; }
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.primary;
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
+      showToast('Dépense ajoutée ✓', 'success', 2000);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
@@ -2534,11 +2543,13 @@ export function mount(store, navigate) {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'Virement';
+      if (!(Number(data.montant) > 0)) { showModalError('Indique un montant supérieur à 0.'); return false; }
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
+      showToast('Virement ajouté ✓', 'success', 2000);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
@@ -2569,11 +2580,13 @@ export function mount(store, navigate) {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'Investissement';
+      if (!(Number(data.montant) > 0)) { showModalError('Indique un montant supérieur à 0.'); return false; }
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
+      showToast('Investissement ajouté ✓', 'success', 2000);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
@@ -2604,11 +2617,13 @@ export function mount(store, navigate) {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
       data.categorie = 'NDF';
+      if (!(Number(data.montant) > 0)) { showModalError('Indique un montant supérieur à 0.'); return false; }
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
       items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
+      showToast('NDF ajoutée ✓', 'success', 2000);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);

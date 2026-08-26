@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, parseNumberInput } from '../utils.js?v=12';
+import { formatCurrency, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20260807b';
 import { createChart, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ─── FIRE Simulator ─────────────────────────────────────────────────────────
@@ -485,11 +485,10 @@ function refreshSaveBar() {
 
   // Wire buttons
   document.getElementById('fire-save-btn')?.addEventListener('click', () => {
-    const name = prompt('Nom du scénario :');
-    if (name && name.trim()) {
-      saveCurrentInputs(name.trim());
+    promptModal('Nom du scénario', '', (name) => {
+      saveCurrentInputs(name);
       refreshSaveBar();
-    }
+    });
   });
 
   document.getElementById('fire-load-btn')?.addEventListener('click', () => {

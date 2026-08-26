@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, getFormData, inputField, selectField } from '../utils.js?v=12';
+import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20260807b';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 const DEPENSE_TYPES = [
@@ -875,17 +875,17 @@ export function mount(store, navigate) {
   ];
 
   document.getElementById('btn-seed-revenus')?.addEventListener('click', () => {
-    if (confirm('Remplacer tous les revenus par les données par défaut ?')) {
+    confirmModal('Remplacer tous les revenus ?', 'Tes revenus actuels seront remplacés par les données par défaut.', () => {
       store.resetSection('revenus');
       navigate('revenus-depenses');
-    }
+    }, { okLabel: 'Remplacer' });
   });
 
   document.getElementById('btn-seed-depenses')?.addEventListener('click', () => {
-    if (confirm('Remplacer toutes les dépenses par les données par défaut ?')) {
+    confirmModal('Remplacer toutes les dépenses ?', 'Tes dépenses actuelles seront remplacées par les données par défaut.', () => {
       store.resetSection('depenses');
       navigate('revenus-depenses');
-    }
+    }, { okLabel: 'Remplacer' });
   });
 
   document.getElementById('btn-add-revenu')?.addEventListener('click', () => {
@@ -965,10 +965,10 @@ export function mount(store, navigate) {
 
   content.querySelectorAll('[data-del-rev]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (confirm('Supprimer ce revenu ?')) {
+      confirmModal('Supprimer ce revenu ?', '', () => {
         store.removeItem('revenus', btn.dataset.delRev);
         navigate('revenus-depenses');
-      }
+      });
     });
   });
 
@@ -1073,10 +1073,10 @@ export function mount(store, navigate) {
 
   content.querySelectorAll('[data-del-dep]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (confirm('Supprimer cette dépense ?')) {
+      confirmModal('Supprimer cette dépense ?', '', () => {
         store.removeItem('depenses', btn.dataset.delDep);
         navigate('revenus-depenses');
-      }
+      });
     });
   });
 }

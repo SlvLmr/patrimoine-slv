@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput } from '../utils.js?v=12';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20260807b';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Succession Pro ───────────────────────────────────────────────
@@ -688,7 +688,7 @@ function refreshSaveBar() {
     <span class="mx-1 h-5 w-px bg-dark-400/50 hidden sm:block"></span>
     <button id="succ-save-btn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-green/15 text-accent-green hover:bg-accent-green/25 transition">Sauvegarder</button>
   `;
-  document.getElementById('succ-save-btn')?.addEventListener('click', () => { const n = prompt('Nom du scénario :'); if (n?.trim()) { saveCurrentInputs(n.trim()); refreshSaveBar(); } });
+  document.getElementById('succ-save-btn')?.addEventListener('click', () => { promptModal('Nom du scénario', '', (n) => { saveCurrentInputs(n); refreshSaveBar(); }); });
   document.getElementById('succ-load-btn')?.addEventListener('click', () => { const i = parseInt(document.getElementById('succ-save-select')?.value); if (!isNaN(i)) { loadSave(i); recalculate(); } });
   document.getElementById('succ-delete-btn')?.addEventListener('click', () => { const i = parseInt(document.getElementById('succ-save-select')?.value); if (!isNaN(i)) { deleteSave(i); refreshSaveBar(); } });
 }

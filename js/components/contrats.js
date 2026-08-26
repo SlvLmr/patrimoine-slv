@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, inputField, selectField, getFormData } from '../utils.js?v=12';
+import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError } from '../utils.js?v=20260807b';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================
@@ -897,9 +897,11 @@ export function mount(store, navigate) {
         const contrats = getContrats(store);
         contrats.push(data);
         store.set('contrats', contrats);
+        showToast(`Contrat « ${data.nom || data.assureur} » importé ✓`, 'success', 3000);
         navigate('contrats');
       } catch (err) {
-        alert('Impossible de lire ce bloc : vérifie que tu as bien collé la réponse JSON complète de claude.ai.\n\n(' + err.message + ')');
+        showModalError('Impossible de lire ce bloc : vérifie que tu as bien collé la réponse JSON complète de claude.ai. (' + err.message + ')');
+        return false;
       }
     });
     // Aperçu live
@@ -927,9 +929,11 @@ export function mount(store, navigate) {
         data.date = new Date().toLocaleDateString('fr-FR');
         store.set('protectionBilan', data);
         selectedDomaineId = null;
+        showToast('Bilan de protection importé ✓', 'success', 3000);
         navigate('contrats');
       } catch (err) {
-        alert('Impossible de lire ce bloc : vérifie que tu as bien collé la réponse JSON complète.\n\n(' + err.message + ')');
+        showModalError('Impossible de lire ce bloc : vérifie que tu as bien collé la réponse JSON complète. (' + err.message + ')');
+        return false;
       }
     });
     modal.querySelector('#import-bilan-json')?.addEventListener('input', (e) => {
@@ -989,10 +993,11 @@ export function mount(store, navigate) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const c = getContrats(store).find(x => x.id === btn.dataset.delContrat);
-      if (c && confirm(`Supprimer le contrat "${c.nom || c.assureur}" ?`)) {
+      if (c) confirmModal(`Supprimer le contrat « ${c.nom || c.assureur} » ?`, 'Ses garanties disparaîtront du radar au prochain bilan.', () => {
         store.set('contrats', getContrats(store).filter(x => x.id !== btn.dataset.delContrat));
+        showToast('Contrat supprimé', 'success', 2500);
         navigate('contrats');
-      }
+      });
     });
   });
 

@@ -49,23 +49,54 @@ export function formatDate(dateStr) {
 }
 
 // Modal helper - dark Finary theme
+// Toast de notification — visible mobile et desktop
+export function showToast(message, type = 'error', duration = 8000) {
+  document.getElementById('sync-toast')?.remove();
+  const colors = {
+    error: 'bg-red-500/90 text-white',
+    success: 'bg-accent-green/90 text-dark-900',
+    warning: 'bg-amber-500/90 text-dark-900',
+    info: 'bg-blue-500/90 text-white'
+  };
+  const toast = document.createElement('div');
+  toast.id = 'sync-toast';
+  toast.className = `fixed top-4 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-xl shadow-2xl text-sm font-medium max-w-sm text-center ${colors[type] || colors.error}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  if (duration > 0) setTimeout(() => toast.remove(), duration);
+}
+
+// Message d'erreur inline dans la modale ouverte (au lieu de fermer sans rien dire)
+export function showModalError(message) {
+  const body = document.getElementById('modal-body');
+  if (!body) return;
+  body.querySelector('.modal-error')?.remove();
+  const div = document.createElement('div');
+  div.className = 'modal-error mt-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs';
+  div.textContent = message;
+  body.appendChild(div);
+}
+
+// Modale v2 : onConfirm() === false garde la modale ouverte (validation),
+// Escape et clic sur le fond ferment, header/footer fixes (le corps défile),
+// présentation bottom-sheet sur mobile.
 export function openModal(title, bodyHtml, onConfirm) {
   const existing = document.getElementById('app-modal');
   if (existing) existing.remove();
 
   const modal = document.createElement('div');
   modal.id = 'app-modal';
-  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4';
   modal.innerHTML = `
-    <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-dark-400/50">
-      <div class="p-6 border-b border-dark-400/50 flex items-center justify-between">
+    <div class="bg-dark-700 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] border border-dark-400/50 flex flex-col">
+      <div class="px-6 py-4 border-b border-dark-400/50 flex items-center justify-between flex-shrink-0">
         <h3 class="text-lg font-semibold text-gray-100">${title}</h3>
-        <button id="modal-close-x" class="text-gray-400 hover:text-gray-100 transition text-2xl leading-none px-1">&times;</button>
+        <button id="modal-close-x" class="text-gray-400 hover:text-gray-100 transition text-2xl leading-none px-2 py-1 -mr-1">&times;</button>
       </div>
-      <div class="p-6" id="modal-body">
+      <div class="p-6 overflow-y-auto flex-1" id="modal-body">
         ${bodyHtml}
       </div>
-      <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3">
+      <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3 flex-shrink-0">
         <button id="modal-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500">Annuler</button>
         <button id="modal-confirm" class="px-5 py-2 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium">Confirmer</button>
       </div>
@@ -74,15 +105,26 @@ export function openModal(title, bodyHtml, onConfirm) {
 
   document.body.appendChild(modal);
 
-  modal.querySelector('#modal-cancel').addEventListener('click', () => modal.remove());
-  modal.querySelector('#modal-close-x').addEventListener('click', () => modal.remove());
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); };
+  document.addEventListener('keydown', onKey);
+  modal.close = close;
+
+  modal.querySelector('#modal-cancel').addEventListener('click', close);
+  modal.querySelector('#modal-close-x').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
   if (onConfirm) {
-    const confirmAndClose = () => { onConfirm(); modal.remove(); };
+    const confirmAndClose = () => {
+      if (onConfirm() === false) return; // validation refusée → la modale reste ouverte
+      close();
+    };
     modal.querySelector('#modal-confirm').addEventListener('click', confirmAndClose);
     modal.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); confirmAndClose(); }
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); confirmAndClose(); }
     });
+  } else {
+    modal.querySelector('#modal-confirm').style.display = 'none';
   }
 
   setTimeout(() => {
@@ -90,6 +132,72 @@ export function openModal(title, bodyHtml, onConfirm) {
     if (firstInput) firstInput.focus();
   }, 100);
 
+  return modal;
+}
+
+// Confirmation custom (remplace confirm() natif)
+export function confirmModal(title, message, onOk, { danger = true, okLabel = null } = {}) {
+  const existing = document.getElementById('app-confirm-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'app-confirm-modal';
+  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4';
+  modal.innerHTML = `
+    <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-sm border border-dark-400/50">
+      <div class="p-5">
+        <h3 class="text-base font-semibold text-gray-100">${title}</h3>
+        ${message ? `<p class="text-sm text-gray-400 mt-2 leading-relaxed">${message}</p>` : ''}
+      </div>
+      <div class="px-4 pb-4 flex justify-end gap-3">
+        <button id="cf-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
+        <button id="cf-ok" class="px-5 py-2 ${danger ? 'bg-red-500/80 hover:bg-red-500' : 'bg-gradient-to-r from-accent-green to-accent-blue hover:opacity-90'} text-white rounded-lg transition font-medium text-sm">${okLabel || (danger ? 'Supprimer' : 'Confirmer')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); };
+  document.addEventListener('keydown', onKey);
+  modal.querySelector('#cf-cancel').addEventListener('click', close);
+  modal.querySelector('#cf-ok').addEventListener('click', () => { close(); onOk(); });
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  setTimeout(() => modal.querySelector('#cf-ok')?.focus(), 50);
+  return modal;
+}
+
+// Saisie simple custom (remplace prompt() natif)
+export function promptModal(title, defaultValue, onConfirm, { label = '', placeholder = '' } = {}) {
+  const existing = document.getElementById('app-prompt-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'app-prompt-modal';
+  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4';
+  modal.innerHTML = `
+    <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-sm border border-dark-400/50">
+      <div class="p-5 border-b border-dark-400/50">
+        <h3 class="text-base font-semibold text-gray-100">${title}</h3>
+      </div>
+      <div class="p-5">
+        ${label ? `<label class="block text-xs text-gray-400 mb-1.5">${label}</label>` : ''}
+        <input id="prompt-input" type="text" value="${(defaultValue || '').replace(/"/g, '&quot;')}" placeholder="${placeholder}"
+          class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-accent-green/50 focus:outline-none transition" autofocus />
+      </div>
+      <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3">
+        <button id="prompt-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
+        <button id="prompt-confirm" class="px-5 py-2 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm">Confirmer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const input = modal.querySelector('#prompt-input');
+  input.focus();
+  input.select();
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => { document.removeEventListener('keydown', onKey); modal.remove(); };
+  document.addEventListener('keydown', onKey);
+  const confirm = () => { const v = input.value; close(); if (v && v.trim()) onConfirm(v.trim()); };
+  modal.querySelector('#prompt-cancel').addEventListener('click', close);
+  modal.querySelector('#prompt-confirm').addEventListener('click', confirm);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirm(); } });
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
   return modal;
 }
 
@@ -1270,7 +1378,7 @@ export function inputField(name, label, value = '', type = 'text', extra = '') {
   return `
     <div class="mb-4">
       <label for="${name}" class="block text-sm font-medium text-gray-300 mb-1.5">${label}</label>
-      <input type="${type}" name="${name}" id="field-${name}" value="${displayValue}"
+      <input type="${type}" name="${name}" id="field-${name}" value="${displayValue}"${type === 'number' ? ' inputmode="decimal"' : ''}
         class="w-full px-3 py-2.5 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 placeholder-gray-600
         focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue/40 transition" ${extra}>
     </div>

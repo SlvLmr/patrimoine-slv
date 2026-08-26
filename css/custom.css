@@ -575,3 +575,25 @@ summary[style*="list-style:none"]::-webkit-details-marker {
     opacity: 1;
   }
 }
+
+/* ─── Passe tactile (écrans sans survol) ─────────────────────────────────── */
+@media (hover: none) {
+  /* Les actions révélées au survol restent visibles au tactile */
+  [class*="group-hover"], .btn-delete { opacity: 1 !important; }
+  /* Les tooltips :hover deviennent des tap-to-toggle (classe .tip-open posée en JS) */
+  .proj-tip-wrap:hover > .proj-tip { display: none; }
+  .proj-tip-wrap.tip-open > .proj-tip { display: block; }
+}
+@media (pointer: coarse) {
+  /* Zone de toucher élargie sur les petites actions sans grossir le glyphe */
+  [data-del-pocket], [data-del-budget], [data-del-contrat], .btn-delete,
+  [data-cic-mensuel], [data-tr-dca-recurring], [data-tr-rev-recurring], [data-tr-prelev-recurring] {
+    position: relative;
+  }
+  [data-del-pocket]::after, [data-del-budget]::after, [data-del-contrat]::after, .btn-delete::after,
+  [data-cic-mensuel]::after, [data-tr-dca-recurring]::after, [data-tr-rev-recurring]::after, [data-tr-prelev-recurring]::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+}

@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, inputField, selectField, getFormData } from '../utils.js?v=12';
+import { formatCurrency, openModal, inputField, selectField, getFormData, confirmModal } from '../utils.js?v=20260807b';
 import { createChart, VIVID_PALETTE, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ============================================================================
@@ -953,6 +953,15 @@ function openChildActualisationModal(store, navigate, calendarYear, snapshots, c
 // ─── Mount ───────────────────────────────────────────────────────────────────
 
 export function mount(store, navigate, { embedded = false } = {}) {
+  // Tooltips du tableau : tap-to-toggle sur écrans tactiles (le survol ne suffit pas)
+  document.querySelectorAll('.proj-tip-wrap').forEach(el => {
+    el.addEventListener('click', () => {
+      if (!window.matchMedia('(hover: none)').matches) return;
+      document.querySelectorAll('.proj-tip-wrap.tip-open').forEach(o => { if (o !== el) o.classList.remove('tip-open'); });
+      el.classList.toggle('tip-open');
+    });
+  });
+
   const enfants = getEnfants(store);
   const activeTab = store.get('_peActiveTab') || '0';
   const idx = activeTab === 'compare' ? -1 : (parseInt(activeTab) || 0);
@@ -1067,11 +1076,11 @@ export function mount(store, navigate, { embedded = false } = {}) {
       const enf = enfs[ci];
       if (!enf) return;
       const item = (enf.placements || []).find(p => p.id === pid);
-      if (item && confirm(`Supprimer \u00ab ${item.nom || 'ce placement'} \u00bb ?`)) {
+      if (item) confirmModal(`Supprimer \u00ab ${item.nom || 'ce placement'} \u00bb ?`, '', () => {
         enf.placements = (enf.placements || []).filter(p => p.id !== pid);
         saveEnfants(store, enfs);
         refresh();
-      }
+      });
     });
   });
 

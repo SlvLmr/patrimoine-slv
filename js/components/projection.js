@@ -1,7 +1,7 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal } from '../utils.js?v=12';
+import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20260807b';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=12';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260801d';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260807b';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260807b';
 import { calculerFiscaliteDonation } from '../fiscal.js';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
@@ -36,7 +36,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260801d';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260807b';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -1782,6 +1782,15 @@ function openTransferModal(store, navigate, editItem = null) {
 }
 
 export function mount(store, navigate) {
+  // Tooltips du tableau : tap-to-toggle sur écrans tactiles (le survol ne suffit pas)
+  document.querySelectorAll('.proj-tip-wrap').forEach(el => {
+    el.addEventListener('click', () => {
+      if (!window.matchMedia('(hover: none)').matches) return;
+      document.querySelectorAll('.proj-tip-wrap.tip-open').forEach(o => { if (o !== el) o.classList.remove('tip-open'); });
+      el.classList.toggle('tip-open');
+    });
+  });
+
   // ── Unified tab clicks
   document.querySelectorAll('.proj-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1805,11 +1814,11 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
-      const { exportProjectionPDF } = await import('../export-pdf.js?v=4');
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=20260807b');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);
-      alert('Erreur lors de l\'export PDF : ' + err.message);
+      showToast('Erreur lors de l\'export PDF : ' + err.message, 'error', 6000);
     }
     btn.disabled = false;
     btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> PDF';
@@ -2232,7 +2241,7 @@ export function mount(store, navigate) {
       return Math.max(base, maxOverride) > 0;
     });
     if (dcaItems.length === 0) {
-      alert('Aucun placement avec DCA actif. Éditez un placement et renseignez un montant DCA mensuel.');
+      showToast('Aucun placement avec DCA actif. Éditez un placement et renseignez un montant DCA mensuel.', 'warning', 6000);
       return;
     }
 
@@ -2344,10 +2353,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('.proj-del-plac').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (confirm('Supprimer ce placement ?')) {
+      confirmModal('Supprimer ce placement ?', '', () => {
         store.removeItem('actifs.placements', btn.dataset.id);
         navigate('projection');
-      }
+      });
     });
   });
 
@@ -2611,10 +2620,10 @@ export function mount(store, navigate) {
   document.querySelectorAll('.proj-del-heritage').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (confirm('Supprimer cet héritage ?')) {
+      confirmModal('Supprimer cet héritage ?', '', () => {
         store.removeItem('heritage', btn.dataset.id);
         navigate('projection');
-      }
+      });
     });
   });
 
@@ -2730,11 +2739,11 @@ export function mount(store, navigate) {
   document.querySelectorAll('.proj-del-transfer').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (confirm('Supprimer ce transfert ?')) {
+      confirmModal('Supprimer ce transfert ?', '', () => {
         const transfers = (store.get('parametres')?.capitalTransfers || []).filter(t => t.id !== btn.dataset.id);
         store.set('parametres.capitalTransfers', transfers);
         navigate('projection');
-      }
+      });
     });
   });
 

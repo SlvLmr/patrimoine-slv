@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, parseNumberInput } from '../utils.js?v=12';
+import { formatCurrency, formatCurrencyCents, parseNumberInput, promptModal } from '../utils.js?v=20260807b';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Auto : Crédit vs LOA vs LLD ─────────────────────────────────
@@ -424,8 +424,7 @@ function refreshSaveBar() {
   `;
 
   document.getElementById('auto-save-btn')?.addEventListener('click', () => {
-    const name = prompt('Nom du scénario :');
-    if (name && name.trim()) { saveCurrentInputs(name.trim()); refreshSaveBar(); }
+    promptModal('Nom du scénario', '', (name) => { saveCurrentInputs(name); refreshSaveBar(); });
   });
   document.getElementById('auto-load-btn')?.addEventListener('click', () => {
     const idx = parseInt(document.getElementById('auto-save-select')?.value);

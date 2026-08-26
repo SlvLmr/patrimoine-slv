@@ -1,4 +1,5 @@
 import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud, discoverProfilesFromCloud, subscribeToProfile } from './firebase-config.js';
+import { showToast } from './utils.js?v=20260807b';
 
 
 const PROFILES_KEY = 'patrimoine-slv-profiles';
@@ -225,7 +226,7 @@ function saveState(profileId, state) {
     }
   } catch (e) {
     console.error('Erreur de sauvegarde:', e);
-    alert('Erreur: espace de stockage insuffisant.');
+    showToast('Erreur : espace de stockage insuffisant.', 'error', 8000);
   }
 }
 

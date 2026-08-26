@@ -1,79 +1,29 @@
-import { Store } from './store.js?v=20260801d';
+import { Store } from './store.js?v=20260807b';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
-import * as RevenusDepenses from './components/revenus-depenses.js?v=20260801d';
-import * as Projection from './components/projection.js?v=20260801d';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20260801j';
-import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260801i';
-import * as Contrats from './components/contrats.js?v=20260807a';
-import * as Compte from './components/compte.js?v=20260801d';
-import * as Repartition from './components/repartition.js?v=20260801d';
-import * as SimulateurFire from './components/simulateur-fire.js?v=20260801d';
-import * as SimulateurCredit from './components/simulateur-credit.js?v=20260801d';
-import * as SimulateurInterets from './components/simulateur-interets.js?v=20260801d';
-import * as SimulateurAuto from './components/simulateur-auto.js?v=20260801d';
-import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260801d';
-import * as Hypotheses from './components/hypotheses.js?v=20260801d';
-import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260801d';
-import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260329a';
+import * as RevenusDepenses from './components/revenus-depenses.js?v=20260807b';
+import * as Projection from './components/projection.js?v=20260807b';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20260807b';
+import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260807b';
+import * as Contrats from './components/contrats.js?v=20260807b';
+import * as Compte from './components/compte.js?v=20260807b';
+import * as Repartition from './components/repartition.js?v=20260807b';
+import * as SimulateurFire from './components/simulateur-fire.js?v=20260807b';
+import * as SimulateurCredit from './components/simulateur-credit.js?v=20260807b';
+import * as SimulateurInterets from './components/simulateur-interets.js?v=20260807b';
+import * as SimulateurAuto from './components/simulateur-auto.js?v=20260807b';
+import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260807b';
+import * as Hypotheses from './components/hypotheses.js?v=20260807b';
+import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260807b';
+import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260807b';
+import { showToast, promptModal, confirmModal } from './utils.js?v=20260807b';
 
 // Auto-configure Google Drive Client ID
 setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
 
 
 const store = Store.init();
-
-// Toast notification system — visible on mobile and desktop
-function showToast(message, type = 'error', duration = 8000) {
-  // Remove existing toast
-  document.getElementById('sync-toast')?.remove();
-  const colors = {
-    error: 'bg-red-500/90 text-white',
-    success: 'bg-accent-green/90 text-dark-900',
-    warning: 'bg-amber-500/90 text-dark-900',
-    info: 'bg-blue-500/90 text-white'
-  };
-  const toast = document.createElement('div');
-  toast.id = 'sync-toast';
-  toast.className = `fixed top-4 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-xl shadow-2xl text-sm font-medium max-w-sm text-center ${colors[type] || colors.error}`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  if (duration > 0) setTimeout(() => toast.remove(), duration);
-}
-
-// Custom prompt modal (replaces native prompt())
-function promptModal(title, defaultValue, onConfirm) {
-  const existing = document.getElementById('app-prompt-modal');
-  if (existing) existing.remove();
-  const modal = document.createElement('div');
-  modal.id = 'app-prompt-modal';
-  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `
-    <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-sm border border-dark-400/50">
-      <div class="p-5 border-b border-dark-400/50">
-        <h3 class="text-base font-semibold text-gray-100">${title}</h3>
-      </div>
-      <div class="p-5">
-        <input id="prompt-input" type="text" value="${(defaultValue || '').replace(/"/g, '&quot;')}"
-          class="w-full bg-dark-800 border border-dark-400/50 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-accent-green/50 focus:outline-none transition" autofocus />
-      </div>
-      <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3">
-        <button id="prompt-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
-        <button id="prompt-confirm" class="px-5 py-2 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm">Confirmer</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  const input = modal.querySelector('#prompt-input');
-  input.focus();
-  input.select();
-  const close = () => modal.remove();
-  const confirm = () => { const v = input.value; close(); if (v && v.trim()) onConfirm(v.trim()); };
-  modal.querySelector('#prompt-cancel').addEventListener('click', close);
-  modal.querySelector('#prompt-confirm').addEventListener('click', confirm);
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirm(); } });
-  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-}
 
 const routes = {
   'revenus-depenses': RevenusDepenses,
@@ -254,6 +204,7 @@ function renderPage() {
   destroyAllCharts();
 
   let hash = window.location.hash.slice(1) || 'suivi-depenses';
+  const _prevHash = _currentHash;
   _currentHash = hash;
   // Redirect legacy routes
   if (hash === 'actifs' || hash === 'passifs' || hash === 'heritage') { hash = 'projection'; window.location.hash = 'projection'; return; }
@@ -265,6 +216,7 @@ function renderPage() {
 
   contentEl.innerHTML = component.render(store);
   component.mount(store, navigate);
+  if (_prevHash !== hash) window.scrollTo(0, 0);
 
   // Update active nav
   document.querySelectorAll('[data-nav]').forEach(el => {

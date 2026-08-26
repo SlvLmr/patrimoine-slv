@@ -1,6 +1,6 @@
-import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData } from '../utils.js?v=12';
+import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20260807b';
 import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=12';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260807b';
 
 // Color map for envelope groups
 const GROUP_COLORS = {
@@ -835,10 +835,10 @@ export function mount(store, navigate) {
         e.stopPropagation();
         const id = btn.dataset.delId;
         const p = placements.find(p => p.id === id);
-        if (p && confirm(`Supprimer "${p.nom}" ?`)) {
+        if (p) confirmModal(`Supprimer « ${p.nom} » ?`, '', () => {
           store.removeItem('actifs.placements', id);
           refresh();
-        }
+        });
       });
     });
 
@@ -1021,10 +1021,10 @@ export function mount(store, navigate) {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
         const p = placements.find(p => p.id === id);
-        if (p && confirm(`Supprimer "${p.nom}" ?`)) {
+        if (p) confirmModal(`Supprimer « ${p.nom} » ?`, '', () => {
           store.removeItem('actifs.placements', id);
           refresh();
-        }
+        });
       });
     });
   }

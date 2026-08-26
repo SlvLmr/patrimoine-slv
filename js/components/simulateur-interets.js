@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput } from '../utils.js?v=12';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20260807b';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur d'Intérêts Composés ─────────────────────────────────────────
@@ -346,8 +346,7 @@ function refreshSaveBar() {
   `;
 
   document.getElementById('ic-save-btn')?.addEventListener('click', () => {
-    const name = prompt('Nom du scénario :');
-    if (name && name.trim()) { saveCurrentInputs(name.trim()); refreshSaveBar(); }
+    promptModal('Nom du scénario', '', (name) => { saveCurrentInputs(name); refreshSaveBar(); });
   });
   document.getElementById('ic-load-btn')?.addEventListener('click', () => {
     const idx = parseInt(document.getElementById('ic-save-select')?.value);
