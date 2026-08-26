@@ -562,11 +562,15 @@ export function render(store) {
           </div>` : ''}
         </div>`;
         }).join('')}
-        ${domRecos.map(r => conseilCardHtml({
-          prio: r.priorite || 3,
-          titre: r.titre,
-          texte: r.texte + (r.prix ? ` (${r.prix})` : '')
-        })).join('')}
+        ${domRecos.map(r => `
+        <div class="relative">
+          ${conseilCardHtml({
+            prio: r.priorite || 3,
+            titre: r.titre,
+            texte: r.texte + (r.prix ? ` (${r.prix})` : '')
+          }, { extraClass: 'pr-8' })}
+          <button data-dismiss-reco="${r.titre.replace(/"/g, '&quot;')}" title="Supprimer ce conseil" class="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded text-gray-600 hover:text-accent-red hover:bg-dark-600/60 transition text-xs">✕</button>
+        </div>`).join('')}
       </div>
     </div>`;
   };
@@ -743,14 +747,22 @@ export function render(store) {
 
       ${topRecos.length > 0 || doublons.length > 0 ? `
       <div class="grid grid-cols-1 ${(topRecos.length + (doublons.length > 0 ? 1 : 0)) > 1 ? 'sm:grid-cols-2 lg:grid-cols-' + Math.min(topRecos.length + (doublons.length > 0 ? 1 : 0), 3) : ''} gap-2">
-        ${topRecos.map(r => conseilCardHtml(
-          { prio: r.priorite || 3, titre: r.titre, texte: r.texte.length > 110 ? r.texte.slice(0, 110) + '…' : r.texte },
-          { tag: 'button', attrs: `data-goto-domaine="${r.domaine}"`, extraClass: 'w-full hover:border-dark-300/40 hover:bg-dark-700/60 transition-all' }
-        )).join('')}
+        ${topRecos.map(r => `
+        <div class="relative group/reco">
+          ${conseilCardHtml(
+            { prio: r.priorite || 3, titre: r.titre, texte: r.texte.length > 110 ? r.texte.slice(0, 110) + '…' : r.texte },
+            { tag: 'button', attrs: `data-goto-domaine="${r.domaine}"`, extraClass: 'w-full h-full hover:border-dark-300/40 hover:bg-dark-700/60 transition-all pr-8' }
+          )}
+          <button data-dismiss-reco="${r.titre.replace(/"/g, '&quot;')}" title="Supprimer ce conseil" class="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded text-gray-600 hover:text-accent-red hover:bg-dark-600/60 transition text-xs">✕</button>
+        </div>`).join('')}
         ${doublons.length > 0 ? `
         <div class="rounded-xl bg-purple-500/10 border border-purple-500/30 px-4 py-3">
           <p class="text-xs font-semibold text-purple-400">🔁 ${doublons.length} doublon${doublons.length > 1 ? 's' : ''} détecté${doublons.length > 1 ? 's' : ''}</p>
-          ${doublons.slice(0, 2).map(d => `<p class="text-[11px] text-gray-400 mt-1 leading-snug"><b class="text-gray-300">${d.titre}</b> — ${d.texte.length > 90 ? d.texte.slice(0, 90) + '…' : d.texte}</p>`).join('')}
+          ${doublons.slice(0, 3).map(d => `
+          <div class="flex items-start gap-1.5 mt-1">
+            <p class="text-[11px] text-gray-400 leading-snug flex-1"><b class="text-gray-300">${d.titre}</b> — ${d.texte.length > 90 ? d.texte.slice(0, 90) + '…' : d.texte}</p>
+            <button data-dismiss-doublon="${d.titre.replace(/"/g, '&quot;')}" title="Supprimer" class="text-gray-600 hover:text-accent-red transition text-[10px] flex-shrink-0 px-0.5">✕</button>
+          </div>`).join('')}
         </div>` : ''}
       </div>` : ''}
 
@@ -865,6 +877,34 @@ export function mount(store, navigate) {
       navigate('contrats');
     });
   });
+  // Supprimer un conseil ou un doublon (réapparaîtra si un prochain bilan le régénère)
+  document.querySelectorAll('[data-dismiss-reco]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const bilanNow = store.get('protectionBilan');
+      if (!bilanNow) return;
+      confirmModal('Supprimer ce conseil ?', 'Il disparaîtra aussi du Conseiller Horizon. Un prochain bilan global pourra le régénérer.', () => {
+        bilanNow.recos = (bilanNow.recos || []).filter(r => r.titre !== btn.dataset.dismissReco);
+        store.set('protectionBilan', bilanNow);
+        showToast('Conseil supprimé', 'success', 2000);
+        navigate('contrats');
+      });
+    });
+  });
+  document.querySelectorAll('[data-dismiss-doublon]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const bilanNow = store.get('protectionBilan');
+      if (!bilanNow) return;
+      confirmModal('Supprimer ce doublon signalé ?', 'Un prochain bilan global pourra le régénérer.', () => {
+        bilanNow.doublons = (bilanNow.doublons || []).filter(d => d.titre !== btn.dataset.dismissDoublon);
+        store.set('protectionBilan', bilanNow);
+        showToast('Doublon supprimé', 'success', 2000);
+        navigate('contrats');
+      });
+    });
+  });
+
   document.querySelectorAll('[data-goto-domaine]').forEach(btn => {
     btn.addEventListener('click', () => {
       selectedDomaineId = btn.dataset.gotoDomaine;
