@@ -1,5 +1,5 @@
-import { getConseilsTransmission } from './hypotheses.js?v=20260808f';
-import { getConseilsLiberte } from './liberte.js?v=20260808f';
+import { getConseilsTransmission } from './hypotheses.js?v=20260808h';
+import { getConseilsLiberte } from './liberte.js?v=20260808h';
 import { getConseilsContrats } from './contrats.js?v=20260808f';
 
 // ============================================================
