@@ -271,12 +271,20 @@ const TYPES_CONTRAT = [
   { value: 'autre', label: 'Autre', color: '#9ca3af' },
 ];
 
-const NUMEROS_UNIVERSELS = [
-  { situation: "Urgences (UE, gratuit)", contact: 'Numéro européen', tel: '112' },
-  { situation: 'SAMU', contact: 'Urgence médicale', tel: '15' },
-  { situation: 'Opposition carte bancaire', contact: 'Serveur interbancaire', tel: '0 892 705 705' },
-  { situation: 'Info escroqueries', contact: 'Plateforme gouvernementale', tel: '0 805 805 817' },
-];
+// Situations de sinistre par type de contrat (pour l'encart « En cas de besoin »)
+const SINISTRE_PAR_TYPE = {
+  mrh: 'Dégât des eaux · incendie · vol (maison)',
+  auto: 'Accident ou panne du véhicule',
+  sante: 'Hospitalisation · frais de santé',
+  prevoyance: 'Arrêt de travail · invalidité · décès',
+  emprunteur: 'Sinistre lié au crédit immobilier',
+  gav: 'Accident de la vie (domestique, sport…)',
+  pj: 'Litige · besoin d\'un avocat',
+  scolaire: 'Accident scolaire ou extrascolaire',
+  materiel: 'Casse ou vol de matériel',
+  voyage: 'Urgence en voyage · rapatriement',
+  autre: 'Sinistre',
+};
 
 // ---- state helpers ----
 let selectedDomaineId = null;
@@ -347,7 +355,9 @@ function catalogueForPrompt() {
 }
 
 function buildPromptContrat() {
-  return `Tu es un expert en assurance et protection du particulier en France. J'ai joint un contrat d'assurance (conditions particulières, tableau de garanties ou avis d'échéance). Je suis un particulier profane : analyse ce document POUR MOI et réponds UNIQUEMENT avec un bloc JSON valide, sans texte avant ni après.
+  return `Tu es un expert en assurance et protection du particulier en France. J'ai joint un ou plusieurs documents d'assurance (conditions particulières, tableaux de garanties, avis d'échéance, synthèse multi-contrats). Je suis un particulier profane : analyse ces documents POUR MOI et réponds UNIQUEMENT avec un bloc JSON valide, sans texte avant ni après.
+
+IMPORTANT — un document peut regrouper PLUSIEURS contrats (ex. une synthèse « protection famille » avec habitation + mutuelle + GAV + prévoyance). Dans ce cas, renvoie UN OBJET PAR CONTRAT dans un tableau : { "contrats": [ {...}, {...} ] }. Ne fusionne JAMAIS plusieurs contrats en une seule fiche : chaque contrat garde son propre numéro, sa propre prime, sa propre échéance et son propre téléphone. S'il n'y a qu'un seul contrat, renvoie l'objet seul (sans tableau).
 
 Domaines et postes autorisés (utilise exactement ces identifiants) :
 ${catalogueForPrompt()}
@@ -404,6 +414,8 @@ Règles :
 - Tutoie le lecteur, français courant. Chaque "resume" fait 1 à 2 phrases concrètes.
 - Note chaque domaine ET chaque poste de chaque domaine (tous les postes listés, même à 0 si rien ne les couvre).
 - Les recommandations sont concrètes : quoi faire, auprès de qui, ordre de grandeur de prix annuel. priorite : 1 = urgent (trou grave), 2 = important, 3 = optimisation.
+- EN PLUS des trous et doublons : pour CHAQUE domaine noté entre 3 et 4,5, ajoute une recommandation priorite 3 dont le titre commence par « Passer de X à 5 — » (X = note actuelle) expliquant précisément ce qui manque pour une couverture optimale : quelle garantie relever, quel plafond viser, quelle option ajouter, et l'ordre de grandeur du coût.
+- Pour "urgences" : liste QUI APPELER pour chaque type de sinistre couvert (dégât des eaux, accident, hospitalisation, litige…), avec le bon numéro (assistance sinistre de préférence) et le numéro de contrat à rappeler au téléphone.
 
 Format de réponse EXACT :
 {
@@ -558,17 +570,26 @@ export function render(store) {
     </div>`;
   };
 
-  // ---- Assistant d'analyse ----
+  // ---- Assistant d'analyse (repliable une fois les données en place) ----
   const assistant = `
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      <div class="card-dark rounded-xl p-4 sm:p-5">
+    <details class="card-dark rounded-xl overflow-hidden group/asst" ${!hasData ? 'open' : ''}>
+      <summary class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer select-none hover:bg-dark-700/30 transition" style="list-style:none">
+        <div class="flex items-center gap-2">
+          <span class="text-base">🧭</span>
+          <h3 class="text-sm font-bold text-gray-100">Analyser ou mettre à jour mes contrats</h3>
+          ${bilan?.date ? `<span class="text-[10px] text-gray-600">· dernier bilan : ${bilan.date}</span>` : ''}
+        </div>
+        <svg class="w-3.5 h-3.5 text-gray-600 transition-transform group-open/asst:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 px-3 pb-3">
+      <div class="rounded-xl bg-dark-800/40 border border-dark-400/15 p-4 sm:p-5">
         <div class="flex items-center gap-2 mb-2">
           <span class="text-lg">📄</span>
           <h3 class="text-sm font-bold text-gray-100">Analyser un contrat</h3>
         </div>
         <ol class="text-xs text-gray-400 space-y-1.5 mb-3 leading-relaxed">
           <li><span class="text-cyan-400 font-semibold">1.</span> Copie le prompt d'analyse ci-dessous</li>
-          <li><span class="text-cyan-400 font-semibold">2.</span> Ouvre <a href="https://claude.ai/new" target="_blank" rel="noopener" class="text-cyan-400 underline hover:text-cyan-300">claude.ai</a>, colle le prompt et <b class="text-gray-300">glisse le PDF de ton contrat</b> (conditions particulières ou tableau de garanties), envoie</li>
+          <li><span class="text-cyan-400 font-semibold">2.</span> Ouvre <a href="https://claude.ai/new" target="_blank" rel="noopener" class="text-cyan-400 underline hover:text-cyan-300">claude.ai</a>, colle le prompt et <b class="text-gray-300">glisse le ou les PDF</b> (conditions particulières, tableaux de garanties — plusieurs contrats possibles d'un coup), envoie</li>
           <li><span class="text-cyan-400 font-semibold">3.</span> Copie la réponse et importe-la ici</li>
         </ol>
         <div class="flex flex-wrap gap-2">
@@ -577,19 +598,19 @@ export function render(store) {
           <button id="btn-add-contrat-manuel" class="px-3 py-1.5 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-xs rounded-lg hover:bg-dark-600 hover:text-gray-200 transition">+ Saisie manuelle</button>
         </div>
       </div>
-      <div class="card-dark rounded-xl p-4 sm:p-5 ${contrats.length === 0 ? 'opacity-50' : ''}">
+      <div class="rounded-xl bg-dark-800/40 border border-dark-400/15 p-4 sm:p-5 ${contrats.length === 0 ? 'opacity-50' : ''}">
         <div class="flex items-center gap-2 mb-2">
           <span class="text-lg">🕸️</span>
           <h3 class="text-sm font-bold text-gray-100">Bilan global &amp; radar</h3>
-          ${bilan?.date ? `<span class="text-[10px] text-gray-600 ml-auto">dernier bilan : ${bilan.date}</span>` : ''}
         </div>
-        <p class="text-xs text-gray-400 mb-3 leading-relaxed">Quand tes contrats sont importés, lance le bilan croisé : il remplit le radar, détecte les <b class="text-gray-300">doublons</b> et les <b class="text-gray-300">trous de couverture</b>, et génère les recommandations. À refaire après chaque ajout de contrat.</p>
+        <p class="text-xs text-gray-400 mb-3 leading-relaxed">Quand tes contrats sont importés, lance le bilan croisé : il remplit le radar, détecte les <b class="text-gray-300">doublons</b> et les <b class="text-gray-300">trous de couverture</b>, et génère les recommandations. À relancer après chaque ajout ou mise à jour de contrat.</p>
         <div class="flex flex-wrap gap-2">
           <button id="btn-copy-prompt-bilan" class="px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs rounded-lg hover:bg-purple-500/30 transition font-medium" ${contrats.length === 0 ? 'disabled' : ''}>📋 Copier le prompt de bilan</button>
           <button id="btn-import-bilan" class="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-lg hover:bg-emerald-500/30 transition font-medium" ${contrats.length === 0 ? 'disabled' : ''}>📥 Coller le bilan</button>
         </div>
       </div>
-    </div>`;
+      </div>
+    </details>`;
 
   // ---- Tableau contrats ----
   const tableau = contrats.length > 0 ? `
@@ -644,9 +665,18 @@ export function render(store) {
       </div>
     </div>` : '';
 
-  // ---- Encart urgences ----
+  // ---- Encart urgences : qui appeler, par type de sinistre ----
   const urgencesBilan = bilan?.urgences || [];
   const urgencesContrats = contrats.filter(c => c.telAssistance || c.telephone);
+  // Depuis les contrats : un numéro par situation (assistance sinistre en priorité)
+  const telsVus = new Set(urgencesBilan.map(u => (u.tel || '').replace(/\s/g, '')));
+  const urgencesDepuisContrats = urgencesContrats.map(c => ({
+    situation: SINISTRE_PAR_TYPE[c.type] || `${c.nom || 'Sinistre'}`,
+    contact: [c.assureur, c.nom].filter(Boolean).join(' — '),
+    tel: c.telAssistance || c.telephone,
+    note: c.numContrat ? `contrat ${c.numContrat}` : '',
+  })).filter(u => u.tel && !telsVus.has(u.tel.replace(/\s/g, '')));
+  const urgencesSinistre = [...urgencesBilan, ...urgencesDepuisContrats];
   const urgences = hasData ? `
     <div class="card-dark rounded-xl overflow-hidden">
       <div class="px-4 sm:px-5 py-3 border-b border-dark-400/30 flex items-center gap-3">
@@ -658,7 +688,7 @@ export function render(store) {
         </div>
       </div>
       <div id="urg-panel-sinistre" class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        ${[...urgencesBilan, ...NUMEROS_UNIVERSELS].map(u => `
+        ${urgencesSinistre.map(u => `
         <div class="flex items-center gap-3 rounded-lg bg-dark-800/50 border border-dark-400/20 px-3 py-2.5">
           <div class="flex-1 min-w-0">
             <p class="text-xs text-gray-200 font-medium truncate">${u.situation}</p>
@@ -667,7 +697,7 @@ export function render(store) {
           <a href="tel:${(u.tel || '').replace(/\s/g, '')}" class="text-sm font-bold text-cyan-400 hover:text-cyan-300 whitespace-nowrap">${u.tel}</a>
           ${copyBtn(u.tel)}
         </div>`).join('')}
-        ${urgencesBilan.length === 0 ? `<p class="text-[11px] text-gray-600 sm:col-span-2">Les numéros de tes assureurs apparaîtront ici après le bilan global (en attendant : numéros universels ci-dessus).</p>` : ''}
+        ${urgencesSinistre.length === 0 ? `<p class="text-[11px] text-gray-600 sm:col-span-2">Renseigne les téléphones de tes contrats (ou lance le bilan global) : chaque sinistre affichera ici qui appeler, avec le bon numéro et la référence du contrat.</p>` : ''}
       </div>
       <div id="urg-panel-contrat" class="hidden p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
         ${urgencesContrats.length > 0 ? urgencesContrats.map(c => `
@@ -897,17 +927,35 @@ export function mount(store, navigate) {
       <textarea id="import-json" rows="10" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-xs font-mono focus:ring-2 focus:ring-emerald-500/40" placeholder='{ "nom": "...", ... }'></textarea>
       <div id="import-preview" class="mt-2 text-xs"></div>
     `;
-    const modal = openModal('Importer l\'analyse du contrat', body, () => {
+    // Upsert : un contrat déjà connu (même n° de contrat, ou même nom + assureur)
+    // est MIS À JOUR au lieu d'être dupliqué
+    const upsertContrat = (liste, data) => {
+      data.garanties = Array.isArray(data.garanties) ? data.garanties : [];
+      const norm = (v) => (v || '').toString().trim().toLowerCase();
+      const existant = liste.find(c =>
+        (norm(c.numContrat) && norm(c.numContrat) === norm(data.numContrat)) ||
+        (norm(c.nom) && norm(c.nom) === norm(data.nom) && norm(c.assureur) === norm(data.assureur))
+      );
+      if (existant) { Object.assign(existant, data, { id: existant.id }); return 'maj'; }
+      data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      liste.push(data);
+      return 'ajout';
+    };
+    const modal = openModal('Importer l\'analyse', body, () => {
       const ta = document.getElementById('import-json');
       try {
         const data = parseColleJSON(ta.value);
-        if (!data.nom && !data.assureur) throw new Error('nom/assureur manquants');
-        data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        data.garanties = Array.isArray(data.garanties) ? data.garanties : [];
+        const items = Array.isArray(data.contrats) ? data.contrats : [data];
+        const valides = items.filter(c => c && (c.nom || c.assureur));
+        if (valides.length === 0) throw new Error('nom/assureur manquants');
         const contrats = getContrats(store);
-        contrats.push(data);
+        let nbAjout = 0, nbMaj = 0;
+        valides.forEach(c => { upsertContrat(contrats, c) === 'maj' ? nbMaj++ : nbAjout++; });
         store.set('contrats', contrats);
-        showToast(`Contrat « ${data.nom || data.assureur} » importé ✓`, 'success', 3000);
+        const parts = [];
+        if (nbAjout > 0) parts.push(`${nbAjout} contrat${nbAjout > 1 ? 's' : ''} ajouté${nbAjout > 1 ? 's' : ''}`);
+        if (nbMaj > 0) parts.push(`${nbMaj} mis à jour`);
+        showToast(parts.join(' · ') + ' ✓ — pense à relancer le bilan global', 'success', 4000);
         navigate('contrats');
       } catch (err) {
         showModalError('Impossible de lire ce bloc : vérifie que tu as bien collé la réponse JSON complète de claude.ai. (' + err.message + ')');
@@ -919,7 +967,8 @@ export function mount(store, navigate) {
       const prev = modal.querySelector('#import-preview');
       try {
         const d = parseColleJSON(e.target.value);
-        prev.innerHTML = `<div class="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-emerald-300">✓ <b>${d.nom || '?'}</b> (${d.assureur || '?'}) — ${(d.garanties || []).length} garantie(s) détectée(s)</div>`;
+        const items = Array.isArray(d.contrats) ? d.contrats : [d];
+        prev.innerHTML = `<div class="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-emerald-300">✓ ${items.length} contrat${items.length > 1 ? 's' : ''} détecté${items.length > 1 ? 's' : ''} : ${items.map(c => `<b>${c.nom || c.assureur || '?'}</b>`).join(', ')} — ${items.reduce((n, c) => n + ((c.garanties || []).length), 0)} garantie(s)</div>`;
       } catch { prev.innerHTML = e.target.value.trim() ? '<p class="text-gray-600">En attente d\'un bloc JSON valide…</p>' : ''; }
     });
   });
