@@ -61,58 +61,89 @@ export function render(store) {
         </button>
       </div>
 
-      <!-- Time Slider + Diversification Score -->
-      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-        <div class="card-dark rounded-xl px-6 py-4">
-          <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span class="text-sm text-gray-400">Année</span>
+      <!-- ═ ACTE 1 · AUJOURD'HUI ═ -->
+      <div class="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4">
+        <div class="card-dark rounded-xl p-5">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+              <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Aujourd'hui</h2>
             </div>
-            <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
-              class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-amber-500"
-              style="accent-color: #c084fc;">
-            <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
-              <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
-              <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
-            </div>
+            <label class="flex items-center gap-1.5 text-[11px] text-gray-500 cursor-pointer select-none">
+              <input type="checkbox" id="rep-immo-toggle" checked class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-purple focus:ring-accent-purple/40">
+              Immobilier inclus
+            </label>
           </div>
-          <div class="flex justify-between mt-1 px-1">
-            <span class="text-[10px] text-gray-600">${currentYear}</span>
-            <span class="text-[10px] text-gray-600">${currentYear + years}</span>
-          </div>
-          <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
+          <p class="text-center mb-1"><span id="rep-donut-now-total" class="text-2xl font-extrabold text-gray-100"></span></p>
+          <div class="relative" style="height:210px;"><canvas id="rep-donut-now"></canvas></div>
+          <div id="rep-donut-now-legend" class="mt-3 space-y-1.5"></div>
         </div>
-        <div id="diversification-widget"></div>
-      </div>
-
-      <!-- Flow + Actions + PEE -->
-      <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
         <div class="card-dark rounded-xl p-5 flex flex-col">
           <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
-              <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Flux mensuels</h2>
+              <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Ce que j'investis chaque mois</h2>
             </div>
             <span class="text-[10px] text-gray-600">Cliquez sur un placement pour le modifier</span>
           </div>
           <div id="rep-flow" class="space-y-0 flex-1 flex flex-col"></div>
         </div>
-        <div class="flex flex-col gap-4">
-          <div class="card-dark rounded-xl px-5 py-4 flex flex-col overflow-hidden">
-            <div class="flex items-center gap-2 mb-3 flex-shrink-0">
-              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-              <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
-            </div>
-            <div id="rep-actions-list" class="space-y-2 overflow-y-auto"></div>
+      </div>
+
+      <!-- ═ ACTE 2 · DEMAIN ═ -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Et demain ?</h2>
           </div>
-          <div class="card-dark rounded-xl px-5 py-4 flex flex-col overflow-hidden">
-            <div class="flex items-center gap-2 mb-3 flex-shrink-0">
-              <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-              <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mon PEE</h3>
-            </div>
-            <div id="rep-pee-list" class="space-y-2 overflow-y-auto"></div>
+          <div class="flex gap-1.5">
+            <button class="rep-preset btn-ghost" data-years="0">Aujourd'hui</button>
+            <button class="rep-preset btn-ghost" data-years="5">+5 ans</button>
+            <button class="rep-preset btn-ghost" data-years="10">+10 ans</button>
+            <button class="rep-preset btn-ghost" data-years="retraite">Retraite</button>
           </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
+            class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer"
+            style="accent-color: #c084fc;">
+          <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
+            <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
+            <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
+          </div>
+        </div>
+        <div class="flex justify-between mt-1 px-1">
+          <span class="text-[10px] text-gray-600">${currentYear}</span>
+          <span class="text-[10px] text-gray-600">${currentYear + years}</span>
+        </div>
+        <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+          <div>
+            <p class="text-[11px] text-gray-500 uppercase tracking-widest text-center mb-2">Répartition en <span id="rep-donut-future-year" class="text-accent-amber font-bold">${currentYear}</span></p>
+            <div class="relative" style="height:200px;"><canvas id="rep-donut-future"></canvas></div>
+            <div id="rep-donut-deltas" class="mt-3 space-y-1.5"></div>
+            <p class="text-[10px] text-gray-600 text-center mt-2">Écarts en points de pourcentage vs aujourd'hui</p>
+          </div>
+          <div id="diversification-widget"></div>
+        </div>
+      </div>
+
+      <!-- Actions + PEE -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card-dark rounded-xl px-5 py-4 flex flex-col overflow-hidden">
+          <div class="flex items-center gap-2 mb-3 flex-shrink-0">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
+          </div>
+          <div id="rep-actions-list" class="space-y-2 overflow-y-auto"></div>
+        </div>
+        <div class="card-dark rounded-xl px-5 py-4 flex flex-col overflow-hidden">
+          <div class="flex items-center gap-2 mb-3 flex-shrink-0">
+            <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mon PEE</h3>
+          </div>
+          <div id="rep-pee-list" class="space-y-2 overflow-y-auto"></div>
         </div>
       </div>
 
@@ -188,6 +219,7 @@ export function mount(store, navigate) {
     groupKeys = snapshots.groupKeys || [];
     buildAreaChart();
     buildDCAChart();
+    updateDonutNow();
     const slider = document.getElementById('rep-slider');
     updateForYear(slider ? parseInt(slider.value) : 0);
   }
@@ -305,6 +337,111 @@ export function mount(store, navigate) {
       </div>`;
   }
 
+  // ── Donuts de répartition (aujourd'hui / année choisie) ──
+  let includeImmo = true;
+
+  function allocationFromSnap(snap) {
+    const items = [];
+    const det = snap.placementDetail || {};
+    Object.entries(det).forEach(([gk, v]) => {
+      if (v > 0) items.push({ label: gk, value: v, color: (ASSET_COLORS[gk] || ASSET_COLORS['Autre']).color });
+    });
+    if ((snap.epargne || 0) > 0) items.push({ label: 'Épargne', value: snap.epargne, color: '#38bdf8' });
+    if (includeImmo && (snap.immobilier || 0) > 0) items.push({ label: 'Immobilier', value: snap.immobilier, color: '#f43f5e' });
+    items.sort((a, b) => b.value - a.value);
+    return items;
+  }
+
+  function buildDonut(canvasId, alloc) {
+    createChart(canvasId, {
+      type: 'doughnut',
+      data: {
+        labels: alloc.map(a => a.label),
+        datasets: [{ data: alloc.map(a => a.value), backgroundColor: alloc.map(a => a.color), borderColor: 'rgba(26,26,34,0.9)', borderWidth: 2, hoverOffset: 6 }]
+      },
+      options: {
+        cutout: '62%',
+        animation: { duration: 300 },
+        interaction: { mode: 'nearest', intersect: true },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => {
+            const total = ctx.dataset.data.reduce((sum, v) => sum + v, 0);
+            const pct = total > 0 ? (ctx.raw / total * 100).toFixed(1) : 0;
+            return ` ${ctx.label} : ${formatCurrency(ctx.raw)} (${pct} %)`;
+          } } }
+        }
+      }
+    });
+  }
+
+  function donutLegendHtml(alloc, baseAlloc = null) {
+    const total = alloc.reduce((sum, a) => sum + a.value, 0);
+    const basePct = {};
+    if (baseAlloc) {
+      const bt = baseAlloc.reduce((sum, a) => sum + a.value, 0);
+      baseAlloc.forEach(a => { basePct[a.label] = bt > 0 ? a.value / bt * 100 : 0; });
+    }
+    return alloc.map(a => {
+      const pct = total > 0 ? a.value / total * 100 : 0;
+      let delta = '';
+      if (baseAlloc) {
+        const d = pct - (basePct[a.label] || 0);
+        const cls = d >= 0.5 ? 'text-emerald-400' : d <= -0.5 ? 'text-red-400' : 'text-gray-600';
+        delta = `<span class="text-[10px] ${cls} w-14 text-right flex-shrink-0">${d >= 0 ? '+' : ''}${d.toFixed(1)} pts</span>`;
+      }
+      return `<div class="flex items-center gap-2 text-xs">
+        <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${a.color}"></span>
+        <span class="text-gray-400 flex-1 truncate">${a.label}</span>
+        <span class="text-gray-500 w-14 text-right flex-shrink-0">${pct.toFixed(1)} %</span>
+        <span class="text-gray-200 font-medium w-20 text-right flex-shrink-0">${formatCurrency(a.value)}</span>
+        ${delta}
+      </div>`;
+    }).join('');
+  }
+
+  function updateDonutNow() {
+    const now = snapshots[0];
+    if (!now) return;
+    const alloc = allocationFromSnap(now);
+    buildDonut('rep-donut-now', alloc);
+    const legend = document.getElementById('rep-donut-now-legend');
+    if (legend) legend.innerHTML = donutLegendHtml(alloc);
+    const totalEl = document.getElementById('rep-donut-now-total');
+    if (totalEl) totalEl.textContent = formatCurrency(alloc.reduce((sum, a) => sum + a.value, 0));
+  }
+
+  function updateDonutFuture(yearIdx) {
+    const now = snapshots[0];
+    const snap = snapshots[yearIdx] || now;
+    if (!snap) return;
+    buildDonut('rep-donut-future', allocationFromSnap(snap));
+    const deltas = document.getElementById('rep-donut-deltas');
+    if (deltas) deltas.innerHTML = donutLegendHtml(allocationFromSnap(snap), allocationFromSnap(now));
+    const fy = document.getElementById('rep-donut-future-year');
+    if (fy) fy.textContent = currentYear + yearIdx;
+  }
+
+  document.getElementById('rep-immo-toggle')?.addEventListener('change', (e) => {
+    includeImmo = e.target.checked;
+    const sliderEl = document.getElementById('rep-slider');
+    updateDonutNow();
+    updateDonutFuture(sliderEl ? parseInt(sliderEl.value) : 0);
+  });
+
+  document.querySelectorAll('.rep-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sliderEl = document.getElementById('rep-slider');
+      if (!sliderEl) return;
+      let target = btn.dataset.years === 'retraite'
+        ? Math.max(0, (params.ageRetraite || 64) - ageFinAnnee)
+        : parseInt(btn.dataset.years);
+      target = Math.min(target, parseInt(sliderEl.max));
+      sliderEl.value = target;
+      updateForYear(target);
+    });
+  });
+
   // Add placement buttons
   document.getElementById('rep-add-placement')?.addEventListener('click', () => {
     openAddPlacementModal(store, navigate, 'repartition');
@@ -316,6 +453,7 @@ export function mount(store, navigate) {
   // Build charts
   buildAreaChart();
   buildDCAChart();
+  updateDonutNow();
 
   // Initial update
   updateForYear(0);
@@ -374,6 +512,7 @@ export function mount(store, navigate) {
     const totalPlacements = snap.placements || 0;
 
     updateKPI(totalDCA, nbWithDCA, snap, totalPlacements);
+    updateDonutFuture(yearIdx);
     updateActions(snap);
     updatePEE(snap, calYear);
     updateFlow(dcaByPlacement, dcaByGroup, totalDCA, calYear, childrenDCA, totalChildrenDCA);
