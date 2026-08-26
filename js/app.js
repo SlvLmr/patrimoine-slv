@@ -1,23 +1,23 @@
-import { Store } from './store.js?v=20260807c';
+import { Store } from './store.js?v=20260807d';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
-import * as RevenusDepenses from './components/revenus-depenses.js?v=20260807c';
-import * as Projection from './components/projection.js?v=20260807c';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20260807c';
-import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260807c';
-import * as Contrats from './components/contrats.js?v=20260807c';
-import * as Compte from './components/compte.js?v=20260807c';
-import * as Repartition from './components/repartition.js?v=20260807c';
-import * as SimulateurFire from './components/simulateur-fire.js?v=20260807c';
-import * as SimulateurCredit from './components/simulateur-credit.js?v=20260807c';
-import * as SimulateurInterets from './components/simulateur-interets.js?v=20260807c';
-import * as SimulateurAuto from './components/simulateur-auto.js?v=20260807c';
-import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260807c';
-import * as Hypotheses from './components/hypotheses.js?v=20260807c';
-import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260807c';
-import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260807c';
-import { showToast, promptModal, confirmModal } from './utils.js?v=20260807c';
+import * as RevenusDepenses from './components/revenus-depenses.js?v=20260807d';
+import * as Projection from './components/projection.js?v=20260807d';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20260807d';
+import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260807d';
+import * as Contrats from './components/contrats.js?v=20260807d';
+import * as Compte from './components/compte.js?v=20260807d';
+import * as Repartition from './components/repartition.js?v=20260807d';
+import * as SimulateurFire from './components/simulateur-fire.js?v=20260807d';
+import * as SimulateurCredit from './components/simulateur-credit.js?v=20260807d';
+import * as SimulateurInterets from './components/simulateur-interets.js?v=20260807d';
+import * as SimulateurAuto from './components/simulateur-auto.js?v=20260807d';
+import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260807d';
+import * as Hypotheses from './components/hypotheses.js?v=20260807d';
+import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260807d';
+import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260807d';
+import { showToast, promptModal, confirmModal } from './utils.js?v=20260807d';
 
 // Auto-configure Google Drive Client ID
 setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
@@ -671,26 +671,6 @@ function initSidebarCollapse() {
   });
 }
 
-// Theme toggle (light/dark)
-function initThemeToggle() {
-  const btn = document.getElementById('theme-toggle');
-  if (!btn) return;
-  const iconMoon = document.getElementById('theme-icon-moon');
-  const iconSun = document.getElementById('theme-icon-sun');
-
-  function applyIcons() {
-    const isLight = document.documentElement.classList.contains('light');
-    if (iconMoon) iconMoon.classList.toggle('hidden', isLight);
-    if (iconSun) iconSun.classList.toggle('hidden', !isLight);
-  }
-  applyIcons();
-
-  btn.addEventListener('click', () => {
-    const isLight = document.documentElement.classList.toggle('light');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    applyIcons();
-  });
-}
 
 // --- Save/Import choice modals ---
 
@@ -956,7 +936,6 @@ function showApp() {
     initProfileSwitcher();
     initMobileMenu();
     initSidebarCollapse();
-    initThemeToggle();
     appStarted = true;
 
 

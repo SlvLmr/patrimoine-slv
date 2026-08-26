@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20260807c';
+import { formatCurrency, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20260807d';
 import { createChart, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ─── FIRE Simulator ─────────────────────────────────────────────────────────

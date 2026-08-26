@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <link rel="stylesheet" href="css/custom.css">
-  <script type="module" src="js/app.js?v=20260807c"></script>
+  <script type="module" src="js/app.js?v=20260807d"></script>
   <style>
     :root {
       --dark-900: 26 26 34;
@@ -34,88 +34,8 @@
       --body-bg: #1a1a22;
       --body-text: #e5e7eb;
     }
-    html.light {
-      --dark-900: 245 245 247;
-      --dark-800: 234 234 239;
-      --dark-700: 221 221 229;
-      --dark-600: 208 208 218;
-      --dark-500: 184 184 196;
-      --dark-400: 154 154 170;
-      --dark-300: 120 120 138;
-      --accent-green: 147 51 234;
-      --accent-red: 220 38 38;
-      --accent-blue: 74 111 148;
-      --accent-purple: 124 92 160;
-      --accent-amber: 168 85 247;
-      --accent-cyan: 15 118 110;
-      --body-bg: #f5f5f7;
-      --body-text: #1a1a2e;
-    }
-    html.light body { color: #1a1a2e; }
-    html.light .text-gray-100, html.light .text-gray-200 { color: #1a1a2e !important; }
-    html.light .text-gray-300 { color: #2d2d3f !important; }
-    html.light .text-gray-400 { color: #4a4a5e !important; }
-    html.light .text-gray-500 { color: #6b6b80 !important; }
-    html.light .text-gray-600 { color: #8a8a9e !important; }
-    html.light .text-gray-700 { color: #a0a0b0 !important; }
-    html.light .text-white { color: #1a1a2e !important; }
-    html.light .placeholder-gray-600::placeholder { color: #8a8a9e !important; }
-    html.light input, html.light select, html.light textarea { color: #1a1a2e; }
-    html.light .bg-black\/60, html.light .bg-black\/40 { background-color: rgba(255,255,255,0.6) !important; }
-    html.light ::-webkit-scrollbar-thumb { background: #b8b8c4; }
-    html.light ::-webkit-scrollbar-thumb:hover { background: #9a9aaa; }
-    /* Card, row, input overrides for light mode */
-    html.light .card-dark {
-      background: linear-gradient(135deg, rgba(100,80,160,0.03) 0%, transparent 40%, rgba(100,80,160,0.03) 100%), #ffffff !important;
-      border-color: rgba(0,0,0,0.08) !important;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
-    }
-    html.light .row-item {
-      background: rgba(0,0,0,0.02) !important;
-      border-color: rgba(0,0,0,0.06) !important;
-    }
-    html.light .input-field {
-      background: rgba(0,0,0,0.03) !important;
-      border-color: rgba(0,0,0,0.1) !important;
-      color: #1a1a2e !important;
-    }
-    html.light .input-inline {
-      color: #1a1a2e !important;
-      border-color: transparent !important;
-    }
-    html.light .input-inline:focus { border-color: rgba(0,0,0,0.15) !important; }
-    html.light .editable-block {
-      background: rgba(0,0,0,0.02) !important;
-      color: #1a1a2e !important;
-    }
-    html.light .btn-add {
-      color: #6b21a8 !important;
-      border-color: rgba(107,33,168,0.2) !important;
-    }
-    html.light .btn-add:hover {
-      color: #7c3aed !important;
-      border-color: rgba(124,58,237,0.4) !important;
-    }
-    html.light .btn-delete { color: rgba(220,38,38,0.5) !important; }
-    html.light .proj-tip {
-      background: rgba(255,255,255,0.97) !important;
-      border-color: rgba(0,0,0,0.12) !important;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
-    }
-    html.light .proj-tip::after { border-top-color: rgba(0,0,0,0.12) !important; }
-    html.light .proj-tip-below > .proj-tip::after { border-bottom-color: rgba(0,0,0,0.12) !important; border-top-color: transparent !important; }
-    html.light table thead { background: rgba(0,0,0,0.03) !important; }
-    html.light .progress-bar { background: rgba(0,0,0,0.06) !important; }
-    html.light .glow-green, html.light .glow-blue, html.light .glow-red {
-      box-shadow: 0 1px 6px rgba(0,0,0,0.06) !important;
-    }
-    html.light select option { background: #fff; color: #1a1a2e; }
-    html.light .backdrop-blur-sm { background-color: rgba(255,255,255,0.5) !important; }
+
   </style>
-  <script>
-    // Apply saved theme before paint
-    if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
-  </script>
   <script>
     function twColor(varName) {
       return ({ opacityValue }) => opacityValue !== undefined
@@ -231,16 +151,8 @@
       <!-- Populated by JS -->
     </nav>
 
-    <!-- Theme toggle + Dropdown arrow -->
+    <!-- Dropdown arrow -->
     <div id="profile-switcher" class="relative border-t border-dark-400/20 px-4 py-2 flex items-center justify-center gap-3">
-      <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-dark-600 transition cursor-pointer" title="Mode clair / sombre">
-        <svg id="theme-icon-moon" class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-        </svg>
-        <svg id="theme-icon-sun" class="w-4 h-4 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-        </svg>
-      </button>
       <button id="profile-dropdown-btn" class="p-1.5 rounded-lg hover:bg-dark-600 transition cursor-pointer" title="Options">
         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>

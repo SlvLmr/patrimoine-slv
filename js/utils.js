@@ -230,7 +230,7 @@ export function getPlacementGroupKey(p) {
 }
 
 // Get the applicable DCA for a given year for a placement
-function getDcaForYear(placement, year) {
+export function getDcaForYear(placement, year) {
   const baseDca = Number(placement.dcaMensuel) || 0;
   // Stop DCA after end year
   const finAnnee = Number(placement.dcaFinAnnee) || 0;

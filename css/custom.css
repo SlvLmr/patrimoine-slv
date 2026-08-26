@@ -624,5 +624,3 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 }
 .btn-ghost:hover { color: #e5e7eb; background: rgb(var(--dark-600) / 0.5); }
 .btn-dot { width: 0.45rem; height: 0.45rem; border-radius: 9999px; flex-shrink: 0; display: inline-block; }
-html.light .btn-secondary { color: #2d2d3f !important; background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.12) !important; }
-html.light .btn-ghost { color: #6b6b80 !important; }
