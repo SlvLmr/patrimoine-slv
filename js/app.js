@@ -46,8 +46,8 @@ const navItems = [
   { id: '_title_compte', sectionTitle: 'Compte' },
   { id: 'compte', label: '_profile_', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', isProfile: true },
   { id: '_title_quotidien', sectionTitle: 'Quotidien' },
-  { id: 'revenus-depenses', label: 'Revenus & dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'suivi-depenses', label: 'Vie quotidienne', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
+  { id: 'revenus-depenses', label: 'Revenus & dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'contrats', label: 'Contrats & garanties', icon: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z' },
   { id: '_title_investissement', sectionTitle: 'Investissement' },
   { id: 'portefeuille-live', label: 'Portefeuille', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
@@ -268,7 +268,7 @@ function initNav() {
             <svg id="outils-chevron" class="w-3 h-3 text-gray-600 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
         </div>
-        <div id="outils-items">`;
+        <div id="outils-items" class="hidden">`;
       }
       inOutilsGroup = false;
       return `<div class="section-title-wrap mt-3 mb-0.5 mx-3"><span class="section-title text-[10px] uppercase tracking-widest font-semibold text-gray-600">${item.sectionTitle}</span></div>`;
@@ -302,7 +302,7 @@ function initNav() {
     const chevron = document.getElementById('outils-chevron');
     if (items) {
       items.classList.toggle('hidden');
-      chevron?.classList.toggle('rotate-180');
+      chevron?.classList.toggle('rotate-180', !items.classList.contains('hidden'));
     }
   });
 }
