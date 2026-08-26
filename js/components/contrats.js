@@ -367,6 +367,7 @@ Barème de notation (note chaque poste de 0 à 5) :
 
 Règles :
 - Tutoie le lecteur, français courant, zéro jargon non expliqué. Chaque "resume" fait 1 à 2 phrases avec les chiffres réels du contrat (plafonds, franchises, taux).
+- Les champs d'identité sont COURTS, jamais des phrases : "nom" ≤ 40 caractères (ex. "MRH maison"), "assureur" = le nom seul (ex. "ACM"), "numContrat"/"numClient"/"echeance"/"telephone" = la valeur seule ou null si absente du document. N'écris JAMAIS d'explication du type "sans numéro dans ce document" dans un champ : mets null.
 - Ne note que les postes réellement traités par CE contrat. Si un chiffre est illisible, mets null et signale-le dans "resume".
 - Extrais tous les numéros utiles (gestion, sinistre, assistance 24h/24).
 
@@ -612,7 +613,8 @@ export function render(store) {
       </div>
     </details>`;
 
-  // ---- Tableau contrats ----
+  // ---- Tableau contrats (compact : 1 ligne par contrat, troncature + survol) ----
+  const esc = (v) => String(v ?? '').replace(/"/g, '&quot;');
   const tableau = contrats.length > 0 ? `
     <div class="card-dark rounded-xl overflow-hidden">
       <div class="px-4 sm:px-5 py-3 border-b border-dark-400/30 flex items-center gap-2">
@@ -621,17 +623,16 @@ export function render(store) {
         <span class="ml-auto text-xs text-gray-500">Total primes : <span class="text-gray-200 font-semibold">${formatCurrencyCents(totalPrimes)}/an</span></span>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-xs min-w-[720px]">
+        <table class="w-full text-xs table-fixed min-w-[640px]">
           <thead class="bg-dark-800/50 text-gray-500 text-[10px] uppercase tracking-wide">
             <tr>
-              <th class="px-3 py-2 text-left">Contrat</th>
-              <th class="px-3 py-2 text-left">Assureur</th>
-              <th class="px-3 py-2 text-left">N° contrat</th>
-              <th class="px-3 py-2 text-left">N° client</th>
-              <th class="px-3 py-2 text-right">Prime</th>
-              <th class="px-3 py-2 text-left">Échéance</th>
-              <th class="px-3 py-2 text-left">Téléphone</th>
-              <th class="px-2 py-2"></th>
+              <th class="px-3 py-2 text-left w-[24%]">Contrat</th>
+              <th class="px-3 py-2 text-left w-[15%]">Assureur</th>
+              <th class="px-3 py-2 text-left w-[21%]">Références</th>
+              <th class="px-3 py-2 text-right w-[11%]">Prime</th>
+              <th class="px-3 py-2 text-left w-[11%]">Échéance</th>
+              <th class="px-3 py-2 text-left w-[14%]">Téléphone</th>
+              <th class="px-2 py-2 w-[4%]"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-dark-400/15">
@@ -640,22 +641,27 @@ export function render(store) {
               const prime = Number(c.prime) || 0;
               return `
             <tr class="hover:bg-dark-600/20 transition cursor-pointer contrat-row" data-contrat-id="${c.id}">
-              <td class="px-3 py-2.5">
-                <div class="flex items-center gap-2">
+              <td class="px-3 py-2">
+                <div class="flex items-center gap-2 min-w-0">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${t.color}"></span>
-                  <div>
-                    <p class="text-gray-200 font-medium">${c.nom || '(sans nom)'}</p>
-                    <p class="text-[10px] text-gray-600">${t.label}</p>
+                  <div class="min-w-0">
+                    <p class="text-gray-200 font-medium truncate" title="${esc(c.nom)}">${c.nom || '(sans nom)'}</p>
+                    <p class="text-[10px] text-gray-600 truncate">${t.label}</p>
                   </div>
                 </div>
               </td>
-              <td class="px-3 py-2.5 text-gray-300">${c.assureur || '—'}</td>
-              <td class="px-3 py-2.5 text-gray-300 whitespace-nowrap">${c.numContrat || '—'} ${copyBtn(c.numContrat)}</td>
-              <td class="px-3 py-2.5 text-gray-300 whitespace-nowrap">${c.numClient || '—'} ${copyBtn(c.numClient)}</td>
-              <td class="px-3 py-2.5 text-right text-gray-200 whitespace-nowrap">${prime > 0 ? formatCurrencyCents(prime) + '/' + (c.primePeriode === 'mois' ? 'mois' : 'an') : '—'}</td>
-              <td class="px-3 py-2.5 text-gray-400">${c.echeance || '—'}</td>
-              <td class="px-3 py-2.5 text-gray-300 whitespace-nowrap">${c.telephone ? `<a href="tel:${c.telephone.replace(/\s/g, '')}" class="hover:text-cyan-400">${c.telephone}</a>` : '—'}</td>
-              <td class="px-2 py-2.5 text-right">
+              <td class="px-3 py-2 text-gray-300 truncate" title="${esc(c.assureur)}">${c.assureur || '—'}</td>
+              <td class="px-3 py-2">
+                <div class="flex items-center gap-1 min-w-0">
+                  <span class="text-gray-300 truncate" title="${esc(c.numContrat)}">${c.numContrat || '—'}</span>
+                  ${copyBtn(c.numContrat)}
+                </div>
+                ${c.numClient ? `<div class="flex items-center gap-1 min-w-0"><span class="text-[10px] text-gray-600 truncate" title="Client ${esc(c.numClient)}">client ${c.numClient}</span> ${copyBtn(c.numClient)}</div>` : ''}
+              </td>
+              <td class="px-3 py-2 text-right text-gray-200 whitespace-nowrap">${prime > 0 ? formatCurrencyCents(prime) + '/' + (c.primePeriode === 'mois' ? 'm' : 'an') : '—'}</td>
+              <td class="px-3 py-2 text-gray-400 truncate" title="${esc(c.echeance)}">${c.echeance || '—'}</td>
+              <td class="px-3 py-2 truncate">${c.telephone ? `<a href="tel:${c.telephone.replace(/\s/g, '')}" class="text-gray-300 hover:text-cyan-400 whitespace-nowrap">${c.telephone}</a>` : '—'}</td>
+              <td class="px-2 py-2 text-right">
                 <button data-del-contrat="${c.id}" class="text-gray-600 hover:text-accent-red transition px-1" title="Supprimer">✕</button>
               </td>
             </tr>`;
@@ -663,6 +669,7 @@ export function render(store) {
           </tbody>
         </table>
       </div>
+      <p class="px-4 py-1.5 text-[10px] text-gray-600 border-t border-dark-400/15">Clique sur une ligne pour voir ou corriger la fiche · survole une cellule tronquée pour lire le texte complet</p>
     </div>` : '';
 
   // ---- Encart urgences : qui appeler, par type de sinistre ----
