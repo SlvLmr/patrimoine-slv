@@ -61,23 +61,62 @@ export function render(store) {
         </button>
       </div>
 
-      <!-- ═ ACTE 1 · AUJOURD'HUI ═ -->
-      <div class="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4">
-        <div class="card-dark rounded-xl p-5">
-          <div class="flex items-center justify-between mb-1">
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-              <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Aujourd'hui</h2>
-            </div>
+      <!-- ═ RÉPARTITION : AUJOURD'HUI vs DEMAIN, côte à côte ═ -->
+      <div class="card-dark rounded-xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+            <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Ma répartition</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
             <label class="flex items-center gap-1.5 text-[11px] text-gray-500 cursor-pointer select-none">
               <input type="checkbox" id="rep-immo-toggle" checked class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-purple focus:ring-accent-purple/40">
               Immobilier inclus
             </label>
+            <div class="flex gap-1">
+              <button class="rep-preset btn-ghost" data-years="0">Aujourd'hui</button>
+              <button class="rep-preset btn-ghost" data-years="5">+5 ans</button>
+              <button class="rep-preset btn-ghost" data-years="10">+10 ans</button>
+              <button class="rep-preset btn-ghost" data-years="retraite">Retraite</button>
+            </div>
           </div>
-          <p class="text-center mb-1"><span id="rep-donut-now-total" class="text-2xl font-extrabold text-gray-100"></span></p>
-          <div class="relative" style="height:210px;"><canvas id="rep-donut-now"></canvas></div>
-          <div id="rep-donut-now-legend" class="mt-3 space-y-1.5"></div>
         </div>
+
+        <div class="flex items-center gap-4 mb-1">
+          <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
+            class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer"
+            style="accent-color: #c084fc;">
+          <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
+            <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
+            <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
+          </div>
+        </div>
+        <div class="flex justify-between mb-4 px-1">
+          <span class="text-[10px] text-gray-600">${currentYear}</span>
+          <span class="text-[10px] text-gray-600">${currentYear + years}</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="rounded-xl bg-dark-800/40 border border-dark-400/15 p-4">
+            <p class="text-[11px] text-gray-500 uppercase tracking-widest text-center">Aujourd'hui <span class="text-gray-600">(${currentYear})</span></p>
+            <p class="text-center mt-1 mb-2"><span id="rep-donut-now-total" class="text-xl font-extrabold text-gray-100"></span></p>
+            <div class="relative" style="height:200px;"><canvas id="rep-donut-now"></canvas></div>
+            <div id="rep-donut-now-legend" class="mt-3 space-y-1.5"></div>
+          </div>
+          <div class="rounded-xl bg-dark-800/40 border border-accent-purple/15 p-4">
+            <p class="text-[11px] text-gray-500 uppercase tracking-widest text-center">En <span id="rep-donut-future-year" class="text-accent-amber font-bold">${currentYear}</span></p>
+            <p class="text-center mt-1 mb-2"><span id="rep-donut-future-total" class="text-xl font-extrabold text-accent-amber"></span></p>
+            <div class="relative" style="height:200px;"><canvas id="rep-donut-future"></canvas></div>
+            <div id="rep-donut-deltas" class="mt-3 space-y-1.5"></div>
+            <p class="text-[10px] text-gray-600 text-center mt-2">Écarts en points de pourcentage vs aujourd'hui</p>
+          </div>
+        </div>
+
+        <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
+      </div>
+
+      <!-- Flux mensuels + Diversification -->
+      <div class="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-4">
         <div class="card-dark rounded-xl p-5 flex flex-col">
           <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <div class="flex items-center gap-2">
@@ -88,45 +127,7 @@ export function render(store) {
           </div>
           <div id="rep-flow" class="space-y-0 flex-1 flex flex-col"></div>
         </div>
-      </div>
-
-      <!-- ═ ACTE 2 · DEMAIN ═ -->
-      <div class="card-dark rounded-xl p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Et demain ?</h2>
-          </div>
-          <div class="flex gap-1.5">
-            <button class="rep-preset btn-ghost" data-years="0">Aujourd'hui</button>
-            <button class="rep-preset btn-ghost" data-years="5">+5 ans</button>
-            <button class="rep-preset btn-ghost" data-years="10">+10 ans</button>
-            <button class="rep-preset btn-ghost" data-years="retraite">Retraite</button>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
-            class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer"
-            style="accent-color: #c084fc;">
-          <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
-            <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
-            <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
-          </div>
-        </div>
-        <div class="flex justify-between mt-1 px-1">
-          <span class="text-[10px] text-gray-600">${currentYear}</span>
-          <span class="text-[10px] text-gray-600">${currentYear + years}</span>
-        </div>
-        <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-          <div>
-            <p class="text-[11px] text-gray-500 uppercase tracking-widest text-center mb-2">Répartition en <span id="rep-donut-future-year" class="text-accent-amber font-bold">${currentYear}</span></p>
-            <div class="relative" style="height:200px;"><canvas id="rep-donut-future"></canvas></div>
-            <div id="rep-donut-deltas" class="mt-3 space-y-1.5"></div>
-            <p class="text-[10px] text-gray-600 text-center mt-2">Écarts en points de pourcentage vs aujourd'hui</p>
-          </div>
-          <div id="diversification-widget"></div>
-        </div>
+        <div id="diversification-widget"></div>
       </div>
 
       <!-- Actions + PEE -->
@@ -228,7 +229,7 @@ export function mount(store, navigate) {
     const widget = document.getElementById('diversification-widget');
     if (!widget) return;
 
-    // Build envelope totals from projected snapshot (excludes immobilier)
+    // Mesures factuelles de concentration (pas de score arbitraire)
     const envelopeTotals = {};
     const allPlacements = [];
     const assetClasses = new Set();
@@ -238,8 +239,7 @@ export function mount(store, navigate) {
       const val = snap.placementById?.[p.id] || Number(p.valeur) || Number(p.apport) || 0;
       if (val <= 0) return;
       envelopeTotals[env] = (envelopeTotals[env] || 0) + val;
-      allPlacements.push({ nom: p.nom || 'Sans nom', val });
-
+      allPlacements.push({ nom: p.nom || 'Sans nom', val, categorie: p.categorie || '' });
       const cat = p.categorie || '';
       const envLc = env.toLowerCase();
       if (cat === 'ETF') assetClasses.add('ETF');
@@ -250,88 +250,61 @@ export function mount(store, navigate) {
       else if (envLc === 'livrets') assetClasses.add('Epargne');
       else assetClasses.add('Autre');
     });
-
-    // Include epargne but NOT immobilier
-    const epargne = store.get('actifs.epargne') || [];
-    const eparTotal = epargne.reduce((s, e) => s + (Number(e.solde) || 0), 0);
-    if (eparTotal > 0) {
-      envelopeTotals['Epargne'] = eparTotal;
-      allPlacements.push({ nom: 'Epargne', val: eparTotal });
-      assetClasses.add('Epargne');
-    }
-
-    const totalAll = Object.values(envelopeTotals).reduce((s, v) => s + v, 0);
+    const epargneList = store.get('actifs.epargne') || [];
+    const eparTotal = epargneList.reduce((sum, e) => sum + (Number(e.solde) || 0), 0);
+    const totalAll = Object.values(envelopeTotals).reduce((sum, v) => sum + v, 0) + eparTotal;
     if (totalAll <= 0) { widget.innerHTML = ''; return; }
 
-    const envelopeCount = Object.keys(envelopeTotals).filter(k => envelopeTotals[k] > 0).length;
+    let maxPlac = { nom: '', val: 0, categorie: '' };
+    allPlacements.forEach(pl => { if (pl.val > maxPlac.val) maxPlac = pl; });
+    const maxPlacPct = maxPlac.val / totalAll;
+    let maxEnv = { nom: '', val: 0 };
+    Object.entries(envelopeTotals).forEach(([env, val]) => { if (val > maxEnv.val) maxEnv = { nom: env, val }; });
+    const maxEnvPct = maxEnv.val / totalAll;
+    const eparPct = eparTotal / totalAll;
+    const cryptoVal = envelopeTotals['Crypto'] || 0;
+    const cryptoPct = cryptoVal / totalAll;
 
-    // Envelope concentration score (30 pts)
-    let scoreEnv = 30, maxEnvPct = 0, maxEnvName = '';
-    Object.entries(envelopeTotals).forEach(([env, val]) => { const pct = val / totalAll; if (pct > maxEnvPct) { maxEnvPct = pct; maxEnvName = env; } });
-    if (maxEnvPct > 0.6) scoreEnv = Math.round(30 * (1 - (maxEnvPct - 0.6) / 0.4));
-    else if (maxEnvPct > 0.4) scoreEnv = Math.round(30 * (0.7 + 0.3 * (1 - (maxEnvPct - 0.4) / 0.2)));
-    scoreEnv = Math.max(0, Math.min(30, scoreEnv));
+    const flags = [];
+    if (maxPlacPct > 0.25 && maxPlac.categorie !== 'ETF') {
+      flags.push({ tone: 'warn', titre: `${maxPlac.nom} pèse ${formatPercent(maxPlacPct)} de ton patrimoine investi`, texte: "Une seule ligne fait la pluie et le beau temps sur ton portefeuille. Diluer progressivement réduit ce risque." });
+    } else if (maxPlacPct > 0.4 && maxPlac.categorie === 'ETF') {
+      flags.push({ tone: 'info', titre: `${maxPlac.nom} : ${formatPercent(maxPlacPct)} du total`, texte: "C'est une grosse part, mais un ETF mondial est déjà diversifié en interne — ce n'est pas un défaut en soi." });
+    }
+    if (eparPct > 0.5) {
+      flags.push({ tone: 'warn', titre: `${formatPercent(eparPct)} en épargne de précaution`, texte: "Au-delà de 6 mois de dépenses, l'argent qui dort sur les livrets perd du pouvoir d'achat face à l'inflation." });
+    }
+    if (cryptoPct > 0.15) {
+      flags.push({ tone: 'warn', titre: `Crypto : ${formatPercent(cryptoPct)} du patrimoine investi`, texte: "Classe très volatile — la plupart des allocations prudentes la limitent à 5-10 %." });
+    }
+    if (assetClasses.size <= 1 && allPlacements.length > 0) {
+      flags.push({ tone: 'info', titre: "Une seule classe d'actifs", texte: "Tout ton patrimoine investi repose sur le même moteur de performance. Une 2e classe (obligations, immobilier papier…) amortit les chocs." });
+    }
 
-    // Placement concentration score (30 pts)
-    let scorePlac = 30, maxPlacPct = 0, maxPlacName = '';
-    if (allPlacements.length > 0) {
-      allPlacements.forEach(p => { const pct = p.val / totalAll; if (pct > maxPlacPct) { maxPlacPct = pct; maxPlacName = p.nom; } });
-      if (maxPlacPct > 0.5) scorePlac = Math.round(30 * (1 - (maxPlacPct - 0.5) / 0.5));
-      else if (maxPlacPct > 0.25) scorePlac = Math.round(30 * (0.6 + 0.4 * (1 - (maxPlacPct - 0.25) / 0.25)));
-    } else { scorePlac = 0; }
-    scorePlac = Math.max(0, Math.min(30, scorePlac));
-
-    // Asset class diversity (25 pts)
-    const numCl = assetClasses.size;
-    const scoreAsset = numCl >= 5 ? 25 : numCl === 4 ? 20 : numCl === 3 ? 15 : numCl === 2 ? 10 : numCl === 1 ? 5 : 0;
-
-    // Envelope count (15 pts)
-    const scoreEnvCnt = envelopeCount >= 4 ? 15 : envelopeCount === 3 ? 12 : envelopeCount === 2 ? 8 : envelopeCount === 1 ? 4 : 0;
-
-    const total = scoreEnv + scorePlac + scoreAsset + scoreEnvCnt;
-    const color = total > 70 ? 'text-emerald-400' : total >= 40 ? 'text-amber-400' : 'text-red-400';
-    const ringCol = total > 70 ? '#10b981' : total >= 40 ? '#f59e0b' : '#ef4444';
-    const R = 40, C = 2 * Math.PI * R, off = C - total / 100 * C;
-
-    const insights = [];
-    if (maxEnvPct > 0.4) insights.push('Concentration ' + maxEnvName + ' : ' + formatPercent(maxEnvPct));
-    if (maxPlacPct > 0.25 && allPlacements.length > 1) insights.push((maxPlacName.length > 20 ? maxPlacName.slice(0, 20) + '…' : maxPlacName) + ' : ' + formatPercent(maxPlacPct) + ' du total');
-    if (envelopeCount >= 3) insights.push('Diversification enveloppes : bonne (' + envelopeCount + ')');
-    else if (envelopeCount === 2) insights.push('Diversification enveloppes : correcte (' + envelopeCount + ')');
-    else insights.push('Diversification enveloppes : à améliorer');
-    if (numCl >= 4) insights.push("Classes d'actifs : bien diversifié (" + numCl + ' types)');
-    else if (numCl <= 2 && numCl > 0) insights.push("Classes d'actifs : peu diversifié (" + numCl + ' type' + (numCl > 1 ? 's' : '') + ')');
+    const toneStyle = (t) => t === 'warn'
+      ? { border: 'border-amber-500/25', bg: 'bg-amber-500/5', text: 'text-amber-400', icon: '&#9888;' }
+      : { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', icon: '&#8505;' };
 
     widget.innerHTML = `
-      <div class="card-dark rounded-xl p-5 shadow-lg shadow-gray-500/20">
-        <div class="flex items-center gap-2 mb-4">
-          <div class="w-8 h-8 rounded-lg bg-gray-500/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-          </div>
-          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">Score de diversification</h2>
+      <div class="card-dark rounded-xl p-5 h-full">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">Points d'attention</h2>
         </div>
-        <div class="flex items-center gap-6">
-          <div class="relative flex-shrink-0">
-            <svg width="100" height="100" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="${R}" fill="none" stroke="#374151" stroke-width="8"/>
-              <circle cx="50" cy="50" r="${R}" fill="none" stroke="${ringCol}" stroke-width="8"
-                stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"
-                transform="rotate(-90 50 50)" style="transition: stroke-dashoffset 0.5s ease"/>
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="${color} text-2xl font-bold">${total}</span>
-            </div>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">
-              <span>Concentration enveloppe</span><span class="text-right text-gray-400">${scoreEnv}/30</span>
-              <span>Concentration placement</span><span class="text-right text-gray-400">${scorePlac}/30</span>
-              <span>Classes d'actifs</span><span class="text-right text-gray-400">${scoreAsset}/25</span>
-              <span>Nb enveloppes</span><span class="text-right text-gray-400">${scoreEnvCnt}/15</span>
-            </div>
-            ${insights.length > 0 ? `<div class="space-y-1 border-t border-dark-400/30 pt-2">${insights.slice(0, 3).map(i => '<p class="text-xs text-gray-500">' + i + '</p>').join('')}</div>` : ''}
+        <div class="space-y-2">
+          ${flags.length > 0 ? flags.map(f => {
+            const st = toneStyle(f.tone);
+            return `<div class="rounded-lg ${st.bg} border ${st.border} px-3 py-2.5">
+              <p class="text-xs font-semibold ${st.text}">${st.icon} ${f.titre}</p>
+              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">${f.texte}</p>
+            </div>`;
+          }).join('') : `
+          <div class="rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-3 py-2.5">
+            <p class="text-xs font-semibold text-emerald-400">&#10003; Répartition équilibrée</p>
+            <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Aucun point de concentration majeur détecté : pas de ligne dominante hors ETF, épargne raisonnable, crypto contenue.</p>
+          </div>`}
+          <div class="text-[10px] text-gray-600 pt-1">
+            ${Object.keys(envelopeTotals).length} enveloppe${Object.keys(envelopeTotals).length > 1 ? 's' : ''} · ${assetClasses.size} classe${assetClasses.size > 1 ? 's' : ''} d'actifs · ${allPlacements.length} ligne${allPlacements.length > 1 ? 's' : ''}
           </div>
         </div>
       </div>`;
@@ -420,6 +393,8 @@ export function mount(store, navigate) {
     if (deltas) deltas.innerHTML = donutLegendHtml(allocationFromSnap(snap), allocationFromSnap(now));
     const fy = document.getElementById('rep-donut-future-year');
     if (fy) fy.textContent = currentYear + yearIdx;
+    const ft = document.getElementById('rep-donut-future-total');
+    if (ft) ft.textContent = formatCurrency(allocationFromSnap(snap).reduce((sum, a) => sum + a.value, 0));
   }
 
   document.getElementById('rep-immo-toggle')?.addEventListener('change', (e) => {

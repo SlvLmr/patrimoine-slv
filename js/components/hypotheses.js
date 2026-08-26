@@ -815,8 +815,8 @@ export function render(store) {
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-bold text-gray-100">Hypothèses</h1>
-            <p class="text-xs text-gray-500">Plan théorique · ${hypotheses.length} hypothèse${hypotheses.length > 1 ? 's' : ''}</p>
+            <h1 class="text-xl font-bold text-gray-100">Transmission</h1>
+            <p class="text-xs text-gray-500">Ta stratégie de donation, pas à pas · ${hypotheses.length} événement${hypotheses.length > 1 ? 's' : ''} planifié${hypotheses.length > 1 ? 's' : ''}</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -824,6 +824,25 @@ export function render(store) {
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
             Ajouter
           </button>
+        </div>
+      </div>
+
+      <!-- ═══ VERDICT : l'enjeu chiffré à l'horizon de projection ═══ -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="tx-verdict">
+        <div class="card-dark rounded-xl px-4 py-3.5 border border-red-500/20">
+          <p class="text-[10px] text-gray-500 uppercase tracking-widest">Si tu ne fais rien</p>
+          <p class="text-xl font-extrabold text-red-400 tabular-nums mt-1" id="tx-sans">—</p>
+          <p class="text-[10px] text-gray-600 mt-0.5">de droits de succession <span id="tx-horizon-1"></span></p>
+        </div>
+        <div class="card-dark rounded-xl px-4 py-3.5 border border-dark-400/30">
+          <p class="text-[10px] text-gray-500 uppercase tracking-widest">Avec ton plan actuel</p>
+          <p class="text-xl font-extrabold text-gray-100 tabular-nums mt-1" id="tx-avec">—</p>
+          <p class="text-[10px] text-gray-600 mt-0.5" id="tx-avec-detail">donations planifiées déduites</p>
+        </div>
+        <div class="card-dark rounded-xl px-4 py-3.5 border border-emerald-500/25 bg-emerald-500/5">
+          <p class="text-[10px] text-gray-500 uppercase tracking-widest">Économie réalisée</p>
+          <p class="text-xl font-extrabold text-emerald-400 tabular-nums mt-1" id="tx-eco">—</p>
+          <p class="text-[10px] text-gray-600 mt-0.5">grâce à ta stratégie de transmission</p>
         </div>
       </div>
 
