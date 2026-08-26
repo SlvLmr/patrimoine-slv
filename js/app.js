@@ -1,23 +1,23 @@
-import { Store } from './store.js?v=20260807e';
+import { Store } from './store.js?v=20260807g';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
-import * as RevenusDepenses from './components/revenus-depenses.js?v=20260807e';
-import * as Projection from './components/projection.js?v=20260807e';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20260807e';
-import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260807e';
-import * as Contrats from './components/contrats.js?v=20260807e';
-import * as Compte from './components/compte.js?v=20260807e';
-import * as Repartition from './components/repartition.js?v=20260807e';
-import * as SimulateurFire from './components/simulateur-fire.js?v=20260807e';
-import * as SimulateurCredit from './components/simulateur-credit.js?v=20260807e';
-import * as SimulateurInterets from './components/simulateur-interets.js?v=20260807e';
-import * as SimulateurAuto from './components/simulateur-auto.js?v=20260807e';
-import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260807e';
-import * as Hypotheses from './components/hypotheses.js?v=20260807e';
-import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260807e';
-import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260807e';
-import { showToast, promptModal, confirmModal } from './utils.js?v=20260807e';
+import * as RevenusDepenses from './components/revenus-depenses.js?v=20260807g';
+import * as Projection from './components/projection.js?v=20260807g';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20260807g';
+import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260807g';
+import * as Contrats from './components/contrats.js?v=20260807g';
+import * as Compte from './components/compte.js?v=20260807g';
+import * as Repartition from './components/repartition.js?v=20260807g';
+import * as SimulateurFire from './components/simulateur-fire.js?v=20260807g';
+import * as SimulateurCredit from './components/simulateur-credit.js?v=20260807g';
+import * as SimulateurInterets from './components/simulateur-interets.js?v=20260807g';
+import * as SimulateurAuto from './components/simulateur-auto.js?v=20260807g';
+import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260807g';
+import * as Hypotheses from './components/hypotheses.js?v=20260807g';
+import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260807g';
+import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260807g';
+import { showToast, promptModal, confirmModal } from './utils.js?v=20260807g';
 
 // Auto-configure Google Drive Client ID
 setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
@@ -47,7 +47,7 @@ const navItems = [
   { id: 'compte', label: '_profile_', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', isProfile: true },
   { id: '_title_quotidien', sectionTitle: 'Quotidien' },
   { id: 'suivi-depenses', label: 'Vie quotidienne', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
-  { id: 'revenus-depenses', label: 'Revenus & dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
+  { id: 'revenus-depenses', label: 'Flux mensuels', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'contrats', label: 'Contrats & garanties', icon: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z' },
   { id: '_title_investissement', sectionTitle: 'Investissement' },
   { id: 'portefeuille-live', label: 'Portefeuille', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },

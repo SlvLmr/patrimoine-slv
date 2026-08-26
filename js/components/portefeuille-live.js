@@ -45,13 +45,37 @@ export function render(store) {
   // Enfants : cumul des avoirs de chaque enfant (livrets + placements
   // saisis dans la page Enfants / Compte — donationConfig.enfants)
   const enfantsCfg = (store.get('donationConfig') || {}).enfants || [];
+  // Cumul des DCA versés : chaque mois archivé où la ligne a été cochée
+  // (+ le mois en cours si déjà coché) additionne son montant
+  const archivesPtf = store.get('archiveDepenses') || [];
+  const nowPtf = new Date();
+  const monthKeyPtf = `${nowPtf.getFullYear()}-${String(nowPtf.getMonth() + 1).padStart(2, '0')}`;
+  const cumulDcaEnfant = (prenom) => {
+    const matches = (nom) => (nom || '').toLowerCase().includes(prenom.toLowerCase());
+    const lines = {};
+    const add = (nom, montant) => { lines[nom] = (lines[nom] || 0) + (Number(montant) || 0); };
+    for (const a of archivesPtf) {
+      const conf = a.trRecurringConfirmed || {};
+      for (const d of (a.dcaTR || [])) if (matches(d.nom) && (conf.expenses || []).includes(d.id)) add(d.nom, d.montant);
+      for (const d of (a.depMensuelles || [])) if (matches(d.nom) && (a.cochees || []).includes(d.id)) add(d.nom, d.montant);
+    }
+    if (!archivesPtf.some(a => a.mois === monthKeyPtf)) {
+      const confNow = (store.get('trRecurringConfirmed') || {})[monthKeyPtf] || {};
+      const cochNow = (store.get('cicMensuellesCochees') || {})[monthKeyPtf] || [];
+      for (const d of (store.get('dcaMensuelsTR') || [])) if (matches(d.nom) && (confNow.expenses || []).includes(d.id)) add(d.nom, d.montant);
+      for (const d of (store.get('depensesMensuellesCIC') || [])) if (matches(d.nom) && cochNow.includes(d.id)) add(d.nom, d.montant);
+    }
+    return Object.entries(lines).map(([nom, cumul]) => ({ nom, cumul }));
+  };
   const enfantsParEnfant = enfantsCfg.map(e => {
+    const prenom = (e.prenom || '').trim() || 'Enfant';
     const lignes = [
       ...(e.livrets || []).map(l => ({ nom: l.nom || 'Livret', montant: Number(l.montant) || 0 })),
       ...(e.placements || []).map(pl => ({ nom: pl.nom || pl.type || 'Placement', montant: Number(pl.valeur) || Number(pl.apport) || 0 })),
     ].filter(d => d.montant > 0);
-    return { prenom: (e.prenom || '').trim() || 'Enfant', lignes, total: lignes.reduce((sum, d) => sum + d.montant, 0) };
-  }).filter(e => e.lignes.length > 0);
+    const dcaCumul = prenom !== 'Enfant' ? cumulDcaEnfant(prenom) : [];
+    return { prenom, lignes, dcaCumul, total: lignes.reduce((sum, d) => sum + d.montant, 0) };
+  }).filter(e => e.lignes.length > 0 || e.dcaCumul.length > 0);
   const totalEnfants = enfantsParEnfant.reduce((sum, e) => sum + e.total, 0);
 
   // Group placements by envelope
@@ -279,7 +303,7 @@ export function render(store) {
               <div class="flex items-center justify-between mb-0.5">
                 <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
               </div>
-              <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}</p>
+              <p class="text-sm font-bold text-center whitespace-nowrap" style="color:#d9a520">${fmt(env.total)}</p>
             </div>`;
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
@@ -330,18 +354,30 @@ export function render(store) {
                 <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
                   <div class="flex items-center justify-between mb-1">
                     <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
-                    <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}</p>
+                    <p class="text-sm font-bold whitespace-nowrap" style="color:#d9a520">${fmt(e.total)}</p>
                   </div>
                   <div class="space-y-1 border-t border-dark-400/20 pt-1">
                     ${e.lignes.map(d => `
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1.5 min-w-0">
-                        <div class="w-1 h-1 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
+                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#d9a52080"></div>
                         <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
                       </div>
                       <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}</span>
                     </div>`).join('')}
                   </div>
+                  ${e.dcaCumul.length > 0 ? `
+                  <div class="space-y-1 border-t border-dark-400/20 mt-1 pt-1">
+                    <p class="text-[9px] text-gray-600 uppercase tracking-wider">DCA cumulé</p>
+                    ${e.dcaCumul.map(d => `
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#d9a52080"></div>
+                        <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
+                      </div>
+                      <span class="text-[10px] font-medium flex-shrink-0 ml-2" style="color:#d9a520">${fmt(d.cumul)}</span>
+                    </div>`).join('')}
+                  </div>` : ''}
                 </div>`).join('')}
               </div>` : ''}
             </div>
@@ -419,12 +455,17 @@ export function render(store) {
               ${env.id === 'enfants' ? enfantsParEnfant.map(e => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-400 font-semibold">${e.prenom}</span>
-                <span class="text-[10px] text-accent-amber font-semibold">${fmt(e.total)}</span>
+                <span class="text-[10px] font-semibold" style="color:#d9a520">${fmt(e.total)}</span>
               </div>
               ${e.lignes.map(d => `
               <div class="flex items-center justify-between pl-6 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom}</span>
                 <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(d.montant)}</span>
+              </div>`).join('')}
+              ${e.dcaCumul.map(d => `
+              <div class="flex items-center justify-between pl-6 mt-0.5">
+                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom} <span class="text-[9px] text-gray-600">(DCA cumulé)</span></span>
+                <span class="text-[10px] font-medium flex-shrink-0" style="color:#d9a520">${fmt(d.cumul)}</span>
               </div>`).join('')}`).join('') : items.length > 0 ? items.map(p => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${p.nom}</span>
