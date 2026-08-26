@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20260807d';
+import { formatCurrency, formatCurrencyCents, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20260807e';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur de Crédit Immobilier ─────────────────────────────────────────

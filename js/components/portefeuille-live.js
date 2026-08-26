@@ -42,23 +42,17 @@ export function render(store) {
   const totalActifs = totalLiquidites + totalPlac + totalImmo;
   const patrimoineNet = totalActifs - totalDette;
 
-  // DCA enfants : lignes récurrentes de la Vie quotidienne (TR + CIC)
-  // dont le nom contient le prénom d'un enfant (page Compte)
-  const enfantsNoms = ((store.get('donationConfig') || {}).enfants || [])
-    .map(e => (e.prenom || '').trim()).filter(Boolean);
-  const isChildAsset = (nom) => enfantsNoms.some(pn => (nom || '').toLowerCase().includes(pn.toLowerCase()));
-  const dcaTRList = store.get('dcaMensuelsTR') || [];
-  const depMensCICList = store.get('depensesMensuellesCIC') || [];
-  const enfantsDca = [
-    ...dcaTRList.filter(d => isChildAsset(d.nom)).map(d => ({ nom: d.nom, montant: Number(d.montant) || 0, banque: bankNames.secondary })),
-    ...depMensCICList.filter(d => isChildAsset(d.nom)).map(d => ({ nom: d.nom, montant: Number(d.montant) || 0, banque: bankNames.primary })),
-  ];
-  const totalEnfantsDca = enfantsDca.reduce((s, d) => s + d.montant, 0);
-  // Regrouper les lignes DCA par enfant (pour la rangée détail sous les enveloppes)
-  const enfantsParEnfant = enfantsNoms.map(pn => {
-    const lignes = enfantsDca.filter(d => (d.nom || '').toLowerCase().includes(pn.toLowerCase()));
-    return { prenom: pn, lignes, total: lignes.reduce((s, d) => s + d.montant, 0) };
+  // Enfants : cumul des avoirs de chaque enfant (livrets + placements
+  // saisis dans la page Enfants / Compte — donationConfig.enfants)
+  const enfantsCfg = (store.get('donationConfig') || {}).enfants || [];
+  const enfantsParEnfant = enfantsCfg.map(e => {
+    const lignes = [
+      ...(e.livrets || []).map(l => ({ nom: l.nom || 'Livret', montant: Number(l.montant) || 0 })),
+      ...(e.placements || []).map(pl => ({ nom: pl.nom || pl.type || 'Placement', montant: Number(pl.valeur) || Number(pl.apport) || 0 })),
+    ].filter(d => d.montant > 0);
+    return { prenom: (e.prenom || '').trim() || 'Enfant', lignes, total: lignes.reduce((sum, d) => sum + d.montant, 0) };
   }).filter(e => e.lignes.length > 0);
+  const totalEnfants = enfantsParEnfant.reduce((sum, e) => sum + e.total, 0);
 
   // Group placements by envelope
   const peaPlac = placements.filter(p => (p.enveloppe || '').startsWith('PEA'));
@@ -91,7 +85,7 @@ export function render(store) {
     { id: 'crypto', label: 'Crypto', total: totalCrypto },
     { id: 'av', label: 'Ass. Vie', total: totalAV },
     { id: 'pee', label: 'PEE', total: totalPEE },
-    { id: 'enfants', label: 'Enfants', total: totalEnfantsDca, isMonthly: true },
+    { id: 'enfants', label: 'Enfants', total: totalEnfants },
     { id: 'otherplac', label: 'Autres', total: totalOtherPlac },
   ].filter(e => ['pea', 'cto', 'crypto', 'av', 'pee'].includes(e.id) || e.total > 0);
 
@@ -285,7 +279,7 @@ export function render(store) {
               <div class="flex items-center justify-between mb-0.5">
                 <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
               </div>
-              <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}<span class="text-[9px] text-gray-500 font-normal">/mois</span></p>
+              <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}</p>
             </div>`;
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
@@ -336,7 +330,7 @@ export function render(store) {
                 <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
                   <div class="flex items-center justify-between mb-1">
                     <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
-                    <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}<span class="text-[9px] text-gray-500 font-normal">/mois</span></p>
+                    <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}</p>
                   </div>
                   <div class="space-y-1 border-t border-dark-400/20 pt-1">
                     ${e.lignes.map(d => `
@@ -345,7 +339,7 @@ export function render(store) {
                         <div class="w-1 h-1 rounded-full bg-accent-amber/50 flex-shrink-0"></div>
                         <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
                       </div>
-                      <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
+                      <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}</span>
                     </div>`).join('')}
                   </div>
                 </div>`).join('')}
@@ -425,12 +419,12 @@ export function render(store) {
               ${env.id === 'enfants' ? enfantsParEnfant.map(e => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-400 font-semibold">${e.prenom}</span>
-                <span class="text-[10px] text-accent-amber font-semibold">${fmt(e.total)}<span class="text-gray-600 font-normal">/mois</span></span>
+                <span class="text-[10px] text-accent-amber font-semibold">${fmt(e.total)}</span>
               </div>
               ${e.lignes.map(d => `
               <div class="flex items-center justify-between pl-6 mt-0.5">
-                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom} <span class="text-[9px] text-gray-600">(${d.banque})</span></span>
-                <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
+                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom}</span>
+                <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(d.montant)}</span>
               </div>`).join('')}`).join('') : items.length > 0 ? items.map(p => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${p.nom}</span>
@@ -692,7 +686,7 @@ export function mount() {
     if (enfSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-enf-svg', 'ptf-svg-L3C-enf',
         enfSubCards,
-        enfSubCards.map(() => '#c084fc'),
+        enfSubCards.map(() => '#d9a520'),
         enfSubCards.map(() => 'glow-amber4'),
         'ptf-card-enfants'
       );
