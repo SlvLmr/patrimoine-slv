@@ -6,6 +6,7 @@ import * as RevenusDepenses from './components/revenus-depenses.js?v=20260801d';
 import * as Projection from './components/projection.js?v=20260801d';
 import * as SuiviDepenses from './components/suivi-depenses.js?v=20260801j';
 import * as PortefeuilleLive from './components/portefeuille-live.js?v=20260801i';
+import * as Contrats from './components/contrats.js?v=20260807a';
 import * as Compte from './components/compte.js?v=20260801d';
 import * as Repartition from './components/repartition.js?v=20260801d';
 import * as SimulateurFire from './components/simulateur-fire.js?v=20260801d';
@@ -77,6 +78,7 @@ function promptModal(title, defaultValue, onConfirm) {
 const routes = {
   'revenus-depenses': RevenusDepenses,
   'suivi-depenses': SuiviDepenses,
+  contrats: Contrats,
   'portefeuille-live': PortefeuilleLive,
   projection: Projection,
   repartition: Repartition,
@@ -96,6 +98,7 @@ const navItems = [
   { id: '_title_quotidien', sectionTitle: 'Quotidien' },
   { id: 'revenus-depenses', label: 'Revenus & dépenses', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'suivi-depenses', label: 'Vie quotidienne', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
+  { id: 'contrats', label: 'Contrats & garanties', icon: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z' },
   { id: '_title_investissement', sectionTitle: 'Investissement' },
   { id: 'portefeuille-live', label: 'Portefeuille', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
   { id: 'repartition', label: 'Répartition', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
