@@ -357,7 +357,9 @@ function catalogueForPrompt() {
 function buildPromptContrat() {
   return `Tu es un expert en assurance et protection du particulier en France. J'ai joint un ou plusieurs documents d'assurance (conditions particulières, tableaux de garanties, avis d'échéance, synthèse multi-contrats). Je suis un particulier profane : analyse ces documents POUR MOI et réponds UNIQUEMENT avec un bloc JSON valide, sans texte avant ni après.
 
-IMPORTANT — un document peut regrouper PLUSIEURS contrats (ex. une synthèse « protection famille » avec habitation + mutuelle + GAV + prévoyance). Dans ce cas, renvoie UN OBJET PAR CONTRAT dans un tableau : { "contrats": [ {...}, {...} ] }. Ne fusionne JAMAIS plusieurs contrats en une seule fiche : chaque contrat garde son propre numéro, sa propre prime, sa propre échéance et son propre téléphone. S'il n'y a qu'un seul contrat, renvoie l'objet seul (sans tableau).
+MÉTHODE OBLIGATOIRE, dans cet ordre :
+1. INVENTAIRE : identifie d'abord TOUS les contrats distincts mentionnés dans les documents. Comptent comme contrats à part entière : les contrats collectifs d'entreprise payés sur la fiche de paie (mutuelle, prévoyance), les garanties gratuites (assurances d'une carte bancaire), les contrats sans numéro ou sans prime visibles, et chaque contrat listé dans une synthèse multi-contrats.
+2. RESTITUTION : renvoie { "contrats": [ {...}, {...} ] } avec EXACTEMENT une fiche par contrat inventorié — si les documents mentionnent 5 contrats, le tableau contient 5 fiches, jamais moins. Ne fusionne JAMAIS plusieurs contrats en une seule fiche : chacun garde son propre numéro, sa propre prime, sa propre échéance et son propre téléphone. N'omets aucun contrat sous prétexte qu'il est gratuit, collectif ou incomplet. S'il n'y a réellement qu'un seul contrat, renvoie l'objet seul (sans tableau).
 
 Domaines et postes autorisés (utilise exactement ces identifiants) :
 ${catalogueForPrompt()}
@@ -601,6 +603,7 @@ export function render(store) {
           <button id="btn-copy-prompt-contrat" class="px-3 py-1.5 bg-cyan-500/20 text-cyan-400 text-xs rounded-lg hover:bg-cyan-500/30 transition font-medium">📋 Copier le prompt d'analyse</button>
           <button id="btn-import-contrat" class="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-lg hover:bg-emerald-500/30 transition font-medium">📥 Coller le résultat</button>
           <button id="btn-add-contrat-manuel" class="px-3 py-1.5 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-xs rounded-lg hover:bg-dark-600 hover:text-gray-200 transition">+ Saisie manuelle</button>
+          ${hasData ? `<button id="btn-reset-protection" class="px-3 py-1.5 text-xs rounded-lg text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition ml-auto">♻ Tout réinitialiser</button>` : ''}
         </div>
       </div>
       <div class="rounded-xl bg-dark-800/40 border border-dark-400/15 p-4 sm:p-5 ${contrats.length === 0 ? 'opacity-50' : ''}">
@@ -877,6 +880,17 @@ export function mount(store, navigate) {
       navigate('contrats');
     });
   });
+  // Réinitialisation globale : repartir de zéro (contrats + bilan + radar)
+  document.getElementById('btn-reset-protection')?.addEventListener('click', () => {
+    const nb = (store.get('contrats') || []).length;
+    confirmModal('Tout réinitialiser ?', `Les ${nb} contrat${nb > 1 ? 's' : ''}, le bilan, le radar et les recommandations seront effacés. Tu repartiras d'une page vierge pour ré-importer proprement.`, () => {
+      store.set('contrats', []);
+      store.set('protectionBilan', null);
+      showToast('Page réinitialisée — tu peux ré-importer tes contrats', 'success', 3500);
+      navigate('contrats');
+    }, { okLabel: 'Tout effacer' });
+  });
+
   // Supprimer un conseil ou un doublon (réapparaîtra si un prochain bilan le régénère)
   document.querySelectorAll('[data-dismiss-reco]').forEach(btn => {
     btn.addEventListener('click', (e) => {
