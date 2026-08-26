@@ -96,23 +96,27 @@ export function render(store) {
           <span class="text-[10px] text-gray-600">${currentYear + years}</span>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="rounded-xl bg-dark-800/40 border border-dark-400/15 p-4">
-            <p class="text-[11px] text-gray-500 uppercase tracking-widest text-center">Aujourd'hui <span class="text-gray-600">(${currentYear})</span></p>
-            <p class="text-center mt-1 mb-2"><span id="rep-donut-now-total" class="text-xl font-extrabold text-gray-100"></span></p>
-            <div class="relative" style="height:200px;"><canvas id="rep-donut-now"></canvas></div>
-            <div id="rep-donut-now-legend" class="mt-3 space-y-1.5"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div class="rounded-xl bg-dark-800/40 border border-dark-400/15 p-3">
+            <div class="flex items-center justify-center gap-2">
+              <p class="text-[11px] text-gray-500 uppercase tracking-widest">Aujourd'hui <span class="text-gray-600">(${currentYear})</span></p>
+              <span id="rep-donut-now-total" class="text-base font-extrabold text-gray-100"></span>
+            </div>
+            <div class="relative mt-1" style="height:140px;"><canvas id="rep-donut-now"></canvas></div>
+            <div id="rep-donut-now-legend" class="mt-2 space-y-0.5"></div>
           </div>
-          <div class="rounded-xl bg-dark-800/40 border border-accent-purple/15 p-4">
-            <p class="text-[11px] text-gray-500 uppercase tracking-widest text-center">En <span id="rep-donut-future-year" class="text-accent-amber font-bold">${currentYear}</span></p>
-            <p class="text-center mt-1 mb-2"><span id="rep-donut-future-total" class="text-xl font-extrabold text-accent-amber"></span></p>
-            <div class="relative" style="height:200px;"><canvas id="rep-donut-future"></canvas></div>
-            <div id="rep-donut-deltas" class="mt-3 space-y-1.5"></div>
-            <p class="text-[10px] text-gray-600 text-center mt-2">Écarts en points de pourcentage vs aujourd'hui</p>
+          <div class="rounded-xl bg-dark-800/40 border border-accent-purple/15 p-3">
+            <div class="flex items-center justify-center gap-2">
+              <p class="text-[11px] text-gray-500 uppercase tracking-widest">En <span id="rep-donut-future-year" class="text-accent-amber font-bold">${currentYear}</span></p>
+              <span id="rep-donut-future-total" class="text-base font-extrabold text-accent-amber"></span>
+            </div>
+            <div class="relative mt-1" style="height:140px;"><canvas id="rep-donut-future"></canvas></div>
+            <div id="rep-donut-deltas" class="mt-2 space-y-0.5"></div>
+            <p class="text-[10px] text-gray-600 text-center mt-1.5">Écarts en points vs aujourd'hui</p>
           </div>
         </div>
 
-        <div id="rep-kpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4"></div>
+        <div id="rep-kpi" class="grid grid-cols-3 gap-2 mt-3"></div>
       </div>
 
       <!-- Flux mensuels + Diversification -->
@@ -229,7 +233,6 @@ export function mount(store, navigate) {
     const widget = document.getElementById('diversification-widget');
     if (!widget) return;
 
-    // Mesures factuelles de concentration (pas de score arbitraire)
     const envelopeTotals = {};
     const allPlacements = [];
     const assetClasses = new Set();
@@ -252,60 +255,88 @@ export function mount(store, navigate) {
     });
     const epargneList = store.get('actifs.epargne') || [];
     const eparTotal = epargneList.reduce((sum, e) => sum + (Number(e.solde) || 0), 0);
-    const totalAll = Object.values(envelopeTotals).reduce((sum, v) => sum + v, 0) + eparTotal;
+    if (eparTotal > 0) {
+      envelopeTotals['Epargne'] = eparTotal;
+      assetClasses.add('Epargne');
+    }
+    const totalAll = Object.values(envelopeTotals).reduce((sum, v) => sum + v, 0);
     if (totalAll <= 0) { widget.innerHTML = ''; return; }
 
-    let maxPlac = { nom: '', val: 0, categorie: '' };
-    allPlacements.forEach(pl => { if (pl.val > maxPlac.val) maxPlac = pl; });
-    const maxPlacPct = maxPlac.val / totalAll;
-    let maxEnv = { nom: '', val: 0 };
-    Object.entries(envelopeTotals).forEach(([env, val]) => { if (val > maxEnv.val) maxEnv = { nom: env, val }; });
-    const maxEnvPct = maxEnv.val / totalAll;
-    const eparPct = eparTotal / totalAll;
-    const cryptoVal = envelopeTotals['Crypto'] || 0;
-    const cryptoPct = cryptoVal / totalAll;
+    // ── Score /100 (concentration enveloppe 30 + placement 30 + classes 25 + nb enveloppes 15) ──
+    const envelopeCount = Object.keys(envelopeTotals).filter(k => envelopeTotals[k] > 0).length;
+    let scoreEnv = 30, maxEnvPct = 0, maxEnvName = '';
+    Object.entries(envelopeTotals).forEach(([env, val]) => { const pct = val / totalAll; if (pct > maxEnvPct) { maxEnvPct = pct; maxEnvName = env; } });
+    if (maxEnvPct > 0.6) scoreEnv = Math.round(30 * (1 - (maxEnvPct - 0.6) / 0.4));
+    else if (maxEnvPct > 0.4) scoreEnv = Math.round(30 * (0.7 + 0.3 * (1 - (maxEnvPct - 0.4) / 0.2)));
+    scoreEnv = Math.max(0, Math.min(30, scoreEnv));
 
+    let scorePlac = 30, maxPlac = { nom: '', val: 0, categorie: '' };
+    allPlacements.forEach(pl => { if (pl.val > maxPlac.val) maxPlac = pl; });
+    const maxPlacPct = allPlacements.length > 0 ? maxPlac.val / totalAll : 0;
+    if (allPlacements.length > 0) {
+      if (maxPlacPct > 0.5) scorePlac = Math.round(30 * (1 - (maxPlacPct - 0.5) / 0.5));
+      else if (maxPlacPct > 0.25) scorePlac = Math.round(30 * (0.6 + 0.4 * (1 - (maxPlacPct - 0.25) / 0.25)));
+    } else { scorePlac = 0; }
+    scorePlac = Math.max(0, Math.min(30, scorePlac));
+
+    const numCl = assetClasses.size;
+    const scoreAsset = numCl >= 5 ? 25 : numCl === 4 ? 20 : numCl === 3 ? 15 : numCl === 2 ? 10 : numCl === 1 ? 5 : 0;
+    const scoreEnvCnt = envelopeCount >= 4 ? 15 : envelopeCount === 3 ? 12 : envelopeCount === 2 ? 8 : envelopeCount === 1 ? 4 : 0;
+
+    const total = scoreEnv + scorePlac + scoreAsset + scoreEnvCnt;
+    const color = total > 70 ? 'text-emerald-400' : total >= 40 ? 'text-amber-400' : 'text-red-400';
+    const ringCol = total > 70 ? '#10b981' : total >= 40 ? '#f59e0b' : '#ef4444';
+    const R = 32, C = 2 * Math.PI * R, off = C - total / 100 * C;
+
+    // ── Points d'attention factuels ──
+    const eparPct = eparTotal / totalAll;
+    const cryptoPct = (envelopeTotals['Crypto'] || 0) / totalAll;
     const flags = [];
     if (maxPlacPct > 0.25 && maxPlac.categorie !== 'ETF') {
-      flags.push({ tone: 'warn', titre: `${maxPlac.nom} pèse ${formatPercent(maxPlacPct)} de ton patrimoine investi`, texte: "Une seule ligne fait la pluie et le beau temps sur ton portefeuille. Diluer progressivement réduit ce risque." });
-    } else if (maxPlacPct > 0.4 && maxPlac.categorie === 'ETF') {
-      flags.push({ tone: 'info', titre: `${maxPlac.nom} : ${formatPercent(maxPlacPct)} du total`, texte: "C'est une grosse part, mais un ETF mondial est déjà diversifié en interne — ce n'est pas un défaut en soi." });
+      flags.push({ tone: 'warn', texte: `<b>${maxPlac.nom}</b> pèse ${formatPercent(maxPlacPct)} du total — une seule ligne fait la pluie et le beau temps.` });
     }
     if (eparPct > 0.5) {
-      flags.push({ tone: 'warn', titre: `${formatPercent(eparPct)} en épargne de précaution`, texte: "Au-delà de 6 mois de dépenses, l'argent qui dort sur les livrets perd du pouvoir d'achat face à l'inflation." });
+      flags.push({ tone: 'warn', texte: `${formatPercent(eparPct)} en épargne : au-delà de 6 mois de dépenses, cet argent perd face à l'inflation.` });
     }
     if (cryptoPct > 0.15) {
-      flags.push({ tone: 'warn', titre: `Crypto : ${formatPercent(cryptoPct)} du patrimoine investi`, texte: "Classe très volatile — la plupart des allocations prudentes la limitent à 5-10 %." });
+      flags.push({ tone: 'warn', texte: `Crypto à ${formatPercent(cryptoPct)} — les allocations prudentes la limitent à 5-10 %.` });
     }
-    if (assetClasses.size <= 1 && allPlacements.length > 0) {
-      flags.push({ tone: 'info', titre: "Une seule classe d'actifs", texte: "Tout ton patrimoine investi repose sur le même moteur de performance. Une 2e classe (obligations, immobilier papier…) amortit les chocs." });
+    if (maxEnvPct > 0.6 && maxEnvName !== 'Epargne') {
+      flags.push({ tone: 'info', texte: `L'enveloppe ${maxEnvName} concentre ${formatPercent(maxEnvPct)} — pas un défaut si le contenu est diversifié (ETF monde).` });
     }
-
-    const toneStyle = (t) => t === 'warn'
-      ? { border: 'border-amber-500/25', bg: 'bg-amber-500/5', text: 'text-amber-400', icon: '&#9888;' }
-      : { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', icon: '&#8505;' };
+    if (flags.length === 0) {
+      flags.push({ tone: 'ok', texte: 'Aucun point de concentration majeur : répartition équilibrée.' });
+    }
+    const toneCls = (t) => t === 'warn' ? 'text-amber-400' : t === 'ok' ? 'text-emerald-400' : 'text-blue-400';
+    const toneIcon = (t) => t === 'warn' ? '&#9888;' : t === 'ok' ? '&#10003;' : '&#8505;';
 
     widget.innerHTML = `
-      <div class="card-dark rounded-xl p-5 h-full">
+      <div class="card-dark rounded-xl p-4 h-full">
         <div class="flex items-center gap-2 mb-3">
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">Points d'attention</h2>
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">Score de diversification</h2>
         </div>
-        <div class="space-y-2">
-          ${flags.length > 0 ? flags.map(f => {
-            const st = toneStyle(f.tone);
-            return `<div class="rounded-lg ${st.bg} border ${st.border} px-3 py-2.5">
-              <p class="text-xs font-semibold ${st.text}">${st.icon} ${f.titre}</p>
-              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">${f.texte}</p>
-            </div>`;
-          }).join('') : `
-          <div class="rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-3 py-2.5">
-            <p class="text-xs font-semibold text-emerald-400">&#10003; Répartition équilibrée</p>
-            <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Aucun point de concentration majeur détecté : pas de ligne dominante hors ETF, épargne raisonnable, crypto contenue.</p>
-          </div>`}
-          <div class="text-[10px] text-gray-600 pt-1">
-            ${Object.keys(envelopeTotals).length} enveloppe${Object.keys(envelopeTotals).length > 1 ? 's' : ''} · ${assetClasses.size} classe${assetClasses.size > 1 ? 's' : ''} d'actifs · ${allPlacements.length} ligne${allPlacements.length > 1 ? 's' : ''}
+        <div class="flex items-center gap-4">
+          <div class="relative flex-shrink-0">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="${R}" fill="none" stroke="#374151" stroke-width="7"/>
+              <circle cx="40" cy="40" r="${R}" fill="none" stroke="${ringCol}" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"
+                transform="rotate(-90 40 40)" style="transition: stroke-dashoffset 0.5s ease"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="${color} text-xl font-bold">${total}</span>
+            </div>
           </div>
+          <div class="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-gray-500">
+            <span>Conc. enveloppe</span><span class="text-right text-gray-400">${scoreEnv}/30</span>
+            <span>Conc. placement</span><span class="text-right text-gray-400">${scorePlac}/30</span>
+            <span>Classes d'actifs</span><span class="text-right text-gray-400">${scoreAsset}/25</span>
+            <span>Nb enveloppes</span><span class="text-right text-gray-400">${scoreEnvCnt}/15</span>
+          </div>
+        </div>
+        <div class="space-y-1 border-t border-dark-400/30 pt-2 mt-2.5">
+          ${flags.slice(0, 3).map(f => `<p class="text-[11px] text-gray-400 leading-snug"><span class="${toneCls(f.tone)}">${toneIcon(f.tone)}</span> ${f.texte}</p>`).join('')}
         </div>
       </div>`;
   }
