@@ -1,6 +1,6 @@
-import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20260807g';
+import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20260808a';
 import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin, ASSET_COLORS } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260807g';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260808a';
 
 // Color map for envelope groups
 const GROUP_COLORS = ASSET_COLORS;

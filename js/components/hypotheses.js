@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal } from '../utils.js?v=20260807g';
+import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal } from '../utils.js?v=20260808a';
 
 // ============================================================================
 // HYPOTHÈSES — Plan théorique éditable
