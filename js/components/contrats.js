@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError } from '../utils.js?v=20260808a';
+import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError } from '../utils.js?v=20260808f';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================
@@ -429,6 +429,23 @@ function parseColleJSON(text) {
   const last = t.lastIndexOf('}');
   if (first >= 0 && last > first) t = t.slice(first, last + 1);
   return JSON.parse(t);
+}
+
+// Conseils exportés pour la page « Le conseiller »
+export function getConseilsContrats(store) {
+  const bilan = store.get('protectionBilan') || null;
+  const recos = (bilan?.recos || []).map(r => ({ prio: r.priorite || 3, titre: r.titre, texte: r.texte + (r.prix ? ` (${r.prix})` : '') }));
+  const doublons = (bilan?.doublons || []).map(d => ({ prio: 2, titre: `Doublon : ${d.titre}`, texte: d.texte }));
+  const out = [...recos, ...doublons].sort((a, b) => a.prio - b.prio);
+  if (out.length === 0) {
+    const hasContrats = (store.get('contrats') || []).length > 0;
+    out.push({ prio: 3,
+      titre: hasContrats ? 'Lance le bilan global de protection' : "Analyse tes contrats d'assurance",
+      texte: hasContrats
+        ? "Tes contrats sont importés mais le bilan croisé n'a pas encore été fait : il détecte les doublons, les trous de couverture et génère tes recommandations."
+        : "Dépose tes contrats via l'assistant de la page Contrats & garanties pour obtenir ton radar de protection et des recommandations personnalisées." });
+  }
+  return out;
 }
 
 // ============================================================

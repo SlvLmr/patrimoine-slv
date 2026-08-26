@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput } from '../utils.js?v=20260808a';
+import { formatCurrency, parseNumberInput } from '../utils.js?v=20260808f';
 
 // ─── Simulateur Salaire : Brut → Net ────────────────────────────────────────
 // Calculates net salary from gross based on French social contributions.

@@ -1,7 +1,7 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20260808a';
+import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20260808f';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE, ASSET_COLORS } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260808a';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260808a';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260808f';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260808f';
 import { calculerFiscaliteDonation } from '../fiscal.js';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
@@ -36,7 +36,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260808a';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260808f';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -1795,7 +1795,7 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
-      const { exportProjectionPDF } = await import('../export-pdf.js?v=20260808a');
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=20260808f');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);

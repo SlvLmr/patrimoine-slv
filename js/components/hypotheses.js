@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal } from '../utils.js?v=20260808a';
+import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal } from '../utils.js?v=20260808f';
 
 // ============================================================================
 // HYPOTHÈSES — Plan théorique éditable
@@ -780,6 +780,62 @@ function renderChildGauges(enfant, gauges, color) {
 }
 
 // ─── Main render ─────────────────────────────────────────────────────────────
+
+// Conseils exportés pour la page « Le conseiller »
+export function getConseilsTransmission(store) {
+  try {
+    const cfg = getDonationConfig(store);
+    const enfants = cfg.enfants || [];
+    const params = store.get('parametres') || {};
+    const ageDonateur = params.ageFinAnnee || 43;
+    const currentYear = new Date().getFullYear();
+    let snapshots = [];
+    try { snapshots = computeProjection(store, profileToOverrides(getProfiles(store), getActiveProfile(store))); } catch (e) { return []; }
+    if (!snapshots.length) return [];
+    const getAV = (snap) => (snap.placementDetail || {})['Assurance Vie'] || 0;
+    const getHorsAV = (snap) => Object.entries(snap.placementDetail || {}).reduce((sum, [k, v]) => k !== 'Assurance Vie' ? sum + v : sum, 0);
+    const nbE = enfants.length || 1;
+    const calcSucc = (horsAV, av) => {
+      const partBrute = horsAV / nbE;
+      const droitsHorsAV = calculerDroitsDonation(Math.max(0, partBrute - ABATTEMENT_PARENT_ENFANT));
+      const avDroits = calculerDroitsAV(Math.max(0, av / nbE - AV_ABATTEMENT_PAR_BENEFICIAIRE));
+      return (droitsHorsAV + avDroits) * nbE;
+    };
+    const sNow = { immobilier: snapshots[0].immobilier || 0, assuranceVie: getAV(snapshots[0]) };
+    const last = snapshots[snapshots.length - 1];
+    const lastIdx = snapshots.length - 1;
+    const sans = calcSucc((last.immobilier || 0) + getHorsAV(last) + (last.epargne || 0), getAV(last));
+    const donsPlan = getHypotheses(store).filter(h => h.theme === 'donation');
+    const recos = [];
+    const avCapacity = AV_ABATTEMENT_PAR_BENEFICIAIRE * nbE;
+    const year70 = currentYear + (AGE_MAX_DONATEUR_AV - ageDonateur);
+    if (ageDonateur < AGE_MAX_DONATEUR_AV && sNow.assuranceVie < avCapacity) {
+      recos.push({ prio: 1, titre: `L'assurance vie : ta niche n°1, jusqu'en ${year70}`,
+        texte: `Chaque euro versé avant tes 70 ans est transmis avec 152 500 € d'abattement par enfant — ${formatCurrency(avCapacity)} de capacité au total. Encours actuel : ${formatCurrency(sNow.assuranceVie)}.` });
+    }
+    if (donsPlan.length === 0 && sans > 0) {
+      recos.push({ prio: 1, titre: 'Aucune donation planifiée',
+        texte: `Sans stratégie, ~${formatCurrency(sans)} de droits de succession à l'horizon ${currentYear + lastIdx}. Commence par les 100 000 € par parent et par enfant, renouvelables tous les 15 ans.` });
+    }
+    if (donsPlan.length > 0) {
+      const firstYear = Math.min(...donsPlan.map(h => h.annee).filter(Boolean));
+      const renou = firstYear + RENOUVELLEMENT_ANNEES;
+      if (isFinite(firstYear) && renou <= currentYear + snapshots.length) {
+        recos.push({ prio: 2, titre: `2ᵉ vague de donations possible dès ${renou}`,
+          texte: `Tes abattements de 100 000 €/enfant se reconstituent 15 ans après ta donation de ${firstYear}.` });
+      }
+    }
+    if (sNow.immobilier > 0 && ageDonateur <= 70) {
+      recos.push({ prio: 2, titre: `Démembrement de l'immobilier : avant ${year70}`,
+        texte: `Donner la nue-propriété de ta maison (${formatCurrency(sNow.immobilier)}) entre 61 et 70 ans n'est taxé que sur 60 % de sa valeur — et tu en gardes l'usage à vie.` });
+    }
+    if (ageDonateur < AGE_MAX_DONATEUR_TEPA) {
+      recos.push({ prio: 3, titre: "Don familial d'argent : 31 865 € en plus",
+        texte: `Par enfant majeur, exonérés, tant que tu as moins de 80 ans — en plus des 100 000 €, renouvelable tous les 15 ans.` });
+    }
+    return recos.sort((a, b) => a.prio - b.prio);
+  } catch (e) { return []; }
+}
 
 export function render(store) {
   const hypotheses = getHypotheses(store);
