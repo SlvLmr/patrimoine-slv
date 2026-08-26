@@ -169,7 +169,7 @@ function conseils(store, fire, annee) {
     const avTotal = (fire.snapshots[0].placementDetail || {})['Assurance Vie'] || 0;
     const capacite = 152500 * enfants.length;
     if (avTotal < capacite && age < 70) {
-      recos.push({ prio: 2, titre: `Parent de ${enfants.length} : ton AV est aussi un outil de transmission`, texte: `${formatCurrency(avTotal)} d'encours pour ${formatCurrency(capacite)} transmissibles hors succession (avant 70 ans). Chaque versement AV prépare à la fois ta rente ET l'héritage. → détails sur Transmission` });
+      recos.push({ prio: 2, titre: `Parent de ${enfants.length} : l'AV couvre le volet transmission`, texte: `Pour la part de ton patrimoine destinée aux enfants, l'AV offre ${formatCurrency(capacite)} transmissibles hors succession si versés avant 70 ans (encours actuel : ${formatCurrency(avTotal)}). Elle complète tes PEA/CTO — qui gardent leur rôle de moteurs de croissance — sans les remplacer. → détails sur Transmission` });
     }
   }
 

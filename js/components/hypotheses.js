@@ -810,8 +810,8 @@ export function getConseilsTransmission(store) {
     const avCapacity = AV_ABATTEMENT_PAR_BENEFICIAIRE * nbE;
     const year70 = currentYear + (AGE_MAX_DONATEUR_AV - ageDonateur);
     if (ageDonateur < AGE_MAX_DONATEUR_AV && sNow.assuranceVie < avCapacity) {
-      recos.push({ prio: 1, titre: `L'assurance vie : ta niche n°1, jusqu'en ${year70}`,
-        texte: `Chaque euro versé avant tes 70 ans est transmis avec 152 500 € d'abattement par enfant — ${formatCurrency(avCapacity)} de capacité au total. Encours actuel : ${formatCurrency(sNow.assuranceVie)}.` });
+      recos.push({ prio: 1, titre: `AV : le canal dédié à la part à transmettre (avant ${year70})`,
+        texte: `Pour la fraction de ton patrimoine destinée aux enfants, l'assurance vie versée avant 70 ans se transmet hors succession avec 152 500 € d'abattement par enfant (${formatCurrency(avCapacity)} au total). Encours actuel : ${formatCurrency(sNow.assuranceVie)}. En complément de tes PEA/CTO, qui restent les moteurs de croissance du projet.` });
     }
     if (donsPlan.length === 0 && sans > 0) {
       recos.push({ prio: 1, titre: 'Aucune donation planifiée',
@@ -1373,8 +1373,8 @@ export function mount(store, navigate) {
         const avCapacity = AV_ABATTEMENT_PAR_BENEFICIAIRE * nbE;
         const year70 = currentYear + (AGE_MAX_DONATEUR_AV - ageDonateur);
         if (ageDonateur < AGE_MAX_DONATEUR_AV && sNow.assuranceVie < avCapacity) {
-          recos.push({ prio: 1, titre: `L'assurance vie : ta niche n°1, jusqu'en ${year70}`,
-            texte: `Chaque euro versé avant tes 70 ans est transmis avec 152 500 € d'abattement par enfant, hors succession — soit ${formatCurrency(avCapacity)} de capacité au total. Ton encours actuel : ${formatCurrency(sNow.assuranceVie)}. C'est ta plus grosse marge inexploitée.` });
+          recos.push({ prio: 1, titre: `AV : le canal dédié à la part à transmettre (avant ${year70})`,
+            texte: `Pour la fraction de ton patrimoine destinée aux enfants, l'AV versée avant 70 ans se transmet hors succession avec 152 500 € d'abattement par enfant — ${formatCurrency(avCapacity)} au total. Encours actuel : ${formatCurrency(sNow.assuranceVie)}. En complément de tes PEA/CTO, qui restent les moteurs de croissance du projet.` });
         }
         if (donsPlan.length === 0 && sans > 0) {
           recos.push({ prio: 1, titre: 'Aucune donation planifiée',
