@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20260807b';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20260807c';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -661,12 +661,12 @@ export function render(store) {
   const noOps = opsCIC.length === 0 && opsTR.length === 0 && extraBankData.every(b => b.ops.length === 0) && archives.length === 0;
 
   return `
-    <div class="space-y-4">
+    <div class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-sky-500/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
               </svg>
             </div>
@@ -674,14 +674,14 @@ export function render(store) {
           </h2>
           <p class="text-gray-500 text-sm mt-1">Suivi de tes opérations bancaires au quotidien</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-          <button id="btn-add-revenu" class="px-2.5 sm:px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs sm:text-sm rounded-lg hover:bg-emerald-500/30 transition font-medium">+ Revenu</button>
-          <button id="btn-add-expense" class="px-2.5 sm:px-3 py-1.5 bg-accent-red/20 text-accent-red text-xs sm:text-sm rounded-lg hover:bg-accent-red/30 transition font-medium">+ Dépense</button>
-          <button id="btn-add-virement" class="px-2.5 sm:px-3 py-1.5 bg-amber-500/20 text-amber-400 text-xs sm:text-sm rounded-lg hover:bg-amber-500/30 transition font-medium">+ Virement</button>
-          <button id="btn-add-invest" class="px-2.5 sm:px-3 py-1.5 bg-blue-500/20 text-blue-400 text-xs sm:text-sm rounded-lg hover:bg-blue-500/30 transition font-medium">+ Invest.</button>
-          <button id="btn-add-ndf" class="px-2.5 sm:px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs sm:text-sm rounded-lg hover:bg-purple-500/30 transition font-medium">+ NDF</button>
-          <button id="btn-transfer" class="px-2.5 sm:px-3 py-1.5 bg-cyan-500/20 text-cyan-400 text-xs sm:text-sm rounded-lg hover:bg-cyan-500/30 transition font-medium">⇄ Transfert</button>
-          <button id="btn-archive-month" class="px-2 py-1 bg-dark-600/60 border border-dark-400/40 text-gray-500 text-[10px] sm:text-[11px] rounded-md hover:bg-dark-600 hover:text-gray-200 transition font-medium flex items-center gap-1.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-add-revenu" class="btn-secondary"><span class="btn-dot" style="background:#34d399"></span>+ Revenu</button>
+          <button id="btn-add-expense" class="btn-secondary"><span class="btn-dot" style="background:rgb(var(--accent-red))"></span>+ Dépense</button>
+          <button id="btn-add-virement" class="btn-secondary"><span class="btn-dot" style="background:#fbbf24"></span>+ Virement</button>
+          <button id="btn-add-invest" class="btn-secondary"><span class="btn-dot" style="background:#60a5fa"></span>+ Invest.</button>
+          <button id="btn-add-ndf" class="btn-secondary"><span class="btn-dot" style="background:#c084fc"></span>+ NDF</button>
+          <button id="btn-transfer" class="btn-secondary"><span class="btn-dot" style="background:#22d3ee"></span>⇄ Transfert</button>
+          <button id="btn-archive-month" class="btn-ghost">
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
             Clôturer le mois
           </button>
@@ -716,8 +716,8 @@ export function render(store) {
               const bgC = getPocketColor((pocketColorsStore[pk.id] || {}).bg || pk.defaultBg);
               const txC = getPocketColor((pocketColorsStore[pk.id] || {}).text || pk.defaultText);
               const delBtn = pk.delPocket
-                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="cic" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
-                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
+                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="cic" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[9px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
+                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[9px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
               return `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md ${bgC.bg} ${bgC.border} cursor-pointer hover:bg-dark-500/40 transition group/pk relative pk-drag-item" draggable="true" data-pk-drag-id="${pk.id}" ${pk.editAttr}>
               <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${pk.label}</span>
               <span class="text-[10px] font-semibold ${txC.text}">${formatCurrencyCents(pk.amount)}</span>
@@ -796,8 +796,8 @@ export function render(store) {
               const bgC = getPocketColor((pocketColorsStore[pk.id] || {}).bg || pk.defaultBg);
               const txC = getPocketColor((pocketColorsStore[pk.id] || {}).text || pk.defaultText);
               const delBtn = pk.delPocket
-                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="tr" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
-                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
+                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="tr" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[9px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
+                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[9px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
               return `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md ${bgC.bg} ${bgC.border} cursor-pointer hover:bg-dark-500/40 transition group/pk relative pk-drag-item" draggable="true" data-pk-drag-id="${pk.id}" ${pk.editAttr}>
               <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${pk.label}</span>
               <span class="text-[10px] font-semibold ${txC.text}">${pk.prefix}${formatCurrencyCents(pk.amount)}</span>
@@ -957,8 +957,8 @@ export function render(store) {
               const bgC = getPocketColor((pocketColorsStore[pk.id] || {}).bg || pk.defaultBg);
               const txC = getPocketColor((pocketColorsStore[pk.id] || {}).text || pk.defaultText);
               const delBtn = pk.delPocket
-                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="${bank.id}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
-                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[8px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
+                ? `<button data-del-pocket="${pk.delPocket}" data-pocket-bank="${bank.id}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[9px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`
+                : `<button data-del-budget="${pk.delKey}" class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-dark-800 border border-dark-400/30 text-gray-600 hover:text-accent-red text-[9px] flex items-center justify-center opacity-0 group-hover/pk:opacity-100 transition-opacity">✕</button>`;
               return `<div class="flex flex-col items-center justify-center px-1 py-1 rounded-md ${bgC.bg} ${bgC.border} cursor-pointer hover:bg-dark-500/40 transition group/pk relative pk-drag-item" draggable="true" data-pk-drag-id="${pk.id}" ${pk.editAttr}>
               <span class="text-[9px] text-gray-500 truncate w-full text-center leading-tight">${pk.label}</span>
               <span class="text-[10px] font-semibold ${txC.text}">${formatCurrencyCents(pk.amount)}</span>

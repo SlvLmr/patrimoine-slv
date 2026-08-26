@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20260807b';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20260807c';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur d'Intérêts Composés ─────────────────────────────────────────
@@ -154,8 +154,8 @@ export function render() {
     <!-- Header -->
     <div>
       <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
-          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
           </svg>
         </div>
@@ -170,7 +170,7 @@ export function render() {
     </div>
 
     <!-- Save bar -->
-    <div class="card-dark rounded-2xl overflow-hidden">
+    <div class="card-dark rounded-xl overflow-hidden">
       <button id="ic-save-toggle" class="w-full flex items-center justify-between px-4 py-3 hover:bg-dark-600/30 transition">
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +192,7 @@ export function render() {
       <!-- LEFT: Inputs -->
       <div class="lg:col-span-5 space-y-4">
 
-        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
+        <div class="card-dark rounded-xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Paramètres
@@ -229,7 +229,7 @@ export function render() {
         <div id="ic-results" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
 
         <!-- Chart -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5">
+        <div class="card-dark rounded-xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Évolution du capital</h3>
           <div class="h-80">
             <canvas id="ic-chart"></canvas>
@@ -237,7 +237,7 @@ export function render() {
         </div>
 
         <!-- Table -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5">
+        <div class="card-dark rounded-xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Détail par année</h3>
           <div class="overflow-x-auto max-h-72 overflow-y-auto">
             <table class="w-full text-sm">
@@ -374,7 +374,7 @@ function renderResults(r) {
   if (!container) return;
 
   container.innerHTML = `
-    <div class="card-dark rounded-2xl p-4 col-span-2 sm:col-span-3 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border border-emerald-500/10">
+    <div class="card-dark rounded-xl p-4 col-span-2 sm:col-span-3 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border border-emerald-500/10">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wider">Capital final</p>
@@ -382,7 +382,7 @@ function renderResults(r) {
           <p class="text-xs text-gray-500 mt-1">soit ${formatCurrency(Math.round(r.capitalFinalReel))} en euros constants (après inflation)</p>
         </div>
         <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-          <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-7 h-7 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
           </svg>
         </div>
@@ -396,7 +396,7 @@ function renderResults(r) {
 }
 
 function mc(label, value, color, sub) {
-  return `<div class="card-dark rounded-2xl p-4">
+  return `<div class="card-dark rounded-xl p-4">
     <p class="text-xs text-gray-500 uppercase tracking-wider">${label}</p>
     <p class="text-lg font-bold ${color} mt-1">${value}</p>
     ${sub ? `<p class="text-xs text-gray-600 mt-0.5">${sub}</p>` : ''}

@@ -118,8 +118,8 @@ export function render(store) {
     <div class="space-y-0">
       <div class="mb-4">
         <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-blue-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
             </svg>
           </div>
@@ -130,7 +130,7 @@ export function render(store) {
 
       <!-- LEVEL 1 — Patrimoine net -->
       <div class="flex justify-center">
-        <div class="card-dark rounded-2xl px-4 sm:px-6 py-3 text-center inline-block">
+        <div class="card-dark rounded-xl px-4 sm:px-6 py-3 text-center inline-block">
           <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Patrimoine net</p>
           <p class="text-2xl sm:text-3xl font-extrabold text-accent-amber tracking-tight">${fmt(patrimoineNet)}</p>
           ${totalDette > 0 ? `
@@ -251,7 +251,7 @@ export function render(store) {
             <div class="grid grid-cols-${Math.min(bankCards.length, 2)} sm:grid-cols-${bankCards.length > 3 ? '3' : bankCards.length} gap-1">
               ${bankCards.map((b, i) => `
               <div id="ptf-card-bank-${i}" class="card-dark rounded-xl p-1.5 overflow-hidden">
-                <p class="text-[9px] sm:text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${b.label}</p>
+                <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${b.label}</p>
                 <p class="text-xs font-bold text-indigo-400 text-center whitespace-nowrap">${fmt(b.solde)}</p>
               </div>`).join('')}
             </div>
@@ -259,7 +259,7 @@ export function render(store) {
             <div class="grid grid-cols-${epargne.length > 2 ? '3' : epargne.length || 1} gap-1.5">
               ${epargne.length > 0 ? epargne.map((e, idx) => `
               <div id="ptf-card-ep-${idx}" class="card-dark rounded-xl p-2.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${e.nom}</p>
+                <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${e.nom}</p>
                 <p class="text-sm font-bold text-indigo-400 text-center">${fmt(Number(e.solde) || 0)}</p>
               </div>`).join('') : '<div class="card-dark rounded-xl p-2.5"><p class="text-[9px] text-gray-600">Aucun</p></div>'}
             </div>
@@ -283,15 +283,15 @@ export function render(store) {
               if (env.id === 'enfants') return `
             <div id="ptf-card-enfants" class="card-dark rounded-xl p-2">
               <div class="flex items-center justify-between mb-0.5">
-                <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
+                <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
               </div>
-              <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}<span class="text-[8px] text-gray-500 font-normal">/mois</span></p>
+              <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}<span class="text-[9px] text-gray-500 font-normal">/mois</span></p>
             </div>`;
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
               <summary class="cursor-pointer select-none" style="list-style:none">
                 <div class="flex items-center justify-between mb-0.5">
-                  <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
+                  <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
                   <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/env:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
                 <p class="text-sm font-bold text-accent-amber text-center whitespace-nowrap">${fmt(env.total)}</p>
@@ -315,7 +315,7 @@ export function render(store) {
                 <details id="ptf-card-${sub.id}" class="card-dark rounded-xl p-2 group/sub">
                   <summary class="cursor-pointer select-none" style="list-style:none">
                     <div class="flex items-center justify-between mb-0.5">
-                      <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
+                      <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">${sub.label}</p>
                       <svg class="w-2.5 h-2.5 text-gray-600 transition-transform group-open/sub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </div>
                     <p class="text-sm font-bold text-accent-amber text-center">${fmt(sub.total)}</p>
@@ -335,8 +335,8 @@ export function render(store) {
                 ${enfantsParEnfant.map((e, i) => `
                 <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
                   <div class="flex items-center justify-between mb-1">
-                    <p class="text-[8px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
-                    <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}<span class="text-[8px] text-gray-500 font-normal">/mois</span></p>
+                    <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
+                    <p class="text-sm font-bold text-accent-amber whitespace-nowrap">${fmt(e.total)}<span class="text-[9px] text-gray-500 font-normal">/mois</span></p>
                   </div>
                   <div class="space-y-1 border-t border-dark-400/20 pt-1">
                     ${e.lignes.map(d => `
@@ -367,7 +367,7 @@ export function render(store) {
           <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
             <div class="flex items-center gap-2">
               <div class="w-5 h-5 rounded-lg bg-indigo-500/15 flex items-center justify-center">
-                <svg class="w-2.5 h-2.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                <svg class="w-2.5 h-2.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
               </div>
               <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Liquidités</span>
             </div>
@@ -420,7 +420,7 @@ export function render(store) {
             <div class="border-b border-dark-400/15 pb-1.5">
               <div class="flex items-center justify-between text-xs">
                 <span class="text-gray-500 font-medium">${env.label}</span>
-                <span class="text-accent-amber font-bold">${fmt(env.total)}${env.isMonthly ? '<span class="text-[8px] text-gray-500 font-normal">/mois</span>' : ''}</span>
+                <span class="text-accent-amber font-bold">${fmt(env.total)}${env.isMonthly ? '<span class="text-[9px] text-gray-500 font-normal">/mois</span>' : ''}</span>
               </div>
               ${env.id === 'enfants' ? enfantsParEnfant.map(e => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
@@ -429,7 +429,7 @@ export function render(store) {
               </div>
               ${e.lignes.map(d => `
               <div class="flex items-center justify-between pl-6 mt-0.5">
-                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom} <span class="text-[8px] text-gray-600">(${d.banque})</span></span>
+                <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom} <span class="text-[9px] text-gray-600">(${d.banque})</span></span>
                 <span class="text-[10px] text-gray-300 font-medium flex-shrink-0">${fmt(d.montant)}<span class="text-gray-600">/mois</span></span>
               </div>`).join('')}`).join('') : items.length > 0 ? items.map(p => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
@@ -447,7 +447,7 @@ export function render(store) {
           <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
             <div class="flex items-center gap-2">
               <div class="w-5 h-5 rounded-lg bg-rose-700/15 flex items-center justify-center">
-                <svg class="w-2.5 h-2.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <svg class="w-2.5 h-2.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
               </div>
               <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Immobilier</span>
             </div>
@@ -470,7 +470,7 @@ export function render(store) {
         <div class="card-dark rounded-xl px-3 py-2.5 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <div class="w-5 h-5 rounded-lg bg-red-500/15 flex items-center justify-center">
-              <svg class="w-2.5 h-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+              <svg class="w-2.5 h-2.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
             </div>
             <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Dettes</span>
           </div>

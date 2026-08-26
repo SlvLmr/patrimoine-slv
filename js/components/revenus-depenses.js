@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20260807b';
+import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20260807c';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 const DEPENSE_TYPES = [
@@ -216,8 +216,8 @@ export function render(store) {
     <div class="space-y-6">
       <div>
         <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
           </div>
@@ -746,7 +746,7 @@ export function mount(store, navigate) {
     modal.style.background = 'rgba(0,0,0,0.75)';
     modal.style.backdropFilter = 'blur(6px)';
     modal.innerHTML = `
-      <div class="card-dark rounded-2xl p-4 relative flex flex-col" style="animation: slideUp 0.2s ease-out; width: calc(100vw - 2rem); height: calc(100vh - 6rem); max-width: 100%; max-height: 100%;">
+      <div class="card-dark rounded-xl p-4 relative flex flex-col" style="animation: slideUp 0.2s ease-out; width: calc(100vw - 2rem); height: calc(100vh - 6rem); max-width: 100%; max-height: 100%;">
         <div class="flex items-center justify-between mb-3 flex-shrink-0">
           <h2 class="text-lg font-semibold text-gray-200">Flux financier</h2>
           <div class="flex items-center gap-3">

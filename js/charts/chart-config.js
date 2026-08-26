@@ -27,6 +27,26 @@ export const legendStrikethroughPlugin = {
   }
 };
 
+
+// Palette canonique des actifs — UNIQUE source de vérité pour associer
+// un support (PEA ETF, CTO, Crypto…) à sa couleur, partout dans l'app.
+export const ASSET_COLORS = {
+  'PEA ETF':       { color: '#3b82f6', text: 'text-blue-400',    bg: 'bg-blue-500/15',    bgSoft: 'bg-blue-500/5',    border: 'border-blue-500/30',    borderSoft: 'border-blue-500/20',    dot: 'bg-blue-400' },
+  'PEA Actions':   { color: '#f59e0b', text: 'text-amber-400',   bg: 'bg-amber-500/15',   bgSoft: 'bg-amber-500/5',   border: 'border-amber-500/30',   borderSoft: 'border-amber-500/20',   dot: 'bg-amber-400' },
+  'PEA Autre':     { color: '#eab308', text: 'text-yellow-400',  bg: 'bg-yellow-500/15',  bgSoft: 'bg-yellow-500/5',  border: 'border-yellow-500/30',  borderSoft: 'border-yellow-500/20',  dot: 'bg-yellow-400' },
+  'Assurance Vie': { color: '#06b6d4', text: 'text-cyan-400',    bg: 'bg-cyan-500/15',    bgSoft: 'bg-cyan-500/5',    border: 'border-cyan-500/30',    borderSoft: 'border-cyan-500/20',    dot: 'bg-cyan-400' },
+  'CTO':           { color: '#a855f7', text: 'text-purple-400',  bg: 'bg-purple-500/15',  bgSoft: 'bg-purple-500/5',  border: 'border-purple-500/30',  borderSoft: 'border-purple-500/20',  dot: 'bg-purple-400' },
+  'CTO TR':        { color: '#a855f7', text: 'text-purple-400',  bg: 'bg-purple-500/15',  bgSoft: 'bg-purple-500/5',  border: 'border-purple-500/30',  borderSoft: 'border-purple-500/20',  dot: 'bg-purple-400' },
+  'CTO BB':        { color: '#c084fc', text: 'text-violet-400',  bg: 'bg-violet-500/15',  bgSoft: 'bg-violet-500/5',  border: 'border-violet-500/30',  borderSoft: 'border-violet-500/20',  dot: 'bg-violet-400' },
+  'Crypto':        { color: '#f97316', text: 'text-orange-400',  bg: 'bg-orange-500/15',  bgSoft: 'bg-orange-500/5',  border: 'border-orange-500/30',  borderSoft: 'border-orange-500/20',  dot: 'bg-orange-400' },
+  'PEE':           { color: '#14b8a6', text: 'text-teal-400',    bg: 'bg-teal-500/15',    bgSoft: 'bg-teal-500/5',    border: 'border-teal-500/30',    borderSoft: 'border-teal-500/20',    dot: 'bg-teal-400' },
+  'PER':           { color: '#ec4899', text: 'text-pink-400',    bg: 'bg-pink-500/15',    bgSoft: 'bg-pink-500/5',    border: 'border-pink-500/30',    borderSoft: 'border-pink-500/20',    dot: 'bg-pink-400' },
+  'Or':            { color: '#eab308', text: 'text-yellow-400',  bg: 'bg-yellow-500/15',  bgSoft: 'bg-yellow-500/5',  border: 'border-yellow-500/30',  borderSoft: 'border-yellow-500/20',  dot: 'bg-yellow-400' },
+  'Argent':        { color: '#94a3b8', text: 'text-slate-400',   bg: 'bg-slate-400/15',   bgSoft: 'bg-slate-400/5',   border: 'border-slate-400/30',   borderSoft: 'border-slate-400/20',   dot: 'bg-slate-400' },
+  'Livrets':       { color: '#38bdf8', text: 'text-sky-400',     bg: 'bg-sky-500/15',     bgSoft: 'bg-sky-500/5',     border: 'border-sky-500/30',     borderSoft: 'border-sky-500/20',     dot: 'bg-sky-400' },
+  'Autre':         { color: '#9ca3af', text: 'text-gray-400',    bg: 'bg-gray-500/15',    bgSoft: 'bg-gray-500/5',    border: 'border-gray-500/30',    borderSoft: 'border-gray-500/20',    dot: 'bg-gray-400' },
+};
+
 export const COLORS = {
   immobilier: '#7c3aed',
   placements: '#c084fc',

@@ -1,5 +1,5 @@
 import { getCurrentUser } from '../firebase-config.js';
-import { formatCurrency, confirmModal, showToast } from '../utils.js?v=20260807b';
+import { formatCurrency, confirmModal, showToast } from '../utils.js?v=20260807c';
 
 function getUserInfo(store) {
   return store.get('userInfo') || { prenom: '', nom: '', telephone: '', dateNaissance: '', photo: '' };
@@ -164,7 +164,7 @@ export function render(store) {
       </div>
 
       <!-- Mon profil -->
-      <div class="card-dark rounded-2xl overflow-hidden">
+      <div class="card-dark rounded-xl overflow-hidden">
         <div class="px-4 sm:px-6 py-4 border-b border-dark-400/20">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Mon profil</h2>
         </div>
@@ -382,7 +382,7 @@ export function render(store) {
       </div>
 
       <!-- Famille / Enfants -->
-      <div class="card-dark rounded-2xl overflow-hidden">
+      <div class="card-dark rounded-xl overflow-hidden">
         <div class="px-4 sm:px-6 py-4 border-b border-dark-400/20 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Famille</h2>
           <button id="btn-add-child" class="btn-add w-auto px-3 py-1">

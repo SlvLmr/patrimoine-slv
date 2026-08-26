@@ -22,7 +22,7 @@ function renderLoginScreen() {
 
 function renderAuthCard() {
   return `
-    <div class="card-dark rounded-2xl p-8">
+    <div class="card-dark rounded-xl p-8">
       <div id="auth-tabs" class="flex mb-6 bg-dark-800 rounded-xl p-1">
         <button data-tab="login" class="auth-tab flex-1 py-2.5 text-sm font-medium rounded-lg transition-all bg-dark-600 text-accent-green">
           Connexion

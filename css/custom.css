@@ -597,3 +597,32 @@ summary[style*="list-style:none"]::-webkit-details-marker {
     inset: -10px;
   }
 }
+
+/* ─── Boutons canoniques (design system) ─────────────────────────────────── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.4rem 0.85rem; border-radius: 0.5rem;
+  font-size: 0.8125rem; font-weight: 500; color: #fff;
+  background: linear-gradient(90deg, rgb(var(--accent-green)), rgb(var(--accent-blue)));
+  transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.4rem 0.85rem; border-radius: 0.5rem;
+  font-size: 0.8125rem; font-weight: 500; color: #d1d5db;
+  background: rgb(var(--dark-600) / 0.55);
+  border: 1px solid rgb(var(--dark-400) / 0.35);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-secondary:hover { background: rgb(var(--dark-600)); color: #f3f4f6; border-color: rgb(var(--dark-300) / 0.5); }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.6rem; border-radius: 0.5rem;
+  font-size: 0.72rem; font-weight: 500; color: #9ca3af;
+  transition: color 0.15s, background 0.15s;
+}
+.btn-ghost:hover { color: #e5e7eb; background: rgb(var(--dark-600) / 0.5); }
+.btn-dot { width: 0.45rem; height: 0.45rem; border-radius: 9999px; flex-shrink: 0; display: inline-block; }
+html.light .btn-secondary { color: #2d2d3f !important; background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.12) !important; }
+html.light .btn-ghost { color: #6b6b80 !important; }

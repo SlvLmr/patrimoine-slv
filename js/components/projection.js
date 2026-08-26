@@ -1,7 +1,7 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20260807b';
-import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260807b';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260807b';
+import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20260807c';
+import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE, ASSET_COLORS } from '../charts/chart-config.js';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260807c';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260807c';
 import { calculerFiscaliteDonation } from '../fiscal.js';
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
@@ -36,7 +36,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260807b';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260807c';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -79,8 +79,8 @@ export function render(store) {
     <div class="space-y-6">
       <div>
         <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
           </div>
@@ -181,27 +181,16 @@ export function render(store) {
   const evolutionPct = first?.patrimoineNet ? evolution / Math.abs(first.patrimoineNet) : 0;
 
   // Color map for placement groups
-  const groupColors = {
-    'PEA ETF': 'text-accent-green',
-    'PEA Actions': 'text-accent-amber',
-    'Assurance Vie': 'text-accent-cyan',
-    'CTO': 'text-accent-blue',
-    'CTO TR': 'text-accent-blue',
-    'CTO BB': 'text-purple-400',
-    'PER': 'text-accent-green',
-    'Crypto': 'text-accent-amber',
-    'PEE': 'text-emerald-400',
-    'Livrets': 'text-sky-300',
-    'Autre': 'text-gray-400'
-  };
-  const defaultGroupColor = 'text-accent-green';
+  // Couleur texte par groupe — dérivée de la palette canonique ASSET_COLORS
+  const groupColors = Object.fromEntries(Object.entries(ASSET_COLORS).map(([k, v]) => [k, v.text]));
+  const defaultGroupColor = 'text-gray-300';
 
   return `
     <div class="space-y-6">
       <div>
         <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
           </div>
@@ -328,16 +317,8 @@ export function render(store) {
                 // Add any remaining groups not in forced order
                 groupOrder.forEach(k => { if (!sortedOrder.includes(k)) sortedOrder.push(k); });
 
-                const groupColors = {
-                  'PEA Actions': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
-                  'PEA ETF': { border: 'border-blue-500/20', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-400' },
-                  'Crypto': { border: 'border-orange-500/20', bg: 'bg-orange-500/5', text: 'text-orange-400', dot: 'bg-orange-400' },
-                  'Assurance Vie': { border: 'border-emerald-500/20', bg: 'bg-emerald-500/5', text: 'text-emerald-400', dot: 'bg-emerald-400' },
-                  'PEE': { border: 'border-emerald-500/20', bg: 'bg-emerald-500/5', text: 'text-emerald-400', dot: 'bg-emerald-400' },
-                  'CTO': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
-                  'CTO TR': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
-                  'CTO BB': { border: 'border-cyan-500/20', bg: 'bg-cyan-500/5', text: 'text-cyan-400', dot: 'bg-cyan-400' },
-                };
+                // Cartes placements — palette canonique ASSET_COLORS
+                const groupColors = Object.fromEntries(Object.entries(ASSET_COLORS).map(([k, v]) => [k, { border: v.borderSoft, bg: v.bgSoft, text: v.text, dot: v.dot }]));
                 const defaultGroupColor = { border: 'border-gray-500/20', bg: 'bg-gray-500/5', text: 'text-gray-400', dot: 'bg-gray-400' };
 
                 if (placements.length === 0) {
@@ -415,10 +396,10 @@ export function render(store) {
                 const freqLabels = { annual: '/an', monthly: '/m', once: '×1' };
                 const freqLabel = freqLabels[t.frequency] || '×1';
                 return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer transfer-row" data-transfer-id="${t.id}">
-                  <span class="text-[8px] px-1 py-0.5 rounded-full ${sourceBg}">${sourceLabel}</span>
-                  <span class="text-gray-600 text-[8px]">→</span>
+                  <span class="text-[9px] px-1 py-0.5 rounded-full ${sourceBg}">${sourceLabel}</span>
+                  <span class="text-gray-600 text-[9px]">→</span>
                   <span class="text-[10px] text-gray-200 font-medium truncate flex-1 min-w-0">${destName}</span>
-                  <span class="text-[8px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
+                  <span class="text-[9px] text-gray-600">${formatCurrency(t.montant)} ${freqLabel}</span>
                   <span class="text-[9px] text-gray-500">${t.startYear}</span>
                   <button class="proj-del-transfer btn-delete text-[9px]" data-id="${t.id}" onclick="event.stopPropagation()">✕</button>
                 </div>`;
@@ -439,7 +420,7 @@ export function render(store) {
                 const yearLabel = h.dateInjection ? new Date(h.dateInjection).getFullYear() : '?';
                 return `<div class="flex items-center gap-1 px-2 py-1 hover:bg-dark-700/40 transition cursor-pointer heritage-row" data-heritage-id="${h.id}">
                   <span class="text-[10px] text-gray-200 truncate flex-1 min-w-0 font-medium" title="${h.nom}">${h.nom}</span>
-                  <span class="text-[8px] text-gray-600">${formatCurrency(h.montant)}</span>
+                  <span class="text-[9px] text-gray-600">${formatCurrency(h.montant)}</span>
                   <span class="text-[9px] text-gray-500">${yearLabel}</span>
                   <button class="proj-del-heritage btn-delete text-[9px]" data-id="${h.id}" onclick="event.stopPropagation()">✕</button>
                 </div>`;
@@ -754,7 +735,7 @@ export function render(store) {
                   const rate = s.placementTaxRates?.[gk] || 0;
                   const ratePct = rate * 100; const rateStr = rate > 0 ? ` <span class="text-gray-500">(${ratePct % 1 === 0 ? ratePct.toFixed(0) : ratePct.toFixed(1)}%)</span>` : '';
                   const tip = val > 0 ? `<div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(ap)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Gains</span><span class="${ga >= 0 ? 'text-accent-green' : 'text-red-400'}">${ga >= 0 ? '+' : ''}${formatCurrency(ga)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts${rateStr}</span><span class="text-red-400">-${formatCurrency(tx)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(val - tx)}</span></div></div>` : '';
-                  return `<td class="px-1 py-0.5 text-center text-[9px] text-gray-200 ${bt} ${extraClass} ${val > 0 ? `proj-tip-wrap ${tipDir}` : ''}">${val > 0 ? `${formatCurrency(val)}<div class="text-[7px] text-gray-500 leading-tight">${formatCurrency(ap)}</div>${tip}` : '<span class="text-gray-700">-</span>'}</td>`;
+                  return `<td class="px-1 py-0.5 text-center text-[9px] text-gray-200 ${bt} ${extraClass} ${val > 0 ? `proj-tip-wrap ${tipDir}` : ''}">${val > 0 ? `${formatCurrency(val)}<div class="text-[9px] text-gray-500 leading-tight">${formatCurrency(ap)}</div>${tip}` : '<span class="text-gray-700">-</span>'}</td>`;
                 };
                 const totalGain = s.cashApresImpot - s.totalApports;
                 return `
@@ -762,7 +743,7 @@ export function render(store) {
                 <td class="px-1 py-1 text-center font-medium text-gray-200 truncate ${bt}">
                   <span class="inline-flex items-center gap-0.5">
                     ${s.label}${isRetirement ? ' <span class="text-[9px] text-accent-amber font-semibold">R</span>' : ''}
-                    ${s.isActualiseMensuel ? '<span class="text-[8px] text-cyan-400" title="Actualisé (mensuel)">&#9783;</span>' : s.isActualise ? '<span class="text-[8px] text-accent-green" title="Actualisé">&#10003;</span>' : ''}
+                    ${s.isActualiseMensuel ? '<span class="text-[9px] text-cyan-400" title="Actualisé (mensuel)">&#9783;</span>' : s.isActualise ? '<span class="text-[9px] text-accent-green" title="Actualisé">&#10003;</span>' : ''}
                     <button class="btn-actualiser text-[9px] text-gray-600 hover:text-accent-cyan transition opacity-0 group-hover/row:opacity-100 ml-0.5" data-year="${s.calendarYear}" title="Actualiser avec les valeurs réelles">&#9998;</button>
                   </span>
                 </td>
@@ -771,7 +752,7 @@ export function render(store) {
                 ${groupKeys.map((gk, i) => placCell(gk, i === groupKeys.length - 1 ? 'border-r-2 border-dark-300/40' : '')).join('')}
                 <td class="px-1 py-0.5 text-center text-[9px] text-gray-400 font-semibold ${bt}">${formatCurrency(s.totalApports)}</td>
                 <td class="px-1 py-0.5 text-center font-semibold text-[9px] ${bt} ${totalGain >= 0 ? 'text-accent-green/70' : 'text-red-400/70'}">${totalGain >= 0 ? '+' : ''}${formatCurrency(totalGain)}</td>
-                <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[9px] ${bt} proj-tip-wrap ${tipDir}">${formatCurrency(s.cashApresImpot)}<div class="text-[7px] text-gray-500 leading-tight font-normal">${formatCurrency(s.totalApports)}</div><div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Placements</span><span class="text-gray-200">${formatCurrency(s.placements)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(s.totalApports)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts</span><span class="text-red-400">-${formatCurrency(s.totalTaxes)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(s.cashApresImpot)}</span></div></div></td>
+                <td class="px-1 py-0.5 text-center font-semibold text-accent-cyan border-r-2 border-dark-300/40 text-[9px] ${bt} proj-tip-wrap ${tipDir}">${formatCurrency(s.cashApresImpot)}<div class="text-[9px] text-gray-500 leading-tight font-normal">${formatCurrency(s.totalApports)}</div><div class="proj-tip"><div class="flex justify-between gap-3"><span class="text-gray-400">Placements</span><span class="text-gray-200">${formatCurrency(s.placements)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Apports</span><span class="text-gray-200">${formatCurrency(s.totalApports)}</span></div><div class="flex justify-between gap-3"><span class="text-gray-400">Impôts</span><span class="text-red-400">-${formatCurrency(s.totalTaxes)}</span></div><div class="border-t border-dark-400/40 mt-1 pt-1 flex justify-between gap-3"><span class="text-gray-300 font-medium">Net</span><span class="text-accent-cyan font-semibold">${formatCurrency(s.cashApresImpot)}</span></div></div></td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 ${bt}">${formatCurrency(s.epargne)}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 ${bt}">${formatCurrency(s.heritage)}</td>
                 <td class="px-1 py-1 text-center text-[9px] text-gray-200 border-r-2 border-dark-300/40 ${bt}">${formatCurrency(s.immobilier)}</td>
@@ -799,7 +780,7 @@ export function render(store) {
                     const donInfo = m.type === 'donation' && m.donationType ? `<div class="text-yellow-400/60 text-[9px] ml-3">${{abattement_100k: 'Abattement 100k€', don_sarkozy: 'Don Sarkozy', demembrement: 'Démembrement NP', purge_pv_cto: 'Purge PV CTO', donation_av: 'Donation AV'}[m.donationType] || m.donationType}${m.beneficiaire ? ' → ' + m.beneficiaire : ''}</div>` : '';
                     return `<div class="flex justify-between gap-3"><span>${icon} ${sign}${formatCurrency(Math.abs(m.montant))}</span><span class="text-gray-500">${src} → ${dst}</span></div>${donInfo}${note}`;
                   }).join('<div class="border-t border-dark-400/30 my-1"></div>') : '';
-                  return `<td class="px-1 py-1 text-center text-[9px] ${bt} ${mvts.length > 0 ? 'proj-tip-wrap cursor-pointer' : ''} ${tipDir} mouv-cell" data-year="${s.calendarYear}"><div class="flex items-center justify-center gap-0.5"><span class="text-[7px] leading-none">${indicators}</span>${mvts.length > 0 ? `<span class="${netTotal > 0 ? 'text-green-400' : netTotal < 0 ? 'text-red-400' : 'text-gray-400'}">${netTotal > 0 ? '+' : ''}${formatCurrency(netTotal)}</span>` : '<span class="text-gray-700">-</span>'}</div>${tipContent ? `<div class="proj-tip" style="min-width:220px">${tipContent}</div>` : ''}</td>`;
+                  return `<td class="px-1 py-1 text-center text-[9px] ${bt} ${mvts.length > 0 ? 'proj-tip-wrap cursor-pointer' : ''} ${tipDir} mouv-cell" data-year="${s.calendarYear}"><div class="flex items-center justify-center gap-0.5"><span class="text-[9px] leading-none">${indicators}</span>${mvts.length > 0 ? `<span class="${netTotal > 0 ? 'text-green-400' : netTotal < 0 ? 'text-red-400' : 'text-gray-400'}">${netTotal > 0 ? '+' : ''}${formatCurrency(netTotal)}</span>` : '<span class="text-gray-700">-</span>'}</div>${tipContent ? `<div class="proj-tip" style="min-width:220px">${tipContent}</div>` : ''}</td>`;
                 })()}
                 <td class="px-0 py-0 text-center text-[9px] border-l-2 border-dark-300/40 ${bt}"><input type="number" class="salaire-input w-full bg-transparent text-center text-[9px] ${salairesParAnnee[s.calendarYear] === 0 ? 'text-red-400' : 'text-purple-400'} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${salairesParAnnee[s.calendarYear] != null ? salairesParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" min="0"></td>
                 <td class="px-0 py-0 text-center text-[9px] ${bt}"><input type="number" class="autre-revenu-input w-full bg-transparent text-center text-[9px] ${autresRevenusParAnnee[s.calendarYear] === 0 ? 'text-red-400' : ''} border-0 outline-none focus:bg-dark-600/50 px-0 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" data-year="${s.calendarYear}" value="${autresRevenusParAnnee[s.calendarYear] != null ? autresRevenusParAnnee[s.calendarYear] : ''}" placeholder="-" step="100" style="${autresRevenusParAnnee[s.calendarYear] !== 0 ? 'color: rgb(163,190,100)' : ''}"></td>
@@ -1211,7 +1192,7 @@ export function render(store) {
               simHtml += '<p class="text-[10px] text-accent-green font-medium mb-2">✓ Patrimoine suffisant jusqu\'à 85 ans — solde final : ' + formatCurrency(simRows[simRows.length-1].totalPatrimoine) + '</p>';
             }
             simHtml += '<div class="overflow-x-auto"><table class="w-full text-[9px] min-w-[700px]">';
-            simHtml += '<thead class="bg-dark-800/50 text-gray-500 text-[8px] uppercase tracking-wider"><tr>';
+            simHtml += '<thead class="bg-dark-800/50 text-gray-500 text-[9px] uppercase tracking-wider"><tr>';
             simHtml += '<th class="px-1.5 py-1.5 text-center">Année</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-center">Âge</th>';
             simHtml += '<th class="px-1.5 py-1.5 text-right">Dépenses</th>';
@@ -1247,7 +1228,7 @@ export function render(store) {
                 const cls = isReserved ? 'text-pink-300/50' : bal > 0 ? 'text-gray-300' : 'text-gray-700';
                 simHtml += '<td class="px-1.5 py-1 text-right ' + bt + ' ' + cls + '">';
                 simHtml += (bal > 0 || w > 0) ? formatCurrency(bal) : '—';
-                if (w > 0) simHtml += '<div class="text-[7px] text-red-400/70">-' + formatCurrency(w) + '</div>';
+                if (w > 0) simHtml += '<div class="text-[9px] text-red-400/70">-' + formatCurrency(w) + '</div>';
                 simHtml += '</td>';
               });
               simHtml += '<td class="px-1.5 py-1 text-right font-semibold border-l border-dark-300/40 ' + bt + ' ' + (isDepleted ? 'text-red-400' : 'text-accent-green') + '">' + formatCurrency(r.totalPatrimoine) + '</td>';
@@ -1814,7 +1795,7 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
-      const { exportProjectionPDF } = await import('../export-pdf.js?v=20260807b');
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=20260807c');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);

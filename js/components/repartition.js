@@ -1,22 +1,9 @@
-import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20260807b';
-import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260807b';
+import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20260807c';
+import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin, ASSET_COLORS } from '../charts/chart-config.js';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260807c';
 
 // Color map for envelope groups
-const GROUP_COLORS = {
-  'PEA ETF': { color: '#3b82f6', bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/30' },
-  'PEA Actions': { color: '#f59e0b', bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/30' },
-  'PEA Autre': { color: '#eab308', bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-  'Assurance Vie': { color: '#06b6d4', bg: 'bg-cyan-500/15', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-  'CTO': { color: '#a855f7', bg: 'bg-purple-500/15', text: 'text-purple-400', border: 'border-purple-500/30' },
-  'CTO TR': { color: '#a855f7', bg: 'bg-purple-500/15', text: 'text-purple-400', border: 'border-purple-500/30' },
-  'CTO BB': { color: '#c084fc', bg: 'bg-violet-500/15', text: 'text-violet-400', border: 'border-violet-500/30' },
-  'Crypto': { color: '#f97316', bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/30' },
-  'PEE': { color: '#14b8a6', bg: 'bg-teal-500/15', text: 'text-teal-400', border: 'border-teal-500/30' },
-  'PER': { color: '#ec4899', bg: 'bg-pink-500/15', text: 'text-pink-400', border: 'border-pink-500/30' },
-  'Or': { color: '#eab308', bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-  'Argent': { color: '#94a3b8', bg: 'bg-slate-400/15', text: 'text-slate-400', border: 'border-slate-400/30' },
-};
+const GROUP_COLORS = ASSET_COLORS;
 const DEFAULT_GROUP = { color: '#6366f1', bg: 'bg-indigo-500/15', text: 'text-indigo-400', border: 'border-indigo-500/30' };
 
 // Distinct colors for individual action cards & donut slices
@@ -59,8 +46,8 @@ export function render(store) {
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 flex items-center justify-center">
-              <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
               </svg>
             </div>
@@ -76,7 +63,7 @@ export function render(store) {
 
       <!-- Time Slider + Diversification Score -->
       <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-        <div class="card-dark rounded-2xl px-6 py-4">
+        <div class="card-dark rounded-xl px-6 py-4">
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-2 flex-shrink-0">
               <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -101,7 +88,7 @@ export function render(store) {
 
       <!-- Flow + Actions + PEE -->
       <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-        <div class="card-dark rounded-2xl p-5 flex flex-col">
+        <div class="card-dark rounded-xl p-5 flex flex-col">
           <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
@@ -112,14 +99,14 @@ export function render(store) {
           <div id="rep-flow" class="space-y-0 flex-1 flex flex-col"></div>
         </div>
         <div class="flex flex-col gap-4">
-          <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
+          <div class="card-dark rounded-xl px-5 py-4 flex flex-col overflow-hidden">
             <div class="flex items-center gap-2 mb-3 flex-shrink-0">
               <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
               <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mes Actions</h3>
             </div>
             <div id="rep-actions-list" class="space-y-2 overflow-y-auto"></div>
           </div>
-          <div class="card-dark rounded-2xl px-5 py-4 flex flex-col overflow-hidden">
+          <div class="card-dark rounded-xl px-5 py-4 flex flex-col overflow-hidden">
             <div class="flex items-center gap-2 mb-3 flex-shrink-0">
               <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Mon PEE</h3>
@@ -130,7 +117,7 @@ export function render(store) {
       </div>
 
       <!-- Evolution Chart -->
-      <div class="card-dark rounded-2xl p-5 min-w-0 overflow-hidden">
+      <div class="card-dark rounded-xl p-5 min-w-0 overflow-hidden">
         <div class="flex items-center gap-2 mb-3">
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
           <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Evolution</h2>
@@ -141,7 +128,7 @@ export function render(store) {
       </div>
 
       <!-- DCA Evolution Chart -->
-      <div class="card-dark rounded-2xl p-5">
+      <div class="card-dark rounded-xl p-5">
         <div class="flex items-center gap-2 mb-3">
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">DCA mensuel par enveloppe</h2>
@@ -152,7 +139,7 @@ export function render(store) {
       </div>
 
       <!-- Detailed table -->
-      <details class="card-dark rounded-2xl group">
+      <details class="card-dark rounded-xl group">
         <summary class="flex items-center justify-between px-5 py-3 cursor-pointer select-none">
           <div class="flex items-center gap-2">
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
@@ -287,7 +274,7 @@ export function mount(store, navigate) {
       <div class="card-dark rounded-xl p-5 shadow-lg shadow-gray-500/20">
         <div class="flex items-center gap-2 mb-4">
           <div class="w-8 h-8 rounded-lg bg-gray-500/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
           </div>

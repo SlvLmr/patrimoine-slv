@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, parseNumberInput, promptModal } from '../utils.js?v=20260807b';
+import { formatCurrency, formatCurrencyCents, parseNumberInput, promptModal } from '../utils.js?v=20260807c';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Auto : Crédit vs LOA vs LLD ─────────────────────────────────
@@ -172,8 +172,8 @@ export function render() {
   <div class="space-y-6">
     <div>
       <h2 class="text-2xl font-bold text-gray-100 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
-          <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17h.01M16 17h.01M2 9h20M5 17h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
           </svg>
         </div>
@@ -186,7 +186,7 @@ export function render() {
     </div>
 
     <!-- Save bar -->
-    <div class="card-dark rounded-2xl overflow-hidden">
+    <div class="card-dark rounded-xl overflow-hidden">
       <button id="auto-save-toggle" class="w-full flex items-center justify-between px-4 py-3 hover:bg-dark-600/30 transition">
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
@@ -205,7 +205,7 @@ export function render() {
       <div class="lg:col-span-5 space-y-4">
 
         <!-- Véhicule -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
+        <div class="card-dark rounded-xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h.01M16 17h.01M2 9h20M5 17h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             Véhicule & général
@@ -217,7 +217,7 @@ export function render() {
         </div>
 
         <!-- Crédit -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
+        <div class="card-dark rounded-xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-blue-500"></span>
             Crédit classique
@@ -232,7 +232,7 @@ export function render() {
         </div>
 
         <!-- LOA -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
+        <div class="card-dark rounded-xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-amber-500"></span>
             LOA (Location avec Option d'Achat)
@@ -248,7 +248,7 @@ export function render() {
         </div>
 
         <!-- LLD -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5 space-y-4">
+        <div class="card-dark rounded-xl p-3 sm:p-5 space-y-4">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-pink-500"></span>
             LLD (Location Longue Durée)
@@ -267,13 +267,13 @@ export function render() {
       <div class="lg:col-span-7 space-y-4">
 
         <!-- Winner card -->
-        <div id="auto-winner" class="card-dark rounded-2xl p-3 sm:p-5"></div>
+        <div id="auto-winner" class="card-dark rounded-xl p-3 sm:p-5"></div>
 
         <!-- Comparison cards -->
         <div id="auto-compare" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
 
         <!-- Differences table -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5">
+        <div class="card-dark rounded-xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Comparatif détaillé</h3>
           <div class="overflow-x-auto">
             <table class="w-full text-sm" id="auto-detail-table">
@@ -291,7 +291,7 @@ export function render() {
         </div>
 
         <!-- Chart -->
-        <div class="card-dark rounded-2xl p-3 sm:p-5">
+        <div class="card-dark rounded-xl p-3 sm:p-5">
           <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Coût cumulé dans le temps</h3>
           <div class="h-80">
             <canvas id="auto-chart"></canvas>
@@ -340,7 +340,7 @@ export function render() {
 
 function prosConsCard(title, color, pros, cons) {
   return `
-    <div class="card-dark rounded-2xl p-4">
+    <div class="card-dark rounded-xl p-4">
       <h4 class="text-sm font-semibold text-${color}-400 mb-2">${title}</h4>
       <div class="space-y-1 mb-3">
         ${pros.map(p => `<div class="flex items-start gap-1.5"><span class="text-accent-green text-xs mt-0.5">+</span><span class="text-xs text-gray-400">${p}</span></div>`).join('')}
@@ -490,7 +490,7 @@ function renderCompare(r) {
 
 function compareCard(label, color, total, mensuel, isBest) {
   return `
-    <div class="card-dark rounded-2xl p-4 ${isBest ? `ring-1 ring-${color}-500/30 bg-${color}-500/5` : ''}">
+    <div class="card-dark rounded-xl p-4 ${isBest ? `ring-1 ring-${color}-500/30 bg-${color}-500/5` : ''}">
       <div class="flex items-center gap-2 mb-2">
         <span class="w-2 h-2 rounded-full bg-${color}-500"></span>
         <p class="text-xs text-gray-500 uppercase tracking-wider">${label}</p>
