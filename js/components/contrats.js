@@ -599,6 +599,7 @@ export function render(store) {
           <li><span class="text-cyan-400 font-semibold">2.</span> Ouvre <a href="https://claude.ai/new" target="_blank" rel="noopener" class="text-cyan-400 underline hover:text-cyan-300">claude.ai</a>, colle le prompt et <b class="text-gray-300">glisse le ou les PDF</b> (conditions particulières, tableaux de garanties — plusieurs contrats possibles d'un coup), envoie</li>
           <li><span class="text-cyan-400 font-semibold">3.</span> Copie la réponse et importe-la ici</li>
         </ol>
+        <p class="text-[10px] text-gray-600 mb-3 leading-relaxed">💡 Nouveau contrat ou renouvellement : mêmes gestes, même prompt — un contrat déjà connu est mis à jour, un nouveau s'ajoute. Termine toujours par un bilan global.</p>
         <div class="flex flex-wrap gap-2">
           <button id="btn-copy-prompt-contrat" class="px-3 py-1.5 bg-cyan-500/20 text-cyan-400 text-xs rounded-lg hover:bg-cyan-500/30 transition font-medium">📋 Copier le prompt d'analyse</button>
           <button id="btn-import-contrat" class="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-lg hover:bg-emerald-500/30 transition font-medium">📥 Coller le résultat</button>
