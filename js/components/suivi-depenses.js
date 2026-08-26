@@ -675,12 +675,12 @@ export function render(store) {
           <p class="text-gray-500 text-sm mt-1">Suivi de tes opérations bancaires au quotidien</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <button id="btn-add-revenu" class="btn-secondary"><span class="btn-dot" style="background:#34d399"></span>+ Revenu</button>
-          <button id="btn-add-expense" class="btn-secondary"><span class="btn-dot" style="background:rgb(var(--accent-red))"></span>+ Dépense</button>
-          <button id="btn-add-virement" class="btn-secondary"><span class="btn-dot" style="background:#fbbf24"></span>+ Virement</button>
-          <button id="btn-add-invest" class="btn-secondary"><span class="btn-dot" style="background:#60a5fa"></span>+ Invest.</button>
-          <button id="btn-add-ndf" class="btn-secondary"><span class="btn-dot" style="background:#c084fc"></span>+ NDF</button>
-          <button id="btn-transfer" class="btn-secondary"><span class="btn-dot" style="background:#22d3ee"></span>⇄ Transfert</button>
+          <button id="btn-add-revenu" class="btn-secondary"><span class="btn-dot" style="background:#34d399"></span><span class="text-emerald-400 font-bold">+</span> Revenu</button>
+          <button id="btn-add-expense" class="btn-secondary"><span class="btn-dot" style="background:rgb(var(--accent-red))"></span><span class="text-red-400 font-bold">−</span> Dépense</button>
+          <button id="btn-add-virement" class="btn-secondary"><span class="btn-dot" style="background:#fbbf24"></span><span class="text-amber-400 font-bold">→</span> Virement</button>
+          <button id="btn-add-invest" class="btn-secondary"><span class="btn-dot" style="background:#60a5fa"></span><span class="text-blue-400 font-bold">↗</span> Invest.</button>
+          <button id="btn-add-ndf" class="btn-secondary"><span class="btn-dot" style="background:#c084fc"></span><span class="text-purple-400 font-bold">⟳</span> NDF</button>
+          <button id="btn-transfer" class="btn-secondary"><span class="btn-dot" style="background:#22d3ee"></span><span class="text-cyan-400 font-bold">⇄</span> Transfert</button>
           <button id="btn-archive-month" class="btn-ghost">
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
             Clôturer le mois
