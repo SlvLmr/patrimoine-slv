@@ -7,6 +7,8 @@ import { createChart } from '../charts/chart-config.js';
 const DOMAINES = [
   {
     id: 'sante', label: 'Santé', emoji: '🩺', defaultOn: true,
+    quoi: "Le remboursement de tes frais de soins : ce que la Sécu et ta mutuelle paient quand tu te soignes (consultations, lunettes, dents, hôpital).",
+    frontiere: "La Santé rembourse des factures de soins. Quand un problème de santé t'empêche de travailler, c'est la Prévoyance qui prend le relais pour remplacer ton revenu.",
     postes: [
       { id: 'mutuelle', label: 'Mutuelle / complémentaire santé',
         cQuoi: "Elle rembourse ce que la Sécurité sociale ne prend pas en charge : consultations, pharmacie, lunettes, dents, hôpital.",
@@ -24,6 +26,8 @@ const DOMAINES = [
   },
   {
     id: 'prevoyance', label: 'Prévoyance', emoji: '🛡️', defaultOn: true,
+    quoi: "Le maintien des revenus du foyer si la vie bascule : arrêt de travail long, invalidité, décès d'un parent.",
+    frontiere: "Différente de la Santé (qui rembourse des soins) et de l'Emprunteur (qui ne protège que le crédit immobilier) : ici on protège le train de vie de la famille.",
     postes: [
       { id: 'itt', label: 'Arrêt de travail (ITT)',
         cQuoi: "Un revenu de remplacement si tu ne peux plus travailler temporairement (maladie, accident). ITT = incapacité temporaire totale.",
@@ -45,6 +49,8 @@ const DOMAINES = [
   },
   {
     id: 'emprunteur', label: 'Emprunteur', emoji: '🏦', defaultOn: true,
+    quoi: "L'assurance de ton crédit immobilier : elle solde ou paie les mensualités si l'assuré décède ou ne peut plus travailler.",
+    frontiere: "Elle protège le crédit, pas le quotidien : les courses, l'école et les factures restent à charge du foyer — c'est le rôle de la Prévoyance.",
     postes: [
       { id: 'deces-ptia', label: 'Décès / PTIA',
         cQuoi: "L'assurance du crédit immobilier : elle rembourse le capital restant dû si l'assuré décède ou perd totalement son autonomie (PTIA).",
@@ -62,6 +68,8 @@ const DOMAINES = [
   },
   {
     id: 'gav', label: 'Accidents de la vie', emoji: '🤕', defaultOn: true,
+    quoi: "L'indemnisation de TES propres blessures quand il n'y a pas de responsable : chute, bricolage, sport, brûlure, accident médical.",
+    frontiere: "C'est le miroir de la Resp. civile : la RC paie les dommages que tu causes aux autres ; la GAV t'indemnise toi, quand personne d'autre n'est en cause.",
     postes: [
       { id: 'seuil', label: "Seuil d'intervention",
         cQuoi: "Le pourcentage d'invalidité à partir duquel la GAV (Garantie Accidents de la Vie) t'indemnise après un accident domestique, de sport, médical…",
@@ -79,6 +87,8 @@ const DOMAINES = [
   },
   {
     id: 'rc', label: 'Resp. civile', emoji: '🤝', defaultOn: true,
+    quoi: "Les dommages que toi, tes enfants ou tes animaux causez involontairement aux autres : elle paie à ta place.",
+    frontiere: "Elle ne couvre jamais tes propres blessures ni tes propres biens — pour ça, voir Accidents de la vie (ton corps) et Habitation / Matériel (tes affaires).",
     postes: [
       { id: 'rc-vie-privee', label: 'RC vie privée',
         cQuoi: "Elle paie les dommages que tu causes involontairement à autrui : dégât chez un voisin, accident de vélo, casse chez des amis.",
@@ -96,6 +106,8 @@ const DOMAINES = [
   },
   {
     id: 'habitation', label: 'Habitation', emoji: '🏠', defaultOn: true,
+    quoi: "La protection du logement et de tout ce qu'il contient contre les sinistres : incendie, dégât des eaux, tempête, vol par effraction.",
+    frontiere: "Ton mobilier est bien couvert ici… mais uniquement lors d'un sinistre au domicile. Le téléphone qui tombe, le PC volé dans le train ou la panne d'un appareil relèvent de la rubrique Matériel.",
     postes: [
       { id: 'incendie-dde', label: 'Incendie / dégât des eaux',
         cQuoi: "Le cœur de la MRH (multirisque habitation) : reconstruction et réparation après incendie, fuite, tempête, catastrophe naturelle.",
@@ -117,6 +129,8 @@ const DOMAINES = [
   },
   {
     id: 'juridique', label: 'Juridique', emoji: '⚖️', defaultOn: true,
+    quoi: "Ton soutien en cas de litige : conseils juridiques et prise en charge des frais d'avocat (voisinage, travail, consommation, administration).",
+    frontiere: "À ne pas confondre avec la Resp. civile : la RC paie quand tu as causé un dommage ; la protection juridique finance ta défense (ou ton recours) dans un conflit.",
     postes: [
       { id: 'pj-incluse', label: 'PJ incluse (MRH / carte bancaire)',
         cQuoi: "La protection juridique de base souvent glissée dans la MRH ou la carte bancaire : conseils et prise en charge limitée de litiges.",
@@ -134,6 +148,8 @@ const DOMAINES = [
   },
   {
     id: 'enfants', label: 'Enfants', emoji: '🧒', defaultOn: true,
+    quoi: "Une vue transversale sur la protection de tes enfants : accident, santé spécifique (orthodontie, psy…), avenir financier si un parent disparaît.",
+    frontiere: "Ces garanties vivent dans d'autres contrats (GAV, mutuelle, prévoyance, scolaire) : la rubrique vérifie qu'aucun enfant ne passe entre les mailles, sans contrat dédié à souscrire.",
     postes: [
       { id: 'individuelle-accident', label: 'Individuelle accident',
         cQuoi: "Une indemnisation pour ton enfant s'il se blesse, même sans responsable identifié (chute seul au parc, sport).",
@@ -151,6 +167,8 @@ const DOMAINES = [
   },
   {
     id: 'scolaire', label: 'Scolaire', emoji: '🎒', defaultOn: true,
+    quoi: "La couverture de l'enfant à l'école, sur le trajet et en activité : sa responsabilité (RC) et ses propres blessures.",
+    frontiere: "Souvent en doublon : la RC familiale de la MRH et une GAV famille couvrent déjà l'essentiel. La rubrique sert d'abord à vérifier ça avant de payer une assurance scolaire.",
     postes: [
       { id: 'rc-scolaire', label: 'RC scolaire',
         cQuoi: "La responsabilité civile de l'enfant pour les dommages qu'il cause à l'école.",
@@ -168,6 +186,8 @@ const DOMAINES = [
   },
   {
     id: 'materiel', label: 'Matériel', emoji: '📱', defaultOn: true,
+    quoi: "Tes objets et appareils pris un par un, dans les cas que la MRH ne couvre pas : casse accidentelle, panne, vol hors du domicile, objets de valeur au-delà des plafonds.",
+    frontiere: "Complément direct de l'Habitation, qui couvre tes biens lors d'un sinistre à la maison. Un score moyen ici n'oblige pas à s'assurer plus : ces assurances sont souvent chères pour le risque réel, et le porter soi-même est parfois le bon choix.",
     postes: [
       { id: 'multimedia', label: 'Multimédia / électroménager',
         cQuoi: "Les extensions de garantie et assurances casse/panne des gros équipements de la maison.",
@@ -185,6 +205,8 @@ const DOMAINES = [
   },
   {
     id: 'auto', label: 'Auto / moto', emoji: '🚗', defaultOn: false,
+    quoi: "La couverture du véhicule, de ses occupants et surtout du conducteur — le grand oublié des formules de base.",
+    frontiere: "Sur la route, seule l'assurance auto joue : ni la RC vie privée ni la MRH ne couvrent un accident de voiture.",
     postes: [
       { id: 'formule', label: 'Formule (tiers → tous risques)',
         cQuoi: "Le niveau de couverture du véhicule : tiers (obligatoire, dommages aux autres), intermédiaire, tous risques (tes propres dommages aussi).",
@@ -202,6 +224,8 @@ const DOMAINES = [
   },
   {
     id: 'mobilite', label: 'Mobilité douce', emoji: '🚲', defaultOn: false,
+    quoi: "Vélos, trottinettes et engins électriques : la RC obligatoire des engins motorisés, le vol et la casse.",
+    frontiere: "Rubrique à part car la RC de ta MRH ne couvre PAS les engins à moteur électrique, et le vol de vélo dans la rue est presque toujours exclu de la MRH.",
     postes: [
       { id: 'rc-edpm', label: 'RC trottinette / EDPM',
         cQuoi: "L'assurance responsabilité civile obligatoire pour les engins électriques (trottinette, gyroroue…). La RC de la MRH ne les couvre PAS.",
@@ -219,6 +243,8 @@ const DOMAINES = [
   },
   {
     id: 'voyage', label: 'Voyage', emoji: '✈️', defaultOn: true,
+    quoi: "Les gros pépins loin de chez toi : rapatriement, frais médicaux à l'étranger, annulation de voyage.",
+    frontiere: "Ta carte bancaire (Visa Premier, Gold…) couvre souvent déjà l'essentiel : la rubrique sert d'abord à le savoir, pour ne pas payer deux fois la même garantie.",
     postes: [
       { id: 'rapatriement', label: 'Assistance rapatriement',
         cQuoi: "L'organisation et la prise en charge de ton retour médicalisé en cas de gros pépin à l'étranger.",
@@ -240,6 +266,8 @@ const DOMAINES = [
   },
   {
     id: 'numerique', label: 'Vie numérique', emoji: '💻', defaultOn: false,
+    quoi: "Les risques en ligne : usurpation d'identité, fraude bancaire, cyberharcèlement (notamment des enfants).",
+    frontiere: "La loi (remboursement des fraudes bancaires) et tes contrats existants (PJ, options MRH) couvrent déjà beaucoup : vérifier avant d'acheter une assurance dédiée.",
     postes: [
       { id: 'usurpation', label: "Usurpation d'identité",
         cQuoi: "L'accompagnement (juridique et technique) si quelqu'un utilise ton identité pour ouvrir des comptes ou contracter des crédits.",
@@ -548,6 +576,11 @@ export function render(store) {
         </div>
         <button id="fiche-close" class="text-gray-600 hover:text-gray-300 transition text-lg px-1">&times;</button>
       </div>
+      ${dom.quoi ? `
+      <div class="mx-4 sm:mx-5 mt-3 rounded-lg bg-indigo-500/5 border border-indigo-500/15 px-3 py-2.5 space-y-1.5 text-xs leading-relaxed">
+        <p><span class="font-semibold text-indigo-300">🎯 Ce que mesure cette rubrique :</span> <span class="text-gray-300">${dom.quoi}</span></p>
+        ${dom.frontiere ? `<p><span class="font-semibold text-indigo-300">↔ À ne pas confondre :</span> <span class="text-gray-400">${dom.frontiere}</span></p>` : ''}
+      </div>` : ''}
       ${data.resume ? `<p class="px-4 sm:px-5 pt-3 text-sm text-gray-300">${data.resume}</p>` : ''}
       <div class="p-4 sm:p-5 space-y-2">
         ${postesAffiches.map((p, i) => {
@@ -789,7 +822,7 @@ export function render(store) {
               const data = domData[d.id];
               const active = selectedDomaineId === d.id;
               return `
-            <button data-select-domaine="${d.id}" class="text-left rounded-lg px-2.5 py-2 border transition ${active ? 'border-cyan-500/50 bg-cyan-500/10' : 'border-dark-400/20 bg-dark-800/40 hover:bg-dark-600/40'}">
+            <button data-select-domaine="${d.id}" title="${(d.quoi || '').replace(/"/g, '&quot;')}" class="text-left rounded-lg px-2.5 py-2 border transition ${active ? 'border-cyan-500/50 bg-cyan-500/10' : 'border-dark-400/20 bg-dark-800/40 hover:bg-dark-600/40'}">
               <p class="text-[11px] text-gray-300 truncate">${d.emoji} ${d.label}</p>
               <div class="flex items-center gap-1.5 mt-1">
                 <div class="flex-1 h-1 rounded-full bg-dark-600/70 overflow-hidden"><div class="h-full rounded-full" style="width:${((data.note || 0) / 5) * 100}%;background:${scoreColor(data.note)}"></div></div>
@@ -1137,11 +1170,14 @@ export function mount(store, navigate) {
     const cfgNow = getConfig(store);
     const body = `
       <p class="text-xs text-gray-400 mb-3">Coche les domaines qui te concernent : les autres disparaissent du radar et des recommandations. Chaque utilisateur a sa propre configuration.</p>
-      <div class="grid grid-cols-2 gap-1.5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
         ${DOMAINES.map(d => `
-        <label class="flex items-center gap-2 cursor-pointer rounded-lg border border-dark-400/30 bg-dark-800 px-3 py-2 hover:border-cyan-500/40 transition has-[:checked]:border-cyan-500/50 has-[:checked]:bg-cyan-500/5">
-          <input type="checkbox" name="dom-${d.id}" ${cfgNow.actifs[d.id] ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-cyan-500 focus:ring-cyan-500/40">
-          <span class="text-xs text-gray-200">${d.emoji} ${d.label}</span>
+        <label class="flex items-start gap-2 cursor-pointer rounded-lg border border-dark-400/30 bg-dark-800 px-3 py-2 hover:border-cyan-500/40 transition has-[:checked]:border-cyan-500/50 has-[:checked]:bg-cyan-500/5">
+          <input type="checkbox" name="dom-${d.id}" ${cfgNow.actifs[d.id] ? 'checked' : ''} class="w-3.5 h-3.5 mt-0.5 rounded border-dark-400 bg-dark-900 text-cyan-500 focus:ring-cyan-500/40">
+          <span class="min-w-0">
+            <span class="block text-xs text-gray-200">${d.emoji} ${d.label}</span>
+            ${d.quoi ? `<span class="block text-[10px] text-gray-600 leading-snug mt-0.5">${d.quoi}</span>` : ''}
+          </span>
         </label>`).join('')}
       </div>
     `;
