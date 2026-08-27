@@ -326,7 +326,8 @@ function getContrats(store) { return store.get('contrats') || []; }
 function getConfig(store) {
   const cfg = store.get('protectionConfig') || {};
   const actifs = { ...Object.fromEntries(DOMAINES.map(d => [d.id, d.defaultOn])), ...(cfg.actifs || {}) };
-  return { actifs };
+  // horsScope : postes marqués « non concerné » (clé "domId::posteId"), retirés de la pondération des notes
+  return { actifs, horsScope: cfg.horsScope || {} };
 }
 
 function getBilan(store) { return store.get('protectionBilan') || null; }
@@ -349,24 +350,35 @@ function scoreLabel(note) {
   return 'Optimal';
 }
 
-// Score d'un domaine : bilan global prioritaire, sinon calcul depuis les garanties des contrats
+// Score d'un domaine : bilan global prioritaire, sinon calcul depuis les garanties des contrats.
+// Les postes marqués « non concerné » sont retirés de la pondération.
 function computeDomaineData(store, domId) {
   const bilan = getBilan(store);
+  const horsScope = getConfig(store).horsScope;
+  const estExclu = (posteId) => !!horsScope[domId + '::' + posteId];
   if (bilan?.scores?.[domId]) {
     const s = bilan.scores[domId];
-    return { note: Number(s.note), resume: s.resume || '', postes: (s.postes || []).map(p => ({
-      poste: p.poste, label: p.label || p.poste, note: Number(p.note), resume: p.resume || '', contrat: p.contrat || ''
-    })), source: 'bilan' };
+    const postes = (s.postes || []).map(p => ({
+      poste: p.poste, label: p.label || p.poste, note: Number(p.note), resume: p.resume || '', contrat: p.contrat || '', exclu: estExclu(p.poste)
+    }));
+    // La note du bilan fait foi, sauf si des postes sont exclus : repondération sur la moyenne des postes restants
+    let note = Number(s.note);
+    if (postes.some(p => p.exclu)) {
+      const retenues = postes.filter(p => !p.exclu && !isNaN(p.note)).map(p => p.note);
+      note = retenues.length ? Math.round((retenues.reduce((a, b) => a + b, 0) / retenues.length) * 2) / 2 : null;
+    }
+    return { note, resume: s.resume || '', postes, source: 'bilan' };
   }
   // Fallback : agréger les garanties des contrats analysés individuellement
   const postes = [];
   for (const c of getContrats(store)) {
     for (const g of (c.garanties || [])) {
-      if (g.domaine === domId) postes.push({ poste: g.poste, label: g.label || g.poste, note: Number(g.note), resume: g.resume || '', contrat: c.nom || c.assureur || '' });
+      if (g.domaine === domId) postes.push({ poste: g.poste, label: g.label || g.poste, note: Number(g.note), resume: g.resume || '', contrat: c.nom || c.assureur || '', exclu: estExclu(g.poste) });
     }
   }
   if (postes.length === 0) return { note: null, resume: '', postes: [], source: 'aucun' };
-  const note = Math.max(...postes.map(p => p.note || 0));
+  const retenus = postes.filter(p => !p.exclu);
+  const note = retenus.length ? Math.max(...retenus.map(p => p.note || 0)) : null;
   return { note, resume: '', postes, source: 'contrats' };
 }
 
@@ -559,8 +571,9 @@ export function render(store) {
     const postesAffiches = [
       ...data.postes,
       ...dom.postes.filter(p => !evaluatedIds.has(p.id) && ![...evaluatedIds].some(e => findPedagogie(dom.id, e) === p))
-        .map(p => ({ poste: p.id, label: p.label, note: null, resume: '', contrat: '' }))
+        .map(p => ({ poste: p.id, label: p.label, note: null, resume: '', contrat: '', exclu: !!cfg.horsScope[dom.id + '::' + p.id] }))
     ];
+    const nbExclus = postesAffiches.filter(p => p.exclu).length;
     return `
     <div class="card-dark rounded-xl overflow-hidden" id="fiche-domaine">
       <div class="px-4 sm:px-5 py-4 border-b border-dark-400/30 flex flex-wrap items-center gap-3">
@@ -576,40 +589,53 @@ export function render(store) {
             </div>
             <span class="text-sm font-bold" style="color:${scoreColor(data.note)}">${data.note !== null ? data.note.toFixed(1).replace('.', ',') + '/5' : '—'}</span>
           </div>
+          ${nbExclus > 0 ? `<p class="text-[9px] text-gray-600 mt-1">note repondérée — ${nbExclus} poste${nbExclus > 1 ? 's' : ''} non concerné${nbExclus > 1 ? 's' : ''} exclu${nbExclus > 1 ? 's' : ''}</p>` : ''}
         </div>
         <button id="fiche-close" class="text-gray-600 hover:text-gray-300 transition text-lg px-1">&times;</button>
       </div>
       ${dom.quoi ? `
-      <div class="mx-4 sm:mx-5 mt-3 rounded-lg bg-indigo-500/5 border border-indigo-500/15 px-3 py-2.5 space-y-1.5 text-xs leading-relaxed">
-        <p><span class="font-semibold text-indigo-300">🎯 Ce que mesure cette rubrique :</span> <span class="text-gray-300">${dom.quoi}</span></p>
-        ${dom.frontiere ? `<p><span class="font-semibold text-indigo-300">↔ À ne pas confondre :</span> <span class="text-gray-400">${dom.frontiere}</span></p>` : ''}
-      </div>` : ''}
-      ${data.resume ? `<p class="px-4 sm:px-5 pt-3 text-sm text-gray-300">${data.resume}</p>` : ''}
-      <div class="p-4 sm:p-5 space-y-2">
+      <details class="mx-4 sm:mx-5 mt-3 rounded-lg bg-indigo-500/5 border border-indigo-500/15 group/rub">
+        <summary class="px-3 py-2 cursor-pointer select-none text-[11px] text-indigo-300/90 flex items-center gap-1.5" style="list-style:none">
+          ℹ️ Comprendre cette rubrique
+          <svg class="w-2.5 h-2.5 transition-transform group-open/rub:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-3 pb-2.5 space-y-1.5 text-xs leading-relaxed">
+          <p><span class="font-semibold text-indigo-300">🎯 Ce que mesure cette rubrique :</span> <span class="text-gray-300">${dom.quoi}</span></p>
+          ${dom.frontiere ? `<p><span class="font-semibold text-indigo-300">↔ À ne pas confondre :</span> <span class="text-gray-400">${dom.frontiere}</span></p>` : ''}
+        </div>
+      </details>` : ''}
+      ${data.resume ? `<p class="px-4 sm:px-5 pt-3 text-xs text-gray-400 leading-relaxed">${data.resume}</p>` : ''}
+      <div class="p-4 sm:p-5 space-y-1.5">
         ${postesAffiches.map((p, i) => {
           const ped = findPedagogie(dom.id, p.poste) || findPedagogie(dom.id, p.label);
+          const noteTxt = p.note !== null && p.note !== undefined && !isNaN(p.note) ? Math.round(p.note) + '/5' : 'non évalué';
           return `
-        <div class="rounded-lg bg-dark-800/50 border border-dark-400/20">
-          <div class="px-3 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span class="text-sm text-gray-200 font-medium">${p.label || p.poste}</span>
-            ${pastilles(p.note)}
-            <span class="text-xs font-bold" style="color:${scoreColor(p.note)}">${p.note !== null && p.note !== undefined && !isNaN(p.note) ? Math.round(p.note) + '/5' : 'non évalué'}</span>
-            ${p.contrat ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-dark-600/70 text-gray-400">🏷 ${p.contrat}</span>` : ''}
-            ${ped ? `<button data-ped-toggle="${dom.id}::${i}" class="ml-auto text-[11px] text-cyan-400/80 hover:text-cyan-300 transition flex items-center gap-1">C'est quoi ? <svg class="w-2.5 h-2.5 transition-transform" data-ped-chevron="${dom.id}::${i}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></button>` : ''}
-          </div>
-          ${p.resume ? `<p class="px-3 pb-2.5 text-xs text-gray-400 leading-relaxed">${p.resume}</p>` : ''}
-          ${ped ? `
-          <div data-ped-panel="${dom.id}::${i}" class="hidden px-3 pb-3">
+        <div class="rounded-lg bg-dark-800/40 border border-dark-400/15 ${p.exclu ? 'opacity-50' : ''}">
+          <button data-poste-toggle="${i}" class="w-full flex items-center gap-2.5 px-3 py-2.5 text-left">
+            <span class="flex-1 min-w-0 text-[13px] text-gray-200 truncate">${p.label || p.poste}</span>
+            ${p.exclu
+              ? `<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-dark-600/70 text-gray-500 uppercase tracking-wide flex-shrink-0">non concerné</span>`
+              : `${pastilles(p.note)}<span class="text-xs font-bold flex-shrink-0 w-[4.5rem] text-right" style="color:${scoreColor(p.note)}">${noteTxt}</span>`}
+            <svg data-poste-chevron="${i}" class="w-3 h-3 text-gray-600 transition-transform flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div data-poste-panel="${i}" class="hidden px-3 pb-3 space-y-2">
+            ${p.resume ? `<p class="text-xs text-gray-400 leading-relaxed">${p.resume}</p>` : ''}
+            ${p.contrat ? `<p class="text-[10px] text-gray-500">🏷 Couvert par : <span class="text-gray-400">${p.contrat}</span></p>` : ''}
+            ${ped ? `
             <div class="rounded-lg bg-cyan-500/5 border border-cyan-500/15 p-3 space-y-2 text-xs leading-relaxed">
               <p><span class="font-semibold text-cyan-300">C'est quoi ?</span> <span class="text-gray-300">${ped.cQuoi}</span></p>
               <p><span class="font-semibold text-cyan-300">Pourquoi c'est important ?</span> <span class="text-gray-300">${ped.pourquoi}</span></p>
               <div><span class="font-semibold text-cyan-300">Ce qu'il faut regarder :</span>
                 <ul class="mt-1 space-y-0.5">${ped.criteres.map(c => `<li class="flex gap-1.5 text-gray-300"><span class="text-cyan-500/60">•</span><span>${c}</span></li>`).join('')}</ul>
               </div>
-            </div>
-          </div>` : ''}
+            </div>` : ''}
+            <button data-poste-exclure="${dom.id}::${p.poste}" class="text-[11px] transition ${p.exclu ? 'text-cyan-400 hover:text-cyan-300' : 'text-gray-600 hover:text-gray-400'}">
+              ${p.exclu ? "↩ Finalement concerné — réintégrer ce poste dans la note" : "🚫 Pas concerné (pas d'animaux, pas de vélo…) — exclure de la note"}
+            </button>
+          </div>
         </div>`;
         }).join('')}
+        <p class="text-[10px] text-gray-600 pt-1">Clique sur un poste pour l'explication complète — et marque-le « non concerné » s'il ne s'applique pas à ta situation : la note du domaine se repondère automatiquement.</p>
         ${domRecos.map(r => `
         <div class="relative">
           ${conseilCardHtml({
@@ -1012,14 +1038,28 @@ export function mount(store, navigate) {
     navigate('contrats');
   });
 
-  // ---- Pédagogie (dépliants) ----
-  document.querySelectorAll('[data-ped-toggle]').forEach(btn => {
+  // ---- Postes (dépliants) ----
+  document.querySelectorAll('[data-poste-toggle]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const key = btn.dataset.pedToggle;
-      const panel = document.querySelector(`[data-ped-panel="${key}"]`);
-      const chevron = document.querySelector(`[data-ped-chevron="${key}"]`);
+      const key = btn.dataset.posteToggle;
+      const panel = document.querySelector(`[data-poste-panel="${key}"]`);
+      const chevron = document.querySelector(`[data-poste-chevron="${key}"]`);
       if (panel) panel.classList.toggle('hidden');
       if (chevron) chevron.style.transform = panel && !panel.classList.contains('hidden') ? 'rotate(180deg)' : '';
+    });
+  });
+
+  // ---- « Non concerné » : exclure / réintégrer un poste de la pondération ----
+  document.querySelectorAll('[data-poste-exclure]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cle = btn.dataset.posteExclure;
+      const cfgNow = getConfig(store);
+      const horsScope = { ...cfgNow.horsScope };
+      const exclure = !horsScope[cle];
+      if (exclure) horsScope[cle] = true; else delete horsScope[cle];
+      store.set('protectionConfig', { actifs: cfgNow.actifs, horsScope });
+      showToast(exclure ? 'Poste exclu de la note ✓' : 'Poste réintégré dans la note ✓', 'success', 2000);
+      navigate('contrats');
     });
   });
 
@@ -1315,7 +1355,7 @@ export function mount(store, navigate) {
         const cb = document.querySelector(`#modal-body input[name="dom-${d.id}"]`);
         actifs[d.id] = cb ? cb.checked : d.defaultOn;
       });
-      store.set('protectionConfig', { actifs });
+      store.set('protectionConfig', { actifs, horsScope: getConfig(store).horsScope });
       navigate('contrats');
     });
   });
