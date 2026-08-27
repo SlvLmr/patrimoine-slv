@@ -364,6 +364,16 @@ MÉTHODE OBLIGATOIRE, dans cet ordre :
 Domaines et postes autorisés (utilise exactement ces identifiants) :
 ${catalogueForPrompt()}
 
+Points de vigilance PAR TYPE de contrat (applique ceux du type détecté) :
+- Habitation (MRH) : valeur à neuf ou vétusté ? franchises ? plafonds mobilier/objets de valeur ? exclusions (piscine, dépendances, espèces) ? délais de déclaration ?
+- GAV : seuil d'invalidité déclencheur (1 %, 5 %, 30 % ?), plafond, QUI est couvert (conjoint souvent exclu), exclusions (véhicule, travail, dos).
+- Santé/mutuelle : hospitalisation en % BR, dépassements d'honoraires, optique/dentaire/orthodontie en euros réels, soins à l'étranger.
+- Prévoyance : capital décès, rente éducation, taux de maintien de salaire (ITT), rente invalidité — si un montant n'est pas dans le document, note null et dis où le trouver.
+- Protection juridique : domaines couverts ET exclus (travail ? construction ?), plafond de frais d'avocat, seuil d'intervention, délais de carence.
+- Carte bancaire : conditions d'activation (part du voyage payée avec la carte), durée max de séjour, plafonds.
+- Auto : formule, garantie du conducteur (l'oubli n°1), assistance 0 km, valeur de remplacement.
+- Scolaire : extrascolaire 24h/24 ou école seulement ? doublon probable avec RC familiale et GAV.
+
 Barème de notation (note chaque poste de 0 à 5) :
 0 = non couvert · 1 = trace (couverture par ricochet, plafonds symboliques) · 2 = insuffisant (plafonds bas, franchises élevées, membres du foyer exclus) · 3 = correct (standard du marché) · 4 = bon (plafonds élevés, franchises faibles, toute la famille) · 5 = optimal.
 
