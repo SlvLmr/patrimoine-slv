@@ -314,6 +314,10 @@ const SINISTRE_PAR_TYPE = {
   autre: 'Sinistre',
 };
 
+// Un vrai numéro de téléphone ? Sinon la consigne part en sous-ligne grise, jamais en gros cyan.
+const isTelReel = (t) => /^[+0-9][0-9 .()/-]{5,19}$/.test(String(t || '').trim());
+const normTxt = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
 // ---- state helpers ----
 let selectedDomaineId = null;
 
@@ -728,15 +732,15 @@ export function render(store) {
   const urgencesContrats = contrats.filter(c => c.telAssistance || c.telephone);
   // Depuis les contrats : un numéro par situation (assistance sinistre en priorité)
   const telsVus = new Set(urgencesBilan.map(u => (u.tel || '').replace(/\s/g, '')));
+  const situationsVues = new Set(urgencesBilan.map(u => normTxt(u.situation)));
   const urgencesDepuisContrats = urgencesContrats.map(c => ({
     situation: SINISTRE_PAR_TYPE[c.type] || `${c.nom || 'Sinistre'}`,
     contact: [c.assureur, c.nom].filter(Boolean).join(' — '),
     tel: c.telAssistance || c.telephone,
     note: c.numContrat ? `contrat ${c.numContrat}` : '',
-  })).filter(u => u.tel && !telsVus.has(u.tel.replace(/\s/g, '')));
-  const urgencesSinistre = [...urgencesBilan, ...urgencesDepuisContrats];
-  // Un vrai numéro de téléphone ? Sinon la consigne part en sous-ligne grise, jamais en gros cyan.
-  const isTelReel = (t) => /^[+0-9][0-9 .()/-]{5,19}$/.test(String(t || '').trim());
+    _edit: 'c' + c.id,
+  })).filter(u => u.tel && !telsVus.has(u.tel.replace(/\s/g, '')) && !situationsVues.has(normTxt(u.situation)));
+  const urgencesSinistre = [...urgencesBilan.map((u, i) => ({ ...u, _edit: 'b' + i })), ...urgencesDepuisContrats];
   const urgences = hasData ? `
     <div class="card-dark rounded-xl overflow-hidden">
       <div class="px-4 sm:px-5 py-3 border-b border-dark-400/30 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -759,6 +763,7 @@ export function render(store) {
             ${sousLigne ? `<p class="text-[10px] text-gray-600 leading-snug">${sousLigne}</p>` : ''}
           </div>
           ${telOk ? `<a href="tel:${u.tel.replace(/\s/g, '')}" class="text-xs font-semibold text-cyan-400/90 hover:text-cyan-300 whitespace-nowrap">${u.tel}</a>${copyBtn(u.tel)}` : ''}
+          <button data-urg-edit="${u._edit}" title="Modifier cette ligne (numéro, consigne…)" class="text-gray-700 hover:text-cyan-400 transition text-[11px] px-0.5 flex-shrink-0">✎</button>
         </div>`;
         }).join('')}
         <p id="urg-vide" class="hidden text-[11px] text-gray-600 py-2 md:col-span-2">Aucune situation ne correspond à ta recherche.</p>
@@ -1022,6 +1027,55 @@ export function mount(store, navigate) {
     });
   });
 
+  // ---- Édition d'une ligne du guide réflexe ----
+  document.querySelectorAll('[data-urg-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.urgEdit;
+      let entree = null;
+      if (key.startsWith('b')) {
+        entree = (store.get('protectionBilan')?.urgences || [])[Number(key.slice(1))];
+      } else {
+        const c = getContrats(store).find(x => x.id === key.slice(1));
+        if (c) entree = {
+          situation: SINISTRE_PAR_TYPE[c.type] || c.nom || 'Sinistre',
+          contact: [c.assureur, c.nom].filter(Boolean).join(' — '),
+          tel: c.telAssistance || c.telephone || '',
+          note: c.numContrat ? `contrat ${c.numContrat}` : '',
+        };
+      }
+      if (!entree) return;
+      const esc2 = (v) => String(v ?? '').replace(/"/g, '&quot;');
+      const telActuel = isTelReel(entree.tel) ? entree.tel : '';
+      // Une consigne logée dans le champ tel bascule dans la consigne, pour ne rien perdre
+      const noteActuelle = [entree.note, !telActuel && entree.tel ? entree.tel : ''].filter(Boolean).join(' · ');
+      const body = `
+        <div class="space-y-3">
+          <div><label class="block text-xs text-gray-400 mb-1">Situation</label>
+            <input id="urg-e-situation" type="text" value="${esc2(entree.situation)}" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm focus:ring-2 focus:ring-cyan-500/40"></div>
+          <div><label class="block text-xs text-gray-400 mb-1">Qui contacter</label>
+            <input id="urg-e-contact" type="text" value="${esc2(entree.contact)}" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm focus:ring-2 focus:ring-cyan-500/40"></div>
+          <div><label class="block text-xs text-gray-400 mb-1">Numéro de téléphone</label>
+            <input id="urg-e-tel" type="tel" inputmode="tel" value="${esc2(telActuel)}" placeholder="01 23 45 67 89" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm focus:ring-2 focus:ring-cyan-500/40"></div>
+          <div><label class="block text-xs text-gray-400 mb-1">Consigne / n° de contrat</label>
+            <input id="urg-e-note" type="text" value="${esc2(noteActuelle)}" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm focus:ring-2 focus:ring-cyan-500/40"></div>
+          <p class="text-[10px] text-gray-600">Tes modifications sont conservées, y compris quand un nouveau bilan est importé.</p>
+        </div>`;
+      openModal('Modifier cette ligne', body, () => {
+        const val = (id) => document.getElementById(id)?.value.trim() || '';
+        const maj = { situation: val('urg-e-situation'), contact: val('urg-e-contact'), tel: val('urg-e-tel'), note: val('urg-e-note'), manuel: true };
+        if (!maj.situation) { showModalError('La situation ne peut pas être vide.'); return false; }
+        if (maj.tel && !isTelReel(maj.tel)) { showModalError('Le champ numéro doit contenir un numéro de téléphone (les consignes vont dans le champ consigne).'); return false; }
+        const bilanNow = store.get('protectionBilan') || {};
+        bilanNow.urgences = bilanNow.urgences || [];
+        if (key.startsWith('b')) bilanNow.urgences[Number(key.slice(1))] = maj;
+        else bilanNow.urgences.push(maj);
+        store.set('protectionBilan', bilanNow);
+        showToast('Ligne mise à jour ✓', 'success', 2000);
+        navigate('contrats');
+      });
+    });
+  });
+
   // ---- Recherche dans le guide réflexe ----
   const urgSearch = document.getElementById('urg-search');
   urgSearch?.addEventListener('input', () => {
@@ -1112,6 +1166,21 @@ export function mount(store, navigate) {
         const data = parseColleJSON(ta.value);
         if (!data.scores) throw new Error('scores manquants');
         data.date = new Date().toLocaleDateString('fr-FR');
+        // Les lignes du guide réflexe éditées à la main survivent au nouveau bilan :
+        // numéro reporté sur la ligne équivalente, lignes sans équivalent conservées.
+        const manuels = (store.get('protectionBilan')?.urgences || []).filter(u => u.manuel);
+        if (manuels.length) {
+          data.urgences = Array.isArray(data.urgences) ? data.urgences : [];
+          manuels.forEach(m => {
+            const cible = data.urgences.find(u => normTxt(u.situation) === normTxt(m.situation) ||
+              (normTxt(u.contact) && normTxt(u.contact) === normTxt(m.contact)));
+            if (cible) {
+              if (!isTelReel(cible.tel) && isTelReel(m.tel)) { cible.tel = m.tel; cible.manuel = true; }
+            } else {
+              data.urgences.push(m);
+            }
+          });
+        }
         store.set('protectionBilan', data);
         selectedDomaineId = null;
         showToast('Bilan de protection importé ✓', 'success', 3000);
