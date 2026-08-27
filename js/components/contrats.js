@@ -301,16 +301,16 @@ const TYPES_CONTRAT = [
 
 // Situations de sinistre par type de contrat (pour l'encart « En cas de besoin »)
 const SINISTRE_PAR_TYPE = {
-  mrh: 'Dégât des eaux · incendie · vol (maison)',
-  auto: 'Accident ou panne du véhicule',
-  sante: 'Hospitalisation · frais de santé',
-  prevoyance: 'Arrêt de travail · invalidité · décès',
-  emprunteur: 'Sinistre lié au crédit immobilier',
-  gav: 'Accident de la vie (domestique, sport…)',
-  pj: 'Litige · besoin d\'un avocat',
-  scolaire: 'Accident scolaire ou extrascolaire',
-  materiel: 'Casse ou vol de matériel',
-  voyage: 'Urgence en voyage · rapatriement',
+  mrh: "J'ai un dégât des eaux, un incendie ou un cambriolage",
+  auto: "J'ai un accident ou une panne de voiture",
+  sante: "Je suis hospitalisé ou j'ai de gros frais de santé",
+  prevoyance: "Je suis en arrêt de travail · invalidité · décès",
+  emprunteur: "Je ne peux plus payer mon crédit (arrêt, invalidité)",
+  gav: "Je me suis blessé (maison, bricolage, sport)",
+  pj: "J'ai un litige et besoin de conseils ou d'un avocat",
+  scolaire: "Mon enfant s'est blessé (école, activités)",
+  materiel: "Mon appareil est cassé, en panne ou volé",
+  voyage: "J'ai un pépin en voyage · rapatriement",
   autre: 'Sinistre',
 };
 
@@ -456,7 +456,7 @@ Règles :
 - Note chaque domaine ET chaque poste de chaque domaine (tous les postes listés, même à 0 si rien ne les couvre).
 - Les recommandations sont concrètes : quoi faire, auprès de qui, ordre de grandeur de prix annuel. priorite : 1 = urgent (trou grave), 2 = important, 3 = optimisation.
 - EN PLUS des trous et doublons : pour CHAQUE domaine noté entre 3 et 4,5, ajoute une recommandation priorite 3 dont le titre commence par « Passer de X à 5 — » (X = note actuelle) expliquant précisément ce qui manque pour une couverture optimale : quelle garantie relever, quel plafond viser, quelle option ajouter, et l'ordre de grandeur du coût.
-- Pour "urgences" : liste QUI APPELER pour chaque type de sinistre couvert (dégât des eaux, accident, hospitalisation, litige…), avec le bon numéro (assistance sinistre de préférence) et le numéro de contrat à rappeler au téléphone.
+- Pour "urgences" : construis un GUIDE RÉFLEXE de 10 à 15 situations très concrètes, formulées à la première personne (« J'ai un dégât des eaux », « On m'a volé mon téléphone », « Mon enfant s'est blessé à l'école », « J'ai un accident de voiture », « Je suis hospitalisé »…), couvrant TOUS les risques assurés par mes contrats. Pour chacune : "contact" = qui contacter en premier ; "tel" = UNIQUEMENT un vrai numéro de téléphone présent dans les documents (sinon null — n'invente jamais de numéro et ne mets JAMAIS de phrase dans ce champ) ; "note" = le n° de contrat à rappeler + le premier réflexe en quelques mots (déposer plainte d'abord, déclarer sous 5 jours, où trouver le numéro s'il manque…). Si un risque courant n'est couvert par aucun contrat, ajoute quand même la situation avec contact "Non couvert" et le bon réflexe gratuit (conciliateur, service public…).
 
 Format de réponse EXACT :
 {
@@ -470,7 +470,7 @@ Format de réponse EXACT :
   },
   "recos": [ { "domaine": "id domaine", "priorite": 1, "titre": "titre court", "texte": "quoi faire concrètement", "prix": "ordre de grandeur €/an" } ],
   "doublons": [ { "titre": "titre court", "texte": "quels contrats se recouvrent et quoi résilier/ajuster" } ],
-  "urgences": [ { "situation": "Dégât des eaux", "contact": "nom assureur", "tel": "01 23 45 67 89", "note": "n° contrat à rappeler" } ]
+  "urgences": [ { "situation": "J'ai un dégât des eaux", "contact": "assureur — contrat concerné", "tel": "01 23 45 67 89 ou null", "note": "contrat n° … · déclarer sous 5 jours ouvrés" } ]
 }`;
 }
 
@@ -735,27 +735,34 @@ export function render(store) {
     note: c.numContrat ? `contrat ${c.numContrat}` : '',
   })).filter(u => u.tel && !telsVus.has(u.tel.replace(/\s/g, '')));
   const urgencesSinistre = [...urgencesBilan, ...urgencesDepuisContrats];
+  // Un vrai numéro de téléphone ? Sinon la consigne part en sous-ligne grise, jamais en gros cyan.
+  const isTelReel = (t) => /^[+0-9][0-9 .()/-]{5,19}$/.test(String(t || '').trim());
   const urgences = hasData ? `
     <div class="card-dark rounded-xl overflow-hidden">
-      <div class="px-4 sm:px-5 py-3 border-b border-dark-400/30 flex items-center gap-3">
-        <span class="text-lg">🆘</span>
+      <div class="px-4 sm:px-5 py-3 border-b border-dark-400/30 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span class="text-base">🆘</span>
         <h3 class="text-sm font-bold text-gray-100">En cas de besoin</h3>
-        <div class="ml-auto flex gap-1">
+        <input id="urg-search" type="search" placeholder="incendie, vol, hôpital…" class="ml-auto w-36 sm:w-48 bg-dark-800/70 border border-dark-400/30 rounded-lg px-2.5 py-1 text-[11px] text-gray-300 placeholder-gray-600 focus:outline-none focus:border-cyan-500/40">
+        <div class="flex gap-1">
           <button data-urg-tab="sinistre" class="urg-tab px-2.5 py-1 text-[11px] rounded-lg bg-cyan-500/20 text-cyan-400 font-medium transition">Par sinistre</button>
           <button data-urg-tab="contrat" class="urg-tab px-2.5 py-1 text-[11px] rounded-lg text-gray-500 hover:text-gray-300 transition">Par contrat</button>
         </div>
       </div>
-      <div id="urg-panel-sinistre" class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        ${urgencesSinistre.map(u => `
-        <div class="flex items-center gap-3 rounded-lg bg-dark-800/50 border border-dark-400/20 px-3 py-2.5">
+      <div id="urg-panel-sinistre" class="px-4 sm:px-5 py-2 grid grid-cols-1 md:grid-cols-2 gap-x-10">
+        ${urgencesSinistre.map(u => {
+          const telOk = isTelReel(u.tel);
+          const sousLigne = [u.contact, u.note, !telOk && u.tel ? u.tel : ''].filter(Boolean).join(' · ');
+          return `
+        <div class="urg-row flex items-center gap-3 py-2 border-b border-dark-400/10">
           <div class="flex-1 min-w-0">
-            <p class="text-xs text-gray-200 font-medium truncate">${u.situation}</p>
-            <p class="text-[10px] text-gray-500 truncate">${u.contact || ''}${u.note ? ' · ' + u.note : ''}</p>
+            <p class="text-xs text-gray-200">${u.situation}</p>
+            ${sousLigne ? `<p class="text-[10px] text-gray-600 leading-snug">${sousLigne}</p>` : ''}
           </div>
-          <a href="tel:${(u.tel || '').replace(/\s/g, '')}" class="text-sm font-bold text-cyan-400 hover:text-cyan-300 whitespace-nowrap">${u.tel}</a>
-          ${copyBtn(u.tel)}
-        </div>`).join('')}
-        ${urgencesSinistre.length === 0 ? `<p class="text-[11px] text-gray-600 sm:col-span-2">Renseigne les téléphones de tes contrats (ou lance le bilan global) : chaque sinistre affichera ici qui appeler, avec le bon numéro et la référence du contrat.</p>` : ''}
+          ${telOk ? `<a href="tel:${u.tel.replace(/\s/g, '')}" class="text-xs font-semibold text-cyan-400/90 hover:text-cyan-300 whitespace-nowrap">${u.tel}</a>${copyBtn(u.tel)}` : ''}
+        </div>`;
+        }).join('')}
+        <p id="urg-vide" class="hidden text-[11px] text-gray-600 py-2 md:col-span-2">Aucune situation ne correspond à ta recherche.</p>
+        ${urgencesSinistre.length === 0 ? `<p class="text-[11px] text-gray-600 py-2 md:col-span-2">Renseigne les téléphones de tes contrats (ou lance le bilan global) : chaque situation affichera ici qui appeler, avec le bon numéro et la référence du contrat.</p>` : ''}
       </div>
       <div id="urg-panel-contrat" class="hidden p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
         ${urgencesContrats.length > 0 ? urgencesContrats.map(c => `
@@ -768,6 +775,7 @@ export function render(store) {
           </div>
         </div>`).join('') : `<p class="text-[11px] text-gray-600 sm:col-span-2">Aucun téléphone enregistré sur tes contrats pour l'instant.</p>`}
       </div>
+      <p class="px-4 sm:px-5 py-1.5 text-[10px] text-gray-600 border-t border-dark-400/15">Guide réflexe généré depuis tes contrats — il se met à jour à chaque import et à chaque nouveau bilan global.</p>
     </div>` : '';
 
   return `
@@ -1012,6 +1020,19 @@ export function mount(store, navigate) {
         t.classList.toggle('text-gray-500', !on);
       });
     });
+  });
+
+  // ---- Recherche dans le guide réflexe ----
+  const urgSearch = document.getElementById('urg-search');
+  urgSearch?.addEventListener('input', () => {
+    const q = urgSearch.value.trim().toLowerCase();
+    let visibles = 0;
+    document.querySelectorAll('#urg-panel-sinistre .urg-row').forEach(row => {
+      const ok = !q || row.textContent.toLowerCase().includes(q);
+      row.classList.toggle('hidden', !ok);
+      if (ok) visibles++;
+    });
+    document.getElementById('urg-vide')?.classList.toggle('hidden', visibles > 0 || !q);
   });
 
   // ---- Copier les prompts ----
