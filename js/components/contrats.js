@@ -535,7 +535,6 @@ export function render(store) {
 
   // Recos priorisées (bandeau haut)
   const recos = (bilan?.recos || []).slice().sort((a, b) => (a.priorite || 3) - (b.priorite || 3));
-  const topRecos = recos.slice(0, 3);
   const doublons = bilan?.doublons || [];
 
   // Total primes annuelles
@@ -783,6 +782,55 @@ export function render(store) {
       <p class="px-4 sm:px-5 py-1.5 text-[10px] text-gray-600 border-t border-dark-400/15">Guide réflexe généré depuis tes contrats — il se met à jour à chaque import et à chaque nouveau bilan global.</p>
     </div>` : '';
 
+  // ---- Bandeau haut compact : synthèse + carrousels conseils / doublons ----
+  const fleche = (dir, nom) => `<button data-car-${dir}="${nom}" class="w-6 h-6 flex items-center justify-center rounded-lg border border-dark-400/30 text-gray-500 hover:text-gray-200 hover:bg-dark-600/60 transition text-sm leading-none">${dir === 'prev' ? '‹' : '›'}</button>`;
+  const colSynthese = bilan?.synthese ? `
+    <div class="card-dark rounded-xl p-4 flex flex-col">
+      <p class="text-[10px] uppercase tracking-widest font-semibold text-gray-500 mb-2">📋 Synthèse</p>
+      <p class="text-[11px] text-gray-300 leading-relaxed">${bilan.synthese}</p>
+    </div>` : '';
+  const colConseils = recos.length > 0 ? `
+    <div class="card-dark rounded-xl p-4 flex flex-col">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] uppercase tracking-widest font-semibold text-gray-500">💡 Conseils</p>
+        <div class="flex items-center gap-1.5">
+          <span class="text-[10px] text-gray-600 tabular-nums" data-car-count="recos">1/${recos.length}</span>
+          ${recos.length > 1 ? fleche('prev', 'recos') + fleche('next', 'recos') : ''}
+        </div>
+      </div>
+      <div class="flex-1">
+        ${recos.map((r, i) => `
+        <div data-car-item="recos" class="relative h-full ${i > 0 ? 'hidden' : ''}">
+          ${conseilCardHtml(
+            { prio: r.priorite || 3, titre: r.titre, texte: r.texte + (r.prix ? ` (${r.prix})` : '') },
+            { tag: 'button', attrs: `data-goto-domaine="${r.domaine}"`, extraClass: 'w-full h-full hover:border-dark-300/40 hover:bg-dark-700/60 transition-all pr-8' }
+          )}
+          <button data-dismiss-reco="${r.titre.replace(/"/g, '&quot;')}" title="Supprimer ce conseil" class="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded text-gray-600 hover:text-accent-red hover:bg-dark-600/60 transition text-xs">✕</button>
+        </div>`).join('')}
+      </div>
+    </div>` : '';
+  const colDoublons = doublons.length > 0 ? `
+    <div class="card-dark rounded-xl p-4 flex flex-col">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] uppercase tracking-widest font-semibold text-purple-400">🔁 Doublon${doublons.length > 1 ? 's' : ''} détecté${doublons.length > 1 ? 's' : ''}</p>
+        <div class="flex items-center gap-1.5">
+          <span class="text-[10px] text-gray-600 tabular-nums" data-car-count="doublons">1/${doublons.length}</span>
+          ${doublons.length > 1 ? fleche('prev', 'doublons') + fleche('next', 'doublons') : ''}
+        </div>
+      </div>
+      <div class="flex-1">
+        ${doublons.map((d, i) => `
+        <div data-car-item="doublons" class="relative h-full rounded-xl bg-purple-500/10 border border-purple-500/25 px-3.5 py-3 ${i > 0 ? 'hidden' : ''}">
+          <p class="text-xs font-semibold text-gray-200 pr-6">${d.titre}</p>
+          <p class="text-[11px] text-gray-400 leading-relaxed mt-1">${d.texte}</p>
+          <button data-dismiss-doublon="${d.titre.replace(/"/g, '&quot;')}" title="Supprimer" class="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded text-gray-600 hover:text-accent-red hover:bg-dark-600/60 transition text-xs">✕</button>
+        </div>`).join('')}
+      </div>
+    </div>` : '';
+  const colonnesHaut = [colSynthese, colConseils, colDoublons].filter(Boolean);
+  const bandeauHaut = colonnesHaut.length > 0 ? `
+      <div class="grid grid-cols-1 ${colonnesHaut.length > 1 ? 'lg:grid-cols-' + colonnesHaut.length : ''} gap-3 items-stretch">${colonnesHaut.join('')}</div>` : '';
+
   return `
     <div class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -800,31 +848,7 @@ export function render(store) {
         <button id="btn-config-domaines" class="px-3 py-1.5 bg-dark-600/60 border border-dark-400/40 text-gray-400 text-xs rounded-lg hover:bg-dark-600 hover:text-gray-200 transition self-start sm:self-auto">⚙️ Personnaliser les domaines</button>
       </div>
 
-      ${bilan?.synthese ? `
-      <div class="card-dark rounded-xl px-4 sm:px-5 py-3.5">
-        <p class="text-sm text-gray-300 leading-relaxed">${bilan.synthese}</p>
-      </div>` : ''}
-
-      ${topRecos.length > 0 || doublons.length > 0 ? `
-      <div class="grid grid-cols-1 ${(topRecos.length + (doublons.length > 0 ? 1 : 0)) > 1 ? 'sm:grid-cols-2 lg:grid-cols-' + Math.min(topRecos.length + (doublons.length > 0 ? 1 : 0), 3) : ''} gap-2">
-        ${topRecos.map(r => `
-        <div class="relative group/reco">
-          ${conseilCardHtml(
-            { prio: r.priorite || 3, titre: r.titre, texte: r.texte.length > 110 ? r.texte.slice(0, 110) + '…' : r.texte },
-            { tag: 'button', attrs: `data-goto-domaine="${r.domaine}"`, extraClass: 'w-full h-full hover:border-dark-300/40 hover:bg-dark-700/60 transition-all pr-8' }
-          )}
-          <button data-dismiss-reco="${r.titre.replace(/"/g, '&quot;')}" title="Supprimer ce conseil" class="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded text-gray-600 hover:text-accent-red hover:bg-dark-600/60 transition text-xs">✕</button>
-        </div>`).join('')}
-        ${doublons.length > 0 ? `
-        <div class="rounded-xl bg-purple-500/10 border border-purple-500/30 px-4 py-3">
-          <p class="text-xs font-semibold text-purple-400">🔁 ${doublons.length} doublon${doublons.length > 1 ? 's' : ''} détecté${doublons.length > 1 ? 's' : ''}</p>
-          ${doublons.slice(0, 3).map(d => `
-          <div class="flex items-start gap-1.5 mt-1">
-            <p class="text-[11px] text-gray-400 leading-snug flex-1"><b class="text-gray-300">${d.titre}</b> — ${d.texte.length > 90 ? d.texte.slice(0, 90) + '…' : d.texte}</p>
-            <button data-dismiss-doublon="${d.titre.replace(/"/g, '&quot;')}" title="Supprimer" class="text-gray-600 hover:text-accent-red transition text-[10px] flex-shrink-0 px-0.5">✕</button>
-          </div>`).join('')}
-        </div>` : ''}
-      </div>` : ''}
+      ${bandeauHaut}
 
       ${hasData ? `
       <div class="card-dark rounded-xl p-4 sm:p-5">
@@ -1025,6 +1049,20 @@ export function mount(store, navigate) {
         t.classList.toggle('text-gray-500', !on);
       });
     });
+  });
+
+  // ---- Carrousels conseils / doublons (bandeau haut) ----
+  ['recos', 'doublons'].forEach(nom => {
+    const items = Array.from(document.querySelectorAll(`[data-car-item="${nom}"]`));
+    if (items.length <= 1) return;
+    let idx = 0;
+    const compteur = document.querySelector(`[data-car-count="${nom}"]`);
+    const montre = () => {
+      items.forEach((el, i) => el.classList.toggle('hidden', i !== idx));
+      if (compteur) compteur.textContent = `${idx + 1}/${items.length}`;
+    };
+    document.querySelector(`[data-car-prev="${nom}"]`)?.addEventListener('click', () => { idx = (idx - 1 + items.length) % items.length; montre(); });
+    document.querySelector(`[data-car-next="${nom}"]`)?.addEventListener('click', () => { idx = (idx + 1) % items.length; montre(); });
   });
 
   // ---- Édition d'une ligne du guide réflexe ----
