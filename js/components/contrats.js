@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError, conseilCardHtml } from '../utils.js?v=20260809a';
+import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError, conseilCardHtml } from '../utils.js?v=20260809m';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================

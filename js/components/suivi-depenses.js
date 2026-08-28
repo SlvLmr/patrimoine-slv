@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20260809a';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20260809m';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -97,6 +97,34 @@ function annulerSaveback(store, credit) {
   if (!(Number(credit) > 0)) return;
   const trF = store.get('trFeatures') || {};
   trF.saveback = Math.max(0, Math.round(((Number(trF.saveback) || 0) - Number(credit)) * 100) / 100);
+  store.set('trFeatures', trF);
+}
+
+// ---- Round-up Trade Republic : complément à l'euro supérieur sur les dépenses CB, boosté, DÉBITÉ du solde ----
+const ROUNDUP_BOOSTS = [1, 2, 3, 4, 5, 10];
+
+// 1,50 € → 0,50 € ; subtilité : une dépense « ronde » (10 €) investit quand même 1 €. Le tout × boost.
+function calcRoundup(montant, boost) {
+  const cents = Math.round((Number(montant) || 0) * 100);
+  if (cents <= 0) return 0;
+  const reste = cents % 100 === 0 ? 100 : 100 - (cents % 100);
+  return Math.round(reste * (Number(boost) || 1)) / 100;
+}
+
+function crediterRoundup(store, montantDepense) {
+  const trF = store.get('trFeatures') || {};
+  if (trF.roundupActif === false) return 0;
+  const credit = calcRoundup(montantDepense, trF.roundupBoost);
+  if (credit <= 0) return 0;
+  trF.roundup = Math.round(((Number(trF.roundup) || 0) + credit) * 100) / 100;
+  store.set('trFeatures', trF);
+  return credit;
+}
+
+function annulerRoundup(store, credit) {
+  if (!(Number(credit) > 0)) return;
+  const trF = store.get('trFeatures') || {};
+  trF.roundup = Math.max(0, Math.round(((Number(trF.roundup) || 0) - Number(credit)) * 100) / 100);
   store.set('trFeatures', trF);
 }
 
@@ -1672,6 +1700,27 @@ export function mount(store, navigate) {
             ${inputField('produit', 'Produit cible', trFeatures.savebackProduit || '', 'text', 'placeholder="Ex: Bitcoin, ETF MSCI World, action…"')}
             ${inputField('isin', 'ISIN (optionnel)', trFeatures.savebackIsin || '', 'text', 'placeholder="Ex: IE00B4L5Y983"')}
           </div>` : '')
+        + (feat === 'roundup' ? `
+          <div class="rounded-lg bg-red-500/5 border border-red-500/15 p-3 mb-4">
+            <p class="text-[11px] text-red-300/90 font-semibold mb-2">Round-up automatique</p>
+            <p class="text-[10px] text-gray-500 leading-relaxed mb-3">Chaque dépense <b class="text-gray-400">CB</b> sur ${bankNames.secondary} investit le complément à l'euro supérieur (1,50 € → 0,50 €) — une dépense ronde (10 €) investit 1 €. Le tout multiplié par le boost, <b class="text-gray-400">débité de ton solde</b>. À la clôture, le montant repart à zéro : il a été investi dans le produit cible.</p>
+            <label class="flex items-center gap-2 mb-3 cursor-pointer">
+              <input type="checkbox" id="ru-actif" ${trFeatures.roundupActif === false ? '' : 'checked'} class="w-4 h-4 rounded border-dark-400 bg-dark-900 text-red-500 focus:ring-red-500/40">
+              <span class="text-xs text-gray-200">Round-up automatique activé</span>
+            </label>
+            <div class="mb-3">
+              <label class="block text-xs font-medium text-gray-300 mb-1">Boost</label>
+              <div class="flex gap-1.5 flex-wrap">
+                ${ROUNDUP_BOOSTS.map(b => `
+                <label class="cursor-pointer px-3 py-1.5 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-red-500/40 has-[:checked]:border-red-500 has-[:checked]:bg-red-500/10 transition">
+                  <input type="radio" name="ru_boost" value="${b}" ${b === (Number(trFeatures.roundupBoost) || 1) ? 'checked' : ''} class="sr-only">
+                  <span class="text-xs text-gray-200 font-medium">x${b}</span>
+                </label>`).join('')}
+              </div>
+            </div>
+            ${inputField('produit', 'Produit cible', trFeatures.roundupProduit || '', 'text', 'placeholder="Ex: ETF S&P 500, action, crypto…"')}
+            ${inputField('isin', 'ISIN (optionnel)', trFeatures.roundupIsin || '', 'text', 'placeholder="Ex: IE00B5BMR087"')}
+          </div>` : '')
         + colorPickerHtml('Couleur fond', 'color_bg', curBg)
         + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(currentLabel, body, () => {
@@ -1683,6 +1732,13 @@ export function mount(store, navigate) {
           trFeatures.savebackIsin = (data.isin || '').trim().toUpperCase();
           // Le produit cible pilote le libellé du bloc (sauf si laissé vide)
           if (trFeatures.savebackProduit) trFeatures.lblSaveback = `Saveback 1% → ${trFeatures.savebackProduit}`;
+        }
+        if (feat === 'roundup') {
+          trFeatures.roundupActif = !!document.getElementById('ru-actif')?.checked;
+          trFeatures.roundupBoost = Number(document.querySelector('input[name="ru_boost"]:checked')?.value) || 1;
+          trFeatures.roundupProduit = (data.produit || '').trim();
+          trFeatures.roundupIsin = (data.isin || '').trim().toUpperCase();
+          if (trFeatures.roundupProduit) trFeatures.lblRoundup = `Round-up${trFeatures.roundupBoost > 1 ? ' x' + trFeatures.roundupBoost : ''} → ${trFeatures.roundupProduit}`;
         }
         store.set('trFeatures', trFeatures);
         const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
@@ -1842,15 +1898,18 @@ export function mount(store, navigate) {
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
       const op = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data };
-      // Saveback TR : 1 % offert sur les dépenses CB Trade Republic (plafonné, hors solde)
+      // Saveback (offert, hors solde) + Round-up (débité du solde) sur les dépenses CB Trade Republic
       if (savebackEligible(op.paiement, op.compte, bankNames.secondary)) {
         const sb = crediterSaveback(store, op.montant);
         if (sb > 0) op.sb = sb;
+        const ru = crediterRoundup(store, op.montant);
+        if (ru > 0) op.ru = ru;
       }
       items.unshift(op);
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
-      showToast(op.sb ? `Dépense ajoutée ✓ · Saveback +${op.sb.toFixed(2).replace('.', ',')} €` : 'Dépense ajoutée ✓', 'success', 2500);
+      const bonus = [op.sb ? `Saveback +${op.sb.toFixed(2).replace('.', ',')} €` : '', op.ru ? `Round-up ${op.ru.toFixed(2).replace('.', ',')} € investis` : ''].filter(Boolean).join(' · ');
+      showToast(bonus ? `Dépense ajoutée ✓ · ${bonus}` : 'Dépense ajoutée ✓', 'success', 2500);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
@@ -1905,6 +1964,7 @@ export function mount(store, navigate) {
         // If switched to revenu → move from suiviDepenses to suiviRevenus
         if (newAff === 'revenu') {
           annulerSaveback(store, item.sb);
+          annulerRoundup(store, item.ru);
           store.set('suiviDepenses', items.filter(i => i.id !== id));
           const revenus = store.get('suiviRevenus') || [];
           revenus.unshift({ id: item.id, type: 'revenu', date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie, pocket: pocketId !== 'aucun' ? pocketId : undefined });
@@ -1919,13 +1979,17 @@ export function mount(store, navigate) {
           else if (newAff === 'autre') data.categorie = 'Autre';
           data.pocket = pocketId !== 'aucun' ? pocketId : undefined;
           data.paiement = document.querySelector('input[name="paiement"]:checked')?.value || item.paiement || 'cb';
-          // Saveback : on annule l'ancien crédit puis on recrédite selon les nouvelles valeurs (plafond respecté)
+          // Saveback / Round-up : on annule les anciens crédits puis on recrédite selon les nouvelles valeurs
           annulerSaveback(store, item.sb);
+          annulerRoundup(store, item.ru);
           delete item.sb;
+          delete item.ru;
           Object.assign(item, data);
           if (savebackEligible(item.paiement, item.compte, bankNames.secondary)) {
             const sb = crediterSaveback(store, item.montant);
             if (sb > 0) item.sb = sb;
+            const ru = crediterRoundup(store, item.montant);
+            if (ru > 0) item.ru = ru;
           }
           store.set('suiviDepenses', items);
           // Apply new pocket deduction if assigned
@@ -2712,7 +2776,7 @@ export function mount(store, navigate) {
       const items = store.get('suiviDepenses') || [];
       const item = items.find(i => i.id === id);
       if (item && item.pocket) deductFromPocket(store, bankNames, item.compte || bankNames.secondary, item.pocket, -(Number(item.montant) || 0));
-      if (item) annulerSaveback(store, item.sb);
+      if (item) { annulerSaveback(store, item.sb); annulerRoundup(store, item.ru); }
       store.set('suiviDepenses', items.filter(i => i.id !== id));
       navigate('suivi-depenses');
     });

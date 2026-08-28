@@ -1,8 +1,28 @@
-import { formatCurrency, formatPercent, computeProjection, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20260809a';
+import { formatCurrency, formatPercent, computeProjection, computeMicroInvestMoyennes, findPlacementCible, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20260809m';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE, ASSET_COLORS } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260809a';
-import * as ProjectionEnfants from './projection-enfants.js?v=20260809a';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20260809m';
+import * as ProjectionEnfants from './projection-enfants.js?v=20260809m';
 import { calculerFiscaliteDonation } from '../fiscal.js';
+
+// Coche « micro-investissements » : remonte les moyennes Saveback / Round-up des mois clôturés dans la projection
+function microInvestToggleHtml(store) {
+  const state = store.getAll();
+  const trF = state.trFeatures || {};
+  const micro = computeMicroInvestMoyennes(state);
+  if (micro.sbMoy <= 0 && micro.ruMoy <= 0) return '';
+  const cibleSb = findPlacementCible(state, trF.savebackIsin, trF.savebackProduit || 'bitcoin');
+  const cibleRu = findPlacementCible(state, trF.roundupIsin, trF.roundupProduit || 'cto');
+  const fmtE = (v) => v.toFixed(2).replace('.', ',');
+  const details = [];
+  if (micro.sbMoy > 0) details.push(`Saveback ${fmtE(micro.sbMoy)} €/mois${cibleSb ? ' → ' + cibleSb.nom : ' (cible introuvable : renseigne l\'ISIN dans Vie quotidienne)'}`);
+  if (micro.ruMoy > 0) details.push(`Round-up ${fmtE(micro.ruMoy)} €/mois${cibleRu ? ' → ' + cibleRu.nom : ' (cible introuvable : renseigne l\'ISIN dans Vie quotidienne)'}`);
+  const actif = !!(state.parametres || {}).inclureMicroInvest;
+  return `
+    <label class="flex items-start gap-2 mt-2 cursor-pointer select-none">
+      <input type="checkbox" id="proj-micro-invest" ${actif ? 'checked' : ''} class="w-3.5 h-3.5 mt-0.5 rounded border-dark-400 bg-dark-900 text-amber-500 focus:ring-amber-500/40">
+      <span class="text-[10px] sm:text-[11px] text-gray-500 leading-snug">💫 Inclure les micro-investissements — ${details.join(' · ')}${micro.nbMois > 0 ? ` <span class="text-gray-600">(moyenne des ${micro.nbMois} derniers mois clôturés)</span>` : ` <span class="text-gray-600">(estimation : mois en cours)</span>`}</span>
+    </label>`;
+}
 
 function openHeritageModal(store, navigate, editItem = null, targetPage = 'projection') {
   const title = editItem ? 'Modifier l\'héritage' : 'Ajouter un héritage';
@@ -36,7 +56,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260809a';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20260809m';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -686,6 +706,7 @@ export function render(store) {
         <div class="p-3 sm:p-5 border-b border-dark-400/30">
           <h2 class="text-base sm:text-lg font-semibold text-gray-200">Détail année par année</h2>
           <p class="text-[10px] sm:text-xs text-gray-600 mt-1">Valeurs brutes. Survolez pour voir apports / gains / impôts. PEA &lt;5a: ${(PFU_RATE*100).toFixed(1)}% · PEA &gt;5a: ${(PS_RATE*100).toFixed(1)}% · AV (transmission): ${(PS_RATE*100).toFixed(1)}% · CTO: ${(PFU_RATE*100).toFixed(1)}% · PEE: ${(PS_RATE*100).toFixed(1)}%</p>
+          ${microInvestToggleHtml(store)}
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm table-fixed min-w-[1000px]">
@@ -1763,6 +1784,14 @@ function openTransferModal(store, navigate, editItem = null) {
 }
 
 export function mount(store, navigate) {
+  // Coche micro-investissements (Saveback + Round-up dans la projection)
+  document.getElementById('proj-micro-invest')?.addEventListener('change', (e) => {
+    const p = store.get('parametres') || {};
+    p.inclureMicroInvest = e.target.checked;
+    store.set('parametres', p);
+    navigate('projection');
+  });
+
   // Tooltips du tableau : tap-to-toggle sur écrans tactiles (le survol ne suffit pas)
   document.querySelectorAll('.proj-tip-wrap').forEach(el => {
     el.addEventListener('click', () => {
@@ -1795,7 +1824,7 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
-      const { exportProjectionPDF } = await import('../export-pdf.js?v=20260809a');
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=20260809m');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);

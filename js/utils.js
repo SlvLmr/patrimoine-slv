@@ -273,6 +273,28 @@ export function getDcaForYear(placement, year) {
   return applicable;
 }
 
+// Micro-investissements (Saveback + Round-up TR) : moyennes mensuelles calculées sur les derniers mois clôturés
+export function computeMicroInvestMoyennes(state) {
+  const arch = (state.archiveDepenses || []).filter(a => a.trSaveback !== undefined || a.trRoundup !== undefined);
+  const derniers = arch.slice(-6);
+  const n = derniers.length;
+  const trF = state.trFeatures || {};
+  // Sans mois clôturé, on estime avec les valeurs du mois en cours
+  const sbMoy = n ? derniers.reduce((s, a) => s + (Number(a.trSaveback) || 0), 0) / n : (Number(trF.saveback) || 0);
+  const ruMoy = n ? derniers.reduce((s, a) => s + (Number(a.trRoundup) || 0), 0) / n : (Number(trF.roundup) || 0);
+  return { sbMoy: Math.round(sbMoy * 100) / 100, ruMoy: Math.round(ruMoy * 100) / 100, nbMois: n };
+}
+
+// Retrouve le placement cible d'un micro-investissement : ISIN exact d'abord, sinon nom contenant le produit
+export function findPlacementCible(state, isin, produit) {
+  const placements = state.actifs?.placements || [];
+  const i = (isin || '').trim().toUpperCase();
+  if (i) { const p = placements.find(x => (x.isin || '').trim().toUpperCase() === i); if (p) return p; }
+  const q = (produit || '').trim().toLowerCase();
+  if (q) { const p = placements.find(x => (x.nom || '').toLowerCase().includes(q)); if (p) return p; }
+  return null;
+}
+
 // Projection engine - per-placement simulation with DCA and Air Liquide
 // overrides: optional object to override store values for scenario comparisons
 //   { rendementPlacements, rendementImmobilier, rendementEpargne, inflation,
@@ -333,6 +355,18 @@ export function computeProjection(store, overrides = {}) {
 
   // Mouvements par année (new system: array of transfers per year)
   const mouvementsParAnnee = state.mouvementsParAnnee || {};
+
+  // Micro-investissements : si params.inclureMicroInvest, la moyenne mensuelle Saveback / Round-up
+  // s'ajoute au DCA mensuel du placement cible (opt-in : sans le paramètre, comportement inchangé)
+  const microDcaParId = {};
+  if (params.inclureMicroInvest) {
+    const trF = state.trFeatures || {};
+    const { sbMoy, ruMoy } = computeMicroInvestMoyennes(state);
+    const cibleSb = findPlacementCible(state, trF.savebackIsin, trF.savebackProduit || 'bitcoin');
+    const cibleRu = findPlacementCible(state, trF.roundupIsin, trF.roundupProduit || 'cto');
+    if (cibleSb && sbMoy > 0) microDcaParId[cibleSb.id] = (microDcaParId[cibleSb.id] || 0) + sbMoy;
+    if (cibleRu && ruMoy > 0) microDcaParId[cibleRu.id] = (microDcaParId[cibleRu.id] || 0) + ruMoy;
+  }
 
   // Build per-placement simulation state
   const rendementPlacements = params.rendementPlacements || {};
@@ -835,7 +869,7 @@ export function computeProjection(store, overrides = {}) {
       if (ps.isAirLiquide) {
         const loyaltyMultiplier = ps.loyaltyEligible ? 1.10 : 1.0;
         const monthlyRate = ps.rendement / 12;
-        const dca = getDcaForYear(ps, currentCalendarYear + year);
+        const dca = getDcaForYear(ps, currentCalendarYear + year) + (microDcaParId[ps.id] || 0);
         const isPEA = ps.groupKey.startsWith('PEA');
         const isAV = ps.groupKey === 'Assurance Vie';
         const monthlyDca = (dca > 0 && ps.prixAction > 0) ? dca : 0;
@@ -907,7 +941,7 @@ export function computeProjection(store, overrides = {}) {
       } else {
         // Month-by-month simulation for proper compound interest on DCA
         const monthlyRate = ps.rendement / 12;
-        const dca = getDcaForYear(ps, currentCalendarYear + year);
+        const dca = getDcaForYear(ps, currentCalendarYear + year) + (microDcaParId[ps.id] || 0);
         const monthlyDca = dca > 0 ? dca : 0;
         const isPEA = ps.groupKey.startsWith('PEA');
         const isAV = ps.groupKey === 'Assurance Vie';
