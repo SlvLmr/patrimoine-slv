@@ -54,6 +54,52 @@ function affectationField(currentValue) {
     </div>`;
 }
 
+// ---- Saveback Trade Republic : 1 % des dépenses CB sur TR, plafonné/mois, OFFERT (jamais déduit du solde) ----
+const SAVEBACK_TAUX = 0.01;
+const SAVEBACK_PLAFOND_MOIS = 15;
+
+const MOYENS_PAIEMENT = [
+  { value: 'cb', label: '💳 CB' },
+  { value: 'prelevement', label: '🏦 Prélèvement' },
+  { value: 'cheque', label: '🖋 Chèque' },
+];
+
+function paiementFieldHtml(selected = 'cb') {
+  return `
+  <div class="mb-4">
+    <label class="block text-sm font-medium text-gray-300 mb-1.5">Moyen de paiement</label>
+    <div class="flex gap-2 flex-wrap">
+      ${MOYENS_PAIEMENT.map(m => `
+        <label class="flex items-center gap-1.5 cursor-pointer px-2.5 py-1.5 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-blue/40 transition has-[:checked]:border-accent-blue has-[:checked]:bg-accent-blue/10">
+          <input type="radio" name="paiement" value="${m.value}" ${m.value === selected ? 'checked' : ''} class="w-3.5 h-3.5 text-accent-blue bg-dark-800 border-dark-400 focus:ring-accent-blue/40">
+          <span class="text-xs text-gray-200">${m.label}</span>
+        </label>`).join('')}
+    </div>
+  </div>`;
+}
+
+const savebackEligible = (paiement, compte, trName) => paiement === 'cb' && compte === trName;
+
+// Crédite le Saveback pour une dépense CB sur Trade Republic ; retourne le montant réellement crédité (plafond respecté)
+function crediterSaveback(store, montantDepense) {
+  const trF = store.get('trFeatures') || {};
+  const actuel = Number(trF.saveback) || 0;
+  const brut = Math.round((Number(montantDepense) || 0) * SAVEBACK_TAUX * 100) / 100;
+  const credit = Math.round(Math.min(brut, Math.max(0, SAVEBACK_PLAFOND_MOIS - actuel)) * 100) / 100;
+  if (credit <= 0) return 0;
+  trF.saveback = Math.round((actuel + credit) * 100) / 100;
+  store.set('trFeatures', trF);
+  return credit;
+}
+
+// Annule un crédit Saveback (suppression ou modification d'une dépense CB)
+function annulerSaveback(store, credit) {
+  if (!(Number(credit) > 0)) return;
+  const trF = store.get('trFeatures') || {};
+  trF.saveback = Math.max(0, Math.round(((Number(trF.saveback) || 0) - Number(credit)) * 100) / 100);
+  store.set('trFeatures', trF);
+}
+
 function getCurrentAffectation(item) {
   if (item.type === 'revenu') return 'revenu';
   const cat = (item.categorie || '').toLowerCase();
@@ -1619,12 +1665,25 @@ export function mount(store, navigate) {
       const curBg = (pc[feat] || defaultColors[feat] || {}).bg || 'gray';
       const curTx = (pc[feat] || defaultColors[feat] || {}).text || 'gray';
       const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue, 'number', 'step="0.01"')
+        + (feat === 'saveback' ? `
+          <div class="rounded-lg bg-amber-500/5 border border-amber-500/15 p-3 mb-4">
+            <p class="text-[11px] text-amber-300/90 font-semibold mb-2">Saveback automatique</p>
+            <p class="text-[10px] text-gray-500 leading-relaxed mb-3">1 % de chaque dépense <b class="text-gray-400">CB</b> sur ${bankNames.secondary} est ajouté ici automatiquement — offert par Trade Republic (jamais déduit du solde), plafonné à ${SAVEBACK_PLAFOND_MOIS} €/mois. À la clôture, le montant repart à zéro : il a été investi dans le produit cible.</p>
+            ${inputField('produit', 'Produit cible', trFeatures.savebackProduit || '', 'text', 'placeholder="Ex: Bitcoin, ETF MSCI World, action…"')}
+            ${inputField('isin', 'ISIN (optionnel)', trFeatures.savebackIsin || '', 'text', 'placeholder="Ex: IE00B4L5Y983"')}
+          </div>` : '')
         + colorPickerHtml('Couleur fond', 'color_bg', curBg)
         + colorPickerHtml('Couleur contenu', 'color_text', curTx);
       openModal(currentLabel, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         trFeatures[meta.valueKey] = Number(data.montant) || 0;
         if (data.libelle) trFeatures[meta.lblKey] = data.libelle;
+        if (feat === 'saveback') {
+          trFeatures.savebackProduit = (data.produit || '').trim();
+          trFeatures.savebackIsin = (data.isin || '').trim().toUpperCase();
+          // Le produit cible pilote le libellé du bloc (sauf si laissé vide)
+          if (trFeatures.savebackProduit) trFeatures.lblSaveback = `Saveback 1% → ${trFeatures.savebackProduit}`;
+        }
         store.set('trFeatures', trFeatures);
         const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
         const txVal = document.querySelector('input[name="color_text"]:checked')?.value || curTx;
@@ -1772,18 +1831,26 @@ export function mount(store, navigate) {
           `).join('')}
         </div>
       </div>
+      ${paiementFieldHtml('cb')}
       ${pocketSelectHtml(defaultPockets)}
     `;
     openModal('Ajouter une dépense', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       if (!(Number(data.montant) > 0)) { showModalError('Indique un montant supérieur à 0.'); return false; }
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.primary;
+      data.paiement = document.querySelector('input[name="paiement"]:checked')?.value || 'cb';
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
-      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
+      const op = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data };
+      // Saveback TR : 1 % offert sur les dépenses CB Trade Republic (plafonné, hors solde)
+      if (savebackEligible(op.paiement, op.compte, bankNames.secondary)) {
+        const sb = crediterSaveback(store, op.montant);
+        if (sb > 0) op.sb = sb;
+      }
+      items.unshift(op);
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
-      showToast('Dépense ajoutée ✓', 'success', 2000);
+      showToast(op.sb ? `Dépense ajoutée ✓ · Saveback +${op.sb.toFixed(2).replace('.', ',')} €` : 'Dépense ajoutée ✓', 'success', 2500);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
@@ -1820,6 +1887,7 @@ export function mount(store, navigate) {
             </div>
           </div>
         </div>
+        ${paiementFieldHtml(item.paiement || 'cb')}
         ${pocketSelectHtml(editPockets, item.pocket || 'aucun')}
       `;
       openModal('Modifier l\'opération', body, () => {
@@ -1836,6 +1904,7 @@ export function mount(store, navigate) {
 
         // If switched to revenu → move from suiviDepenses to suiviRevenus
         if (newAff === 'revenu') {
+          annulerSaveback(store, item.sb);
           store.set('suiviDepenses', items.filter(i => i.id !== id));
           const revenus = store.get('suiviRevenus') || [];
           revenus.unshift({ id: item.id, type: 'revenu', date: data.date, description: data.description, montant: data.montant, compte: data.compte, categorie: data.categorie, pocket: pocketId !== 'aucun' ? pocketId : undefined });
@@ -1849,7 +1918,15 @@ export function mount(store, navigate) {
           else if (newAff === 'ndf') data.categorie = 'NDF';
           else if (newAff === 'autre') data.categorie = 'Autre';
           data.pocket = pocketId !== 'aucun' ? pocketId : undefined;
+          data.paiement = document.querySelector('input[name="paiement"]:checked')?.value || item.paiement || 'cb';
+          // Saveback : on annule l'ancien crédit puis on recrédite selon les nouvelles valeurs (plafond respecté)
+          annulerSaveback(store, item.sb);
+          delete item.sb;
           Object.assign(item, data);
+          if (savebackEligible(item.paiement, item.compte, bankNames.secondary)) {
+            const sb = crediterSaveback(store, item.montant);
+            if (sb > 0) item.sb = sb;
+          }
           store.set('suiviDepenses', items);
           // Apply new pocket deduction if assigned
           if (data.pocket) deductFromPocket(store, bankNames, data.compte, data.pocket, data.montant);
@@ -2635,6 +2712,7 @@ export function mount(store, navigate) {
       const items = store.get('suiviDepenses') || [];
       const item = items.find(i => i.id === id);
       if (item && item.pocket) deductFromPocket(store, bankNames, item.compte || bankNames.secondary, item.pocket, -(Number(item.montant) || 0));
+      if (item) annulerSaveback(store, item.sb);
       store.set('suiviDepenses', items.filter(i => i.id !== id));
       navigate('suivi-depenses');
     });
