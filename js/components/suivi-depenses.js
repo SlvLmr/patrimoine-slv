@@ -62,7 +62,25 @@ const MOYENS_PAIEMENT = [
   { value: 'cb', label: '💳 CB' },
   { value: 'prelevement', label: '🏦 Prélèvement' },
   { value: 'cheque', label: '🖋 Chèque' },
+  { value: 'virement', label: '↔ Virement' },
+  { value: 'investissement', label: '📈 Investissement' },
 ];
+
+// Crédits Saveback / Round-up d'une ligne récurrente cochée (mémorisés dans trRecurringConfirmed[mois].sbCredits)
+function crediterLigneRecurrente(store, month, id, item) {
+  if (!item || item.paiement !== 'cb') return;
+  const sb = crediterSaveback(store, item.montant);
+  const ru = crediterRoundup(store, item.montant);
+  if (sb > 0 || ru > 0) { month.sbCredits = month.sbCredits || {}; month.sbCredits[id] = { sb, ru }; }
+}
+
+function annulerLigneRecurrente(store, month, id) {
+  const cr = month?.sbCredits?.[id];
+  if (!cr) return;
+  annulerSaveback(store, cr.sb);
+  annulerRoundup(store, cr.ru);
+  delete month.sbCredits[id];
+}
 
 function paiementFieldHtml(selected = 'cb') {
   return `
@@ -2098,11 +2116,13 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Nom', dep.nom)}
         ${inputField('montant', 'Montant (€)', dep.montant, 'number', '0.01')}
+        ${paiementFieldHtml(dep.paiement || 'prelevement')}
       `;
       openModal('Modifier la dépense mensuelle', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         dep.nom = data.nom || dep.nom;
         dep.montant = Number(data.montant) || dep.montant;
+        dep.paiement = document.querySelector('input[name="paiement"]:checked')?.value || dep.paiement || 'prelevement';
         store.set('depensesMensuellesCIC', list);
         navigate('suivi-depenses');
       });
@@ -2159,12 +2179,13 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('nom', 'Nom', '')}
       ${inputField('montant', 'Montant (€)', '', 'number', '0.01')}
+      ${paiementFieldHtml('prelevement')}
     `;
     openModal('Ajouter une dépense mensuelle', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       if (!data.nom || !data.montant) return;
       const list = store.get('depensesMensuellesCIC') || [];
-      list.push({ id: 'mc-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) });
+      list.push({ id: 'mc-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant), paiement: document.querySelector('input[name="paiement"]:checked')?.value || 'prelevement' });
       store.set('depensesMensuellesCIC', list);
       navigate('suivi-depenses');
     });
@@ -2182,9 +2203,11 @@ export function mount(store, navigate) {
       if (cb.checked) {
         if (!month.expenses.includes(id)) month.expenses.push(id);
         if (dcaItem && dcaItem.pocket) deductFromPocket(store, bankNames, bankNames.secondary, dcaItem.pocket, dcaItem.montant);
+        crediterLigneRecurrente(store, month, id, dcaItem);
       } else {
         month.expenses = month.expenses.filter(x => x !== id);
         if (dcaItem && dcaItem.pocket) deductFromPocket(store, bankNames, bankNames.secondary, dcaItem.pocket, -dcaItem.montant);
+        annulerLigneRecurrente(store, month, id);
       }
       all[monthKey] = month;
       store.set('trRecurringConfirmed', all);
@@ -2225,6 +2248,7 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Nom', item.nom)}
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+        ${paiementFieldHtml(item.paiement || 'investissement')}
         ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
       `;
       openModal('Modifier le DCA', body, () => {
@@ -2233,13 +2257,19 @@ export function mount(store, navigate) {
         const oldMontant = Number(item.montant) || 0;
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
+        item.paiement = document.querySelector('input[name="paiement"]:checked')?.value || item.paiement || 'investissement';
         const pk = document.getElementById('pocket-select')?.value || 'aucun';
         if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
         const mk = getCurrentMonthKey();
-        const conf = (store.get('trRecurringConfirmed') || {})[mk] || {};
+        const allConf = store.get('trRecurringConfirmed') || {};
+        const conf = allConf[mk] || {};
         if ((conf.expenses || []).includes(id)) {
           if (oldPocket) deductFromPocket(store, bankNames, bankNames.secondary, oldPocket, -oldMontant);
           if (item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, item.montant);
+          annulerLigneRecurrente(store, conf, id);
+          crediterLigneRecurrente(store, conf, id, item);
+          allConf[mk] = conf;
+          store.set('trRecurringConfirmed', allConf);
         }
         store.set('dcaMensuelsTR', list);
         navigate('suivi-depenses');
@@ -2258,6 +2288,7 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Nom', item.nom)}
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+        ${paiementFieldHtml(item.paiement || 'virement')}
         ${pocketSelectHtml(pockets, item.pocket || 'aucun', 'Ajouter au pocket')}
       `;
       openModal('Modifier le revenu mensuel', body, () => {
@@ -2266,6 +2297,7 @@ export function mount(store, navigate) {
         const oldMontant = Number(item.montant) || 0;
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
+        item.paiement = document.querySelector('input[name="paiement"]:checked')?.value || item.paiement || 'virement';
         const pk = document.getElementById('pocket-select')?.value || 'aucun';
         if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
         // If confirmed, adjust pocket balances
@@ -2286,6 +2318,9 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.trDcaDel;
       const list = store.get('dcaMensuelsTR') || [];
+      const allConf = store.get('trRecurringConfirmed') || {};
+      const conf = allConf[getCurrentMonthKey()];
+      if (conf?.sbCredits?.[id]) { annulerLigneRecurrente(store, conf, id); store.set('trRecurringConfirmed', allConf); }
       store.set('dcaMensuelsTR', list.filter(d => d.id !== id));
       navigate('suivi-depenses');
     });
@@ -2307,6 +2342,7 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('nom', 'Nom', '')}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+      ${paiementFieldHtml('investissement')}
       ${pocketSelectHtml(pockets)}
     `;
     openModal('Ajouter un DCA mensuel', body, () => {
@@ -2314,7 +2350,7 @@ export function mount(store, navigate) {
       if (!data.nom || !data.montant) return;
       const pk = document.getElementById('pocket-select')?.value || 'aucun';
       const list = store.get('dcaMensuelsTR') || [];
-      const entry = { id: 'dca-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) };
+      const entry = { id: 'dca-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant), paiement: document.querySelector('input[name="paiement"]:checked')?.value || 'investissement' };
       if (pk !== 'aucun') entry.pocket = pk;
       list.push(entry);
       store.set('dcaMensuelsTR', list);
@@ -2328,6 +2364,7 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('nom', 'Nom', '')}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+      ${paiementFieldHtml('virement')}
       ${pocketSelectHtml(pockets, 'aucun', 'Ajouter au pocket')}
     `;
     openModal('Ajouter un revenu mensuel', body, () => {
@@ -2335,7 +2372,7 @@ export function mount(store, navigate) {
       if (!data.nom || !data.montant) return;
       const pk = document.getElementById('pocket-select')?.value || 'aucun';
       const list = store.get('revenusMensuelsTR') || [];
-      const entry = { id: 'rev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) };
+      const entry = { id: 'rev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant), paiement: document.querySelector('input[name="paiement"]:checked')?.value || 'virement' };
       if (pk !== 'aucun') entry.pocket = pk;
       list.push(entry);
       store.set('revenusMensuelsTR', list);
@@ -2404,9 +2441,11 @@ export function mount(store, navigate) {
       if (cb.checked) {
         if (!month.prelevements.includes(id)) month.prelevements.push(id);
         if (item && item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, item.montant);
+        crediterLigneRecurrente(store, month, id, item);
       } else {
         month.prelevements = month.prelevements.filter(x => x !== id);
         if (item && item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, -item.montant);
+        annulerLigneRecurrente(store, month, id);
       }
       all[monthKey] = month;
       store.set('trRecurringConfirmed', all);
@@ -2425,6 +2464,7 @@ export function mount(store, navigate) {
       const body = `
         ${inputField('nom', 'Nom', item.nom)}
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
+        ${paiementFieldHtml(item.paiement || 'prelevement')}
         ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
       `;
       openModal('Modifier le prélèvement', body, () => {
@@ -2433,13 +2473,19 @@ export function mount(store, navigate) {
         const oldMontant = Number(item.montant) || 0;
         item.nom = data.nom || item.nom;
         item.montant = Number(data.montant) || item.montant;
+        item.paiement = document.querySelector('input[name="paiement"]:checked')?.value || item.paiement || 'prelevement';
         const pk = document.getElementById('pocket-select')?.value || 'aucun';
         if (pk !== 'aucun') item.pocket = pk; else delete item.pocket;
         const mk = getCurrentMonthKey();
-        const conf = (store.get('trRecurringConfirmed') || {})[mk] || {};
+        const allConf = store.get('trRecurringConfirmed') || {};
+        const conf = allConf[mk] || {};
         if ((conf.prelevements || []).includes(id)) {
           if (oldPocket) deductFromPocket(store, bankNames, bankNames.secondary, oldPocket, -oldMontant);
           if (item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, item.montant);
+          annulerLigneRecurrente(store, conf, id);
+          crediterLigneRecurrente(store, conf, id, item);
+          allConf[mk] = conf;
+          store.set('trRecurringConfirmed', allConf);
         }
         store.set('prelevementsTR', list);
         navigate('suivi-depenses');
@@ -2452,6 +2498,9 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.trPrelevDel;
       const list = store.get('prelevementsTR') || [];
+      const allConf = store.get('trRecurringConfirmed') || {};
+      const conf = allConf[getCurrentMonthKey()];
+      if (conf?.sbCredits?.[id]) { annulerLigneRecurrente(store, conf, id); store.set('trRecurringConfirmed', allConf); }
       store.set('prelevementsTR', list.filter(p => p.id !== id));
       navigate('suivi-depenses');
     });
@@ -2463,6 +2512,7 @@ export function mount(store, navigate) {
     const body = `
       ${inputField('nom', 'Nom', '', 'text', 'placeholder="Ex: Netflix, Assurance..."')}
       ${inputField('montant', 'Montant (€)', '', 'number', 'step="0.01"')}
+      ${paiementFieldHtml('prelevement')}
       ${pocketSelectHtml(pockets)}
     `;
     openModal('Ajouter un prélèvement', body, () => {
@@ -2470,7 +2520,7 @@ export function mount(store, navigate) {
       if (!data.nom || !data.montant) return;
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const list = store.get('prelevementsTR') || [];
-      const entry = { id: 'prelev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant) };
+      const entry = { id: 'prelev-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant), paiement: document.querySelector('input[name="paiement"]:checked')?.value || 'prelevement' };
       if (pocketId !== 'aucun') entry.pocket = pocketId;
       list.push(entry);
       store.set('prelevementsTR', list);
