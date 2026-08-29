@@ -1124,9 +1124,12 @@ export function render(store) {
             </summary>
             <div class="flex flex-wrap gap-1.5 pl-5 pt-1.5 pb-1">
               ${byYear[y].map(a => `
-              <button class="archive-row px-3 py-1.5 rounded-lg bg-dark-600/40 border border-dark-400/20 text-xs text-gray-300 capitalize hover:bg-dark-600 hover:text-gray-100 hover:border-dark-300/40 transition" data-mois="${a.mois}">
-                ${new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long' })}
-              </button>`).join('')}
+              <div class="flex items-center">
+                <button class="archive-row px-3 py-1.5 rounded-lg bg-dark-600/40 border border-dark-400/20 text-xs text-gray-300 capitalize hover:bg-dark-600 hover:text-gray-100 hover:border-dark-300/40 transition" data-mois="${a.mois}">
+                  ${new Date(a.mois + '-01').toLocaleDateString('fr-FR', { month: 'long' })}
+                </button>
+                ${a.mois === sorted[0].mois ? `<button data-unclose="${a.mois}" title="Déclôturer ce mois (annuler la clôture)" class="px-1 py-1.5 rounded-lg text-gray-600 hover:text-amber-400 hover:bg-dark-600/60 transition text-xs">⤺</button>` : ''}
+              </div>`).join('')}
             </div>
           </details>`).join('');
           })()}
@@ -3017,5 +3020,54 @@ export function mount(store, navigate) {
 
   document.querySelectorAll('.archive-row').forEach(row => {
     row.addEventListener('click', () => showArchiveDetail(row.dataset.mois));
+  });
+
+  // ---- Déclôturer le dernier mois clôturé (clôture faite par erreur) ----
+  document.querySelectorAll('[data-unclose]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const mois = btn.dataset.unclose;
+      const archives = store.get('archiveDepenses') || [];
+      const sorted = [...archives].sort((a, b) => b.mois.localeCompare(a.mois));
+      if (!sorted.length || sorted[0].mois !== mois) return;
+      const a = sorted[0];
+      const label = new Date(mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      confirmModal(`Déclôturer ${label} ?`,
+        'Le mois redevient le mois en cours : opérations, coches et soldes de début de mois sont restaurés tels qu\'au moment de la clôture. Les coches faites depuis sur le mois suivant seront effacées.',
+        () => {
+          const meta = a.meta || {};
+          // 1. Soldes de début de mois restaurés (valeurs d'avant clôture, snapshotées dans l'archive)
+          const prev = store.get('soldeMoisPrecedent') || {};
+          const newPrev = { ...prev, cic: Number(meta.soldePrevCIC) || 0, tr: Number(meta.soldePrevTR) || 0 };
+          Object.entries(meta.extraPrev || {}).forEach(([k, v]) => { newPrev[k] = Number(v) || 0; });
+          store.set('soldeMoisPrecedent', newPrev);
+          // 2. Opérations et revenus du mois réinjectés (sans doublons d'id)
+          const curOps = store.get('suiviDepenses') || [];
+          const idsOps = new Set(curOps.map(o => o.id));
+          store.set('suiviDepenses', [...(a.operations || []).filter(o => !idsOps.has(o.id)), ...curOps]);
+          const curRev = store.get('suiviRevenus') || [];
+          const idsRev = new Set(curRev.map(o => o.id));
+          store.set('suiviRevenus', [...(a.revenus || []).filter(o => !idsRev.has(o.id)), ...curRev]);
+          // 3. Compteurs TR du mois restaurés (la clôture les avait remis à zéro)
+          const trF = store.get('trFeatures') || {};
+          trF.interets = Number(meta.trInterets) || 0;
+          trF.saveback = Number(meta.trSaveback) || 0;
+          trF.roundup = Number(meta.trRoundup) || 0;
+          store.set('trFeatures', trF);
+          // 4. Pockets restaurés tels qu'au moment de la clôture
+          if (meta.budgetPockets) store.set('budgetPockets', JSON.parse(JSON.stringify(meta.budgetPockets)));
+          // 5. Les coches des mois postérieurs sont forcément nées après la clôture : on les efface
+          const allConf = store.get('trRecurringConfirmed') || {};
+          Object.keys(allConf).forEach(k => { if (k > mois) delete allConf[k]; });
+          store.set('trRecurringConfirmed', allConf);
+          const allCoch = store.get('cicMensuellesCochees') || {};
+          Object.keys(allCoch).forEach(k => { if (k > mois) delete allCoch[k]; });
+          store.set('cicMensuellesCochees', allCoch);
+          // 6. L'archive disparaît → ce mois redevient le mois de travail effectif
+          store.set('archiveDepenses', archives.filter(x => x.mois !== mois));
+          showToast(`${label} déclôturé ✓ — le mois est de nouveau en cours`, 'success', 3500);
+          navigate('suivi-depenses');
+        });
+    });
   });
 }
