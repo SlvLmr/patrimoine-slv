@@ -263,14 +263,29 @@ function getToday() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Référence au store, posée par render()/mount(), pour calculer le mois de travail effectif
+let _activeStore = null;
+
+// Mois de travail effectif : si le mois calendaire est déjà clôturé (clôture anticipée le 29 par ex.),
+// on travaille sur le mois suivant — les coches repartent à zéro sur une clé vierge, sans double comptage.
 function getCurrentMonthKey() {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  let d = new Date(now.getFullYear(), now.getMonth(), 1);
+  let key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const archives = _activeStore?.get('archiveDepenses') || [];
+  let garde = 0;
+  while (archives.some(a => a.mois === key) && garde < 24) {
+    d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    garde++;
+  }
+  return key;
 }
 
+// Mois précédent relatif au mois de travail effectif (et non au calendrier)
 function getPreviousMonthKey() {
-  const now = new Date();
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const [y, m] = getCurrentMonthKey().split('-').map(Number);
+  const prev = new Date(y, m - 2, 1);
   return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
 }
 
@@ -431,6 +446,7 @@ const REVENUS_MENSUELS_TR = [];
 
 
 export function render(store) {
+  _activeStore = store;
   const bankNames = store.getBankNames();
   const extraBanks = bankNames.extra || [];
   const COMPTES = [bankNames.secondary, bankNames.primary, ...extraBanks.map(b => b.name)];
@@ -1122,6 +1138,7 @@ export function render(store) {
 }
 
 export function mount(store, navigate) {
+  _activeStore = store;
   const bankNames = store.getBankNames();
   const extraBanks = bankNames.extra || [];
   const COMPTES = [bankNames.secondary, bankNames.primary, ...extraBanks.map(b => b.name)];
