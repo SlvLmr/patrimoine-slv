@@ -464,7 +464,17 @@ ${JSON.stringify(contrats, null, 1)}
 Domaines à évaluer (utilise exactement ces identifiants) :
 ${domainesActifs.map(d => `- ${d.id} (${d.label}) : postes ${d.postes.map(p => p.id).join(', ')}`).join('\n')}
 
-Barème : 0 = non couvert · 1 = trace · 2 = insuffisant · 3 = correct · 4 = bon · 5 = optimal (couverture complète, cohérente entre contrats, sans trou ni doublon coûteux).
+Barème — note la PROTECTION RÉELLE, pas la perfection :
+- 5 = les risques majeurs du domaine sont bien couverts, aux bons niveaux — même si des options de confort manquent
+- 4 = très bonne couverture, améliorations mineures possibles
+- 3 = correct, mais une garantie IMPORTANTE est moyenne
+- 2 = un vrai trou sur un risque significatif
+- 1 = trace de couverture · 0 = rien
+
+Règles de notation (anti-punitives) :
+- PONDÈRE par la gravité du risque : la reconstruction du logement pèse bien plus que le plafond bijoux en dépendances ; le capital décès pèse bien plus qu'une franchise perfectible.
+- PAS DE DOUBLE PEINE : un détail mineur ou une option de confort absente ne retire JAMAIS plus de 0,5 point — il se signale dans la recommandation « Passer de X à 5 », pas en malus de note.
+- Réserve les notes ≤ 3 aux vrais trous de couverture sur des risques significatifs. Un excellent contrat avec deux détails à polir mérite 4,5, pas 3,5.
 
 Règles :
 - Croise les contrats entre eux : détecte les DOUBLONS (même risque payé deux fois) et les TROUS de couverture.
