@@ -349,9 +349,9 @@ input[type="number"] {
   }
 }
 
-/* Logo gradient gold → lilac */
+/* Logo gradient sunset : doré → corail → magenta → violet */
 .logo-gradient-text {
-  background: linear-gradient(90deg, #60a5fa, #818cf8, #a78bfa, #c4b5fd);
+  background: linear-gradient(90deg, #fdba4d, #ff7a59, #f14fa0, #a34fde);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -391,11 +391,11 @@ input[type="number"] {
 }
 
 .logo-bar-left {
-  background: linear-gradient(90deg, transparent, #60a5fa);
+  background: linear-gradient(90deg, transparent, #fdba4d);
 }
 
 .logo-bar-right {
-  background: linear-gradient(90deg, #c4b5fd, transparent);
+  background: linear-gradient(90deg, #a34fde, transparent);
 }
 
 /* Logo halo effect */
@@ -408,7 +408,7 @@ input[type="number"] {
 }
 
 .logo-text-halo {
-  text-shadow: 0 0 10px rgba(96, 165, 250, 0.1), 0 0 10px rgba(167, 139, 250, 0.1);
+  text-shadow: 0 0 10px rgba(255, 122, 89, 0.12), 0 0 10px rgba(163, 79, 222, 0.12);
 }
 
 .logo-symbol {
