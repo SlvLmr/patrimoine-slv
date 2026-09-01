@@ -1290,6 +1290,9 @@ export function mount(store, navigate) {
 
   // ---- CRUD manuel contrat ----
   const openContratModal = (existing = null) => {
+    const escA = (v) => String(v ?? '').replace(/"/g, '&quot;');
+    const escT = (v) => String(v ?? '').replace(/</g, '&lt;');
+    const garanties = existing?.garanties || [];
     const body = `
       ${inputField('nom', 'Nom du contrat', existing?.nom || '', 'text', 'placeholder="Ex: MRH maison"')}
       ${selectField('type', 'Type', TYPES_CONTRAT, existing?.type || 'autre')}
@@ -1307,19 +1310,69 @@ export function mount(store, navigate) {
         <div>${inputField('telephone', 'Tél. gestion', existing?.telephone || '')}</div>
         <div>${inputField('telAssistance', 'Tél. assistance 24h/24', existing?.telAssistance || '')}</div>
       </div>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-300 mb-1">Résumé</label>
+        <textarea id="ct-resume" rows="2" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-xs focus:ring-2 focus:ring-cyan-500/40">${escT(existing?.resume || '')}</textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Points forts (1 par ligne)</label>
+          <textarea id="ct-forts" rows="3" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-xs focus:ring-2 focus:ring-emerald-500/40">${escT((existing?.pointsForts || []).join('\n'))}</textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-300 mb-1">Points faibles (1 par ligne)</label>
+          <textarea id="ct-faibles" rows="3" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-xs focus:ring-2 focus:ring-red-500/40">${escT((existing?.pointsFaibles || []).join('\n'))}</textarea>
+        </div>
+      </div>
+      ${garanties.length > 0 ? `
+      <details class="mb-2 rounded-lg border border-dark-400/30 bg-dark-800/40">
+        <summary class="px-3 py-2 text-xs text-gray-300 cursor-pointer select-none">🛡 Garanties (${garanties.length}) — corriger libellés, notes, plafonds, franchises</summary>
+        <div class="px-3 pb-3 space-y-2">
+          ${garanties.map((g, i) => `
+          <div class="rounded-lg bg-dark-900/50 border border-dark-400/20 p-2 space-y-1.5">
+            <div class="flex items-center gap-2">
+              <input data-gar-label="${i}" value="${escA(g.label || g.poste)}" class="flex-1 min-w-0 px-2 py-1 bg-dark-800 border border-dark-400/40 rounded text-xs text-gray-200">
+              <label class="text-[10px] text-gray-600 flex-shrink-0">Note</label>
+              <input data-gar-note="${i}" type="number" min="0" max="5" step="0.5" value="${g.note ?? ''}" class="w-16 px-2 py-1 bg-dark-800 border border-dark-400/40 rounded text-xs text-gray-200 text-center">
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <input data-gar-plafond="${i}" value="${escA(g.plafond || '')}" placeholder="Plafond" class="px-2 py-1 bg-dark-800 border border-dark-400/40 rounded text-[11px] text-gray-300">
+              <input data-gar-franchise="${i}" value="${escA(g.franchise || '')}" placeholder="Franchise" class="px-2 py-1 bg-dark-800 border border-dark-400/40 rounded text-[11px] text-gray-300">
+            </div>
+          </div>`).join('')}
+          <p class="text-[10px] text-gray-600">Le domaine et le poste de chaque garantie restent gérés par l'analyse — corriger une note ici met à jour le radar (hors bilan global, qui prime tant qu'il n'est pas relancé).</p>
+        </div>
+      </details>` : ''}
     `;
     openModal(existing ? 'Modifier le contrat' : 'Ajouter un contrat', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       const contrats = getContrats(store);
+      const lignes = (id) => (document.getElementById(id)?.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+      const extras = {
+        resume: document.getElementById('ct-resume')?.value.trim() || '',
+        pointsForts: lignes('ct-forts'),
+        pointsFaibles: lignes('ct-faibles'),
+      };
       if (existing) {
         const c = contrats.find(x => x.id === existing.id);
-        if (c) Object.assign(c, data);
+        if (c) {
+          Object.assign(c, data, extras);
+          (c.garanties || []).forEach((g, i) => {
+            const val = (champ) => document.querySelector(`[data-gar-${champ}="${i}"]`)?.value;
+            const lb = val('label'); if (lb !== undefined && lb.trim()) g.label = lb.trim();
+            const nt = val('note'); if (nt !== undefined && nt !== '') g.note = Math.max(0, Math.min(5, Number(nt)));
+            const pl = val('plafond'); if (pl !== undefined) g.plafond = pl.trim();
+            const fr = val('franchise'); if (fr !== undefined) g.franchise = fr.trim();
+          });
+        }
       } else {
+        Object.assign(data, extras);
         data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         data.garanties = [];
         contrats.push(data);
       }
       store.set('contrats', contrats);
+      showToast('Contrat mis à jour ✓', 'success', 2000);
       navigate('contrats');
     });
   };
