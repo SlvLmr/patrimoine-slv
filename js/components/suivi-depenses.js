@@ -340,58 +340,121 @@ function bilanHeaderHtml(a, prev) {
   const bp = bilanBucketsArchive(prev);
   const prevLabel = prev ? new Date(prev.mois + '-01').toLocaleDateString('fr-FR', { month: 'long' }) : '';
   const fmt = formatCurrencyCents;
+  const fleche = (d, bon) => `<span class="${bon ? 'text-emerald-400' : 'text-red-400'}">${d > 0 ? '▲' : '▼'}</span>`;
   // Delta vs mois précédent : le sens « bon/mauvais » dépend de la grandeur
   const delta = (cur, old, bienQuandMonte) => {
     if (!bp || old === undefined || old === null) return '';
     const d = cur - old;
-    if (Math.abs(d) < 0.01) return `<span class="text-gray-600">stable vs ${prevLabel}</span>`;
+    if (Math.abs(d) < 0.01) return `<span class="text-[9px] text-gray-600">= ${prevLabel}</span>`;
     const bon = d > 0 ? bienQuandMonte : !bienQuandMonte;
-    return `<span class="${bon ? 'text-emerald-400/80' : 'text-red-400/80'}">${d > 0 ? '+' : '−'}${fmt(Math.abs(d))} vs ${prevLabel}</span>`;
+    return `<span class="text-[9px] ${bon ? 'text-emerald-400/90' : 'text-red-400/90'}">${fleche(d, bon)} ${fmt(Math.abs(d))} vs ${prevLabel}</span>`;
   };
-  const tuile = (titre, valeur, sous, couleur) => `
-    <div class="rounded-xl bg-dark-800/50 border border-dark-400/20 px-3 py-2.5">
-      <p class="text-[9px] uppercase tracking-wider text-gray-600">${titre}</p>
-      <p class="text-base font-bold ${couleur} leading-tight mt-0.5">${valeur}</p>
-      <p class="text-[9px] mt-0.5">${sous || '&nbsp;'}</p>
-    </div>`;
-  const tauxCouleur = b.taux === null ? 'text-gray-500' : b.taux >= 20 ? 'text-emerald-400' : b.taux >= 0 ? 'text-amber-400' : 'text-red-400';
-  const deltaTaux = (bp && bp.taux !== null && b.taux !== null && Math.abs(b.taux - bp.taux) >= 0.5)
-    ? `<span class="${b.taux > bp.taux ? 'text-emerald-400/80' : 'text-red-400/80'}">${b.taux > bp.taux ? '+' : '−'}${Math.abs(Math.round(b.taux - bp.taux))} pts vs ${prevLabel}</span>`
+
+  // ── Jauge circulaire du taux d'épargne ──
+  const tauxOk = b.taux !== null;
+  const tauxCouleur = !tauxOk ? '#6b7280' : b.taux >= 20 ? '#34d399' : b.taux >= 0 ? '#fbbf24' : '#f87171';
+  const C = 2 * Math.PI * 40;
+  const frac = tauxOk ? Math.max(0, Math.min(1, b.taux / 100)) : 0;
+  const deltaTaux = (bp && bp.taux !== null && tauxOk && Math.abs(b.taux - bp.taux) >= 0.5)
+    ? `<span class="text-[9px] ${b.taux > bp.taux ? 'text-emerald-400/90' : 'text-red-400/90'}">${fleche(b.taux - bp.taux, b.taux > bp.taux)} ${Math.abs(Math.round(b.taux - bp.taux))} pts vs ${prevLabel}</span>`
     : '';
-  const top = Object.entries(b.cats).sort((x, y) => y[1] - x[1]).slice(0, 5);
+  const jauge = `
+    <div class="rounded-xl bg-dark-800/50 border border-dark-400/20 p-4 flex items-center gap-4">
+      <div class="relative w-24 h-24 flex-shrink-0">
+        <svg viewBox="0 0 100 100" class="w-24 h-24 -rotate-90">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(82,82,94,0.3)" stroke-width="9"/>
+          <circle cx="50" cy="50" r="40" fill="none" stroke="${tauxCouleur}" stroke-width="9" stroke-linecap="round"
+            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - frac)).toFixed(1)}"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-xl font-extrabold leading-none" style="color:${tauxCouleur}">${tauxOk ? Math.round(b.taux) + '%' : '—'}</span>
+        </div>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[9px] uppercase tracking-wider text-gray-600">Taux d'épargne</p>
+        <p class="text-sm text-gray-300 mt-0.5">Reste <span class="font-bold text-gray-100">${fmt(b.reste)}</span></p>
+        <p class="text-[10px] text-gray-500 leading-snug">sur ${fmt(b.revenus)} de revenus</p>
+        ${deltaTaux ? `<p class="mt-1">${deltaTaux}</p>` : ''}
+      </div>
+    </div>`;
+
+  // ── Barre de flux : où va chaque euro de revenu ──
+  const cash = b.revenus - b.depenses - b.investi;
+  const totalFlux = Math.max(b.revenus, b.depenses + b.investi, 1);
+  const seg = (v) => Math.max(0, (v / totalFlux) * 100);
+  const segDep = seg(b.depenses), segInv = seg(b.investi), segCash = seg(cash);
+  const puce = (couleur, titre, valeur, sous) => `
+    <div class="flex items-start gap-1.5 min-w-0">
+      <span class="w-2.5 h-2.5 rounded-sm mt-0.5 flex-shrink-0" style="background:${couleur}"></span>
+      <div class="min-w-0">
+        <p class="text-[9px] uppercase tracking-wider text-gray-600 leading-none">${titre}</p>
+        <p class="text-sm font-bold text-gray-100 leading-tight mt-0.5">${valeur}</p>
+        ${sous ? `<p class="leading-none mt-0.5">${sous}</p>` : ''}
+      </div>
+    </div>`;
+  const flux = `
+    <div class="rounded-xl bg-dark-800/50 border border-dark-400/20 p-4 lg:col-span-2 flex flex-col justify-between gap-3">
+      <div class="flex items-baseline justify-between gap-3">
+        <p class="text-[9px] uppercase tracking-wider text-gray-600">Chaque euro de revenu ce mois-ci</p>
+        <p class="text-sm font-bold text-emerald-400 whitespace-nowrap">${fmt(b.revenus)} ${delta(b.revenus, bp?.revenus, true)}</p>
+      </div>
+      <div class="flex h-5 rounded-lg overflow-hidden bg-dark-600/40">
+        ${segDep > 0 ? `<div style="width:${segDep}%;background:linear-gradient(180deg,#fb7185,#ef4444)" title="Dépenses ${fmt(b.depenses)}"></div>` : ''}
+        ${segInv > 0 ? `<div style="width:${segInv}%;background:linear-gradient(180deg,#60a5fa,#3b82f6)" title="Investi ${fmt(b.investi)}"></div>` : ''}
+        ${segCash > 0 ? `<div style="width:${segCash}%;background:linear-gradient(180deg,#34d399,#10b981)" title="Cash conservé ${fmt(cash)}"></div>` : ''}
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        ${puce('#ef4444', 'Dépensé', fmt(b.depenses), delta(b.depenses, bp?.depenses, false))}
+        ${puce('#3b82f6', 'Investi', fmt(b.investi), delta(b.investi, bp?.investi, true))}
+        ${puce('#10b981', 'Cash conservé', fmt(Math.max(0, cash)), cash < 0 ? `<span class="text-[9px] text-amber-400/90">investi ${fmt(-cash)} pris sur l'épargne</span>` : '')}
+      </div>
+    </div>`;
+
+  // ── Catégories : barres colorées avec part des dépenses ──
+  const PALETTE_CATS = ['#f87171', '#fb923c', '#fbbf24', '#a78bfa', '#60a5fa', '#34d399'];
+  const top = Object.entries(b.cats).sort((x, y) => y[1] - x[1]).slice(0, 6);
   const maxV = top.length ? top[0][1] : 1;
-  const barres = top.map(([c, v]) => {
+  const barres = top.map(([c, v], i) => {
+    const part = b.depenses > 0 ? Math.round((v / b.depenses) * 100) : 0;
     let deltaTxt = '';
     if (bp && bp.cats[c] > 0) {
       const p = ((v - bp.cats[c]) / bp.cats[c]) * 100;
-      if (Math.abs(p) >= 1) deltaTxt = `<span class="${p > 0 ? 'text-red-400/80' : 'text-emerald-400/80'}">${p > 0 ? '+' : ''}${Math.round(p)} %</span>`;
+      if (Math.abs(p) >= 1) deltaTxt = `<span class="${p > 0 ? 'text-red-400/90' : 'text-emerald-400/90'}">${p > 0 ? '▲ +' : '▼ '}${Math.round(p)} %</span>`;
     }
     return `
-    <div class="flex items-center gap-2">
-      <span class="w-28 flex-shrink-0 text-[10px] text-gray-400 truncate" title="${String(c).replace(/"/g, '&quot;')}">${c}</span>
-      <div class="flex-1 h-2 rounded-full bg-dark-600/60 overflow-hidden"><div class="h-full rounded-full bg-red-400/50" style="width:${Math.max(2, (v / maxV) * 100)}%"></div></div>
-      <span class="w-20 text-right text-[10px] text-gray-300 whitespace-nowrap">${fmt(v)}</span>
-      <span class="w-11 text-right text-[9px]">${deltaTxt}</span>
-    </div>`;
-  }).join('');
-  return `
-    <div class="mb-5 space-y-4">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        ${tuile('Revenus', fmt(b.revenus), delta(b.revenus, bp?.revenus, true), 'text-emerald-400')}
-        ${tuile('Dépenses', fmt(b.depenses), delta(b.depenses, bp?.depenses, false), 'text-red-400')}
-        ${tuile('Investi', fmt(b.investi), delta(b.investi, bp?.investi, true), 'text-blue-400')}
-        <div class="rounded-xl border px-3 py-2.5 ${b.taux !== null && b.taux >= 20 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-dark-800/50 border-dark-400/20'}">
-          <p class="text-[9px] uppercase tracking-wider text-gray-600">Taux d'épargne</p>
-          <p class="text-xl font-extrabold ${tauxCouleur} leading-tight">${b.taux === null ? '—' : Math.round(b.taux) + ' %'}</p>
-          <p class="text-[9px] text-gray-500 mt-0.5">reste ${fmt(b.reste)}${deltaTaux ? ' · ' + deltaTaux : ''}</p>
+    <div class="flex items-center gap-2.5">
+      <span class="w-28 flex-shrink-0 text-[11px] text-gray-300 truncate" title="${String(c).replace(/"/g, '&quot;')}">${c}</span>
+      <div class="flex-1 h-3.5 rounded-full bg-dark-600/50 overflow-hidden">
+        <div class="h-full rounded-full flex items-center" style="width:${Math.max(3, (v / maxV) * 100)}%;background:linear-gradient(90deg,${PALETTE_CATS[i % PALETTE_CATS.length]}88,${PALETTE_CATS[i % PALETTE_CATS.length]})">
+          <span class="text-[8px] font-bold text-dark-900/80 pl-1.5 whitespace-nowrap">${part >= 8 ? part + ' %' : ''}</span>
         </div>
       </div>
+      <span class="w-20 text-right text-[11px] font-semibold text-gray-200 whitespace-nowrap">${fmt(v)}</span>
+      <span class="w-14 text-right text-[9px] whitespace-nowrap">${deltaTxt}</span>
+    </div>`;
+  }).join('');
+
+  // ── Pastilles micro-invest ──
+  const meta = a.meta || {};
+  const pastillesMicro = [
+    Number(meta.trSaveback) ? `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300">🪙 Saveback <b>${fmt(meta.trSaveback)}</b></span>` : '',
+    Number(meta.trRoundup) ? `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-red-500/10 border border-red-500/25 text-red-300">🔄 Round-up <b>${fmt(meta.trRoundup)}</b></span>` : '',
+    Number(meta.trInterets) ? `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">💰 Intérêts <b>${fmt(meta.trInterets)}</b></span>` : '',
+  ].filter(Boolean).join(' ');
+
+  return `
+    <div class="mb-5 space-y-3">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        ${jauge}
+        ${flux}
+      </div>
       ${top.length > 0 ? `
-      <div>
-        <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1.5">Où est parti l'argent</p>
-        <div class="space-y-1">${barres}</div>
+      <div class="rounded-xl bg-dark-800/50 border border-dark-400/20 p-4">
+        <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-2.5">Où est parti l'argent</p>
+        <div class="space-y-1.5">${barres}</div>
       </div>` : ''}
-      <p class="text-[9px] text-gray-600">Hors virements internes entre tes comptes. Investi = DCA confirmés + opérations d'investissement + livrets + Saveback + Round-up. Le reste = revenus − dépenses (il inclut l'investi et le cash conservé).</p>
+      ${pastillesMicro ? `<div class="flex flex-wrap gap-1.5">${pastillesMicro}</div>` : ''}
+      <p class="text-[9px] text-gray-600">Hors virements internes entre tes comptes. Investi = DCA confirmés + opérations d'investissement + livrets + Saveback + Round-up.</p>
     </div>`;
 }
 
