@@ -289,6 +289,115 @@ function getPreviousMonthKey() {
   return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
 }
 
+// ============================================================
+// BILAN DE CLÔTURE — agrégats d'un mois archivé
+// Hors virements internes entre comptes ; l'investi est séparé des dépenses.
+// ============================================================
+function bilanBucketsArchive(a) {
+  if (!a) return null;
+  const num = (v) => Number(v) || 0;
+  const meta = a.meta || {};
+  const conf = a.trRecurringConfirmed || {};
+  const estTransfertNom = (nom) => /virement|livret/i.test(nom || '');
+  const mensuellesCochees = (a.depMensuelles || []).filter(d => (a.cochees || []).includes(d.id));
+
+  // Revenus réels : opérations revenus (hors virements) + intérêts TR.
+  // Les « apports mensuels » TR sont des transferts entre tes comptes, pas des revenus.
+  const revenus = (a.revenus || []).filter(r => (r.categorie || '') !== 'Virement').reduce((s, r) => s + num(r.montant), 0)
+    + num(meta.trInterets);
+
+  // Investi : DCA confirmés + opérations « Investissement » + lignes livret/invest CIC + Saveback + Round-up
+  const dcaConf = (a.dcaTR || []).filter(d => (conf.expenses || []).includes(d.id)).reduce((s, d) => s + num(d.montant), 0);
+  const opsInvest = (a.operations || []).filter(o => (o.categorie || '') === 'Investissement').reduce((s, o) => s + num(o.montant), 0);
+  const mensInvest = mensuellesCochees.filter(d => d.paiement === 'investissement' || /livret/i.test(d.nom || '')).reduce((s, d) => s + num(d.montant), 0);
+  const investi = dcaConf + opsInvest + mensInvest + num(meta.trSaveback) + num(meta.trRoundup);
+
+  // Dépenses réelles : opérations (hors Virement/Investissement) + mensuelles CIC cochées (hors transferts) + abonnements TR confirmés
+  const opsDep = (a.operations || []).filter(o => !/^(virement|investissement)$/i.test(o.categorie || '')).reduce((s, o) => s + num(o.montant), 0);
+  const mensDep = mensuellesCochees.filter(d => d.paiement !== 'investissement' && d.paiement !== 'virement' && !estTransfertNom(d.nom)).reduce((s, d) => s + num(d.montant), 0);
+  const abosConf = (a.prelevTR || []).filter(p => (conf.prelevements || []).includes(p.id)).reduce((s, p) => s + num(p.montant), 0);
+  const depenses = opsDep + mensDep + abosConf;
+
+  const reste = revenus - depenses;
+  const taux = revenus > 0 ? (reste / revenus) * 100 : null;
+
+  // Dépenses par catégorie
+  const cats = {};
+  (a.operations || []).forEach(o => {
+    const c = o.categorie || 'Autre';
+    if (/^(virement|investissement)$/i.test(c)) return;
+    cats[c] = (cats[c] || 0) + num(o.montant);
+  });
+  if (mensDep > 0) cats['Charges fixes'] = (cats['Charges fixes'] || 0) + mensDep;
+  if (abosConf > 0) cats['Abonnements'] = (cats['Abonnements'] || 0) + abosConf;
+
+  return { revenus, depenses, investi, reste, taux, cats };
+}
+
+function bilanHeaderHtml(a, prev) {
+  const b = bilanBucketsArchive(a);
+  if (!b) return '';
+  const bp = bilanBucketsArchive(prev);
+  const prevLabel = prev ? new Date(prev.mois + '-01').toLocaleDateString('fr-FR', { month: 'long' }) : '';
+  const fmt = formatCurrencyCents;
+  // Delta vs mois précédent : le sens « bon/mauvais » dépend de la grandeur
+  const delta = (cur, old, bienQuandMonte) => {
+    if (!bp || old === undefined || old === null) return '';
+    const d = cur - old;
+    if (Math.abs(d) < 0.01) return `<span class="text-gray-600">stable vs ${prevLabel}</span>`;
+    const bon = d > 0 ? bienQuandMonte : !bienQuandMonte;
+    return `<span class="${bon ? 'text-emerald-400/80' : 'text-red-400/80'}">${d > 0 ? '+' : '−'}${fmt(Math.abs(d))} vs ${prevLabel}</span>`;
+  };
+  const tuile = (titre, valeur, sous, couleur) => `
+    <div class="rounded-xl bg-dark-800/50 border border-dark-400/20 px-3 py-2.5">
+      <p class="text-[9px] uppercase tracking-wider text-gray-600">${titre}</p>
+      <p class="text-base font-bold ${couleur} leading-tight mt-0.5">${valeur}</p>
+      <p class="text-[9px] mt-0.5">${sous || '&nbsp;'}</p>
+    </div>`;
+  const tauxCouleur = b.taux === null ? 'text-gray-500' : b.taux >= 20 ? 'text-emerald-400' : b.taux >= 0 ? 'text-amber-400' : 'text-red-400';
+  const deltaTaux = (bp && bp.taux !== null && b.taux !== null && Math.abs(b.taux - bp.taux) >= 0.5)
+    ? `<span class="${b.taux > bp.taux ? 'text-emerald-400/80' : 'text-red-400/80'}">${b.taux > bp.taux ? '+' : '−'}${Math.abs(Math.round(b.taux - bp.taux))} pts vs ${prevLabel}</span>`
+    : '';
+  const top = Object.entries(b.cats).sort((x, y) => y[1] - x[1]).slice(0, 5);
+  const maxV = top.length ? top[0][1] : 1;
+  const barres = top.map(([c, v]) => {
+    let deltaTxt = '';
+    if (bp && bp.cats[c] > 0) {
+      const p = ((v - bp.cats[c]) / bp.cats[c]) * 100;
+      if (Math.abs(p) >= 1) deltaTxt = `<span class="${p > 0 ? 'text-red-400/80' : 'text-emerald-400/80'}">${p > 0 ? '+' : ''}${Math.round(p)} %</span>`;
+    }
+    return `
+    <div class="flex items-center gap-2">
+      <span class="w-28 flex-shrink-0 text-[10px] text-gray-400 truncate" title="${String(c).replace(/"/g, '&quot;')}">${c}</span>
+      <div class="flex-1 h-2 rounded-full bg-dark-600/60 overflow-hidden"><div class="h-full rounded-full bg-red-400/50" style="width:${Math.max(2, (v / maxV) * 100)}%"></div></div>
+      <span class="w-20 text-right text-[10px] text-gray-300 whitespace-nowrap">${fmt(v)}</span>
+      <span class="w-11 text-right text-[9px]">${deltaTxt}</span>
+    </div>`;
+  }).join('');
+  return `
+    <div class="mb-5 space-y-4">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        ${tuile('Revenus', fmt(b.revenus), delta(b.revenus, bp?.revenus, true), 'text-emerald-400')}
+        ${tuile('Dépenses', fmt(b.depenses), delta(b.depenses, bp?.depenses, false), 'text-red-400')}
+        ${tuile('Investi', fmt(b.investi), delta(b.investi, bp?.investi, true), 'text-blue-400')}
+        <div class="rounded-xl border px-3 py-2.5 ${b.taux !== null && b.taux >= 20 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-dark-800/50 border-dark-400/20'}">
+          <p class="text-[9px] uppercase tracking-wider text-gray-600">Taux d'épargne</p>
+          <p class="text-xl font-extrabold ${tauxCouleur} leading-tight">${b.taux === null ? '—' : Math.round(b.taux) + ' %'}</p>
+          <p class="text-[9px] text-gray-500 mt-0.5">reste ${fmt(b.reste)}${deltaTaux ? ' · ' + deltaTaux : ''}</p>
+        </div>
+      </div>
+      ${top.length > 0 ? `
+      <div>
+        <p class="text-[10px] text-gray-600 uppercase tracking-widest font-semibold mb-1.5">Où est parti l'argent</p>
+        <div class="space-y-1">${barres}</div>
+      </div>` : ''}
+      <p class="text-[9px] text-gray-600">Hors virements internes entre tes comptes. Investi = DCA confirmés + opérations d'investissement + livrets + Saveback + Round-up. Le reste = revenus − dépenses (il inclut l'investi et le cash conservé).</p>
+    </div>`;
+}
+
+// Ouvre automatiquement le bilan du mois qui vient d'être clôturé (posé par la clôture, lu par mount)
+let _bilanApresCloture = null;
+
 const POCKET_COLORS = [
   { name: 'gray',    bg: 'bg-dark-600/40',       border: 'border-dark-400/20',     text: 'text-gray-400',    dot: '#9ca3af' },
   { name: 'blue',    bg: 'bg-blue-500/10',       border: 'border-blue-500/20',     text: 'text-blue-400',    dot: '#60a5fa' },
@@ -1434,6 +1543,7 @@ export function mount(store, navigate) {
       store.set('trFeatures', trF);
 
       showToast(`Mois de ${label} clôturé ✓`, 'success', 3500);
+      _bilanApresCloture = monthKey;
       navigate('suivi-depenses');
     });
   };
@@ -2869,6 +2979,9 @@ export function mount(store, navigate) {
     const a = archives.find(ar => ar.mois === mois);
     if (!a) return;
     const label = new Date(mois + '-01').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    // Archive du mois précédent (pour les deltas du bilan)
+    const triees = [...archives].sort((x, y) => x.mois.localeCompare(y.mois));
+    const prevArchive = triees[triees.findIndex(x => x.mois === mois) - 1] || null;
     const allOps = (a.operations || []).map(o => ({ ...o, type: 'depense' }));
     const allRevs = (a.revenus || []).map(r => ({ ...r, type: 'revenu' }));
     const allItems = [...allRevs, ...allOps].sort((x, y) => (y.date || '').localeCompare(x.date || ''));
@@ -3004,10 +3117,11 @@ export function mount(store, navigate) {
     modal.innerHTML = `
       <div class="bg-dark-700 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-dark-400/50 flex flex-col">
         <div class="px-6 py-4 border-b border-dark-400/50 flex items-center justify-between flex-shrink-0">
-          <h3 class="text-lg font-semibold text-gray-100 capitalize">${label}</h3>
+          <h3 class="text-lg font-semibold text-gray-100">Bilan · <span class="capitalize">${label}</span></h3>
           <button id="modal-close-x" class="text-gray-400 hover:text-gray-100 transition text-2xl leading-none px-1">&times;</button>
         </div>
         <div class="overflow-x-auto overflow-y-auto flex-1 p-5">
+          ${bilanHeaderHtml(a, prevArchive)}
           <div class="grid grid-cols-${COMPTES.length} gap-5" style="min-width: ${COMPTES.length * 280}px;">
             ${COMPTES.map((c, i) => renderBankCol(c, i)).join('')}
           </div>
@@ -3021,6 +3135,13 @@ export function mount(store, navigate) {
   document.querySelectorAll('.archive-row').forEach(row => {
     row.addEventListener('click', () => showArchiveDetail(row.dataset.mois));
   });
+
+  // Bilan affiché automatiquement juste après une clôture
+  if (_bilanApresCloture) {
+    const mk = _bilanApresCloture;
+    _bilanApresCloture = null;
+    showArchiveDetail(mk);
+  }
 
   // ---- Déclôturer le dernier mois clôturé (clôture faite par erreur) ----
   document.querySelectorAll('[data-unclose]').forEach(btn => {
