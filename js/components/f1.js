@@ -10,6 +10,9 @@ import { getCurrentUser, saveSharedDoc, loadSharedDoc, subscribeSharedDoc, isCon
 
 const BAREME = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
+// Favicon propre à l'univers F1 : drapeau à damier sur fond nuit, liseré et traînées néon
+export const F1_FAVICON = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#00e5ff'/><stop offset='100%' stop-color='#ff2d95'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='#0d0221'/><rect x='1' y='1' width='30' height='30' rx='6' fill='none' stroke='url(#g)' stroke-width='1.5' stroke-opacity='0.85'/><path d='M8 5v22' stroke='#e5e7eb' stroke-width='2' stroke-linecap='round'/><rect x='10' y='5' width='16' height='12' fill='#1a0533' stroke='#ffffff' stroke-opacity='0.25' stroke-width='0.5'/><g fill='#ffffff'><rect x='10' y='5' width='4' height='4'/><rect x='18' y='5' width='4' height='4'/><rect x='14' y='9' width='4' height='4'/><rect x='22' y='9' width='4' height='4'/><rect x='10' y='13' width='4' height='4'/><rect x='18' y='13' width='4' height='4'/></g><rect x='12' y='21' width='16' height='2.2' rx='1.1' fill='#ff2d95'/><rect x='16' y='25' width='12' height='2.2' rx='1.1' fill='#00e5ff'/></svg>`);
+
 // Tracés : silhouettes SVG stylisées (viewBox 0 0 100 60), pas des relevés exacts
 const GP_2025 = [
   { id: 'aus', nom: 'Australie', circuit: 'Albert Park · Melbourne', iso: 'au', date: '16 mars',
@@ -385,6 +388,7 @@ function vuePaddock(store) {
   const setups = getSetups(fiche);
   const setupActif = setups.find(s => s.id === varianteActive) || setups[0];
   const strat = fiche.strat || {};
+  const chronos = fiche.chronos || {};
 
   const selecteur = `
     <div class="flex gap-1.5 overflow-x-auto pb-2 mb-4" style="scrollbar-width:thin">
@@ -433,7 +437,24 @@ function vuePaddock(store) {
       </div>
     </div>`).join('');
 
-  return `${selecteur}${entete}
+  const blocChronos = `
+    <div class="f1-carte p-4 mb-3">
+      <div class="flex flex-wrap items-end gap-3">
+        <p class="f1-sous-titre text-[11px] tracking-[0.15em] w-full sm:w-auto sm:mr-2 sm:pb-2">⏱ CHRONOS DE RÉFÉRENCE</p>
+        <div class="flex-1 min-w-[130px]">
+          <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Temps qualif</label>
+          <input data-f1-chrono="qualif" type="text" value="${chronos.qualif || ''}" class="f1-input w-full" placeholder="1:29.347">
+        </div>
+        <div class="flex-1 min-w-[130px]">
+          <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Temps course (meilleur tour)</label>
+          <input data-f1-chrono="course" type="text" value="${chronos.course || ''}" class="f1-input w-full" placeholder="1:32.108">
+        </div>
+        <button id="f1-save-chrono" class="f1-bouton" style="padding:0.5rem 1rem" title="Enregistrer les chronos">💾</button>
+      </div>
+      <p class="text-[9px] mt-1.5" style="color:#8d7fb3">Tes références personnelles sur ce circuit — à battre. Propres à chaque pilote.</p>
+    </div>`;
+
+  return `${selecteur}${entete}${blocChronos}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
       <div class="f1-carte p-4">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-2">🔧 SETUP</p>
@@ -787,6 +808,14 @@ export function mount(store, navigate) {
     Object.assign(actif, valeurs);
     store.set('f1Garage', garage);
     showToast(`Setup « ${actif.nom} » enregistré 🔧`, 'success', 2000);
+    navigate('f1');
+  });
+
+  document.getElementById('f1-save-chrono')?.addEventListener('click', () => {
+    const { garage, fiche } = licherFiche();
+    fiche.chronos = lireChamps('data-f1-chrono');
+    store.set('f1Garage', garage);
+    showToast('Chronos de référence enregistrés ⏱', 'success', 2000);
     navigate('f1');
   });
 

@@ -18,7 +18,7 @@ import * as SimulateurAuto from './components/simulateur-auto.js?v=20260809m';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260809m';
 import * as Hypotheses from './components/hypotheses.js?v=20260809m';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260809m';
-import * as F1 from './components/f1.js?v=20260810c';
+import * as F1 from './components/f1.js?v=20260810d';
 import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260809m';
 import { showToast, promptModal, confirmModal } from './utils.js?v=20260809m';
 
@@ -250,6 +250,13 @@ function renderPage() {
 
   // Update user bar
   updateUserBar();
+
+  // Favicon par univers : damier néon dans le Paddock F1, « H » Horizon partout ailleurs
+  const iconLink = document.querySelector('link[rel="icon"]');
+  if (iconLink) {
+    if (!iconLink.dataset.horizonHref) iconLink.dataset.horizonHref = iconLink.href;
+    iconLink.href = hash === 'f1' ? F1.F1_FAVICON : iconLink.dataset.horizonHref;
+  }
 }
 
 
