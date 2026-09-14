@@ -228,7 +228,12 @@ function pousserChamp(store, champ) {
   store.set('f1Champ', champ);
   if (isConfigured()) {
     saveSharedDoc('f1-championnat', champ).then(ok => {
-      if (!ok) showToast('Classement non synchronisé (hors ligne ou règle Firestore manquante)', 'error', 4000);
+      const el = document.getElementById('f1-sync-etat');
+      if (el) {
+        el.textContent = ok ? '● classement synchronisé' : '● non synchronisé — règle Firestore « shared » manquante';
+        el.style.color = ok ? '#34d399' : '#fb7185';
+      }
+      if (!ok) showToast('Classement non synchronisé : ajoute la règle Firestore « shared » (voir console Firebase)', 'error', 5000);
     });
   }
 }
@@ -299,6 +304,7 @@ export function render(store) {
         <div>
           <button id="f1-nom-serie" class="f1-titre text-2xl sm:text-3xl leading-none text-left uppercase" title="Renommer la série (nom commun aux deux pilotes)">${champ.nomSerie || 'NIGHT SERIES'}</button>
           <p class="f1-sous-titre text-[11px] tracking-[0.2em] mt-1">SAISON ${champ.saison} · DUEL PS5</p>
+          <p id="f1-sync-etat" class="text-[9px] uppercase tracking-wide mt-0.5" style="color:#8d7fb3">● synchronisation…</p>
         </div>
         <div class="ml-auto flex items-center gap-2">
           ${onglet('championnat', '🏆 Championnat')}
@@ -937,15 +943,30 @@ export function mount(store, navigate) {
 
   // Sync du championnat commun : charge puis écoute le document partagé.
   // Le rafraîchissement ne se déclenche que si on est toujours sur la page F1.
+  const majSync = (etat) => {
+    const el = document.getElementById('f1-sync-etat');
+    if (!el) return;
+    if (etat === 'ok') { el.textContent = '● classement synchronisé'; el.style.color = '#34d399'; }
+    else if (etat === 'erreur') { el.textContent = '● non synchronisé — règle Firestore « shared » manquante'; el.style.color = '#fb7185'; }
+    else { el.textContent = '● mode local (hors connexion)'; el.style.color = '#8d7fb3'; }
+  };
   if (isConfigured()) {
     loadSharedDoc('f1-championnat').then(distant => {
-      if (adopterSiPlusRecent(store, distant) && surPageF1()) navigate('f1');
+      if (distant === null) {
+        // Premier passage : on crée le document partagé à partir de l'état local
+        saveSharedDoc('f1-championnat', getChamp(store)).then(ok => majSync(ok ? 'ok' : 'erreur'));
+      } else {
+        majSync('ok');
+        if (adopterSiPlusRecent(store, distant) && surPageF1()) navigate('f1');
+      }
     });
     if (!_unsubShared) {
       _unsubShared = subscribeSharedDoc('f1-championnat', (distant) => {
         if (adopterSiPlusRecent(store, distant) && surPageF1()) navigate('f1');
       });
     }
+  } else {
+    setTimeout(() => majSync('local'), 0);
   }
 
   document.getElementById('f1-retour')?.addEventListener('click', () => navigate('suivi-depenses'));
