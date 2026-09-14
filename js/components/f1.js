@@ -1070,7 +1070,20 @@ export function mount(store, navigate) {
       const champ = getChamp(store);
       const p = champ.pilotes[slot];
       const monSlot = getMonSlot(store);
+      const cp = couleurPilote(p);
       const body = `
+        <div class="relative overflow-hidden rounded-xl mb-4 px-4 h-24 flex items-center" style="border:1px solid ${cp}55;background:linear-gradient(90deg,${cp}18,transparent 70%)">
+          <img src="img/f1/pilotes/${slot}.png" alt="" aria-hidden="true"
+            class="absolute right-1 bottom-0 h-[95%] object-contain pointer-events-none select-none"
+            style="opacity:0.5;mask-image:linear-gradient(90deg,transparent 0%,black 45%);-webkit-mask-image:linear-gradient(90deg,transparent 0%,black 45%)"
+            onerror="this.remove()">
+          <div class="relative flex items-center gap-2.5">
+            <span class="w-4 h-4 rounded-full flex-shrink-0" style="background:${p.casque};box-shadow:0 0 8px ${p.casque}"></span>
+            <span class="text-xl font-extrabold text-gray-100 tracking-wider">${p.tri}</span>
+            ${drapeau(natIso(p.nat), 'w-5 h-3.5')}
+            <span class="text-xs font-semibold" style="color:${cp}">${ecurieDe(p.ecurie).label}</span>
+          </div>
+        </div>
         ${inputField('nom', 'Prénom', p.nom)}
         <div class="grid grid-cols-2 gap-2">
           <div>${inputField('tri', 'Trigramme (3 lettres)', p.tri, 'text', 'maxlength="3" style="text-transform:uppercase"')}</div>
