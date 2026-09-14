@@ -305,10 +305,10 @@ function vueChampionnat(store, champ) {
           <span class="w-7 h-7 rounded-full flex-shrink-0 border-2 border-white/30" title="Casque" style="background:${p.casque};box-shadow:0 0 10px ${p.casque}"></span>
           <div class="min-w-0">
             <p class="f1-titre text-xl leading-none tracking-wider flex items-center gap-2">${p.tri} ${drapeau(natIso(p.nat), 'w-5 h-3.5')}</p>
-            <p class="text-[10px] uppercase tracking-widest mt-0.5" style="color:${e.couleur}">${e.label} · ${p.nom}</p>
+            <p class="text-[10px] uppercase tracking-widest mt-0.5 flex items-center gap-1.5" style="color:#ded5f2"><span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${e.couleur};box-shadow:0 0 6px ${e.couleur}"></span>${e.label} · ${p.nom}</p>
           </div>
           <div class="ml-auto text-right">
-            <p class="f1-titre text-3xl leading-none" style="color:${e.couleur};text-shadow:0 0 14px ${e.couleur}88">${s.pts}</p>
+            <p class="f1-titre text-3xl leading-none" style="color:#ffffff;text-shadow:0 0 16px ${e.couleur}">${s.pts}</p>
             <p class="text-[9px] uppercase tracking-widest text-gray-500">pts</p>
           </div>
         </div>
@@ -316,7 +316,7 @@ function vueChampionnat(store, champ) {
           <span>🏆 ${s.wins} victoire${s.wins > 1 ? 's' : ''}</span>
           <span>🍾 ${s.podiums} podium${s.podiums > 1 ? 's' : ''}</span>
           <span>🏁 ${s.courses} course${s.courses > 1 ? 's' : ''}</span>
-          ${rang === 2 ? `<span style="color:#ff2d95">+${ecart} pts d'écart</span>` : ''}
+          ${rang === 2 ? `<span style="color:#ff9dc4">+${ecart} pts d'écart</span>` : ''}
         </div>
         <p class="text-[9px] text-gray-600 mt-2">Modifier mon profil pilote →</p>
       </div>
@@ -330,8 +330,8 @@ function vueChampionnat(store, champ) {
       const e = { ...ecurieDe(p.ecurie), couleur: couleurPilote(p) };
       const pos = r[slot];
       const couru = pos !== undefined && pos !== null && pos !== '';
-      return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold ${couru ? '' : 'opacity-30'}"
-        style="background:${e.couleur}1a;border:1px solid ${e.couleur}55;color:${e.couleur}">
+      return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold ${couru ? '' : 'opacity-40'}"
+        style="background:${e.couleur}30;border:1px solid ${e.couleur}99;color:#ffffff">
         ${p.tri} ${posTxt(pos)}${couru && ptsPour(pos) > 0 ? ` · +${ptsPour(pos)}` : ''}</span>`;
     };
     const dispute = r.p1 !== undefined || r.p2 !== undefined;
@@ -521,9 +521,9 @@ function vuePalmares(store, champ) {
 
   const ligneStat = (label, va, vb) => `
     <div class="flex items-center gap-3 py-2 border-b border-white/5">
-      <span class="w-14 text-right f1-titre text-lg" style="color:${c1}">${va}</span>
+      <span class="w-14 text-right f1-titre text-lg" style="color:#fff;text-shadow:0 0 10px ${c1}">${va}</span>
       <span class="flex-1 text-center text-[10px] uppercase tracking-widest text-gray-400">${label}</span>
-      <span class="w-14 text-left f1-titre text-lg" style="color:${c2}">${vb}</span>
+      <span class="w-14 text-left f1-titre text-lg" style="color:#fff;text-shadow:0 0 10px ${c2}">${vb}</span>
     </div>`;
 
   const historique = (champ.historique || []).slice().reverse();
@@ -535,8 +535,8 @@ function vuePalmares(store, champ) {
         <span class="text-[9px] text-gray-500 uppercase">${duels1 + duels2} GP disputés</span>
       </div>
       <div class="flex items-center justify-between px-2 pb-1">
-        <span class="f1-titre text-xl" style="color:${c1}">${p1.tri}</span>
-        <span class="f1-titre text-xl" style="color:${c2}">${p2.tri}</span>
+        <span class="f1-titre text-xl" style="color:#fff;text-shadow:0 0 12px ${c1}">${p1.tri}</span>
+        <span class="f1-titre text-xl" style="color:#fff;text-shadow:0 0 12px ${c2}">${p2.tri}</span>
       </div>
       ${ligneStat('Points', cl.p1.pts, cl.p2.pts)}
       ${ligneStat('Victoires (P1)', cl.p1.wins, cl.p2.wins)}
