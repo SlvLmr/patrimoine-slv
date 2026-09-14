@@ -194,6 +194,7 @@ let ongletActif = 'championnat'; // championnat | paddock | palmares
 let gpActif = GP_2025[0].id;
 let varianteActive = null; // id de la variante de setup affichée (null = première)
 let stratActive = 1; // plan de stratégie affiché (1 = plan A, 2 = plan B)
+let _scrollF1 = 0; // position de défilement du monde F1, restaurée après chaque re-rendu
 let _unsubShared = null;
 const surPageF1 = () => window.location.hash.slice(1) === 'f1';
 
@@ -888,6 +889,13 @@ function ouvrirFicheCircuit(gpId) {
 // MOUNT
 // ============================================================
 export function mount(store, navigate) {
+  // Le monde F1 défile dans son propre conteneur : on restaure la position après chaque re-rendu
+  const monde = document.querySelector('.f1-monde');
+  if (monde) {
+    monde.scrollTop = _scrollF1;
+    monde.addEventListener('scroll', () => { _scrollF1 = monde.scrollTop; });
+  }
+
   // Sync du championnat commun : charge puis écoute le document partagé.
   // Le rafraîchissement ne se déclenche que si on est toujours sur la page F1.
   if (isConfigured()) {
@@ -915,7 +923,7 @@ export function mount(store, navigate) {
     }, { label: 'Ce nom est partagé entre les deux pilotes', placeholder: 'NIGHT SERIES' });
   });
   document.querySelectorAll('[data-f1-tab]').forEach(btn => {
-    btn.addEventListener('click', () => { ongletActif = btn.dataset.f1Tab; navigate('f1'); });
+    btn.addEventListener('click', () => { ongletActif = btn.dataset.f1Tab; _scrollF1 = 0; navigate('f1'); });
   });
   document.querySelectorAll('[data-f1-zoom]').forEach(btn => {
     btn.addEventListener('click', () => ouvrirFicheCircuit(btn.dataset.f1Zoom));
