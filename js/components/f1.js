@@ -395,7 +395,8 @@ function getSetups(fiche, gpId) {
   if (fiche.setup && Object.keys(fiche.setup).length) return [{ id: 'std', nom: 'Course', ...fiche.setup }];
   const ref = SETUPS_REFERENCE[gpId];
   if (ref && ref.length) return JSON.parse(JSON.stringify(ref));
-  return [{ id: 'std', nom: 'Course' }];
+  // Variantes proposées d'office : qualif, course sur le sec, course sous la pluie
+  return [{ id: 'qualif', nom: '⏱ Qualif' }, { id: 'course-sec', nom: '☀️ Course' }, { id: 'course-pluie', nom: '🌧️ Course' }];
 }
 
 function vuePaddock(store) {
