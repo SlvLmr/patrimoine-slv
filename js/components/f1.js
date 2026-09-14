@@ -445,7 +445,7 @@ function vuePaddock(store) {
       <div class="grid grid-cols-2 gap-2">
         ${champs.map(([id, label]) => `
         <div>
-          <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">${label}</label>
+          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">${label}</label>
           <input data-f1-setup="${id}" type="text" inputmode="decimal" value="${setupActif[id] ?? ''}" class="f1-input w-full">
         </div>`).join('')}
       </div>
@@ -456,11 +456,11 @@ function vuePaddock(store) {
       <div class="flex flex-wrap items-end gap-3">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] w-full sm:w-auto sm:mr-2 sm:pb-2">⏱ CHRONOS DE RÉFÉRENCE</p>
         <div class="flex-1 min-w-[130px]">
-          <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Temps qualif</label>
+          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Temps qualif</label>
           <input data-f1-chrono="qualif" type="text" value="${chronos.qualif || ''}" class="f1-input w-full" placeholder="1:29.347">
         </div>
         <div class="flex-1 min-w-[130px]">
-          <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Temps course (meilleur tour)</label>
+          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Temps course (meilleur tour)</label>
           <input data-f1-chrono="course" type="text" value="${chronos.course || ''}" class="f1-input w-full" placeholder="1:32.108">
         </div>
         <button id="f1-save-chrono" class="f1-bouton" style="padding:0.5rem 1rem" title="Enregistrer les chronos">💾</button>
@@ -485,15 +485,15 @@ function vuePaddock(store) {
       </div>
       <div class="f1-carte p-4">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-3">📋 STRATÉGIE</p>
-        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Pneus de départ</label>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Pneus de départ</label>
         <select data-f1-strat="depart" class="f1-input w-full mb-2">${PNEUS.map(p => `<option value="${p.value}" ${strat.depart === p.value ? 'selected' : ''}>${p.label}</option>`).join('')}</select>
         <div class="grid grid-cols-2 gap-2 mb-2">
           <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Plein d'essence (%)</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Plein d'essence (%)</label>
             <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 105">
           </div>
           <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Météo / température</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Météo / température</label>
             <input data-f1-strat="meteo" type="text" value="${strat.meteo || ''}" class="f1-input w-full" placeholder="Sec, piste 34°">
           </div>
         </div>
@@ -501,17 +501,17 @@ function vuePaddock(store) {
         ${[1, 2, 3].map(n => `
         <div class="grid grid-cols-2 gap-2 mb-1.5">
           <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Arrêt ${n} — tour</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Arrêt ${n} — tour</label>
             <input data-f1-strat="a${n}Tour" type="text" inputmode="numeric" value="${strat['a' + n + 'Tour'] ?? ''}" class="f1-input w-full" placeholder="${n === 1 ? 'Ex: 18' : 'optionnel'}">
           </div>
           <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Pneus montés</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Pneus montés</label>
             <select data-f1-strat="a${n}Pneu" class="f1-input w-full"><option value="">—</option>${PNEUS.map(p => `<option value="${p.value}" ${strat['a' + n + 'Pneu'] === p.value ? 'selected' : ''}>${p.label}</option>`).join('')}</select>
           </div>
         </div>`).join('')}
-        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">ERS / essence</label>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">ERS / essence</label>
         <input data-f1-strat="ers" type="text" value="${strat.ers || ''}" class="f1-input w-full mb-2" placeholder="ERS hotlap T1, essence standard">
-        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Débrief après course</label>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Débrief après course</label>
         <textarea data-f1-strat="debrief" rows="3" class="f1-input w-full" placeholder="Undercut gagnant au tour 17…">${strat.debrief || ''}</textarea>
         <button id="f1-save-strat" class="f1-bouton mt-3">💾 Enregistrer la stratégie</button>
       </div>
