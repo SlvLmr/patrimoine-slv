@@ -945,33 +945,49 @@ export function mount(store, navigate) {
       if (!gp) return;
       const champ = getChamp(store);
       const r = champ.resultats[gp.id] || {};
-      const options = ['<option value="">— non couru —</option>']
-        .concat(Array.from({ length: 20 }, (_, i) => `<option value="${i + 1}">P${i + 1}${i < 10 ? ' · ' + BAREME[i] + ' pts' : ''}</option>`))
-        .concat(['<option value="DNF">DNF · abandon</option>']).join('');
-      const sel = (slot) => {
+      const c1 = couleurPilote(champ.pilotes.p1), c2 = couleurPilote(champ.pilotes.p2);
+
+      const blocPilote = (slot) => {
         const p = champ.pilotes[slot];
-        const e = { ...ecurieDe(p.ecurie), couleur: couleurPilote(p) };
-        const cur = r[slot];
+        const c = slot === 'p1' ? c1 : c2;
+        const btnPos = (val, label, large = false) => `
+          <button type="button" data-f1-pos="${slot}::${val}" class="f1-posbtn${large ? ' px-3' : ''}" style="--pc:${val === 'DNF' ? '#f87171' : c}">${label}</button>`;
         return `
-        <div class="mb-3">
-          <label class="block text-xs font-semibold mb-1" style="color:${e.couleur}">${p.tri} — ${p.nom}</label>
-          <select id="f1-res-${slot}" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm">${options}</select>
+        <div class="rounded-xl p-3 mb-3" style="border:1px solid ${c}44;background:${c}0d">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-3.5 h-3.5 rounded-full flex-shrink-0" style="background:${p.casque};box-shadow:0 0 6px ${p.casque}"></span>
+            <span class="text-sm font-bold text-gray-100">${p.tri}</span>
+            <span class="text-xs text-gray-500">${p.nom}</span>
+            <span id="f1-res-resume-${slot}" class="ml-auto text-xs font-bold" style="color:${c}"></span>
+          </div>
+          <input type="hidden" id="f1-res-${slot}" value="">
+          <div class="flex flex-wrap gap-1">
+            ${Array.from({ length: 20 }, (_, i) => btnPos(i + 1, 'P' + (i + 1))).join('')}
+            ${btnPos('DNF', 'DNF', true)}
+            ${btnPos('', '—', true)}
+          </div>
         </div>`;
       };
-      const extraSel = (id, label) => `
-        <div class="mb-3">
-          <label class="block text-xs font-semibold mb-1 text-gray-300">${label}</label>
-          <select id="${id}" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm">
-            <option value="">—</option>
-            <option value="p1">${champ.pilotes.p1.tri}</option>
-            <option value="p2">${champ.pilotes.p2.tri}</option>
-          </select>
+
+      const segment = (id, titre) => `
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-300">${titre}</label>
+          <input type="hidden" id="f1-res-${id}" value="">
+          <div class="flex gap-1">
+            <button type="button" data-f1-seg="${id}::" class="f1-posbtn flex-1" style="--pc:#9ca3af">—</button>
+            <button type="button" data-f1-seg="${id}::p1" class="f1-posbtn flex-1" style="--pc:${c1}">${champ.pilotes.p1.tri}</button>
+            <button type="button" data-f1-seg="${id}::p2" class="f1-posbtn flex-1" style="--pc:${c2}">${champ.pilotes.p2.tri}</button>
+          </div>
         </div>`;
-      const extras = `<div class="grid grid-cols-2 gap-2">${extraSel('f1-res-pole', '🚀 Pole position')}${extraSel('f1-res-mtour', '⏱ Meilleur tour')}</div>`;
-      openModal(`🏁 ${gp.nom} — résultat`, sel('p1') + sel('p2') + extras + '<p class="text-[10px] text-gray-500">Barème 2025 : 25-18-15-12-10-8-6-4-2-1, pas de point bonus. Résultat partagé entre les deux pilotes.</p>', () => {
+
+      const body = blocPilote('p1') + blocPilote('p2') +
+        `<div class="grid grid-cols-2 gap-2 mb-2">${segment('pole', '🚀 Pole position')}${segment('mtour', '⏱ Meilleur tour')}</div>
+        <p class="text-[10px] text-gray-500">Barème 2025 : 25-18-15-12-10-8-6-4-2-1, pas de point bonus. Résultat partagé entre les deux pilotes.</p>`;
+
+      openModal(`🏁 ${gp.nom} — résultat`, body, () => {
         const lire = (slot) => {
           const v = document.getElementById(`f1-res-${slot}`)?.value;
-          return v === '' ? undefined : (v === 'DNF' ? 'DNF' : Number(v));
+          return (v === '' || v === undefined) ? undefined : (v === 'DNF' ? 'DNF' : Number(v));
         };
         const nv = {};
         const v1 = lire('p1'); if (v1 !== undefined) nv.p1 = v1;
@@ -985,15 +1001,41 @@ export function mount(store, navigate) {
         showToast(`${gp.nom} enregistré 🏁`, 'success', 2500);
         navigate('f1');
       });
-      // Pré-sélection
-      setTimeout(() => {
-        ['p1', 'p2'].forEach(slot => {
-          const el = document.getElementById(`f1-res-${slot}`);
-          if (el && r[slot] !== undefined) el.value = String(r[slot]);
+
+      // Câblage des boutons + pré-sélection
+      const majResume = (slot) => {
+        const v = document.getElementById(`f1-res-${slot}`)?.value;
+        const el = document.getElementById(`f1-res-resume-${slot}`);
+        if (!el) return;
+        if (v === '' || v === undefined) el.textContent = '';
+        else if (v === 'DNF') el.textContent = 'Abandon';
+        else el.textContent = `P${v}` + (ptsPour(Number(v)) > 0 ? ` · +${ptsPour(Number(v))} pts` : ' · 0 pt');
+      };
+      const choisir = (attr, prefixe, val) => {
+        document.querySelectorAll(`[${attr}^="${prefixe}::"], [${attr}="${prefixe}::"]`).forEach(b => {
+          b.classList.toggle('f1-posbtn-on', b.getAttribute(attr) === `${prefixe}::${val}`);
         });
-        if (r.pole) { const el = document.getElementById('f1-res-pole'); if (el) el.value = r.pole; }
-        if (r.mtour) { const el = document.getElementById('f1-res-mtour'); if (el) el.value = r.mtour; }
-      }, 0);
+        const cache = document.getElementById(`f1-res-${prefixe}`);
+        if (cache) cache.value = val;
+      };
+      document.querySelectorAll('[data-f1-pos]').forEach(b => {
+        b.addEventListener('click', () => {
+          const [slot, val] = b.dataset.f1Pos.split('::');
+          choisir('data-f1-pos', slot, val ?? '');
+          majResume(slot);
+        });
+      });
+      document.querySelectorAll('[data-f1-seg]').forEach(b => {
+        b.addEventListener('click', () => {
+          const [id, val] = b.dataset.f1Seg.split('::');
+          choisir('data-f1-seg', id, val ?? '');
+        });
+      });
+      choisir('data-f1-pos', 'p1', r.p1 !== undefined ? String(r.p1) : '');
+      choisir('data-f1-pos', 'p2', r.p2 !== undefined ? String(r.p2) : '');
+      choisir('data-f1-seg', 'pole', r.pole || '');
+      choisir('data-f1-seg', 'mtour', r.mtour || '');
+      majResume('p1'); majResume('p2');
     });
   });
 

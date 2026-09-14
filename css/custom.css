@@ -685,3 +685,8 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 .f1-pneu:hover { opacity: 0.85; transform: scale(1.06); }
 .f1-pneu-on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 12px var(--pneu-c); }
 .f1-pneu-on::after { content: '✓'; position: absolute; top: -5px; right: -5px; width: 14px; height: 14px; border-radius: 9999px; background: #10b981; color: #fff; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 6px rgba(16,185,129,0.7); }
+
+/* Boutons de position du modal résultat F1 */
+.f1-posbtn { min-width: 34px; padding: 5px 3px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); font-size: 11px; font-weight: 700; color: #cbd5e1; background: rgba(255,255,255,0.05); transition: all .1s; cursor: pointer; }
+.f1-posbtn:hover { border-color: var(--pc); color: #fff; }
+.f1-posbtn-on { background: var(--pc); border-color: var(--pc); color: #0b0b10; box-shadow: 0 0 10px var(--pc); }
