@@ -410,8 +410,9 @@ const TRIO_REFERENCE = {
   },
 };
 
-// Setups « SRS Custom » (données du 23/10/2025, course 50 %) — pré-remplis tant que rien n'est enregistré.
-const SETUPS_REFERENCE = {
+// ⚠ GRAINE PERSONNELLE (Sylvain) : injectée UNE FOIS dans son stockage à la connexion de SON compte,
+// jamais affichée pour un autre utilisateur. Règle actée : aucune donnée saisie n'est codée en dur côté partagé.
+const SEED_SETUPS_SRS = {
   aus: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '12', aeroAr: '4', diffAccel: '100', diffFrein: '30',
     carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
     suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '21', hautAr: '41',
@@ -511,7 +512,7 @@ const SETUPS_REFERENCE = {
 };
 
 // Stratégies SRS Custom (course 50 %) : départ + arrêts + essence ; le reste dans le débrief.
-const STRATS_REFERENCE = {
+const SEED_STRATS = {
   aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.9 kg', debrief: 'Diff course : 80-100' },
   chn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.2 kg', debrief: 'Diff course : 80-100' },
   jpn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.1 kg', debrief: 'Diff course : 80-100' },
@@ -567,7 +568,7 @@ const INFOS_COURSE = {
 };
 
 // Stratégie ② de référence (plans alternatifs du 23/10/2025)
-const STRATS2_REFERENCE = {
+const SEED_STRATS2 = {
   aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'S' },
   jpn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
   bhr: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M' },
@@ -593,7 +594,7 @@ const STRATS2_REFERENCE = {
 };
 
 // Chronos de référence (best laps QLF / RAC du 23/10/2025)
-const CHRONOS_REFERENCE = {
+const SEED_CHRONOS = {
   aus: { clm: '1.17.374', qualif: '1.18.136', course: '1.20.159' },
   chn: { qualif: '1.34.295', course: '1.37.327' },
   jpn: { qualif: '1.29.900', course: '1.32.192' },
@@ -628,7 +629,6 @@ function getSetups(fiche, gpId) {
     { id: 'ref-qualif', nom: '⏱ Qualif', ...(trio.qualif || {}) },
     { id: 'ref-sec', nom: '☀️ Course', ...(trio.sec || {}) },
     { id: 'ref-pluie', nom: '🌧️ Course', ...(trio.pluie || {}) },
-    ...(SETUPS_REFERENCE[gpId] || []),
   ];
   return JSON.parse(JSON.stringify(ref));
 }
@@ -644,10 +644,10 @@ function vuePaddock(store) {
     if (iTete > 0) setups = [setups[iTete], ...setups.slice(0, iTete), ...setups.slice(iTete + 1)];
   }
   const setupActif = setups.find(s => s.id === varianteActive) || setups[0];
-  const strat1 = (fiche.strat && Object.keys(fiche.strat).length) ? fiche.strat : (STRATS_REFERENCE[gp.id] || {});
-  const strat2 = (fiche.strat2 && Object.keys(fiche.strat2).length) ? fiche.strat2 : (STRATS2_REFERENCE[gp.id] || {});
+  const strat1 = fiche.strat || {};
+  const strat2 = fiche.strat2 || {};
   const strat = stratActive === 2 ? strat2 : strat1;
-  const chronos = (fiche.chronos && Object.keys(fiche.chronos).length) ? fiche.chronos : (CHRONOS_REFERENCE[gp.id] || {});
+  const chronos = fiche.chronos || {};
 
   const selecteur = `
     <div class="f1-scroll flex gap-1.5 overflow-x-auto pb-2 mb-4">
@@ -719,7 +719,7 @@ function vuePaddock(store) {
       <div class="f1-carte p-4">
         <div class="flex items-center justify-between mb-2">
           <p class="f1-sous-titre text-[11px] tracking-[0.15em]">🔧 SETUP</p>
-          ${SETUPS_REFERENCE[gp.id] ? `<button id="f1-ref-reload" class="f1-tab" style="font-size:10px;padding:0.25rem 0.6rem" title="Remplacer mes valeurs par les setups et la stratégie de référence de ce circuit">↺ Références</button>` : ''}
+          ${TRIO_REFERENCE[gp.id] ? `<button id="f1-ref-reload" class="f1-tab" style="font-size:10px;padding:0.25rem 0.6rem" title="Remplacer mes valeurs par les setups et la stratégie de référence de ce circuit">↺ Références</button>` : ''}
         </div>
         ${ongletsVariantes}
         ${blocsSetup}
@@ -895,6 +895,26 @@ function ouvrirFicheCircuit(gpId) {
 // MOUNT
 // ============================================================
 export function mount(store, navigate) {
+  // Migration one-shot : les données SRS quittent le code partagé pour le stockage PERSONNEL
+  // du compte propriétaire. Une fois posées (marqueur f1SeedSRS), le code n'y touche plus.
+  const emailMoi = (getCurrentUser?.()?.email || '').toLowerCase();
+  if (emailMoi === 'sylvain.lamour@gmail.com' && !store.get('f1SeedSRS')) {
+    const garage = store.get('f1Garage') || {};
+    GP_2025.forEach(gp => {
+      const fiche = garage[gp.id] || {};
+      if (!Array.isArray(fiche.setups) || !fiche.setups.length) fiche.setups = getSetups(fiche, gp.id);
+      if (SEED_SETUPS_SRS[gp.id] && !fiche.setups.some(s => s.nom === 'SRS Custom')) {
+        fiche.setups.push(...JSON.parse(JSON.stringify(SEED_SETUPS_SRS[gp.id])));
+      }
+      if (SEED_STRATS[gp.id] && (!fiche.strat || !Object.keys(fiche.strat).length)) fiche.strat = { ...SEED_STRATS[gp.id] };
+      if (SEED_STRATS2[gp.id] && (!fiche.strat2 || !Object.keys(fiche.strat2).length)) fiche.strat2 = { ...SEED_STRATS2[gp.id] };
+      if (SEED_CHRONOS[gp.id] && (!fiche.chronos || !Object.keys(fiche.chronos).length)) fiche.chronos = { ...SEED_CHRONOS[gp.id] };
+      garage[gp.id] = fiche;
+    });
+    store.set('f1Garage', garage);
+    store.set('f1SeedSRS', 1);
+  }
+
   // Le monde F1 défile dans son propre conteneur : on restaure la position après chaque re-rendu
   const monde = document.querySelector('.f1-monde');
   if (monde) {
@@ -1164,20 +1184,17 @@ export function mount(store, navigate) {
   });
 
   document.getElementById('f1-ref-reload')?.addEventListener('click', () => {
-    confirmModal('Recharger les réglages de référence ?',
-      'Tes setups et ta stratégie personnels sur ce circuit seront remplacés par les valeurs de référence (course 50 %). Chronos compris.',
+    confirmModal('Recharger les setups de référence ?',
+      'Tes variantes de setup sur ce circuit seront remplacées par le trio de référence (Qualif / Course sec / Course pluie). Stratégies et chronos conservés.',
       () => {
         const garage = store.get('f1Garage') || {};
         const fiche = garage[gpActif] || {};
-        if (SETUPS_REFERENCE[gpActif]) fiche.setups = JSON.parse(JSON.stringify(SETUPS_REFERENCE[gpActif]));
+        fiche.setups = getSetups({}, gpActif);
         delete fiche.setup;
-        fiche.strat = { ...(STRATS_REFERENCE[gpActif] || {}) };
-        fiche.strat2 = { ...(STRATS2_REFERENCE[gpActif] || {}) };
-        if (CHRONOS_REFERENCE[gpActif]) fiche.chronos = { ...CHRONOS_REFERENCE[gpActif] };
         garage[gpActif] = fiche;
         store.set('f1Garage', garage);
         varianteActive = null;
-        showToast('Références rechargées ↺', 'success', 2500);
+        showToast('Setups de référence rechargés ↺', 'success', 2500);
         navigate('f1');
       });
   });
