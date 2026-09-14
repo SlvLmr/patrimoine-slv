@@ -473,8 +473,6 @@ function vuePaddock(store) {
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-2">🔧 SETUP</p>
         ${ongletsVariantes}
         ${blocsSetup}
-        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Notes</label>
-        <textarea data-f1-setup="notes" rows="2" class="f1-input w-full" placeholder="Survirage T3, vibreur à éviter…">${setupActif.notes || ''}</textarea>
         <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer « ${setupActif.nom} »</button>
       </div>
       <div class="space-y-3">
