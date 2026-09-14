@@ -657,7 +657,7 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 }
 .f1-bandeau { background: linear-gradient(90deg, #e10600, #ff2d95); clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%); }
 .f1-damier { background-image: conic-gradient(#fff 90deg, transparent 90deg 180deg, #fff 180deg 270deg, transparent 270deg); background-size: 8px 8px; }
-.f1-tab { font-family: 'Titillium Web', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.4rem 0.8rem; border-radius: 0.6rem; border: 1px solid rgba(0,229,255,0.35); color: #9fd8e8; background: rgba(0,229,255,0.06); transition: all .15s; }
+.f1-tab { font-family: 'Titillium Web', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.45rem 0.9rem; border-radius: 0.6rem; border: 1px solid rgba(0,229,255,0.4); color: #eafcff; background: rgba(0,229,255,0.08); transition: all .15s; }
 .f1-tab:hover { color: #fff; border-color: #00e5ff; box-shadow: 0 0 12px rgba(0,229,255,0.35); }
 .f1-tab-on { color: #0d0221; background: #00e5ff; border-color: #00e5ff; box-shadow: 0 0 16px rgba(0,229,255,0.6); }
 .f1-puce-gp { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 44px; padding: 6px 4px; border-radius: 0.6rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #9ca3af; flex: 0 0 auto; transition: all .15s; }
