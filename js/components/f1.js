@@ -306,7 +306,7 @@ export function render(store) {
           ${onglet('championnat', '🏆 Championnat')}
           ${onglet('paddock', '🔧 Paddock')}
           ${onglet('palmares', '🏅 Palmarès')}
-          <button id="f1-retour" class="f1-tab" style="border-color:rgba(255,255,255,0.15);color:#9ca3af">← Horizon</button>
+          <button id="f1-retour" class="f1-tab" title="Quitter le paddock" style="border-color:rgba(255,255,255,0.15);color:#9ca3af">←</button>
         </div>
       </div>
       ${contenu}
