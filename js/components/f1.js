@@ -741,22 +741,28 @@ function vuePaddock(store) {
           ${[['S', '#e10600', INFOS_COURSE[gp.id].vieS], ['M', '#ffd12e', INFOS_COURSE[gp.id].vieM], ['H', '#f0f0f0', INFOS_COURSE[gp.id].vieH]].map(([l, c, v]) => `
           <span class="inline-flex items-center gap-1 text-[10px] font-bold text-gray-100"><span class="inline-flex items-center justify-center rounded-full flex-shrink-0" style="width:16px;height:16px;border:2.5px solid ${c};color:${c};font-size:8px;font-weight:900;background:#0b0b10">${l}</span>${v} t</span>`).join('')}
         </div>` : ''}
-        <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-1.5">Pneus de départ</label>
-        ${pneuSelecteur('depart', strat.depart, 40)}
-        <div class="mt-3 mb-3 max-w-[220px]">
-          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">⛽ Plein d'essence</label>
-          <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 51.9 kg">
+        <p class="f1-sous-titre text-[10px] tracking-[0.15em] mb-1.5">PLAN DE COURSE</p>
+        <div class="rounded-xl px-3 py-2.5 mb-1.5 flex items-center gap-3 flex-wrap" style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.28)">
+          <span class="f1-titre text-[13px] flex-shrink-0 w-16" style="color:#7fe7f7">DÉPART</span>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <span class="text-[9px] uppercase tracking-wide text-gray-100 opacity-0">Tour</span>
+            <span class="w-14 text-center text-base flex-shrink-0">🏁</span>
+          </div>
+          ${pneuSelecteur('depart', strat.depart, 30)}
         </div>
-        <p class="f1-sous-titre text-[10px] tracking-[0.15em] mb-1.5">ARRÊTS AUX STANDS</p>
         ${[1, 2, 3].map(n => `
         <div class="rounded-xl px-3 py-2.5 mb-1.5 flex items-center gap-3 flex-wrap" style="background:rgba(255,255,255,0.04);border:1px solid rgba(160,130,220,0.22)">
-          <span class="f1-titre text-[13px] flex-shrink-0 w-16" style="color:#7fe7f7">ARRÊT ${n}</span>
+          <span class="f1-titre text-[13px] flex-shrink-0 w-16" style="color:#e8e2f7">STOP ${n}</span>
           <div class="flex items-center gap-1.5 flex-shrink-0">
             <span class="text-[9px] uppercase tracking-wide text-gray-100">Tour</span>
             <input data-f1-strat="a${n}Tour" type="text" inputmode="numeric" value="${strat['a' + n + 'Tour'] ?? ''}" class="f1-input w-14 text-center" placeholder="${n === 1 ? '18' : '—'}">
           </div>
           ${pneuSelecteur('a' + n + 'Pneu', strat['a' + n + 'Pneu'], 30, true)}
         </div>`).join('')}
+        <div class="mt-3 mb-3 max-w-[220px]">
+          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">⛽ Plein d'essence</label>
+          <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 51.9 kg">
+        </div>
         <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Débrief après course</label>
         <textarea data-f1-strat="debrief" rows="3" class="f1-input w-full" placeholder="Undercut gagnant au tour 17…">${strat.debrief || ''}</textarea>
         <button id="f1-save-strat" class="f1-bouton mt-3">💾 Enregistrer la stratégie</button>
