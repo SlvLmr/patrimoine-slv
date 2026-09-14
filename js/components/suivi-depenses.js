@@ -310,13 +310,22 @@ function bilanBucketsArchive(a) {
   const dcaConf = (a.dcaTR || []).filter(d => (conf.expenses || []).includes(d.id)).reduce((s, d) => s + num(d.montant), 0);
   const opsInvest = (a.operations || []).filter(o => (o.categorie || '') === 'Investissement').reduce((s, o) => s + num(o.montant), 0);
   const mensInvest = mensuellesCochees.filter(d => d.paiement === 'investissement' || /livret/i.test(d.nom || '')).reduce((s, d) => s + num(d.montant), 0);
-  const investi = dcaConf + opsInvest + mensInvest + num(meta.trSaveback) + num(meta.trRoundup);
+  let investi = dcaConf + opsInvest + mensInvest + num(meta.trSaveback) + num(meta.trRoundup);
 
   // Dépenses réelles : opérations (hors Virement/Investissement) + mensuelles CIC cochées (hors transferts) + abonnements TR confirmés
   const opsDep = (a.operations || []).filter(o => !/^(virement|investissement)$/i.test(o.categorie || '')).reduce((s, o) => s + num(o.montant), 0);
-  const mensDep = mensuellesCochees.filter(d => d.paiement !== 'investissement' && d.paiement !== 'virement' && !estTransfertNom(d.nom)).reduce((s, d) => s + num(d.montant), 0);
+  let mensDep = mensuellesCochees.filter(d => d.paiement !== 'investissement' && d.paiement !== 'virement' && !estTransfertNom(d.nom)).reduce((s, d) => s + num(d.montant), 0);
+  // Mensuelles cochées des banques supplémentaires (archivées dans meta)
+  let mensXInv = 0;
+  Object.entries(meta.mensuellesExtra || {}).forEach(([bid, lignes]) => {
+    (lignes || []).filter(d => ((meta.extraMensCochees || {})[bid] || []).includes(d.id)).forEach(d => {
+      if (d.paiement === 'investissement' || /livret/i.test(d.nom || '')) mensXInv += num(d.montant);
+      else if (d.paiement !== 'virement' && !estTransfertNom(d.nom)) mensDep += num(d.montant);
+    });
+  });
   const abosConf = (a.prelevTR || []).filter(p => (conf.prelevements || []).includes(p.id)).reduce((s, p) => s + num(p.montant), 0);
   const depenses = opsDep + mensDep + abosConf;
+  investi += mensXInv;
 
   const reste = revenus - depenses;
   const taux = revenus > 0 ? (reste / revenus) * 100 : null;
@@ -861,6 +870,8 @@ export function render(store) {
   }
 
   // Extra banks computation
+  const mensuellesExtraAll = store.get('mensuellesExtra') || {};
+  const extraCocheesAll = store.get('extraMensuellesCochees') || {};
   const extraBankData = extraBanks.map(bank => {
     const ccId = 'cc-' + bank.id;
     const baseSolde = Number(comptesCourants.find(c => c.id === ccId)?.solde) || 0;
@@ -868,7 +879,11 @@ export function render(store) {
     const obligSolde = Number(soldeObligatoire[bank.id]) || 0;
     const rev = revenus.filter(r => r.compte === bank.name).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const dep = items.filter(i => i.compte === bank.name).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-    const solde = baseSolde + prevSolde + rev - dep;
+    // Dépenses mensuelles récurrentes de la banque (cochées = débitées du solde)
+    const mensLignes = mensuellesExtraAll[bank.id] || [];
+    const mensCochees = monthIsClosed ? [] : ((extraCocheesAll[monthKey] || {})[bank.id] || []);
+    const totalMensCoche = mensLignes.filter(d => mensCochees.includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+    const solde = baseSolde + prevSolde + rev - dep - totalMensCoche;
     const ops = [
       ...items.filter(i => i.compte === bank.name).map(i => ({ ...i, type: 'depense' })),
       ...revenus.filter(r => r.compte === bank.name).map(r => ({ ...r, type: 'revenu' }))
@@ -887,7 +902,7 @@ export function render(store) {
         return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
       });
     }
-    return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig, pocketItems: bankPocketItems };
+    return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig, pocketItems: bankPocketItems, mensLignes, mensCochees, totalMensCoche };
   });
 
   // Archive data
@@ -1254,6 +1269,38 @@ export function render(store) {
             ${bank.ops.map(renderOp).join('')}
           </div>
           ` : `<div class="px-5 py-4 text-sm text-gray-500">Aucune opération</div>`}
+
+          <!-- Dépenses mensuelles fixes (banque supplémentaire) -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span class="text-[11px] font-semibold text-gray-300">Dépenses mensuelles</span>
+                <span class="text-[10px] text-gray-500">${bank.mensCochees.length}/${bank.mensLignes.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-medium text-accent-red">${formatCurrencyCents(bank.totalMensCoche)}</span>
+                <button data-add-mensuel-extra="${bank.id}" class="text-accent-amber hover:text-accent-amber/80 text-[11px] font-bold transition ml-2" title="Ajouter une dépense mensuelle récurrente">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${bank.mensLignes.map(d => {
+                const checked = bank.mensCochees.includes(d.id);
+                return `
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition">
+                <div class="flex items-center gap-2 min-w-0">
+                  <input type="checkbox" data-extra-mensuel="${bank.id}::${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
+                  <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-extra-mc-edit="${bank.id}::${d.id}">${d.nom}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[11px] font-medium ${checked ? 'text-gray-600' : 'text-gray-100'} cursor-pointer" data-extra-mc-edit="${bank.id}::${d.id}">${formatCurrencyCents(d.montant)}</span>
+                  <button data-extra-mc-del="${bank.id}::${d.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+              ${bank.mensLignes.length === 0 ? `<p class="px-4 py-1 text-[10px] text-gray-600">Aucune ligne récurrente — le « + » ci-dessus en ajoute une (loyer, abonnement…).</p>` : ''}
+            </div>
+          </div>
         </div>
         `).join('')}
 
@@ -1478,12 +1525,15 @@ export function mount(store, navigate) {
 
     // Extra banks final soldes
     const extraFinals = {};
+    const mensuellesExtraSnap = store.get('mensuellesExtra') || {};
+    const extraCochSnap = (store.get('extraMensuellesCochees') || {})[monthKey] || {};
     for (const bank of extraBanks) {
       const base = Number(comptesCourants.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
       const prev = Number(soldePrecedent[bank.id]) || 0;
       const rev = revenus.filter(r => r.compte === bank.name).reduce((s, r) => s + (Number(r.montant) || 0), 0);
       const dep = items.filter(i => i.compte === bank.name).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-      extraFinals[bank.id] = base + prev + rev - dep;
+      const mensCoche = (mensuellesExtraSnap[bank.id] || []).filter(d => (extraCochSnap[bank.id] || []).includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+      extraFinals[bank.id] = base + prev + rev - dep - mensCoche;
     }
 
     // Build archive summary
@@ -1562,6 +1612,8 @@ export function mount(store, navigate) {
           extraPrev: {},
           extraOblig: {},
           budgetPockets: JSON.parse(JSON.stringify(store.get('budgetPockets') || {})),
+          mensuellesExtra: JSON.parse(JSON.stringify(mensuellesExtraSnap)),
+          extraMensCochees: JSON.parse(JSON.stringify(extraCochSnap)),
         },
       };
       for (const bank of extraBanks) {
@@ -2295,6 +2347,75 @@ export function mount(store, navigate) {
       }
       cicCochees[monthKey] = list;
       store.set('cicMensuellesCochees', cicCochees);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // ---- Dépenses mensuelles des banques supplémentaires ----
+  document.querySelectorAll('[data-extra-mensuel]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const [bankId, id] = cb.dataset.extraMensuel.split('::');
+      const monthKey = getCurrentMonthKey();
+      const all = store.get('extraMensuellesCochees') || {};
+      const mois = all[monthKey] || {};
+      const liste = mois[bankId] || [];
+      mois[bankId] = cb.checked ? [...new Set([...liste, id])] : liste.filter(x => x !== id);
+      all[monthKey] = mois;
+      store.set('extraMensuellesCochees', all);
+      navigate('suivi-depenses');
+    });
+  });
+
+  document.querySelectorAll('[data-add-mensuel-extra]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bankId = btn.dataset.addMensuelExtra;
+      const body = `
+        ${inputField('nom', 'Nom', '', 'text', 'placeholder="Ex: Loyer, Assurance…"')}
+        ${inputField('montant', 'Montant (€)', '', 'number', '0.01')}
+        ${paiementFieldHtml('prelevement')}
+      `;
+      openModal('Ajouter une dépense mensuelle', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        if (!data.nom || !data.montant) return;
+        const all = store.get('mensuellesExtra') || {};
+        const liste = all[bankId] || [];
+        liste.push({ id: 'mx-' + Date.now().toString(36), nom: data.nom, montant: Number(data.montant), paiement: document.querySelector('input[name="paiement"]:checked')?.value || 'prelevement' });
+        all[bankId] = liste;
+        store.set('mensuellesExtra', all);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-extra-mc-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const [bankId, id] = el.dataset.extraMcEdit.split('::');
+      const all = store.get('mensuellesExtra') || {};
+      const liste = all[bankId] || [];
+      const dep = liste.find(d => d.id === id);
+      if (!dep) return;
+      const body = `
+        ${inputField('nom', 'Nom', dep.nom)}
+        ${inputField('montant', 'Montant (€)', dep.montant, 'number', '0.01')}
+        ${paiementFieldHtml(dep.paiement || 'prelevement')}
+      `;
+      openModal('Modifier la dépense mensuelle', body, () => {
+        const data = getFormData(document.getElementById('modal-body'));
+        dep.nom = data.nom || dep.nom;
+        dep.montant = Number(data.montant) || dep.montant;
+        dep.paiement = document.querySelector('input[name="paiement"]:checked')?.value || dep.paiement || 'prelevement';
+        store.set('mensuellesExtra', all);
+        navigate('suivi-depenses');
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-extra-mc-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [bankId, id] = btn.dataset.extraMcDel.split('::');
+      const all = store.get('mensuellesExtra') || {};
+      all[bankId] = (all[bankId] || []).filter(d => d.id !== id);
+      store.set('mensuellesExtra', all);
       navigate('suivi-depenses');
     });
   });
@@ -3247,6 +3368,9 @@ export function mount(store, navigate) {
           const allCoch = store.get('cicMensuellesCochees') || {};
           Object.keys(allCoch).forEach(k => { if (k > mois) delete allCoch[k]; });
           store.set('cicMensuellesCochees', allCoch);
+          const allCochX = store.get('extraMensuellesCochees') || {};
+          Object.keys(allCochX).forEach(k => { if (k > mois) delete allCochX[k]; });
+          store.set('extraMensuellesCochees', allCochX);
           // 6. L'archive disparaît → ce mois redevient le mois de travail effectif
           store.set('archiveDepenses', archives.filter(x => x.mois !== mois));
           showToast(`${label} déclôturé ✓ — le mois est de nouveau en cours`, 'success', 3500);
