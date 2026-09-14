@@ -395,6 +395,19 @@ const CHAMPS_SETUP = [
 ];
 
 // Variantes de setup : migre l'ancien format { setup: {...} } vers { setups: [{id, nom, ...}] }
+// Trio de base immuable : ⏱ Qualif (rouge) · ☀️ Course (jaune) · 🌧️ Course (bleu).
+// Rempli circuit par circuit à partir des fiches simracingsetup ; vide en attendant.
+const TRIO_REFERENCE = {
+  aus: {
+    qualif: { aeroAv: '18', aeroAr: '8', diffAccel: '100', diffFrein: '25', carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+      suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '21', hautAv: '20', hautAr: '40', pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '21.0 / 21.0' },
+    sec: { aeroAv: '15', aeroAr: '9', diffAccel: '100', diffFrein: '30', carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+      suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '16', hautAv: '21', hautAr: '40', pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' },
+    pluie: { aeroAv: '32', aeroAr: '28', diffAccel: '90', diffFrein: '30', carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+      suspAv: '41', suspAr: '8', antiRoulisAv: '10', antiRoulisAr: '21', hautAv: '20', hautAr: '48', pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' },
+  },
+};
+
 // Setups « SRS Custom » (données du 23/10/2025, course 50 %) — pré-remplis tant que rien n'est enregistré.
 const SETUPS_REFERENCE = {
   aus: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '12', aeroAr: '4', diffAccel: '100', diffFrein: '30',
@@ -553,10 +566,15 @@ const CHRONOS_REFERENCE = {
 function getSetups(fiche, gpId) {
   if (Array.isArray(fiche.setups) && fiche.setups.length) return fiche.setups;
   if (fiche.setup && Object.keys(fiche.setup).length) return [{ id: 'std', nom: 'Course', ...fiche.setup }];
-  const ref = SETUPS_REFERENCE[gpId];
-  if (ref && ref.length) return JSON.parse(JSON.stringify(ref));
-  // Variantes proposées d'office : qualif, course sur le sec, course sous la pluie
-  return [{ id: 'qualif', nom: '⏱ Qualif' }, { id: 'course-sec', nom: '☀️ Course' }, { id: 'course-pluie', nom: '🌧️ Course' }];
+  // Base : le trio immuable (rempli si les données du circuit existent) + la variante SRS Custom
+  const trio = TRIO_REFERENCE[gpId] || {};
+  const ref = [
+    { id: 'ref-qualif', nom: '⏱ Qualif', ...(trio.qualif || {}) },
+    { id: 'ref-sec', nom: '☀️ Course', ...(trio.sec || {}) },
+    { id: 'ref-pluie', nom: '🌧️ Course', ...(trio.pluie || {}) },
+    ...(SETUPS_REFERENCE[gpId] || []),
+  ];
+  return JSON.parse(JSON.stringify(ref));
 }
 
 function vuePaddock(store) {
