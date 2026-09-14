@@ -302,8 +302,11 @@ export function render(store) {
       <!-- Top bar -->
       <div class="flex flex-wrap items-center gap-3 pt-5 pb-6">
         <div>
-          <button id="f1-nom-serie" class="f1-titre text-2xl sm:text-3xl leading-none text-left uppercase" title="Renommer la série (nom commun aux deux pilotes)">${champ.nomSerie || 'NIGHT SERIES'}</button>
-          <p class="f1-sous-titre text-[11px] tracking-[0.2em] mt-1">SAISON ${champ.saison} · DUEL PS5</p>
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" alt="F1" class="h-8 sm:h-9 w-auto"
+            style="filter:drop-shadow(0 0 10px rgba(225,6,0,0.45))"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+          <span class="f1-titre text-3xl leading-none" style="display:none;color:#e10600">F1</span>
+          <button id="f1-nom-serie" class="f1-sous-titre text-[11px] tracking-[0.2em] mt-1.5 block text-left uppercase" title="Renommer la série (nom commun aux deux pilotes)">${champ.nomSerie || 'NIGHT SERIES'}</button>
           <p id="f1-sync-etat" class="text-[9px] uppercase tracking-wide mt-0.5" style="color:#8d7fb3">● synchronisation…</p>
         </div>
         <div class="ml-auto flex items-center gap-2">
