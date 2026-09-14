@@ -83,11 +83,26 @@ const NATIONS = [
   ['jp', 'Japon'], ['au', 'Australie'], ['ma', 'Maroc'], ['dz', 'Algérie'], ['sn', 'Sénégal'],
 ];
 
+// Vrais tracés : cartes officielles formula1.com (tracé blanc, fond transparent).
+// Si l'image ne charge pas, repli sur la silhouette SVG stylisée.
+const F1_MAPS = {
+  aus: 'Australia', chn: 'China', jpn: 'Japan', bhr: 'Bahrain', sau: 'Saudi_Arabia', mia: 'Miami',
+  emi: 'Emilia_Romagna', mon: 'Monaco', esp: 'Spain', can: 'Canada', aut: 'Austria', gbr: 'Great_Britain',
+  bel: 'Belgium', hun: 'Hungary', ned: 'Netherlands', ita: 'Italy', aze: 'Baku', sgp: 'Singapore',
+  usa: 'USA', mex: 'Mexico', bra: 'Brazil', las: 'Las_Vegas', qat: 'Qatar', abu: 'Abu_Dhabi',
+};
+
 const traceSvg = (gp, cls = 'w-16 h-10', couleur = '#00e5ff') => `
-  <svg viewBox="0 0 100 60" class="${cls} flex-shrink-0" fill="none">
-    <path d="${gp.trace}" stroke="rgba(255,255,255,0.12)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="${gp.trace}" stroke="${couleur}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 3px ${couleur}88)"/>
-  </svg>`;
+  <span class="${cls} flex-shrink-0 inline-block">
+    <img src="https://media.formula1.com/image/upload/f_auto,q_auto,w_320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/${F1_MAPS[gp.id]}_Circuit.png"
+      alt="Tracé ${gp.nom}" loading="lazy" class="w-full h-full object-contain"
+      style="filter:drop-shadow(0 0 4px ${couleur}66)"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <svg viewBox="0 0 100 60" fill="none" class="w-full h-full" style="display:none">
+      <path d="${gp.trace}" stroke="rgba(255,255,255,0.12)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="${gp.trace}" stroke="${couleur}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+  </span>`;
 
 const ECURIES = [
   { value: 'mclaren', label: 'McLaren', couleur: '#FF8000' },
@@ -203,7 +218,7 @@ export function render(store) {
       <div class="flex flex-wrap items-center gap-3 pt-5 pb-6">
         <div>
           <p class="f1-titre text-2xl sm:text-3xl leading-none">NIGHT&nbsp;SERIES</p>
-          <p class="f1-sous-titre text-[11px] tracking-[0.35em] mt-1">SAISON ${champ.saison} · DUEL PS5</p>
+          <p class="f1-sous-titre text-[11px] tracking-[0.2em] mt-1">SAISON ${champ.saison} · DUEL PS5</p>
         </div>
         <div class="ml-auto flex items-center gap-2">
           ${onglet('championnat', '🏆 Championnat')}
@@ -291,7 +306,7 @@ function vueChampionnat(store, champ) {
     </div>
     <div class="f1-carte overflow-hidden">
       <div class="f1-bandeau px-4 py-2 flex items-center justify-between">
-        <span class="f1-titre text-sm tracking-[0.25em]">CALENDRIER · ${GP_2025.length} GP</span>
+        <span class="f1-titre text-sm tracking-[0.15em]">CALENDRIER · ${GP_2025.length} GP</span>
         <span class="text-[9px] uppercase tracking-widest text-white/70">clique une course pour saisir le résultat</span>
       </div>
       <div class="divide-y divide-white/5">${lignesGP}</div>
@@ -357,11 +372,11 @@ function vuePaddock(store) {
 
   const blocsSetup = CHAMPS_SETUP.map(([titre, champs]) => `
     <div class="mb-3">
-      <p class="f1-sous-titre text-[10px] tracking-[0.3em] mb-2">${titre.toUpperCase()}</p>
+      <p class="f1-sous-titre text-[10px] tracking-[0.15em] mb-2">${titre.toUpperCase()}</p>
       <div class="grid grid-cols-2 gap-2">
         ${champs.map(([id, label]) => `
         <div>
-          <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">${label}</label>
+          <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">${label}</label>
           <input data-f1-setup="${id}" type="text" inputmode="decimal" value="${setupActif[id] ?? ''}" class="f1-input w-full">
         </div>`).join('')}
       </div>
@@ -370,32 +385,32 @@ function vuePaddock(store) {
   return `${selecteur}${entete}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
       <div class="f1-carte p-4">
-        <p class="f1-sous-titre text-[11px] tracking-[0.3em] mb-2">🔧 SETUP</p>
+        <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-2">🔧 SETUP</p>
         ${ongletsVariantes}
         ${blocsSetup}
-        <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Notes</label>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Notes</label>
         <textarea data-f1-setup="notes" rows="2" class="f1-input w-full" placeholder="Survirage T3, vibreur à éviter…">${setupActif.notes || ''}</textarea>
         <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer « ${setupActif.nom} »</button>
       </div>
       <div class="f1-carte p-4">
-        <p class="f1-sous-titre text-[11px] tracking-[0.3em] mb-3">📋 STRATÉGIE</p>
-        <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Pneus de départ</label>
+        <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-3">📋 STRATÉGIE</p>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Pneus de départ</label>
         <select data-f1-strat="depart" class="f1-input w-full mb-2">${PNEUS.map(p => `<option value="${p.value}" ${strat.depart === p.value ? 'selected' : ''}>${p.label}</option>`).join('')}</select>
         <div class="grid grid-cols-2 gap-2 mb-2">
           <div>
-            <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Nombre d'arrêts</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Nombre d'arrêts</label>
             <input data-f1-strat="arrets" type="text" inputmode="numeric" value="${strat.arrets ?? ''}" class="f1-input w-full">
           </div>
           <div>
-            <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Météo / température</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Météo / température</label>
             <input data-f1-strat="meteo" type="text" value="${strat.meteo || ''}" class="f1-input w-full" placeholder="Sec, piste 34°">
           </div>
         </div>
-        <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Relais (composé + tours)</label>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Relais (composé + tours)</label>
         <textarea data-f1-strat="relais" rows="3" class="f1-input w-full mb-2" placeholder="M 1-18 → H 19-44">${strat.relais || ''}</textarea>
-        <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">ERS / essence</label>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">ERS / essence</label>
         <input data-f1-strat="ers" type="text" value="${strat.ers || ''}" class="f1-input w-full mb-2" placeholder="ERS hotlap T1, essence standard">
-        <label class="block text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Débrief après course</label>
+        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Débrief après course</label>
         <textarea data-f1-strat="debrief" rows="3" class="f1-input w-full" placeholder="Undercut gagnant au tour 17…">${strat.debrief || ''}</textarea>
         <button id="f1-save-strat" class="f1-bouton mt-3">💾 Enregistrer la stratégie</button>
       </div>
@@ -434,7 +449,7 @@ function vuePalmares(store, champ) {
   return `
     <div class="f1-carte p-4 mb-4">
       <div class="flex items-center justify-between mb-2">
-        <p class="f1-sous-titre text-[11px] tracking-[0.3em]">FACE-À-FACE · SAISON ${champ.saison}</p>
+        <p class="f1-sous-titre text-[11px] tracking-[0.15em]">FACE-À-FACE · SAISON ${champ.saison}</p>
         <span class="text-[9px] text-gray-500 uppercase">${duels1 + duels2} GP disputés</span>
       </div>
       <div class="flex items-center justify-between px-2 pb-1">
@@ -452,7 +467,7 @@ function vuePalmares(store, champ) {
     </div>
 
     <div class="f1-carte overflow-hidden mb-4">
-      <div class="f1-bandeau px-4 py-2"><span class="f1-titre text-sm tracking-[0.25em]">PALMARÈS</span></div>
+      <div class="f1-bandeau px-4 py-2"><span class="f1-titre text-sm tracking-[0.15em]">PALMARÈS</span></div>
       ${historique.length === 0 ? `
       <p class="px-4 py-5 text-xs text-gray-500">Aucune saison terminée pour l'instant. Le premier titre s'écrira ici, en lettres néon.</p>` : historique.map(h => `
       <div class="flex items-center gap-4 px-4 py-3 border-b border-white/5">
