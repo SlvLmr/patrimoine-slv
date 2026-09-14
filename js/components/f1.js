@@ -474,7 +474,7 @@ function vuePaddock(store) {
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-2">🔧 SETUP</p>
         ${ongletsVariantes}
         ${blocsSetup}
-        <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer « ${setupActif.nom} »</button>
+        <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer</button>
       </div>
       <div class="flex flex-col gap-3">
       <div class="f1-carte p-3 flex-1 flex">
