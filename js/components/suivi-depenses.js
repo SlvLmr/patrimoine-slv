@@ -302,9 +302,16 @@ function bilanBucketsArchive(a) {
   const mensuellesCochees = (a.depMensuelles || []).filter(d => (a.cochees || []).includes(d.id));
 
   // Revenus réels : opérations revenus (hors virements) + intérêts TR.
-  // Les « apports mensuels » TR sont des transferts entre tes comptes, pas des revenus.
+  // Les apports mensuels récurrents sont des transferts entre tes comptes par défaut : ils ne comptent
+  // en revenus que si leur moyen de paiement dit explicitement autre chose qu'un virement.
+  const apportReel = (d) => d.paiement && d.paiement !== 'virement' && !estTransfertNom(d.nom);
+  let apportsReels = ((a.revMensuelsTR || []).filter(r => (conf.revenues || []).includes(r.id) && apportReel(r))).reduce((s, r) => s + num(r.montant), 0);
+  apportsReels += (meta.apportsCIC || []).filter(x => (meta.apportsCICCoches || []).includes(x.id) && apportReel(x)).reduce((s, x) => s + num(x.montant), 0);
+  Object.entries(meta.apportsExtra || {}).forEach(([bid, lignes]) => {
+    apportsReels += (lignes || []).filter(x => ((meta.extraApCochees || {})[bid] || []).includes(x.id) && apportReel(x)).reduce((s, x) => s + num(x.montant), 0);
+  });
   const revenus = (a.revenus || []).filter(r => (r.categorie || '') !== 'Virement').reduce((s, r) => s + num(r.montant), 0)
-    + num(meta.trInterets);
+    + num(meta.trInterets) + apportsReels;
 
   // Investi : DCA confirmés + opérations « Investissement » + lignes livret/invest CIC + Saveback + Round-up
   const dcaConf = (a.dcaTR || []).filter(d => (conf.expenses || []).includes(d.id)).reduce((s, d) => s + num(d.montant), 0);
@@ -793,6 +800,12 @@ export function render(store) {
     .filter(d => cocheesThisMonth.includes(d.id))
     .reduce((s, d) => s + d.montant, 0)) + totalCocheesPrev;
 
+  // Apports mensuels CIC (cochés = crédités au solde)
+  const apportsCIC = store.get('apportsMensuelsCIC') || [];
+  const apCicCochesAll = store.get('cicApportsCoches') || {};
+  const apCicCoches = monthIsClosed ? [] : (apCicCochesAll[monthKey] || []);
+  const totalApportsCIC = apportsCIC.filter(x => apCicCoches.includes(x.id)).reduce((s, x) => s + (Number(x.montant) || 0), 0);
+
   // TR recurring state: confirmed (unchecked) items are counted in balance
   const trConfirmed = store.get('trRecurringConfirmed') || {};
   const trConfirmedThisMonth = trConfirmed[monthKey] || { expenses: [], revenues: [] };
@@ -819,7 +832,7 @@ export function render(store) {
   // Compute live solde = base + revenus - depenses - checked monthly
   const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-  const soldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
+  const soldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees + totalApportsCIC;
 
   const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
   const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
@@ -872,6 +885,8 @@ export function render(store) {
   // Extra banks computation
   const mensuellesExtraAll = store.get('mensuellesExtra') || {};
   const extraCocheesAll = store.get('extraMensuellesCochees') || {};
+  const apportsExtraAll = store.get('apportsExtra') || {};
+  const extraApCochesAll = store.get('extraApportsCoches') || {};
   const extraBankData = extraBanks.map(bank => {
     const ccId = 'cc-' + bank.id;
     const baseSolde = Number(comptesCourants.find(c => c.id === ccId)?.solde) || 0;
@@ -883,7 +898,11 @@ export function render(store) {
     const mensLignes = mensuellesExtraAll[bank.id] || [];
     const mensCochees = monthIsClosed ? [] : ((extraCocheesAll[monthKey] || {})[bank.id] || []);
     const totalMensCoche = mensLignes.filter(d => mensCochees.includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
-    const solde = baseSolde + prevSolde + rev - dep - totalMensCoche;
+    // Apports mensuels récurrents de la banque (cochés = crédités au solde)
+    const apLignes = apportsExtraAll[bank.id] || [];
+    const apCoches = monthIsClosed ? [] : ((extraApCochesAll[monthKey] || {})[bank.id] || []);
+    const totalApCoche = apLignes.filter(d => apCoches.includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+    const solde = baseSolde + prevSolde + rev - dep - totalMensCoche + totalApCoche;
     const ops = [
       ...items.filter(i => i.compte === bank.name).map(i => ({ ...i, type: 'depense' })),
       ...revenus.filter(r => r.compte === bank.name).map(r => ({ ...r, type: 'revenu' }))
@@ -902,7 +921,7 @@ export function render(store) {
         return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
       });
     }
-    return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig, pocketItems: bankPocketItems, mensLignes, mensCochees, totalMensCoche };
+    return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig, pocketItems: bankPocketItems, mensLignes, mensCochees, totalMensCoche, apLignes, apCoches, totalApCoche };
   });
 
   // Archive data
@@ -1060,6 +1079,37 @@ export function render(store) {
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <span class="text-[11px] font-medium ${checked ? 'text-gray-600' : 'text-gray-100'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
                   <button data-mc-del="${d.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Apports mensuels CIC -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+                <span class="text-[11px] font-semibold text-gray-300">Apports mensuels</span>
+                <span class="text-[10px] text-gray-500">${apCicCoches.length}/${apportsCIC.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(totalApportsCIC)}</span>
+                <button id="btn-add-apport-cic" class="text-emerald-400 hover:text-emerald-400/80 text-[11px] font-bold transition ml-2" title="Ajouter un apport mensuel récurrent">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${apportsCIC.map(d => {
+                const checked = apCicCoches.includes(d.id);
+                return `
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition">
+                <div class="flex items-center gap-2 min-w-0">
+                  <input type="checkbox" data-cic-apport="${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
+                  <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-apc-edit="${d.id}">${d.nom}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[11px] font-medium ${checked ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-apc-edit="${d.id}">+${formatCurrencyCents(d.montant)}</span>
+                  <button data-apc-del="${d.id}" class="btn-delete text-xs">✕</button>
                 </div>
               </div>`;
               }).join('')}
@@ -1301,6 +1351,37 @@ export function render(store) {
               ${bank.mensLignes.length === 0 ? `<p class="px-4 py-1 text-[10px] text-gray-600">Aucune ligne récurrente — le « + » ci-dessus en ajoute une (loyer, abonnement…).</p>` : ''}
             </div>
           </div>
+
+          <!-- Apports mensuels (banque supplémentaire) -->
+          <div class="border-t border-dark-400/30">
+            <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/30">
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+                <span class="text-[11px] font-semibold text-gray-300">Apports mensuels</span>
+                <span class="text-[10px] text-gray-500">${bank.apCoches.length}/${bank.apLignes.length}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-medium text-emerald-400">+${formatCurrencyCents(bank.totalApCoche)}</span>
+                <button data-add-apport-extra="${bank.id}" class="text-emerald-400 hover:text-emerald-400/80 text-[11px] font-bold transition ml-2" title="Ajouter un apport mensuel récurrent">+</button>
+              </div>
+            </div>
+            <div class="divide-y divide-dark-400/10">
+              ${bank.apLignes.map(d => {
+                const checked = bank.apCoches.includes(d.id);
+                return `
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition">
+                <div class="flex items-center gap-2 min-w-0">
+                  <input type="checkbox" data-extra-apport="${bank.id}::${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
+                  <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-extra-ap-edit="${bank.id}::${d.id}">${d.nom}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="text-[11px] font-medium ${checked ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-extra-ap-edit="${bank.id}::${d.id}">+${formatCurrencyCents(d.montant)}</span>
+                  <button data-extra-ap-del="${bank.id}::${d.id}" class="btn-delete text-xs">✕</button>
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>
         </div>
         `).join('')}
 
@@ -1507,7 +1588,10 @@ export function mount(store, navigate) {
     const totalCochees = depMensuelles.filter(d => cocheesThisMonth.includes(d.id)).reduce((s, d) => s + d.montant, 0);
     const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-    const finalSoldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees;
+    const apportsCICSnap = store.get('apportsMensuelsCIC') || [];
+    const apCicCochesClose = (store.get('cicApportsCoches') || {})[monthKey] || [];
+    const totalApportsCICClose = apportsCICSnap.filter(x => apCicCochesClose.includes(x.id)).reduce((s, x) => s + (Number(x.montant) || 0), 0);
+    const finalSoldeCIC = baseSoldeCIC + soldePrevCIC + revCIC - depCIC - totalCochees + totalApportsCICClose;
     const revTR = revenus.filter(r => r.compte === bankNames.secondary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const depTR = items.filter(i => i.compte === bankNames.secondary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
     const trFeats = store.get('trFeatures') || {};
@@ -1527,13 +1611,16 @@ export function mount(store, navigate) {
     const extraFinals = {};
     const mensuellesExtraSnap = store.get('mensuellesExtra') || {};
     const extraCochSnap = (store.get('extraMensuellesCochees') || {})[monthKey] || {};
+    const apportsExtraSnap = store.get('apportsExtra') || {};
+    const extraApCochSnap = (store.get('extraApportsCoches') || {})[monthKey] || {};
     for (const bank of extraBanks) {
       const base = Number(comptesCourants.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
       const prev = Number(soldePrecedent[bank.id]) || 0;
       const rev = revenus.filter(r => r.compte === bank.name).reduce((s, r) => s + (Number(r.montant) || 0), 0);
       const dep = items.filter(i => i.compte === bank.name).reduce((s, i) => s + (Number(i.montant) || 0), 0);
       const mensCoche = (mensuellesExtraSnap[bank.id] || []).filter(d => (extraCochSnap[bank.id] || []).includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
-      extraFinals[bank.id] = base + prev + rev - dep - mensCoche;
+      const apCoche = (apportsExtraSnap[bank.id] || []).filter(d => (extraApCochSnap[bank.id] || []).includes(d.id)).reduce((s, d) => s + (Number(d.montant) || 0), 0);
+      extraFinals[bank.id] = base + prev + rev - dep - mensCoche + apCoche;
     }
 
     // Build archive summary
@@ -1614,6 +1701,10 @@ export function mount(store, navigate) {
           budgetPockets: JSON.parse(JSON.stringify(store.get('budgetPockets') || {})),
           mensuellesExtra: JSON.parse(JSON.stringify(mensuellesExtraSnap)),
           extraMensCochees: JSON.parse(JSON.stringify(extraCochSnap)),
+          apportsCIC: JSON.parse(JSON.stringify(apportsCICSnap)),
+          apportsCICCoches: [...apCicCochesClose],
+          apportsExtra: JSON.parse(JSON.stringify(apportsExtraSnap)),
+          extraApCochees: JSON.parse(JSON.stringify(extraApCochSnap)),
         },
       };
       for (const bank of extraBanks) {
@@ -2416,6 +2507,115 @@ export function mount(store, navigate) {
       const all = store.get('mensuellesExtra') || {};
       all[bankId] = (all[bankId] || []).filter(d => d.id !== id);
       store.set('mensuellesExtra', all);
+      navigate('suivi-depenses');
+    });
+  });
+
+  // ---- Apports mensuels CIC ----
+  document.querySelectorAll('[data-cic-apport]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.cicApport;
+      const monthKey = getCurrentMonthKey();
+      const all = store.get('cicApportsCoches') || {};
+      const liste = all[monthKey] || [];
+      all[monthKey] = cb.checked ? [...new Set([...liste, id])] : liste.filter(x => x !== id);
+      store.set('cicApportsCoches', all);
+      navigate('suivi-depenses');
+    });
+  });
+
+  const openApportModal = (titre, existant, onSave) => {
+    const body = `
+      ${inputField('nom', 'Nom', existant?.nom || '', 'text', 'placeholder="Ex: Salaire, Pension, Apport…"')}
+      ${inputField('montant', 'Montant (€)', existant?.montant || '', 'number', '0.01')}
+      ${paiementFieldHtml(existant?.paiement || 'virement')}
+    `;
+    openModal(titre, body, () => {
+      const data = getFormData(document.getElementById('modal-body'));
+      if (!data.nom || !data.montant) return;
+      onSave({
+        nom: data.nom,
+        montant: Number(data.montant),
+        paiement: document.querySelector('input[name="paiement"]:checked')?.value || existant?.paiement || 'virement',
+      });
+      navigate('suivi-depenses');
+    });
+  };
+
+  document.getElementById('btn-add-apport-cic')?.addEventListener('click', () => {
+    openApportModal('Ajouter un apport mensuel', null, (maj) => {
+      const liste = store.get('apportsMensuelsCIC') || [];
+      liste.push({ id: 'apc-' + Date.now().toString(36), ...maj });
+      store.set('apportsMensuelsCIC', liste);
+    });
+  });
+
+  document.querySelectorAll('[data-apc-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const liste = store.get('apportsMensuelsCIC') || [];
+      const item = liste.find(x => x.id === el.dataset.apcEdit);
+      if (!item) return;
+      openApportModal('Modifier l\'apport mensuel', item, (maj) => {
+        Object.assign(item, maj);
+        store.set('apportsMensuelsCIC', liste);
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-apc-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      store.set('apportsMensuelsCIC', (store.get('apportsMensuelsCIC') || []).filter(x => x.id !== btn.dataset.apcDel));
+      navigate('suivi-depenses');
+    });
+  });
+
+  // ---- Apports mensuels des banques supplémentaires ----
+  document.querySelectorAll('[data-extra-apport]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const [bankId, id] = cb.dataset.extraApport.split('::');
+      const monthKey = getCurrentMonthKey();
+      const all = store.get('extraApportsCoches') || {};
+      const mois = all[monthKey] || {};
+      const liste = mois[bankId] || [];
+      mois[bankId] = cb.checked ? [...new Set([...liste, id])] : liste.filter(x => x !== id);
+      all[monthKey] = mois;
+      store.set('extraApportsCoches', all);
+      navigate('suivi-depenses');
+    });
+  });
+
+  document.querySelectorAll('[data-add-apport-extra]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bankId = btn.dataset.addApportExtra;
+      openApportModal('Ajouter un apport mensuel', null, (maj) => {
+        const all = store.get('apportsExtra') || {};
+        const liste = all[bankId] || [];
+        liste.push({ id: 'apx-' + Date.now().toString(36), ...maj });
+        all[bankId] = liste;
+        store.set('apportsExtra', all);
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-extra-ap-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const [bankId, id] = el.dataset.extraApEdit.split('::');
+      const all = store.get('apportsExtra') || {};
+      const item = (all[bankId] || []).find(x => x.id === id);
+      if (!item) return;
+      openApportModal('Modifier l\'apport mensuel', item, (maj) => {
+        Object.assign(item, maj);
+        store.set('apportsExtra', all);
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-extra-ap-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [bankId, id] = btn.dataset.extraApDel.split('::');
+      const all = store.get('apportsExtra') || {};
+      all[bankId] = (all[bankId] || []).filter(x => x.id !== id);
+      store.set('apportsExtra', all);
       navigate('suivi-depenses');
     });
   });
@@ -3371,6 +3571,12 @@ export function mount(store, navigate) {
           const allCochX = store.get('extraMensuellesCochees') || {};
           Object.keys(allCochX).forEach(k => { if (k > mois) delete allCochX[k]; });
           store.set('extraMensuellesCochees', allCochX);
+          const allApC = store.get('cicApportsCoches') || {};
+          Object.keys(allApC).forEach(k => { if (k > mois) delete allApC[k]; });
+          store.set('cicApportsCoches', allApC);
+          const allApX = store.get('extraApportsCoches') || {};
+          Object.keys(allApX).forEach(k => { if (k > mois) delete allApX[k]; });
+          store.set('extraApportsCoches', allApX);
           // 6. L'archive disparaît → ce mois redevient le mois de travail effectif
           store.set('archiveDepenses', archives.filter(x => x.mois !== mois));
           showToast(`${label} déclôturé ✓ — le mois est de nouveau en cours`, 'success', 3500);
