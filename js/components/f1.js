@@ -418,6 +418,11 @@ const SETUPS_REFERENCE = {
   ],
 };
 
+// Stratégies de référence (base course 50 %) : pré-remplies tant que rien n'est enregistré
+const STRATS_REFERENCE = {
+  aus: { depart: 'M', essence: '105', a1Tour: '10', a1Pneu: 'H' },
+};
+
 function getSetups(fiche, gpId) {
   if (Array.isArray(fiche.setups) && fiche.setups.length) return fiche.setups;
   if (fiche.setup && Object.keys(fiche.setup).length) return [{ id: 'std', nom: 'Course', ...fiche.setup }];
@@ -433,7 +438,7 @@ function vuePaddock(store) {
   const fiche = garage[gp.id] || {};
   const setups = getSetups(fiche, gp.id);
   const setupActif = setups.find(s => s.id === varianteActive) || setups[0];
-  const strat = fiche.strat || {};
+  const strat = (fiche.strat && Object.keys(fiche.strat).length) ? fiche.strat : (STRATS_REFERENCE[gp.id] || {});
   const chronos = fiche.chronos || {};
 
   const selecteur = `
@@ -499,7 +504,10 @@ function vuePaddock(store) {
   return `${selecteur}${entete}${blocChronos}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-stretch">
       <div class="f1-carte p-4">
-        <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-2">🔧 SETUP</p>
+        <div class="flex items-center justify-between mb-2">
+          <p class="f1-sous-titre text-[11px] tracking-[0.15em]">🔧 SETUP</p>
+          ${SETUPS_REFERENCE[gp.id] ? `<button id="f1-ref-reload" class="f1-tab" style="font-size:10px;padding:0.25rem 0.6rem" title="Remplacer mes valeurs par les setups et la stratégie de référence de ce circuit">↺ Références</button>` : ''}
+        </div>
         ${ongletsVariantes}
         ${blocsSetup}
         <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer</button>
@@ -860,6 +868,23 @@ export function mount(store, navigate) {
       varianteActive = fiche.setups[0]?.id || null;
       navigate('f1');
     });
+  });
+
+  document.getElementById('f1-ref-reload')?.addEventListener('click', () => {
+    confirmModal('Recharger les réglages de référence ?',
+      'Tes setups et ta stratégie personnels sur ce circuit seront remplacés par les valeurs de référence (course 50 %). Les chronos sont conservés.',
+      () => {
+        const garage = store.get('f1Garage') || {};
+        const fiche = garage[gpActif] || {};
+        if (SETUPS_REFERENCE[gpActif]) fiche.setups = JSON.parse(JSON.stringify(SETUPS_REFERENCE[gpActif]));
+        delete fiche.setup;
+        fiche.strat = { ...(STRATS_REFERENCE[gpActif] || {}) };
+        garage[gpActif] = fiche;
+        store.set('f1Garage', garage);
+        varianteActive = null;
+        showToast('Références rechargées ↺', 'success', 2500);
+        navigate('f1');
+      });
   });
 
   document.getElementById('f1-save-setup')?.addEventListener('click', () => {
