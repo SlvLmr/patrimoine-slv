@@ -468,17 +468,17 @@ function vuePaddock(store) {
     </div>`;
 
   return `${selecteur}${entete}${blocChronos}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-stretch">
       <div class="f1-carte p-4">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-2">🔧 SETUP</p>
         ${ongletsVariantes}
         ${blocsSetup}
         <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer « ${setupActif.nom} »</button>
       </div>
-      <div class="space-y-3">
-      <div class="f1-carte p-3">
-        <button data-f1-zoom="${gp.id}" class="block w-full text-left" title="Agrandir : zones DRS, données circuit">
-          ${traceSvg(gp, 'block w-full h-48', '#9fd8e8', 800)}
+      <div class="flex flex-col gap-3">
+      <div class="f1-carte p-3 flex-1 flex">
+        <button data-f1-zoom="${gp.id}" class="w-full text-left flex flex-col" title="Agrandir : zones DRS, données circuit">
+          ${traceSvg(gp, 'block w-full flex-1 min-h-[200px]', '#9fd8e8', 1024)}
           <p class="text-[9px] uppercase tracking-wide text-center mt-1.5" style="color:#b1a2d6">🔍 agrandir · zones DRS &amp; données circuit</p>
         </button>
       </div>

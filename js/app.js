@@ -18,7 +18,7 @@ import * as SimulateurAuto from './components/simulateur-auto.js?v=20260809m';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260809m';
 import * as Hypotheses from './components/hypotheses.js?v=20260809m';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260809m';
-import * as F1 from './components/f1.js?v=20260810j';
+import * as F1 from './components/f1.js?v=20260810k';
 import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260809m';
 import { showToast, promptModal, confirmModal } from './utils.js?v=20260809m';
 
