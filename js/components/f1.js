@@ -171,6 +171,15 @@ const ecurieDe = (id) => ECURIES.find(e => e.value === id) || ECURIES[1];
 // Couleur du pilote : personnalisée si définie, sinon celle de son écurie
 const couleurPilote = (p) => p.couleur || ecurieDe(p.ecurie).couleur;
 
+// Vrai casque (vue de profil, tourné vers la droite) à la couleur du pilote
+const casqueSvg = (couleur, cls = 'w-6 h-5') => `
+  <svg viewBox="0 0 32 24" class="${cls} flex-shrink-0" aria-hidden="true">
+    <path d="M3 15 C3 7.5 9 2.5 16 2.5 C23.5 2.5 29 8 29 15 L29 18.5 C29 20.2 27.8 21.2 26 21.2 L8 21.2 C5 21.2 3 19 3 16.5 Z" fill="${couleur}" style="filter:drop-shadow(0 0 4px ${couleur}99)"/>
+    <path d="M16.8 8.5 L28.6 12.2 C28.9 13.2 29 14.2 29 15 L29 16.2 L19.5 16.2 C17.6 16.2 16.2 14.6 16.4 12.7 Z" fill="#0d0d14" opacity="0.92"/>
+    <path d="M3 16.4 L29 16.4 L29 17.6 L3 17.6 Z" fill="rgba(255,255,255,0.16)"/>
+    <ellipse cx="9.5" cy="8.5" rx="3.2" ry="1.6" fill="rgba(255,255,255,0.35)" transform="rotate(-18 9.5 8.5)"/>
+  </svg>`;
+
 const PNEUS = [
   { value: 'S', label: 'Soft', couleur: '#e10600' },
   { value: 'M', label: 'Medium', couleur: '#ffd12e' },
@@ -326,7 +335,7 @@ function vueChampionnat(store, champ) {
       <div class="p-4 pl-6 relative">
         <div class="flex items-center gap-3">
           <span class="f1-titre text-3xl" style="color:${leader ? '#fff' : '#9ca3af'}">P${rang}</span>
-          <span class="w-7 h-7 rounded-full flex-shrink-0 border-2 border-white/30" title="Casque" style="background:${p.casque};box-shadow:0 0 10px ${p.casque}"></span>
+          ${casqueSvg(p.casque, 'w-10 h-8')}
           <div class="min-w-0">
             <p class="f1-titre text-xl leading-none tracking-wider flex items-center gap-2">${p.tri} ${drapeau(natIso(p.nat), 'w-5 h-3.5')}</p>
             <p class="text-[10px] uppercase tracking-widest mt-0.5 flex items-center gap-1.5" style="color:#ded5f2"><span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${e.couleur};box-shadow:0 0 6px ${e.couleur}"></span>${e.label} · ${p.nom}</p>
@@ -979,7 +988,7 @@ export function mount(store, navigate) {
         return `
         <div class="rounded-xl p-3 mb-3" style="border:1px solid ${c}44;background:${c}0d">
           <div class="flex items-center gap-2 mb-2">
-            <span class="w-3.5 h-3.5 rounded-full flex-shrink-0" style="background:${p.casque};box-shadow:0 0 6px ${p.casque}"></span>
+            ${casqueSvg(p.casque, 'w-7 h-5')}
             <span class="text-sm font-bold text-gray-100">${p.tri}</span>
             <span class="text-xs text-gray-500">${p.nom}</span>
             <span id="f1-res-resume-${slot}" class="ml-auto text-xs font-bold" style="color:${c}"></span>
@@ -1078,37 +1087,49 @@ export function mount(store, navigate) {
             style="opacity:0.5;mask-image:linear-gradient(90deg,transparent 0%,black 45%);-webkit-mask-image:linear-gradient(90deg,transparent 0%,black 45%)"
             onerror="this.remove()">
           <div class="relative flex items-center gap-2.5">
-            <span class="w-4 h-4 rounded-full flex-shrink-0" style="background:${p.casque};box-shadow:0 0 8px ${p.casque}"></span>
+            ${casqueSvg(p.casque, 'w-9 h-7')}
             <span class="text-xl font-extrabold text-gray-100 tracking-wider">${p.tri}</span>
             ${drapeau(natIso(p.nat), 'w-5 h-3.5')}
             <span class="text-xs font-semibold" style="color:${cp}">${ecurieDe(p.ecurie).label}</span>
           </div>
         </div>
-        ${inputField('nom', 'Prénom', p.nom)}
         <div class="grid grid-cols-2 gap-2">
+          <div>${inputField('nom', 'Prénom', p.nom)}</div>
           <div>${inputField('tri', 'Trigramme (3 lettres)', p.tri, 'text', 'maxlength="3" style="text-transform:uppercase"')}</div>
-          <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-300 mb-1.5">Nationalité</label>
-            <select id="f1-nat" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm">
-              ${NATIONS.map(([iso, nomPays]) => `<option value="${iso}" ${natIso(p.nat) === iso ? 'selected' : ''}>${nomPays}</option>`).join('')}
-            </select>
-          </div>
         </div>
-        ${selectField('ecurie', 'Écurie', ECURIES, p.ecurie)}
-        <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Nationalité</label>
+          <select id="f1-nat" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm">
+            ${NATIONS.map(([iso, nomPays]) => `<option value="${iso}" ${natIso(p.nat) === iso ? 'selected' : ''}>${nomPays}</option>`).join('')}
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-1.5">Écurie</label>
+          <input type="hidden" id="f1-ecurie" value="${p.ecurie}">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+            ${ECURIES.map(e => `
+            <button type="button" data-f1-ecurie-btn="${e.value}" class="f1-posbtn flex items-center gap-2 px-2.5 py-2 text-left ${e.value === p.ecurie ? 'f1-posbtn-on' : ''}" style="--pc:${e.couleur}">
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${e.couleur};box-shadow:0 0 5px ${e.couleur}"></span>${e.label}
+            </button>`).join('')}
+          </div>
+          <p class="text-[10px] text-gray-600 mt-1">Choisir une écurie aligne la couleur ci-dessous — personnalisable ensuite.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mb-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1.5">Couleur d'écurie</label>
-            <input type="color" id="f1-couleur" value="${couleurPilote(p)}" class="w-full h-10 rounded-lg bg-dark-800 border border-dark-400/50 cursor-pointer">
-            <p class="text-[9px] text-gray-600 mt-0.5">Personnalisable — teinte tes points, chips et liserés</p>
+            <input type="color" id="f1-couleur" value="${cp}" class="w-full h-10 rounded-lg bg-dark-800 border border-dark-400/50 cursor-pointer">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1.5">Couleur de casque</label>
-            <input type="color" id="f1-casque" value="${p.casque || '#E10600'}" class="w-full h-10 rounded-lg bg-dark-800 border border-dark-400/50 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <input type="color" id="f1-casque" value="${p.casque || '#E10600'}" class="flex-1 h-10 rounded-lg bg-dark-800 border border-dark-400/50 cursor-pointer">
+              <span id="f1-casque-apercu">${casqueSvg(p.casque || '#E10600', 'w-11 h-9')}</span>
+            </div>
           </div>
         </div>
-        <label class="flex items-center gap-2 cursor-pointer mb-1">
+        <label class="flex items-center gap-2.5 cursor-pointer rounded-xl px-3 py-2.5" style="border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03)">
           <input type="checkbox" id="f1-cest-moi" ${monSlot === slot ? 'checked' : ''} class="w-4 h-4 rounded border-dark-400 bg-dark-900 text-red-500">
-          <span class="text-xs text-gray-300">C'est moi (ce profil est le mien sur cet appareil)</span>
+          <span class="text-xs text-gray-200">C'est moi — ce profil est le mien sur cet appareil</span>
         </label>`;
       openModal(`Pilote ${p.tri}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -1118,15 +1139,8 @@ export function mount(store, navigate) {
         cible.nom = data.nom || cible.nom;
         cible.tri = (data.tri || cible.tri).toUpperCase().slice(0, 3);
         cible.nat = document.getElementById('f1-nat')?.value || natIso(cible.nat);
-        const ancienneEcurie = cible.ecurie;
-        cible.ecurie = data.ecurie || cible.ecurie;
-        const couleurChoisie = document.getElementById('f1-couleur')?.value || '';
-        // Couleur : si l'écurie change et que le sélecteur n'a pas été retouché, on adopte la couleur de la nouvelle écurie
-        if (cible.ecurie !== ancienneEcurie && couleurChoisie.toLowerCase() === couleurPilote(p).toLowerCase()) {
-          cible.couleur = ecurieDe(cible.ecurie).couleur;
-        } else if (couleurChoisie) {
-          cible.couleur = couleurChoisie;
-        }
+        cible.ecurie = document.getElementById('f1-ecurie')?.value || cible.ecurie;
+        cible.couleur = document.getElementById('f1-couleur')?.value || cible.couleur;
         cible.casque = document.getElementById('f1-casque')?.value || cible.casque;
         if (document.getElementById('f1-cest-moi')?.checked) {
           store.set('f1MonSlot', slot);
@@ -1136,6 +1150,21 @@ export function mount(store, navigate) {
         pousserChamp(store, c);
         showToast('Profil pilote mis à jour 🏎', 'success', 2000);
         navigate('f1');
+      });
+      // Écurie en boutons (la couleur suit), aperçu du casque en direct
+      document.querySelectorAll('[data-f1-ecurie-btn]').forEach(b => {
+        b.addEventListener('click', () => {
+          const val = b.dataset.f1EcurieBtn;
+          const cache = document.getElementById('f1-ecurie');
+          if (cache) cache.value = val;
+          document.querySelectorAll('[data-f1-ecurie-btn]').forEach(x => x.classList.toggle('f1-posbtn-on', x === b));
+          const inp = document.getElementById('f1-couleur');
+          if (inp) inp.value = ecurieDe(val).couleur;
+        });
+      });
+      document.getElementById('f1-casque')?.addEventListener('input', (e) => {
+        const ap = document.getElementById('f1-casque-apercu');
+        if (ap) ap.innerHTML = casqueSvg(e.target.value, 'w-11 h-9');
       });
     });
   });
