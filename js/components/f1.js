@@ -114,15 +114,6 @@ const GP_2025 = [
 ];
 
 // Drapeaux en images (les emoji drapeaux ne s'affichent pas sous Windows)
-// Légende ERS (couleurs du guide) : suivre la couleur du tracé pour le mode ERS
-const ERS_LEGENDE = [
-  ['#c437d9', 'Overtake'], ['#3fbf3f', 'Hotlap'], ['#e8c400', 'Medium'], ['#e10600', 'None'],
-];
-const legendeErs = () => `
-  <div class="flex flex-wrap items-center justify-center gap-1.5">
-    ${ERS_LEGENDE.map(([c, l]) => `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wide font-bold text-gray-100" style="background:${c}1f;border:1px solid ${c}88"><span class="w-2 h-2 rounded-sm" style="background:${c};box-shadow:0 0 5px ${c}"></span>${l}</span>`).join('')}
-  </div>`;
-
 const drapeau = (iso, cls = 'w-6 h-4') => `<img src="https://flagcdn.com/w40/${iso}.png" alt="${iso}" loading="lazy" class="${cls} rounded-[2px] object-cover flex-shrink-0" style="box-shadow:0 0 4px rgba(0,0,0,0.5)">`;
 
 // Nationalité : iso2 stocké ; convertit les anciens emoji drapeaux (🇫🇷 → fr)
@@ -152,14 +143,10 @@ const F1_MAPS = {
   usa: 'USA', mex: 'Mexico', bra: 'Brazil', las: 'Las_Vegas', qat: 'Qatar', abu: 'Abu_Dhabi',
 };
 
-// Priorité d'affichage : carte ERS locale (img/f1/ers/<gp>.png, zones colorées) → carte officielle F1 → silhouette SVG
 const traceSvg = (gp, cls = 'w-16 h-10', couleur = '#00e5ff', larg = 320) => `
   <span class="${cls} flex-shrink-0 inline-block">
-    <img src="img/f1/ers/${gp.id}.png" alt="Carte ERS ${gp.nom}" loading="lazy"
-      class="w-full h-full object-contain" style="background:#fff;border-radius:0.5rem"
-      onerror="this.style.display='none';this.nextElementSibling.style.display=''">
     <img src="https://media.formula1.com/image/upload/f_auto,q_auto,w_${larg}/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/${F1_MAPS[gp.id]}_Circuit.png"
-      alt="Tracé ${gp.nom}" loading="lazy" class="w-full h-full object-contain" style="display:none"
+      alt="Tracé ${gp.nom}" loading="lazy" class="w-full h-full object-contain"
       onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <svg viewBox="0 0 100 60" fill="none" class="w-full h-full" style="display:none">
       <path d="${gp.trace}" stroke="rgba(255,255,255,0.12)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
@@ -523,7 +510,6 @@ function vuePaddock(store) {
         <button data-f1-zoom="${gp.id}" class="w-full text-left flex flex-col" title="Agrandir : zones DRS, données circuit">
           ${traceSvg(gp, 'block w-full flex-1 min-h-[200px]', '#9fd8e8', 1024)}
           <p class="text-[9px] uppercase tracking-wide text-center mt-1.5" style="color:#b1a2d6">🔍 agrandir · zones DRS &amp; données circuit</p>
-          <div class="mt-2">${legendeErs()}</div>
         </button>
       </div>
       <div class="f1-carte p-4">
@@ -650,8 +636,6 @@ function ouvrirFicheCircuit(gpId) {
         <button id="f1-zoom-close" class="text-3xl leading-none px-2 hover:text-white" style="color:#b1a2d6">&times;</button>
       </div>
       ${traceSvg(gp, 'block w-full h-[300px]', '#00e5ff', 1280)}
-      <div class="mt-3">${legendeErs()}</div>
-      <p class="text-[12px] leading-relaxed mt-2" style="color:#cec4e6"><b style="color:#7fe7f7">ERS · </b>En qualif, cale le mode sur la couleur du tracé : violet Overtake, vert Hotlap, jaune Medium, rouge None (recharge). En course : Overtake par à-coups aux mêmes endroits, Medium la majorité du tour, None dans les virages pour recharger.</p>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
         ${tuile('Longueur', gp.km + ' km')}
         ${tuile('Tours', gp.tours)}
