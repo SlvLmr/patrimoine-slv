@@ -173,9 +173,22 @@ const ecurieDe = (id) => ECURIES.find(e => e.value === id) || ECURIES[1];
 const couleurPilote = (p) => p.couleur || ecurieDe(p.ecurie).couleur;
 
 const PNEUS = [
-  { value: 'S', label: '🔴 Soft' }, { value: 'M', label: '🟡 Medium' }, { value: 'H', label: '⚪ Hard' },
-  { value: 'I', label: '🟢 Inter' }, { value: 'W', label: '🔵 Pluie' },
+  { value: 'S', label: 'Soft', couleur: '#e10600' },
+  { value: 'M', label: 'Medium', couleur: '#ffd12e' },
+  { value: 'H', label: 'Hard', couleur: '#f0f0f0' },
+  { value: 'I', label: 'Inter', couleur: '#43b02a' },
+  { value: 'W', label: 'Pluie', couleur: '#00a3e0' },
 ];
+
+// Sélecteur de pneus visuel : disque noir, flanc coloré, lettre du composé, coche sur la sélection
+function pneuSelecteur(champ, valeur, taille = 36, avecAucun = false) {
+  return `<div class="flex items-center gap-2 flex-wrap" data-f1-pneu-groupe="${champ}">
+    <input type="hidden" data-f1-strat="${champ}" value="${valeur || ''}">
+    ${avecAucun ? `<button type="button" data-f1-pneu="" title="Aucun arrêt" class="f1-pneu ${!valeur ? 'f1-pneu-on' : ''}" style="width:${taille}px;height:${taille}px;border:3px dashed #6b7280;--pneu-c:#6b7280;color:#9ca3af;font-size:${Math.round(taille * 0.4)}px">–</button>` : ''}
+    ${PNEUS.map(p => `
+    <button type="button" data-f1-pneu="${p.value}" title="${p.label}" class="f1-pneu ${valeur === p.value ? 'f1-pneu-on' : ''}" style="width:${taille}px;height:${taille}px;border:3.5px solid ${p.couleur};--pneu-c:${p.couleur};color:${p.couleur};font-size:${Math.round(taille * 0.4)}px">${p.value}</button>`).join('')}
+  </div>`;
+}
 
 // ---- state ----
 let ongletActif = 'championnat'; // championnat | paddock | palmares
@@ -485,29 +498,27 @@ function vuePaddock(store) {
       </div>
       <div class="f1-carte p-4">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-3">📋 STRATÉGIE</p>
-        <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Pneus de départ</label>
-        <select data-f1-strat="depart" class="f1-input w-full mb-2">${PNEUS.map(p => `<option value="${p.value}" ${strat.depart === p.value ? 'selected' : ''}>${p.label}</option>`).join('')}</select>
-        <div class="grid grid-cols-2 gap-2 mb-2">
+        <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-1.5">Pneus de départ</label>
+        ${pneuSelecteur('depart', strat.depart, 40)}
+        <div class="grid grid-cols-2 gap-2 mt-3 mb-3">
           <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Plein d'essence (%)</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">⛽ Plein d'essence (%)</label>
             <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 105">
           </div>
           <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Météo / température</label>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">🌡 Météo / température</label>
             <input data-f1-strat="meteo" type="text" value="${strat.meteo || ''}" class="f1-input w-full" placeholder="Sec, piste 34°">
           </div>
         </div>
-        <p class="f1-sous-titre text-[10px] tracking-[0.15em] mt-3 mb-1.5">ARRÊTS AUX STANDS</p>
+        <p class="f1-sous-titre text-[10px] tracking-[0.15em] mb-1.5">ARRÊTS AUX STANDS</p>
         ${[1, 2, 3].map(n => `
-        <div class="grid grid-cols-2 gap-2 mb-1.5">
-          <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Arrêt ${n} — tour</label>
-            <input data-f1-strat="a${n}Tour" type="text" inputmode="numeric" value="${strat['a' + n + 'Tour'] ?? ''}" class="f1-input w-full" placeholder="${n === 1 ? 'Ex: 18' : 'optionnel'}">
+        <div class="rounded-xl px-3 py-2.5 mb-1.5 flex items-center gap-3 flex-wrap" style="background:rgba(255,255,255,0.04);border:1px solid rgba(160,130,220,0.22)">
+          <span class="f1-titre text-[13px] flex-shrink-0 w-16" style="color:#7fe7f7">ARRÊT ${n}</span>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <span class="text-[9px] uppercase tracking-wide text-gray-100">Tour</span>
+            <input data-f1-strat="a${n}Tour" type="text" inputmode="numeric" value="${strat['a' + n + 'Tour'] ?? ''}" class="f1-input w-14 text-center" placeholder="${n === 1 ? '18' : '—'}">
           </div>
-          <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Pneus montés</label>
-            <select data-f1-strat="a${n}Pneu" class="f1-input w-full"><option value="">—</option>${PNEUS.map(p => `<option value="${p.value}" ${strat['a' + n + 'Pneu'] === p.value ? 'selected' : ''}>${p.label}</option>`).join('')}</select>
-          </div>
+          ${pneuSelecteur('a' + n + 'Pneu', strat['a' + n + 'Pneu'], 30, true)}
         </div>`).join('')}
         <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">ERS / essence</label>
         <input data-f1-strat="ers" type="text" value="${strat.ers || ''}" class="f1-input w-full mb-2" placeholder="ERS hotlap T1, essence standard">
@@ -852,6 +863,17 @@ export function mount(store, navigate) {
     store.set('f1Garage', garage);
     showToast(`Setup « ${actif.nom} » enregistré 🔧`, 'success', 2000);
     navigate('f1');
+  });
+
+  // Sélecteurs de pneus visuels (stratégie)
+  document.querySelectorAll('[data-f1-pneu-groupe]').forEach(gr => {
+    const cache = gr.querySelector('input[type="hidden"]');
+    gr.querySelectorAll('[data-f1-pneu]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (cache) cache.value = btn.dataset.f1Pneu;
+        gr.querySelectorAll('[data-f1-pneu]').forEach(b => b.classList.toggle('f1-pneu-on', b === btn));
+      });
+    });
   });
 
   document.getElementById('f1-save-chrono')?.addEventListener('click', () => {

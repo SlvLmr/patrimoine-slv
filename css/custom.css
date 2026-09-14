@@ -679,3 +679,9 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 .f1-scroll::-webkit-scrollbar { height: 5px; }
 .f1-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 999px; }
 .f1-scroll::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #00e5ff, #ff2d95); border-radius: 999px; box-shadow: 0 0 8px rgba(255,45,149,0.5); }
+
+/* Pneus F1 cliquables (stratégie Paddock) */
+.f1-pneu { position: relative; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; background: #0b0b10; font-family: 'Titillium Web', sans-serif; font-weight: 900; opacity: 0.4; transition: all .12s; cursor: pointer; }
+.f1-pneu:hover { opacity: 0.85; transform: scale(1.06); }
+.f1-pneu-on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 12px var(--pneu-c); }
+.f1-pneu-on::after { content: '✓'; position: absolute; top: -5px; right: -5px; width: 14px; height: 14px; border-radius: 9999px; background: #10b981; color: #fff; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 6px rgba(16,185,129,0.7); }
