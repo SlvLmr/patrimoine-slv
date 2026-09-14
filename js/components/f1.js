@@ -332,7 +332,7 @@ function vueChampionnat(store, champ) {
       const couru = pos !== undefined && pos !== null && pos !== '';
       return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold ${couru ? '' : 'opacity-40'}"
         style="background:${e.couleur}30;border:1px solid ${e.couleur}99;color:#ffffff">
-        ${p.tri} ${posTxt(pos)}${couru && ptsPour(pos) > 0 ? ` · +${ptsPour(pos)}` : ''}</span>`;
+        ${p.tri} ${posTxt(pos)}${couru && ptsPour(pos) > 0 ? ` · +${ptsPour(pos)}` : ''}${r.pole === slot ? ' · P' : ''}${r.mtour === slot ? ' · MT' : ''}</span>`;
     };
     const dispute = r.p1 !== undefined || r.p2 !== undefined;
     return `
@@ -506,6 +506,12 @@ function vuePalmares(store, champ) {
 
   // Duels gagnés (meilleure position que l'autre sur un même GP) et séries
   let duels1 = 0, duels2 = 0, serieCour = { slot: null, n: 0 }, serieMax = { slot: null, n: 0 };
+  let poles1 = 0, poles2 = 0, mt1 = 0, mt2 = 0;
+  GP_2025.forEach(gp => {
+    const r = champ.resultats[gp.id] || {};
+    if (r.pole === 'p1') poles1++; else if (r.pole === 'p2') poles2++;
+    if (r.mtour === 'p1') mt1++; else if (r.mtour === 'p2') mt2++;
+  });
   GP_2025.forEach(gp => {
     const r = champ.resultats[gp.id];
     if (!r || (r.p1 === undefined && r.p2 === undefined)) return;
@@ -539,6 +545,8 @@ function vuePalmares(store, champ) {
       </div>
       ${ligneStat('Points', cl.p1.pts, cl.p2.pts)}
       ${ligneStat('Victoires (P1)', cl.p1.wins, cl.p2.wins)}
+      ${ligneStat('Pole positions', poles1, poles2)}
+      ${ligneStat('Meilleurs tours', mt1, mt2)}
       ${ligneStat('Podiums', cl.p1.podiums, cl.p2.podiums)}
       ${ligneStat('Duels gagnés', duels1, duels2)}
       <div class="flex justify-between text-[10px] text-gray-400 mt-2 px-2">
@@ -661,7 +669,17 @@ export function mount(store, navigate) {
           <select id="f1-res-${slot}" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm">${options}</select>
         </div>`;
       };
-      openModal(`🏁 ${gp.nom} — résultat`, sel('p1') + sel('p2') + '<p class="text-[10px] text-gray-500">Barème 2025 : 25-18-15-12-10-8-6-4-2-1, pas de point bonus. Résultat partagé entre les deux pilotes.</p>', () => {
+      const extraSel = (id, label) => `
+        <div class="mb-3">
+          <label class="block text-xs font-semibold mb-1 text-gray-300">${label}</label>
+          <select id="${id}" class="w-full px-3 py-2 bg-dark-800 border border-dark-400/50 rounded-lg text-gray-200 text-sm">
+            <option value="">—</option>
+            <option value="p1">${champ.pilotes.p1.tri}</option>
+            <option value="p2">${champ.pilotes.p2.tri}</option>
+          </select>
+        </div>`;
+      const extras = `<div class="grid grid-cols-2 gap-2">${extraSel('f1-res-pole', '🚀 Pole position')}${extraSel('f1-res-mtour', '⏱ Meilleur tour')}</div>`;
+      openModal(`🏁 ${gp.nom} — résultat`, sel('p1') + sel('p2') + extras + '<p class="text-[10px] text-gray-500">Barème 2025 : 25-18-15-12-10-8-6-4-2-1, pas de point bonus. Résultat partagé entre les deux pilotes.</p>', () => {
         const lire = (slot) => {
           const v = document.getElementById(`f1-res-${slot}`)?.value;
           return v === '' ? undefined : (v === 'DNF' ? 'DNF' : Number(v));
@@ -669,6 +687,8 @@ export function mount(store, navigate) {
         const nv = {};
         const v1 = lire('p1'); if (v1 !== undefined) nv.p1 = v1;
         const v2 = lire('p2'); if (v2 !== undefined) nv.p2 = v2;
+        const pole = document.getElementById('f1-res-pole')?.value; if (pole) nv.pole = pole;
+        const mtour = document.getElementById('f1-res-mtour')?.value; if (mtour) nv.mtour = mtour;
         const c = getChamp(store);
         if (Object.keys(nv).length === 0) delete c.resultats[gp.id];
         else c.resultats[gp.id] = nv;
@@ -682,6 +702,8 @@ export function mount(store, navigate) {
           const el = document.getElementById(`f1-res-${slot}`);
           if (el && r[slot] !== undefined) el.value = String(r[slot]);
         });
+        if (r.pole) { const el = document.getElementById('f1-res-pole'); if (el) el.value = r.pole; }
+        if (r.mtour) { const el = document.getElementById('f1-res-mtour'); if (el) el.value = r.mtour; }
       }, 0);
     });
   });
