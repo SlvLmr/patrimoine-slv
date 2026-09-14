@@ -395,32 +395,159 @@ const CHAMPS_SETUP = [
 ];
 
 // Variantes de setup : migre l'ancien format { setup: {...} } vers { setups: [{id, nom, ...}] }
-// Setups de référence codés en dur par circuit (remplis au fur et à mesure) :
-// servent de base pré-remplie tant que le pilote n'a rien sauvegardé ; dès qu'il
-// enregistre, sa copie personnelle prend le dessus (la référence reste intacte).
-// Règle immuable : rouge (Esports Quali) → ⏱ Qualif · jaune (Esports Race) → ☀️ Course · bleu (Wet) → 🌧️ Course.
-// Valeurs calées sur un format course 50 % (source simracingsetup, F1 25).
-// Ordres : aéro av/ar · diff accél/décél · carrossage av/ar, pince av/ar · susp av/ar, anti-roulis av/ar, hauteur av/ar · freins répartition ← pression · pneus psi av (G/D), ar (G/D).
+// Setups « SRS Custom » (données du 23/10/2025, course 50 %) — pré-remplis tant que rien n'est enregistré.
 const SETUPS_REFERENCE = {
-  aus: [
-    { id: 'ref-qualif', nom: '⏱ Qualif', aeroAv: '18', aeroAr: '8', diffAccel: '100', diffFrein: '25',
-      carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
-      suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '21', hautAv: '20', hautAr: '40',
-      pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '21.0 / 21.0' },
-    { id: 'ref-course-sec', nom: '☀️ Course', aeroAv: '15', aeroAr: '9', diffAccel: '100', diffFrein: '30',
-      carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
-      suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '16', hautAv: '21', hautAr: '40',
-      pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' },
-    { id: 'ref-course-pluie', nom: '🌧️ Course', aeroAv: '32', aeroAr: '28', diffAccel: '90', diffFrein: '30',
-      carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
-      suspAv: '41', suspAr: '8', antiRoulisAv: '10', antiRoulisAr: '21', hautAv: '20', hautAr: '48',
-      pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' },
-  ],
+  aus: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '12', aeroAr: '4', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '21', hautAr: '41',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  chn: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '26', aeroAr: '22', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '6', antiRoulisAv: '8', antiRoulisAr: '1', hautAv: '20', hautAr: '43',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  jpn: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '19', aeroAr: '13', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '22', hautAr: '41',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  bhr: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '29', aeroAr: '24', diffAccel: '100', diffFrein: '25',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '10', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '21', hautAr: '44',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  sau: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '9', aeroAr: '4', diffAccel: '100', diffFrein: '25',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '10', antiRoulisAr: '1', hautAv: '19', hautAr: '44',
+    pressionFreins: '100', repartFreins: '52', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  mia: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '10', aeroAr: '4', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '21', hautAr: '43',
+    pressionFreins: '100', repartFreins: '55', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  emi: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '24', aeroAr: '18', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '2', antiRoulisAv: '3', antiRoulisAr: '1', hautAv: '21', hautAr: '44',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '24.9 / 24.9' }],
+  mon: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '50', aeroAr: '50', diffAccel: '100', diffFrein: '35',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '7', antiRoulisAr: '1', hautAv: '21', hautAr: '44',
+    pressionFreins: '100', repartFreins: '54', psiAv: '22.5 / 22.5', psiAr: '20.5 / 20.5' }],
+  esp: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '34', aeroAr: '28', diffAccel: '100', diffFrein: '25',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '4', antiRoulisAv: '4', antiRoulisAr: '1', hautAv: '21', hautAr: '42',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  can: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '31', aeroAr: '27', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '3', antiRoulisAr: '1', hautAv: '20', hautAr: '40',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  aut: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '14', aeroAr: '7', diffAccel: '100', diffFrein: '25',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '19', hautAr: '40',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '23.6 / 23.6' }],
+  gbr: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '9', aeroAr: '3', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '20', hautAr: '40',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  bel: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '1', aeroAr: '0', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '6', antiRoulisAr: '1', hautAv: '20', hautAr: '43',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  hun: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '50', aeroAr: '50', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '10', antiRoulisAv: '8', antiRoulisAr: '1', hautAv: '20', hautAr: '42',
+    pressionFreins: '100', repartFreins: '52', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  ned: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '47', aeroAr: '41', diffAccel: '100', diffFrein: '20',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '3', antiRoulisAr: '1', hautAv: '20', hautAr: '42',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  ita: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '1', aeroAr: '0', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '19', hautAr: '42',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  aze: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '5', aeroAr: '0', diffAccel: '100', diffFrein: '25',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '20', hautAr: '40',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  sgp: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '50', aeroAr: '45', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '4', antiRoulisAr: '1', hautAv: '20', hautAr: '43',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
+  usa: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '35', aeroAr: '32', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '20', hautAr: '40',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '25.5 / 25.5' }],
+  mex: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '22', aeroAr: '14', diffAccel: '100', diffFrein: '25',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '20', hautAr: '40',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  bra: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '26', aeroAr: '22', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '20', hautAr: '44',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  las: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '0', aeroAr: '0', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '21', hautAr: '41',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  qat: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '44', aeroAr: '34', diffAccel: '100', diffFrein: '30',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '20', hautAr: '43',
+    pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' }],
+  abu: [{ id: 'ref-srs', nom: 'SRS Custom', aeroAv: '32', aeroAr: '26', diffAccel: '100', diffFrein: '25',
+    carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+    suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '1', hautAv: '20', hautAr: '44',
+    pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '25.8 / 25.8' }],
 };
 
-// Stratégies de référence (base course 50 %) : pré-remplies tant que rien n'est enregistré
+// Stratégies SRS Custom (course 50 %) : départ + arrêts + essence ; le reste dans le débrief.
 const STRATS_REFERENCE = {
-  aus: { depart: 'M', essence: '105', a1Tour: '10', a1Pneu: 'H' },
+  aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.9 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→S · Vie pneus : S 11 / M 16 / H 20 t · Arrêt ≈ 21 s · Diff course : 80-100 · CLM 1:17.374' },
+  chn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.2 kg', debrief: 'Course 50 % : 28 t · Strat ② : — · Vie pneus : S 8 / M 11 / H 15 t · Arrêt ≈ 18 s · Diff course : 80-100' },
+  jpn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.1 kg', debrief: 'Course 50 % : 27 t · Strat ② : M→H→H · Vie pneus : S 10 / M 16 / H 20 t · Arrêt ≈ 18 s · Diff course : 80-100' },
+  bhr: { depart: 'M', a1Pneu: 'H', a2Pneu: 'S', essence: '55 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→M · Vie pneus : S 9 / M 10 / H 15 t · Arrêt ≈ 19 s · Diff course : 80-100' },
+  sau: { depart: 'M', a1Pneu: 'H', essence: '50.9 kg', debrief: 'Course 50 % : 25 t · Strat ② : M→H→S · Vie pneus : S 11 / M 16 / H 20 t · Arrêt ≈ 23 s · Diff course : 80-100' },
+  mia: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.1 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→H · Vie pneus : S 8 / M 13 / H 20 t · Arrêt ≈ 22 s · Diff course : 80-100' },
+  emi: { depart: 'M', a1Pneu: 'H', essence: '53.4 kg', debrief: 'Course 50 % : 32 t · Strat ② : M→H→H · Vie pneus : S 9 / M 15 / H 20 t · Arrêt ≈ 25 s · Diff course : 80-100' },
+  mon: { depart: 'M', a1Pneu: 'H', essence: '47.2 kg', debrief: 'Course 50 % : 39 t · Strat ② : M→H→H · Vie pneus : S 13 / M 19 / H 25 t · Arrêt ≈ 18.5 s · Diff course : 80-100' },
+  esp: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '55.1 kg', debrief: 'Course 50 % : 33 t · Strat ② : M→H→H · Vie pneus : S 13 / M 18 / H 27 t · Arrêt ≈ 22 s · Diff course : 80-100' },
+  can: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.4 kg', debrief: 'Course 50 % : 35 t · Strat ② : M→H→H · Vie pneus : S 13 / M 27 / H 32 t · Arrêt ≈ 23 s · Diff course : 80-100' },
+  aut: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.2 kg', debrief: 'Course 50 % : 36 t · Strat ② : M→H→H · Vie pneus : S 10 / M 13 / H 23 t · Arrêt ≈ 18 s · Diff course : 80-100' },
+  gbr: { depart: 'M', a1Pneu: 'H', essence: '50.4 kg', debrief: 'Course 50 % : 26 t · Strat ② : S→H · Vie pneus : S 10 / M 13 / H 20 t · Arrêt ≈ 24 s · Diff course : 80-100' },
+  bel: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '50.2 kg', debrief: 'Course 50 % : 22 t · Strat ② : M→H→H · Vie pneus : S 9 / M 13 / H 23 t · Arrêt ≈ 20 s · Diff course : 80-100' },
+  hun: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.5 kg', debrief: 'Course 50 % : 35 t · Strat ② : M→H→H · Vie pneus : S 8 / M 18 / H 23 t · Arrêt ≈ 21 s · Diff course : 80-100' },
+  ned: { depart: 'M', a1Pneu: 'H', essence: '53.7 kg', debrief: 'Course 50 % : 36 t · Strat ② : M→H→H · Vie pneus : S 14 / M 17 / H 24 t · Arrêt ≈ 21.5 s · Diff course : 80-100' },
+  ita: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '49.8 kg', debrief: 'Course 50 % : 27 t · Strat ② : M→H→H · Vie pneus : S 9 / M 13 / H 18 t · Arrêt ≈ 21 s · Diff course : 80-100' },
+  aze: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.6 kg', debrief: 'Course 50 % : 26 t · Strat ② : M→H→H · Vie pneus : S 10 / M 16 / H 27 t · Arrêt ≈ 19.5 s · Diff course : 80-100' },
+  sgp: { depart: 'M', a1Pneu: 'H', essence: '56.5 kg', debrief: 'Course 50 % : 31 t · Strat ② : M→H→H · Vie pneus : S 10 / M 20 / H 27 t · Arrêt ≈ 21 s · Diff course : 80-100' },
+  usa: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.7 kg', debrief: 'Course 50 % : 28 t · Strat ② : M→H→H · Vie pneus : S 10 / M 16 / H 23 t · Arrêt ≈ 20 s · Diff course : 80-100' },
+  mex: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H', essence: '55.6 kg', debrief: 'Course 50 % : 35 t · Strat ② : M→H→M · Vie pneus : S 10 / M 16 / H 23 t · Arrêt ≈ 16 s · Diff course : 80-100' },
+  bra: { depart: 'M', a1Pneu: 'H', essence: '53.3 kg', debrief: 'Course 50 % : 36 t · Strat ② : M→H→H · Vie pneus : S 9 / M 16 / H 20 t · Arrêt ≈ 20 s · Diff course : 80-100' },
+  las: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.4 kg', debrief: 'Course 50 % : 25 t · Strat ② : M→H→H · Vie pneus : S 9 / M 16 / H 20 t · Arrêt ≈ 21.5 s · Diff course : 80-100' },
+  qat: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.3 kg', debrief: 'Course 50 % : 29 t · Strat ② : — · Vie pneus : S 10 / M 13 / H 20 t · Arrêt ≈ 20 s · Diff course : 80-100' },
+  abu: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.9 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→H · Vie pneus : S 10 / M 14 / H 19 t · Arrêt ≈ 20 s · Diff course : 80-100' },
+};
+
+// Chronos de référence (best laps QLF / RAC du 23/10/2025)
+const CHRONOS_REFERENCE = {
+  aus: { qualif: '1.18.136', course: '1.20.159' },
+  chn: { qualif: '1.34.295', course: '1.37.327' },
+  jpn: { qualif: '1.29.900', course: '1.32.192' },
+  bhr: { qualif: '1.29.034', course: '1.31.698' },
+  sau: { qualif: '1.28.977', course: '1.32.894' },
+  mia: { qualif: '1.27.383', course: '1.31.627' },
+  emi: { qualif: '1.16.579', course: '1.18.874' },
+  esp: { qualif: '1.13.599', course: '1.16.142' },
+  can: { qualif: '1.10.340', course: '1.13.586' },
+  aut: { qualif: '1.05.509', course: '1.06.996' },
+  gbr: { qualif: '1.28.094', course: '1.30.580' },
+  bel: { qualif: '1.44.944', course: '1.47.506' },
+  hun: { qualif: '1.17.707', course: '1.20.006' },
+  ned: { qualif: '1.11.008', course: '1.14.518' },
+  ita: { qualif: '1.19.551', course: '1.21.953' },
+  aze: { qualif: '1.41.923', course: '1.43.774' },
+  sgp: { qualif: '1.31.386', course: '1.34.484' },
+  usa: { qualif: '1.33.787', course: '1.37.529' },
+  mex: { qualif: '1.16.768', course: '1.19.154' },
+  bra: { qualif: '1.08.714', course: '1.11.167' },
+  las: { qualif: '1.33.160', course: '1.35.496' },
+  qat: { qualif: '1.22.998', course: '1.24.377' },
+  abu: { qualif: '1.24.284', course: '1.27.081' },
 };
 
 function getSetups(fiche, gpId) {
@@ -439,7 +566,7 @@ function vuePaddock(store) {
   const setups = getSetups(fiche, gp.id);
   const setupActif = setups.find(s => s.id === varianteActive) || setups[0];
   const strat = (fiche.strat && Object.keys(fiche.strat).length) ? fiche.strat : (STRATS_REFERENCE[gp.id] || {});
-  const chronos = fiche.chronos || {};
+  const chronos = (fiche.chronos && Object.keys(fiche.chronos).length) ? fiche.chronos : (CHRONOS_REFERENCE[gp.id] || {});
 
   const selecteur = `
     <div class="f1-scroll flex gap-1.5 overflow-x-auto pb-2 mb-4">
@@ -525,8 +652,8 @@ function vuePaddock(store) {
         <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-1.5">Pneus de départ</label>
         ${pneuSelecteur('depart', strat.depart, 40)}
         <div class="mt-3 mb-3 max-w-[220px]">
-          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">⛽ Plein d'essence (%)</label>
-          <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 105">
+          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">⛽ Plein d'essence</label>
+          <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 51.9 kg">
         </div>
         <p class="f1-sous-titre text-[10px] tracking-[0.15em] mb-1.5">ARRÊTS AUX STANDS</p>
         ${[1, 2, 3].map(n => `
@@ -872,13 +999,14 @@ export function mount(store, navigate) {
 
   document.getElementById('f1-ref-reload')?.addEventListener('click', () => {
     confirmModal('Recharger les réglages de référence ?',
-      'Tes setups et ta stratégie personnels sur ce circuit seront remplacés par les valeurs de référence (course 50 %). Les chronos sont conservés.',
+      'Tes setups et ta stratégie personnels sur ce circuit seront remplacés par les valeurs de référence (course 50 %). Chronos compris.',
       () => {
         const garage = store.get('f1Garage') || {};
         const fiche = garage[gpActif] || {};
         if (SETUPS_REFERENCE[gpActif]) fiche.setups = JSON.parse(JSON.stringify(SETUPS_REFERENCE[gpActif]));
         delete fiche.setup;
         fiche.strat = { ...(STRATS_REFERENCE[gpActif] || {}) };
+        if (CHRONOS_REFERENCE[gpActif]) fiche.chronos = { ...CHRONOS_REFERENCE[gpActif] };
         garage[gpActif] = fiche;
         store.set('f1Garage', garage);
         varianteActive = null;
