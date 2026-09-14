@@ -637,7 +637,12 @@ function vuePaddock(store) {
   const garage = store.get('f1Garage') || {};
   const gp = GP_2025.find(g => g.id === gpActif) || GP_2025[0];
   const fiche = garage[gp.id] || {};
-  const setups = getSetups(fiche, gp.id);
+  let setups = getSetups(fiche, gp.id);
+  const varianteTete = store.get('f1VarianteTete');
+  if (varianteTete) {
+    const iTete = setups.findIndex(s => s.nom === varianteTete);
+    if (iTete > 0) setups = [setups[iTete], ...setups.slice(0, iTete), ...setups.slice(iTete + 1)];
+  }
   const setupActif = setups.find(s => s.id === varianteActive) || setups[0];
   const strat1 = (fiche.strat && Object.keys(fiche.strat).length) ? fiche.strat : (STRATS_REFERENCE[gp.id] || {});
   const strat2 = (fiche.strat2 && Object.keys(fiche.strat2).length) ? fiche.strat2 : (STRATS2_REFERENCE[gp.id] || {});
@@ -672,6 +677,7 @@ function vuePaddock(store) {
       ${setups.map(s => `
       <button data-f1-variante="${s.id}" class="f1-tab ${s.id === setupActif.id ? 'f1-tab-on' : ''}" style="font-size:10px;padding:0.25rem 0.6rem">${s.nom}</button>`).join('')}
       <button id="f1-add-variante" class="f1-tab" style="font-size:10px;padding:0.25rem 0.6rem;border-style:dashed" title="Nouvelle variante (Pluie, Qualif…)">+ variante</button>
+      <button id="f1-pin-variante" class="f1-tab" style="font-size:10px;padding:0.25rem 0.6rem;${varianteTete === setupActif.nom ? 'color:#ffd54a;border-color:#ffd54a99' : ''}" title="Afficher « ${setupActif.nom} » en premier par défaut, sur tous les circuits">${varianteTete === setupActif.nom ? '★' : '☆'}</button>
       ${setups.length > 1 ? `<button id="f1-del-variante" class="f1-tab" style="font-size:10px;padding:0.25rem 0.6rem;border-color:rgba(255,45,149,0.4);color:#ff8fc0" title="Supprimer la variante affichée">✕</button>` : ''}
     </div>`;
 
@@ -1077,6 +1083,17 @@ export function mount(store, navigate) {
     });
     return obj;
   };
+
+  document.getElementById('f1-pin-variante')?.addEventListener('click', () => {
+    const garage = store.get('f1Garage') || {};
+    const fiche = garage[gpActif] || {};
+    const setups = getSetups(fiche, gpActif);
+    const actif = setups.find(s => s.id === varianteActive) || setups[0];
+    const courant = store.get('f1VarianteTete');
+    store.set('f1VarianteTete', courant === actif.nom ? '' : actif.nom);
+    showToast(courant === actif.nom ? 'Épinglage retiré' : `« ${actif.nom} » affichée en premier partout ★`, 'success', 2500);
+    navigate('f1');
+  });
 
   document.getElementById('f1-add-variante')?.addEventListener('click', () => {
     promptModal('Nouvelle variante de setup', '', (nom) => {
