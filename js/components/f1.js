@@ -374,9 +374,18 @@ const CHAMPS_SETUP = [
 ];
 
 // Variantes de setup : migre l'ancien format { setup: {...} } vers { setups: [{id, nom, ...}] }
-function getSetups(fiche) {
+// Setups de référence codés en dur par circuit (remplis au fur et à mesure) :
+// servent de base pré-remplie tant que le pilote n'a rien sauvegardé ; dès qu'il
+// enregistre, sa copie personnelle prend le dessus (la référence reste intacte).
+const SETUPS_REFERENCE = {
+  // aus: [{ id: 'ref-course', nom: 'Pro Course', aeroAv: '25', aeroAr: '20', ... }],
+};
+
+function getSetups(fiche, gpId) {
   if (Array.isArray(fiche.setups) && fiche.setups.length) return fiche.setups;
   if (fiche.setup && Object.keys(fiche.setup).length) return [{ id: 'std', nom: 'Course', ...fiche.setup }];
+  const ref = SETUPS_REFERENCE[gpId];
+  if (ref && ref.length) return JSON.parse(JSON.stringify(ref));
   return [{ id: 'std', nom: 'Course' }];
 }
 
@@ -384,7 +393,7 @@ function vuePaddock(store) {
   const garage = store.get('f1Garage') || {};
   const gp = GP_2025.find(g => g.id === gpActif) || GP_2025[0];
   const fiche = garage[gp.id] || {};
-  const setups = getSetups(fiche);
+  const setups = getSetups(fiche, gp.id);
   const setupActif = setups.find(s => s.id === varianteActive) || setups[0];
   const strat = fiche.strat || {};
   const chronos = fiche.chronos || {};
@@ -410,10 +419,6 @@ function vuePaddock(store) {
         <p class="f1-titre text-xl uppercase">${gp.nom}</p>
         <p class="text-[10px] text-gray-500 uppercase tracking-widest">${gp.circuit} · ${gp.date} · ${gp.km} km · ${gp.virages} virages · ${gp.drs} zone${gp.drs > 1 ? 's' : ''} DRS</p>
       </div>
-      <button data-f1-zoom="${gp.id}" class="text-center hover:scale-105 transition" title="Zoom : tracé, zones DRS, infos circuit">
-        ${traceSvg(gp, 'w-32 h-20 block mx-auto', '#ff2d95', 640)}
-        <span class="text-[9px] uppercase tracking-wide" style="color:#b1a2d6">🔍 fiche circuit</span>
-      </button>
     </div>`;
 
   const ongletsVariantes = `
@@ -463,6 +468,13 @@ function vuePaddock(store) {
         <textarea data-f1-setup="notes" rows="2" class="f1-input w-full" placeholder="Survirage T3, vibreur à éviter…">${setupActif.notes || ''}</textarea>
         <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer « ${setupActif.nom} »</button>
       </div>
+      <div class="space-y-3">
+      <div class="f1-carte p-3">
+        <button data-f1-zoom="${gp.id}" class="block w-full text-left" title="Agrandir : zones DRS, données circuit">
+          ${traceSvg(gp, 'block w-full h-48', '#9fd8e8', 800)}
+          <p class="text-[9px] uppercase tracking-wide text-center mt-1.5" style="color:#b1a2d6">🔍 agrandir · zones DRS &amp; données circuit</p>
+        </button>
+      </div>
       <div class="f1-carte p-4">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-3">📋 STRATÉGIE</p>
         <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Pneus de départ</label>
@@ -494,6 +506,7 @@ function vuePaddock(store) {
         <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Débrief après course</label>
         <textarea data-f1-strat="debrief" rows="3" class="f1-input w-full" placeholder="Undercut gagnant au tour 17…">${strat.debrief || ''}</textarea>
         <button id="f1-save-strat" class="f1-bouton mt-3">💾 Enregistrer la stratégie</button>
+      </div>
       </div>
     </div>`;
 }
@@ -780,7 +793,7 @@ export function mount(store, navigate) {
   const licherFiche = () => {
     const garage = store.get('f1Garage') || {};
     const fiche = garage[gpActif] || {};
-    fiche.setups = getSetups(fiche);
+    fiche.setups = getSetups(fiche, gpActif);
     delete fiche.setup; // migration ancien format
     garage[gpActif] = fiche;
     return { garage, fiche };
