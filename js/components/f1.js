@@ -319,7 +319,11 @@ function vueChampionnat(store, champ) {
     <button data-f1-pilote="${slot}" class="f1-carte text-left relative overflow-hidden flex-1 min-w-[260px] p-0" style="border-color:${leader ? e.couleur : 'rgba(255,255,255,0.08)'};box-shadow:${leader ? `0 0 24px ${e.couleur}44` : 'none'}">
       <div class="absolute left-0 top-0 bottom-0 w-1.5" style="background:${e.couleur};box-shadow:0 0 12px ${e.couleur}"></div>
       ${leader ? '<div class="f1-damier absolute right-0 top-0 w-16 h-3 opacity-40"></div>' : ''}
-      <div class="p-4 pl-6">
+      <img src="img/f1/pilotes/${slot}.png" alt="" loading="lazy" aria-hidden="true"
+        class="absolute right-1 bottom-0 h-[92%] object-contain pointer-events-none select-none"
+        style="opacity:0.22;mask-image:linear-gradient(90deg,transparent 0%,black 45%);-webkit-mask-image:linear-gradient(90deg,transparent 0%,black 45%)"
+        onerror="this.remove()">
+      <div class="p-4 pl-6 relative">
         <div class="flex items-center gap-3">
           <span class="f1-titre text-3xl" style="color:${leader ? '#fff' : '#9ca3af'}">P${rang}</span>
           <span class="w-7 h-7 rounded-full flex-shrink-0 border-2 border-white/30" title="Casque" style="background:${p.casque};box-shadow:0 0 10px ${p.casque}"></span>
