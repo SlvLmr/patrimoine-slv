@@ -517,15 +517,9 @@ function vuePaddock(store) {
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-3">📋 STRATÉGIE</p>
         <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-1.5">Pneus de départ</label>
         ${pneuSelecteur('depart', strat.depart, 40)}
-        <div class="grid grid-cols-2 gap-2 mt-3 mb-3">
-          <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">⛽ Plein d'essence (%)</label>
-            <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 105">
-          </div>
-          <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">🌡 Météo / température</label>
-            <input data-f1-strat="meteo" type="text" value="${strat.meteo || ''}" class="f1-input w-full" placeholder="Sec, piste 34°">
-          </div>
+        <div class="mt-3 mb-3 max-w-[220px]">
+          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">⛽ Plein d'essence (%)</label>
+          <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 105">
         </div>
         <p class="f1-sous-titre text-[10px] tracking-[0.15em] mb-1.5">ARRÊTS AUX STANDS</p>
         ${[1, 2, 3].map(n => `
@@ -537,8 +531,6 @@ function vuePaddock(store) {
           </div>
           ${pneuSelecteur('a' + n + 'Pneu', strat['a' + n + 'Pneu'], 30, true)}
         </div>`).join('')}
-        <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">ERS / essence</label>
-        <input data-f1-strat="ers" type="text" value="${strat.ers || ''}" class="f1-input w-full mb-2" placeholder="ERS hotlap T1, essence standard">
         <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Débrief après course</label>
         <textarea data-f1-strat="debrief" rows="3" class="f1-input w-full" placeholder="Undercut gagnant au tour 17…">${strat.debrief || ''}</textarea>
         <button id="f1-save-strat" class="f1-bouton mt-3">💾 Enregistrer la stratégie</button>
