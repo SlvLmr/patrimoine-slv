@@ -232,7 +232,10 @@ function getMonSlot(store) {
 const ptsPour = (pos) => (typeof pos === 'number' && pos >= 1 && pos <= 10) ? BAREME[pos - 1] : 0;
 
 function classement(champ) {
-  const t = { p1: { pts: 0, wins: 0, podiums: 0, courses: 0 }, p2: { pts: 0, wins: 0, podiums: 0, courses: 0 } };
+  const t = {
+    p1: { pts: 0, wins: 0, podiums: 0, courses: 0, poles: 0, mt: 0, dnf: 0 },
+    p2: { pts: 0, wins: 0, podiums: 0, courses: 0, poles: 0, mt: 0, dnf: 0 },
+  };
   GP_2025.forEach(gp => {
     const r = champ.resultats[gp.id];
     if (!r) return;
@@ -243,7 +246,10 @@ function classement(champ) {
       t[k].pts += ptsPour(pos);
       if (pos === 1) t[k].wins++;
       if (typeof pos === 'number' && pos <= 3) t[k].podiums++;
+      if (pos === 'DNF') t[k].dnf++;
     });
+    if (r.pole && t[r.pole]) t[r.pole].poles++;
+    if (r.mtour && t[r.mtour]) t[r.mtour].mt++;
   });
   return t;
 }
@@ -312,9 +318,12 @@ function vueChampionnat(store, champ) {
             <p class="text-[9px] uppercase tracking-widest text-gray-500">pts</p>
           </div>
         </div>
-        <div class="flex gap-4 mt-3 text-[10px] uppercase tracking-wider text-gray-400">
+        <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[10px] uppercase tracking-wider text-gray-400">
           <span>🏆 ${s.wins} victoire${s.wins > 1 ? 's' : ''}</span>
+          <span>🚀 ${s.poles} pole${s.poles > 1 ? 's' : ''}</span>
+          <span>⏱ ${s.mt} best lap${s.mt > 1 ? 's' : ''}</span>
           <span>🍾 ${s.podiums} podium${s.podiums > 1 ? 's' : ''}</span>
+          <span>💥 ${s.dnf} DNF</span>
           <span>🏁 ${s.courses} course${s.courses > 1 ? 's' : ''}</span>
           ${rang === 2 ? `<span style="color:#ff9dc4">+${ecart} pts d'écart</span>` : ''}
         </div>
@@ -399,7 +408,7 @@ function vuePaddock(store) {
   const chronos = fiche.chronos || {};
 
   const selecteur = `
-    <div class="flex gap-1.5 overflow-x-auto pb-2 mb-4" style="scrollbar-width:thin">
+    <div class="f1-scroll flex gap-1.5 overflow-x-auto pb-2 mb-4">
       ${GP_2025.map(g => {
         const f = garage[g.id];
         const rempli = f && ((f.setups && f.setups.length) || f.setup || f.strat);
@@ -561,6 +570,7 @@ function vuePalmares(store, champ) {
       ${ligneStat('Pole positions', poles1, poles2)}
       ${ligneStat('Meilleurs tours', mt1, mt2)}
       ${ligneStat('Podiums', cl.p1.podiums, cl.p2.podiums)}
+      ${ligneStat('Abandons (DNF)', cl.p1.dnf, cl.p2.dnf)}
       ${ligneStat('Duels gagnés', duels1, duels2)}
       <div class="flex justify-between text-[10px] text-gray-400 mt-2 px-2">
         <span>Série en cours : ${serieCour.n > 0 ? `<b style="color:${serieCour.slot === 'p1' ? c1 : c2}">${champ.pilotes[serieCour.slot].tri} × ${serieCour.n}</b>` : '—'}</span>

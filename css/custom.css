@@ -673,3 +673,9 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 .f1-monde .text-gray-400 { color: #cec4e6 !important; }
 .f1-monde .text-gray-500 { color: #b1a2d6 !important; }
 .f1-monde .text-gray-600 { color: #9385ba !important; }
+
+/* Slider néon du sélecteur de circuits (Paddock F1) */
+.f1-scroll { scrollbar-width: thin; scrollbar-color: #ff2d95 rgba(255,255,255,0.06); }
+.f1-scroll::-webkit-scrollbar { height: 5px; }
+.f1-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 999px; }
+.f1-scroll::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #00e5ff, #ff2d95); border-radius: 999px; box-shadow: 0 0 8px rgba(255,45,149,0.5); }
