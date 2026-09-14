@@ -18,6 +18,7 @@ import * as SimulateurAuto from './components/simulateur-auto.js?v=20260809m';
 import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20260809m';
 import * as Hypotheses from './components/hypotheses.js?v=20260809m';
 import * as SimulateurSuccession from './components/simulateur-succession.js?v=20260809m';
+import * as F1 from './components/f1.js?v=20260809y';
 import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20260809m';
 import { showToast, promptModal, confirmModal } from './utils.js?v=20260809m';
 
@@ -44,6 +45,7 @@ const routes = {
   liberte: Liberte,
   conseiller: Conseiller,
   'simulateur-succession': SimulateurSuccession,
+  f1: F1,
 };
 
 const navItems = [
@@ -292,7 +294,15 @@ function initNav() {
       <span class="nav-label${item.isProfile ? ' nav-profile-name' : ''}">${label}</span>
       ${item.live ? '<span class="live-dot"></span>' : ''}
     </a>`;
-  }).join('') + (inOutilsGroup ? '</div>' : '');
+  }).join('') + (inOutilsGroup ? '</div>' : '') + `
+    <div class="my-2 mx-3 h-px bg-gradient-to-r from-transparent via-dark-300/50 to-transparent"></div>
+    <a href="#f1" data-nav="f1" title="Paddock F1 — un tout autre univers"
+      class="flex items-center gap-3 px-4 py-1.5 rounded-xl text-sm transition-colors text-gray-500 hover:text-pink-400 hover:bg-dark-600">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21V4m0 0c3-2 6 2 9 0s6-2 9 0v9c-3 2-6-2-9 0s-6 2-9 0"/>
+      </svg>
+      <span class="nav-label">Paddock F1</span>
+    </a>`;
 
   // Intercept nav links so they go through navigate() (needed for sim leave prompt)
   document.querySelectorAll('[data-nav]').forEach(el => {

@@ -189,6 +189,48 @@ async function loadProfilesFromCloud(userId) {
   }
 }
 
+// ---- Documents PARTAGÉS entre comptes (ex: championnat F1) ----
+// Chemin Firestore : shared/{docId}. Nécessite une règle autorisant les utilisateurs authentifiés :
+//   match /shared/{docId} { allow read, write: if request.auth != null; }
+async function saveSharedDoc(docId, data) {
+  const { db } = initFirebase();
+  if (!db) return false;
+  try {
+    await withRetry(() => _firebaseFirestore.setDoc(
+      _firebaseFirestore.doc(db, 'shared', docId), {
+      data: JSON.stringify(data),
+      updatedAt: new Date().toISOString(),
+    }));
+    return true;
+  } catch (e) {
+    console.error('Shared doc save error:', e.code, e.message);
+    return false;
+  }
+}
+
+async function loadSharedDoc(docId) {
+  const { db } = initFirebase();
+  if (!db) return null;
+  try {
+    const snap = await withRetry(() => _firebaseFirestore.getDoc(
+      _firebaseFirestore.doc(db, 'shared', docId)));
+    return snap.exists() ? JSON.parse(snap.data().data) : null;
+  } catch (e) {
+    console.error('Shared doc load error:', e.code, e.message);
+    return null;
+  }
+}
+
+function subscribeSharedDoc(docId, onChange) {
+  const { db } = initFirebase();
+  if (!db) return () => {};
+  const docRef = _firebaseFirestore.doc(db, 'shared', docId);
+  return _firebaseFirestore.onSnapshot(docRef, (snap) => {
+    if (!snap.exists()) return;
+    try { onChange(JSON.parse(snap.data().data)); } catch {}
+  }, (e) => console.error('Shared doc listen error:', e.code));
+}
+
 // Test Firestore connection by writing a test document
 async function testCloudConnection(userId) {
   const { db } = initFirebase();
@@ -274,5 +316,8 @@ export {
   loadProfilesFromCloud,
   discoverProfilesFromCloud,
   testCloudConnection,
-  subscribeToProfile
+  subscribeToProfile,
+  saveSharedDoc,
+  loadSharedDoc,
+  subscribeSharedDoc
 };
