@@ -399,8 +399,24 @@ const CHAMPS_SETUP = [
 // Setups de référence codés en dur par circuit (remplis au fur et à mesure) :
 // servent de base pré-remplie tant que le pilote n'a rien sauvegardé ; dès qu'il
 // enregistre, sa copie personnelle prend le dessus (la référence reste intacte).
+// Règle immuable : rouge (Esports Quali) → ⏱ Qualif · jaune (Esports Race) → ☀️ Course · bleu (Wet) → 🌧️ Course.
+// Valeurs calées sur un format course 50 % (source simracingsetup, F1 25).
+// Ordres : aéro av/ar · diff accél/décél · carrossage av/ar, pince av/ar · susp av/ar, anti-roulis av/ar, hauteur av/ar · freins répartition ← pression · pneus psi av (G/D), ar (G/D).
 const SETUPS_REFERENCE = {
-  // aus: [{ id: 'ref-course', nom: 'Pro Course', aeroAv: '25', aeroAr: '20', ... }],
+  aus: [
+    { id: 'ref-qualif', nom: '⏱ Qualif', aeroAv: '18', aeroAr: '8', diffAccel: '100', diffFrein: '25',
+      carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+      suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '21', hautAv: '20', hautAr: '40',
+      pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '21.0 / 21.0' },
+    { id: 'ref-course-sec', nom: '☀️ Course', aeroAv: '15', aeroAr: '9', diffAccel: '100', diffFrein: '30',
+      carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+      suspAv: '41', suspAr: '1', antiRoulisAv: '1', antiRoulisAr: '16', hautAv: '21', hautAr: '40',
+      pressionFreins: '100', repartFreins: '53', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' },
+    { id: 'ref-course-pluie', nom: '🌧️ Course', aeroAv: '32', aeroAr: '28', diffAccel: '90', diffFrein: '30',
+      carrossAv: '-3.50', carrossAr: '-2.00', pinceAv: '0.00', pinceAr: '0.10',
+      suspAv: '41', suspAr: '8', antiRoulisAv: '10', antiRoulisAr: '21', hautAv: '20', hautAr: '48',
+      pressionFreins: '100', repartFreins: '54', psiAv: '29.5 / 29.5', psiAr: '26.5 / 26.5' },
+  ],
 };
 
 function getSetups(fiche, gpId) {
@@ -488,6 +504,7 @@ function vuePaddock(store) {
         ${ongletsVariantes}
         ${blocsSetup}
         <button id="f1-save-setup" class="f1-bouton mt-3">💾 Enregistrer</button>
+        <p class="text-[9px] mt-2" style="color:#8d7fb3">Références pro calées sur un format course 50 % — en 35 % ou 100 %, adapte surtout essence et arrêts.</p>
       </div>
       <div class="flex flex-col gap-3">
       <div class="f1-carte p-3 flex-1 flex">
