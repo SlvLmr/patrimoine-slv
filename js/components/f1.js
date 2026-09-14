@@ -193,6 +193,7 @@ function pneuSelecteur(champ, valeur, taille = 36, avecAucun = false) {
 let ongletActif = 'championnat'; // championnat | paddock | palmares
 let gpActif = GP_2025[0].id;
 let varianteActive = null; // id de la variante de setup affichée (null = première)
+let stratActive = 1; // plan de stratégie affiché (1 = plan A, 2 = plan B)
 let _unsubShared = null;
 const surPageF1 = () => window.location.hash.slice(1) === 'f1';
 
@@ -536,6 +537,32 @@ const STRATS_REFERENCE = {
   abu: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.9 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→H · Vie pneus : S 10 / M 14 / H 19 t · Arrêt ≈ 20 s · Diff course : 80-100' },
 };
 
+// Stratégie ② de référence (plans alternatifs du 23/10/2025)
+const STRATS2_REFERENCE = {
+  aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'S' },
+  jpn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  bhr: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M' },
+  sau: { depart: 'M', a1Pneu: 'H', a2Pneu: 'S' },
+  mia: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  emi: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  mon: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  esp: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  can: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  aut: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  gbr: { depart: 'S', a1Pneu: 'H' },
+  bel: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  hun: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  ned: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  ita: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  aze: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  sgp: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  usa: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  mex: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M' },
+  bra: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  las: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+  abu: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H' },
+};
+
 // Chronos de référence (best laps QLF / RAC du 23/10/2025)
 const CHRONOS_REFERENCE = {
   aus: { qualif: '1.18.136', course: '1.20.159' },
@@ -583,7 +610,9 @@ function vuePaddock(store) {
   const fiche = garage[gp.id] || {};
   const setups = getSetups(fiche, gp.id);
   const setupActif = setups.find(s => s.id === varianteActive) || setups[0];
-  const strat = (fiche.strat && Object.keys(fiche.strat).length) ? fiche.strat : (STRATS_REFERENCE[gp.id] || {});
+  const strat1 = (fiche.strat && Object.keys(fiche.strat).length) ? fiche.strat : (STRATS_REFERENCE[gp.id] || {});
+  const strat2 = (fiche.strat2 && Object.keys(fiche.strat2).length) ? fiche.strat2 : (STRATS2_REFERENCE[gp.id] || {});
+  const strat = stratActive === 2 ? strat2 : strat1;
   const chronos = (fiche.chronos && Object.keys(fiche.chronos).length) ? fiche.chronos : (CHRONOS_REFERENCE[gp.id] || {});
 
   const selecteur = `
@@ -666,7 +695,13 @@ function vuePaddock(store) {
         </button>
       </div>
       <div class="f1-carte p-4">
-        <p class="f1-sous-titre text-[11px] tracking-[0.15em] mb-3">📋 STRATÉGIE</p>
+        <div class="flex items-center justify-between mb-3">
+          <p class="f1-sous-titre text-[11px] tracking-[0.15em]">📋 STRATÉGIE</p>
+          <div class="flex gap-1">
+            <button data-f1-strat-tab="1" class="f1-tab ${stratActive === 1 ? 'f1-tab-on' : ''}" style="font-size:10px;padding:0.25rem 0.6rem">① Plan A</button>
+            <button data-f1-strat-tab="2" class="f1-tab ${stratActive === 2 ? 'f1-tab-on' : ''}" style="font-size:10px;padding:0.25rem 0.6rem">② Plan B</button>
+          </div>
+        </div>
         <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-1.5">Pneus de départ</label>
         ${pneuSelecteur('depart', strat.depart, 40)}
         <div class="mt-3 mb-3 max-w-[220px]">
@@ -840,7 +875,7 @@ export function mount(store, navigate) {
     btn.addEventListener('click', () => ouvrirFicheCircuit(btn.dataset.f1Zoom));
   });
   document.querySelectorAll('[data-f1-gp-select]').forEach(btn => {
-    btn.addEventListener('click', () => { gpActif = btn.dataset.f1GpSelect; varianteActive = null; navigate('f1'); });
+    btn.addEventListener('click', () => { gpActif = btn.dataset.f1GpSelect; varianteActive = null; stratActive = 1; navigate('f1'); });
   });
 
   // ---- Saisie d'un résultat de course (commun) ----
@@ -1024,6 +1059,7 @@ export function mount(store, navigate) {
         if (SETUPS_REFERENCE[gpActif]) fiche.setups = JSON.parse(JSON.stringify(SETUPS_REFERENCE[gpActif]));
         delete fiche.setup;
         fiche.strat = { ...(STRATS_REFERENCE[gpActif] || {}) };
+        fiche.strat2 = { ...(STRATS2_REFERENCE[gpActif] || {}) };
         if (CHRONOS_REFERENCE[gpActif]) fiche.chronos = { ...CHRONOS_REFERENCE[gpActif] };
         garage[gpActif] = fiche;
         store.set('f1Garage', garage);
@@ -1065,10 +1101,14 @@ export function mount(store, navigate) {
 
   document.getElementById('f1-save-strat')?.addEventListener('click', () => {
     const { garage, fiche } = licherFiche();
-    fiche.strat = lireChamps('data-f1-strat');
+    fiche[stratActive === 2 ? 'strat2' : 'strat'] = lireChamps('data-f1-strat');
     store.set('f1Garage', garage);
-    showToast('Stratégie enregistrée 📋', 'success', 2000);
+    showToast(`Stratégie ${stratActive === 2 ? '② (plan B)' : '① (plan A)'} enregistrée 📋`, 'success', 2000);
     navigate('f1');
+  });
+
+  document.querySelectorAll('[data-f1-strat-tab]').forEach(btn => {
+    btn.addEventListener('click', () => { stratActive = Number(btn.dataset.f1StratTab); navigate('f1'); });
   });
 
   // ---- Palmarès : clôture de saison ----
