@@ -511,30 +511,58 @@ const SETUPS_REFERENCE = {
 
 // Stratégies SRS Custom (course 50 %) : départ + arrêts + essence ; le reste dans le débrief.
 const STRATS_REFERENCE = {
-  aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.9 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→S · Vie pneus : S 11 / M 16 / H 20 t · Arrêt ≈ 21 s · Diff course : 80-100' },
-  chn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.2 kg', debrief: 'Course 50 % : 28 t · Strat ② : — · Vie pneus : S 8 / M 11 / H 15 t · Arrêt ≈ 18 s · Diff course : 80-100' },
-  jpn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.1 kg', debrief: 'Course 50 % : 27 t · Strat ② : M→H→H · Vie pneus : S 10 / M 16 / H 20 t · Arrêt ≈ 18 s · Diff course : 80-100' },
-  bhr: { depart: 'M', a1Pneu: 'H', a2Pneu: 'S', essence: '55 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→M · Vie pneus : S 9 / M 10 / H 15 t · Arrêt ≈ 19 s · Diff course : 80-100' },
-  sau: { depart: 'M', a1Pneu: 'H', essence: '50.9 kg', debrief: 'Course 50 % : 25 t · Strat ② : M→H→S · Vie pneus : S 11 / M 16 / H 20 t · Arrêt ≈ 23 s · Diff course : 80-100' },
-  mia: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.1 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→H · Vie pneus : S 8 / M 13 / H 20 t · Arrêt ≈ 22 s · Diff course : 80-100' },
-  emi: { depart: 'M', a1Pneu: 'H', essence: '53.4 kg', debrief: 'Course 50 % : 32 t · Strat ② : M→H→H · Vie pneus : S 9 / M 15 / H 20 t · Arrêt ≈ 25 s · Diff course : 80-100' },
-  mon: { depart: 'M', a1Pneu: 'H', essence: '47.2 kg', debrief: 'Course 50 % : 39 t · Strat ② : M→H→H · Vie pneus : S 13 / M 19 / H 25 t · Arrêt ≈ 18.5 s · Diff course : 80-100' },
-  esp: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '55.1 kg', debrief: 'Course 50 % : 33 t · Strat ② : M→H→H · Vie pneus : S 13 / M 18 / H 27 t · Arrêt ≈ 22 s · Diff course : 80-100' },
-  can: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.4 kg', debrief: 'Course 50 % : 35 t · Strat ② : M→H→H · Vie pneus : S 13 / M 27 / H 32 t · Arrêt ≈ 23 s · Diff course : 80-100' },
-  aut: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.2 kg', debrief: 'Course 50 % : 36 t · Strat ② : M→H→H · Vie pneus : S 10 / M 13 / H 23 t · Arrêt ≈ 18 s · Diff course : 80-100' },
-  gbr: { depart: 'M', a1Pneu: 'H', essence: '50.4 kg', debrief: 'Course 50 % : 26 t · Strat ② : S→H · Vie pneus : S 10 / M 13 / H 20 t · Arrêt ≈ 24 s · Diff course : 80-100' },
-  bel: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '50.2 kg', debrief: 'Course 50 % : 22 t · Strat ② : M→H→H · Vie pneus : S 9 / M 13 / H 23 t · Arrêt ≈ 20 s · Diff course : 80-100' },
-  hun: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.5 kg', debrief: 'Course 50 % : 35 t · Strat ② : M→H→H · Vie pneus : S 8 / M 18 / H 23 t · Arrêt ≈ 21 s · Diff course : 80-100' },
-  ned: { depart: 'M', a1Pneu: 'H', essence: '53.7 kg', debrief: 'Course 50 % : 36 t · Strat ② : M→H→H · Vie pneus : S 14 / M 17 / H 24 t · Arrêt ≈ 21.5 s · Diff course : 80-100' },
-  ita: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '49.8 kg', debrief: 'Course 50 % : 27 t · Strat ② : M→H→H · Vie pneus : S 9 / M 13 / H 18 t · Arrêt ≈ 21 s · Diff course : 80-100' },
-  aze: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.6 kg', debrief: 'Course 50 % : 26 t · Strat ② : M→H→H · Vie pneus : S 10 / M 16 / H 27 t · Arrêt ≈ 19.5 s · Diff course : 80-100' },
-  sgp: { depart: 'M', a1Pneu: 'H', essence: '56.5 kg', debrief: 'Course 50 % : 31 t · Strat ② : M→H→H · Vie pneus : S 10 / M 20 / H 27 t · Arrêt ≈ 21 s · Diff course : 80-100' },
-  usa: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.7 kg', debrief: 'Course 50 % : 28 t · Strat ② : M→H→H · Vie pneus : S 10 / M 16 / H 23 t · Arrêt ≈ 20 s · Diff course : 80-100' },
-  mex: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H', essence: '55.6 kg', debrief: 'Course 50 % : 35 t · Strat ② : M→H→M · Vie pneus : S 10 / M 16 / H 23 t · Arrêt ≈ 16 s · Diff course : 80-100' },
-  bra: { depart: 'M', a1Pneu: 'H', essence: '53.3 kg', debrief: 'Course 50 % : 36 t · Strat ② : M→H→H · Vie pneus : S 9 / M 16 / H 20 t · Arrêt ≈ 20 s · Diff course : 80-100' },
-  las: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.4 kg', debrief: 'Course 50 % : 25 t · Strat ② : M→H→H · Vie pneus : S 9 / M 16 / H 20 t · Arrêt ≈ 21.5 s · Diff course : 80-100' },
-  qat: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.3 kg', debrief: 'Course 50 % : 29 t · Strat ② : — · Vie pneus : S 10 / M 13 / H 20 t · Arrêt ≈ 20 s · Diff course : 80-100' },
-  abu: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.9 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→H · Vie pneus : S 10 / M 14 / H 19 t · Arrêt ≈ 20 s · Diff course : 80-100' },
+  aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.9 kg', debrief: 'Diff course : 80-100' },
+  chn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.2 kg', debrief: 'Diff course : 80-100' },
+  jpn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.1 kg', debrief: 'Diff course : 80-100' },
+  bhr: { depart: 'M', a1Pneu: 'H', a2Pneu: 'S', essence: '55 kg', debrief: 'Diff course : 80-100' },
+  sau: { depart: 'M', a1Pneu: 'H', essence: '50.9 kg', debrief: 'Diff course : 80-100' },
+  mia: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.1 kg', debrief: 'Diff course : 80-100' },
+  emi: { depart: 'M', a1Pneu: 'H', essence: '53.4 kg', debrief: 'Diff course : 80-100' },
+  mon: { depart: 'M', a1Pneu: 'H', essence: '47.2 kg', debrief: 'Diff course : 80-100' },
+  esp: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '55.1 kg', debrief: 'Diff course : 80-100' },
+  can: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.4 kg', debrief: 'Diff course : 80-100' },
+  aut: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.2 kg', debrief: 'Diff course : 80-100' },
+  gbr: { depart: 'M', a1Pneu: 'H', essence: '50.4 kg', debrief: 'Diff course : 80-100' },
+  bel: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '50.2 kg', debrief: 'Diff course : 80-100' },
+  hun: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.5 kg', debrief: 'Diff course : 80-100' },
+  ned: { depart: 'M', a1Pneu: 'H', essence: '53.7 kg', debrief: 'Diff course : 80-100' },
+  ita: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '49.8 kg', debrief: 'Diff course : 80-100' },
+  aze: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.6 kg', debrief: 'Diff course : 80-100' },
+  sgp: { depart: 'M', a1Pneu: 'H', essence: '56.5 kg', debrief: 'Diff course : 80-100' },
+  usa: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.7 kg', debrief: 'Diff course : 80-100' },
+  mex: { depart: 'M', a1Pneu: 'H', a2Pneu: 'H', essence: '55.6 kg', debrief: 'Diff course : 80-100' },
+  bra: { depart: 'M', a1Pneu: 'H', essence: '53.3 kg', debrief: 'Diff course : 80-100' },
+  las: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.4 kg', debrief: 'Diff course : 80-100' },
+  qat: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '54.3 kg', debrief: 'Diff course : 80-100' },
+  abu: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.9 kg', debrief: 'Diff course : 80-100' },
+};
+
+// Infos course par GP (50 %) : tours, temps d'arrêt au stand, vie moyenne des gommes
+const INFOS_COURSE = {
+  aus: { tours: 29, arret: '21', vieS: 11, vieM: 16, vieH: 20 },
+  chn: { tours: 28, arret: '18', vieS: 8, vieM: 11, vieH: 15 },
+  jpn: { tours: 27, arret: '18', vieS: 10, vieM: 16, vieH: 20 },
+  bhr: { tours: 29, arret: '19', vieS: 9, vieM: 10, vieH: 15 },
+  sau: { tours: 25, arret: '23', vieS: 11, vieM: 16, vieH: 20 },
+  mia: { tours: 29, arret: '22', vieS: 8, vieM: 13, vieH: 20 },
+  emi: { tours: 32, arret: '25', vieS: 9, vieM: 15, vieH: 20 },
+  mon: { tours: 39, arret: '18.5', vieS: 13, vieM: 19, vieH: 25 },
+  esp: { tours: 33, arret: '22', vieS: 13, vieM: 18, vieH: 27 },
+  can: { tours: 35, arret: '23', vieS: 13, vieM: 27, vieH: 32 },
+  aut: { tours: 36, arret: '18', vieS: 10, vieM: 13, vieH: 23 },
+  gbr: { tours: 26, arret: '24', vieS: 10, vieM: 13, vieH: 20 },
+  bel: { tours: 22, arret: '20', vieS: 9, vieM: 13, vieH: 23 },
+  hun: { tours: 35, arret: '21', vieS: 8, vieM: 18, vieH: 23 },
+  ned: { tours: 36, arret: '21.5', vieS: 14, vieM: 17, vieH: 24 },
+  ita: { tours: 27, arret: '21', vieS: 9, vieM: 13, vieH: 18 },
+  aze: { tours: 26, arret: '19.5', vieS: 10, vieM: 16, vieH: 27 },
+  sgp: { tours: 31, arret: '21', vieS: 10, vieM: 20, vieH: 27 },
+  usa: { tours: 28, arret: '20', vieS: 10, vieM: 16, vieH: 23 },
+  mex: { tours: 35, arret: '16', vieS: 10, vieM: 16, vieH: 23 },
+  bra: { tours: 36, arret: '20', vieS: 9, vieM: 16, vieH: 20 },
+  las: { tours: 25, arret: '21.5', vieS: 9, vieM: 16, vieH: 20 },
+  qat: { tours: 29, arret: '20', vieS: 10, vieM: 13, vieH: 20 },
+  abu: { tours: 29, arret: '20', vieS: 10, vieM: 14, vieH: 19 },
 };
 
 // Stratégie ② de référence (plans alternatifs du 23/10/2025)
@@ -706,6 +734,13 @@ function vuePaddock(store) {
             <button data-f1-strat-tab="2" class="f1-tab ${stratActive === 2 ? 'f1-tab-on' : ''}" style="font-size:10px;padding:0.25rem 0.6rem">② Plan B</button>
           </div>
         </div>
+        ${INFOS_COURSE[gp.id] ? `
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3 rounded-lg px-3 py-2" style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.18)">
+          <span class="text-[10px] font-bold text-gray-100">🏁 ${INFOS_COURSE[gp.id].tours} tours <span class="text-gray-100/60 font-normal">(50 %)</span></span>
+          <span class="text-[10px] font-bold text-gray-100">⏱ Arrêt ≈ ${INFOS_COURSE[gp.id].arret} s</span>
+          ${[['S', '#e10600', INFOS_COURSE[gp.id].vieS], ['M', '#ffd12e', INFOS_COURSE[gp.id].vieM], ['H', '#f0f0f0', INFOS_COURSE[gp.id].vieH]].map(([l, c, v]) => `
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold text-gray-100"><span class="inline-flex items-center justify-center rounded-full flex-shrink-0" style="width:16px;height:16px;border:2.5px solid ${c};color:${c};font-size:8px;font-weight:900;background:#0b0b10">${l}</span>${v} t</span>`).join('')}
+        </div>` : ''}
         <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-1.5">Pneus de départ</label>
         ${pneuSelecteur('depart', strat.depart, 40)}
         <div class="mt-3 mb-3 max-w-[220px]">
@@ -834,6 +869,7 @@ function ouvrirFicheCircuit(gpId) {
         ${tuile('Virages', gp.virages)}
         ${tuile('Zones DRS', gp.drs)}
       </div>
+      ${INFOS_COURSE[gpId] ? `<p class="text-[13px] leading-relaxed mt-3" style="color:#cec4e6"><b style="color:#7fe7f7">Course 50 % · </b>${INFOS_COURSE[gpId].tours} tours · arrêt ≈ ${INFOS_COURSE[gpId].arret} s · vie des gommes : S ${INFOS_COURSE[gpId].vieS} / M ${INFOS_COURSE[gpId].vieM} / H ${INFOS_COURSE[gpId].vieH} tours</p>` : ''}
       <p class="text-[13px] leading-relaxed mt-3" style="color:#cec4e6"><b style="color:#7fe7f7">DRS · </b>${gp.drsInfo}</p>
       <p class="text-[9px] mt-3" style="color:#8d7fb3">Tracé stylisé dessiné pour Night Series · données indicatives saison 2025.</p>
     </div>`;
