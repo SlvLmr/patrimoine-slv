@@ -511,7 +511,7 @@ const SETUPS_REFERENCE = {
 
 // Stratégies SRS Custom (course 50 %) : départ + arrêts + essence ; le reste dans le débrief.
 const STRATS_REFERENCE = {
-  aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.9 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→S · Vie pneus : S 11 / M 16 / H 20 t · Arrêt ≈ 21 s · Diff course : 80-100 · CLM 1:17.374' },
+  aus: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '51.9 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→S · Vie pneus : S 11 / M 16 / H 20 t · Arrêt ≈ 21 s · Diff course : 80-100' },
   chn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '52.2 kg', debrief: 'Course 50 % : 28 t · Strat ② : — · Vie pneus : S 8 / M 11 / H 15 t · Arrêt ≈ 18 s · Diff course : 80-100' },
   jpn: { depart: 'M', a1Pneu: 'H', a2Pneu: 'M', essence: '53.1 kg', debrief: 'Course 50 % : 27 t · Strat ② : M→H→H · Vie pneus : S 10 / M 16 / H 20 t · Arrêt ≈ 18 s · Diff course : 80-100' },
   bhr: { depart: 'M', a1Pneu: 'H', a2Pneu: 'S', essence: '55 kg', debrief: 'Course 50 % : 29 t · Strat ② : M→H→M · Vie pneus : S 9 / M 10 / H 15 t · Arrêt ≈ 19 s · Diff course : 80-100' },
@@ -565,7 +565,7 @@ const STRATS2_REFERENCE = {
 
 // Chronos de référence (best laps QLF / RAC du 23/10/2025)
 const CHRONOS_REFERENCE = {
-  aus: { qualif: '1.18.136', course: '1.20.159' },
+  aus: { clm: '1.17.374', qualif: '1.18.136', course: '1.20.159' },
   chn: { qualif: '1.34.295', course: '1.37.327' },
   jpn: { qualif: '1.29.900', course: '1.32.192' },
   bhr: { qualif: '1.29.034', course: '1.31.698' },
@@ -662,6 +662,10 @@ function vuePaddock(store) {
     <div class="f1-carte p-4 mb-3">
       <div class="flex flex-wrap items-end gap-3">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em] w-full sm:w-auto sm:mr-2 sm:pb-2">⏱ CHRONOS DE RÉFÉRENCE</p>
+        <div class="flex-1 min-w-[130px]">
+          <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Temps CLM</label>
+          <input data-f1-chrono="clm" type="text" value="${chronos.clm || ''}" class="f1-input w-full" placeholder="1:17.374">
+        </div>
         <div class="flex-1 min-w-[130px]">
           <label class="block text-[10px] uppercase tracking-wide text-gray-100 mb-0.5">Temps qualif</label>
           <input data-f1-chrono="qualif" type="text" value="${chronos.qualif || ''}" class="f1-input w-full" placeholder="1:29.347">
