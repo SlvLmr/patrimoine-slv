@@ -833,7 +833,16 @@ function vuePalmares(store, champ) {
   const historique = (champ.historique || []).slice().reverse();
 
   return `
-    <div class="f1-carte p-4 mb-4">
+    <div class="f1-carte p-4 mb-4 relative overflow-hidden">
+      <img src="img/f1/pilotes/p1.png" alt="" aria-hidden="true"
+        class="absolute left-0 top-0 h-full object-contain pointer-events-none select-none"
+        style="opacity:0.15;mask-image:linear-gradient(90deg,black 25%,transparent 80%);-webkit-mask-image:linear-gradient(90deg,black 25%,transparent 80%)"
+        onerror="this.remove()">
+      <img src="img/f1/pilotes/p2.png" alt="" aria-hidden="true"
+        class="absolute right-0 top-0 h-full object-contain pointer-events-none select-none"
+        style="opacity:0.15;mask-image:linear-gradient(270deg,black 25%,transparent 80%);-webkit-mask-image:linear-gradient(270deg,black 25%,transparent 80%)"
+        onerror="this.remove()">
+      <div class="relative">
       <div class="flex items-center justify-between mb-2">
         <p class="f1-sous-titre text-[11px] tracking-[0.15em]">FACE-À-FACE · SAISON ${champ.saison}</p>
         <span class="text-[9px] text-gray-500 uppercase">${duels1 + duels2} GP disputés</span>
@@ -852,6 +861,7 @@ function vuePalmares(store, champ) {
       <div class="flex justify-between text-[10px] text-gray-400 mt-2 px-2">
         <span>Série en cours : ${serieCour.n > 0 ? `<b style="color:${serieCour.slot === 'p1' ? c1 : c2}">${champ.pilotes[serieCour.slot].tri} × ${serieCour.n}</b>` : '—'}</span>
         <span>Meilleure série : ${serieMax.n > 0 ? `<b style="color:${serieMax.slot === 'p1' ? c1 : c2}">${champ.pilotes[serieMax.slot].tri} × ${serieMax.n}</b>` : '—'}</span>
+      </div>
       </div>
     </div>
 
