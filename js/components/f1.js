@@ -140,9 +140,9 @@ const F1_MAPS = {
   usa: 'USA', mex: 'Mexico', bra: 'Brazil', las: 'Las_Vegas', qat: 'Qatar', abu: 'Abu_Dhabi',
 };
 
-const traceSvg = (gp, cls = 'w-16 h-10', couleur = '#00e5ff') => `
+const traceSvg = (gp, cls = 'w-16 h-10', couleur = '#00e5ff', larg = 320) => `
   <span class="${cls} flex-shrink-0 inline-block">
-    <img src="https://media.formula1.com/image/upload/f_auto,q_auto,w_320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/${F1_MAPS[gp.id]}_Circuit.png"
+    <img src="https://media.formula1.com/image/upload/f_auto,q_auto,w_${larg}/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/${F1_MAPS[gp.id]}_Circuit.png"
       alt="Tracé ${gp.nom}" loading="lazy" class="w-full h-full object-contain"
       style="filter:drop-shadow(0 0 4px ${couleur}66)"
       onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
@@ -408,7 +408,7 @@ function vuePaddock(store) {
         <p class="text-[10px] text-gray-500 uppercase tracking-widest">${gp.circuit} · ${gp.date} · ${gp.km} km · ${gp.virages} virages · ${gp.drs} zone${gp.drs > 1 ? 's' : ''} DRS</p>
       </div>
       <button data-f1-zoom="${gp.id}" class="text-center hover:scale-105 transition" title="Zoom : tracé, zones DRS, infos circuit">
-        ${traceSvg(gp, 'w-32 h-20 block mx-auto', '#ff2d95')}
+        ${traceSvg(gp, 'w-32 h-20 block mx-auto', '#ff2d95', 640)}
         <span class="text-[9px] uppercase tracking-wide" style="color:#b1a2d6">🔍 fiche circuit</span>
       </button>
     </div>`;
@@ -566,7 +566,7 @@ function ouvrirFicheCircuit(gpId) {
         </div>
         <button id="f1-zoom-close" class="text-3xl leading-none px-2 hover:text-white" style="color:#b1a2d6">&times;</button>
       </div>
-      ${traceSvg(gp, 'block w-full h-[300px]', '#00e5ff')}
+      ${traceSvg(gp, 'block w-full h-[300px]', '#00e5ff', 1280)}
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
         ${tuile('Longueur', gp.km + ' km')}
         ${tuile('Tours', gp.tours)}
