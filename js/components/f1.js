@@ -343,7 +343,6 @@ function vueChampionnat(store, champ) {
         <p class="text-[13px] font-bold text-gray-100 uppercase tracking-wide truncate">${gp.nom}</p>
         <p class="text-[10px] text-gray-500 truncate">${gp.circuit} · ${gp.date}</p>
       </div>
-      <span class="hidden md:block">${traceSvg(gp, 'w-14 h-9', dispute ? '#00e5ff' : '#5b4a7d')}</span>
       <div class="flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
         ${chipRes('p1')}${chipRes('p2')}
       </div>
