@@ -400,7 +400,7 @@ function vueChampionnat(store, champ) {
 // ---- Vue Garage / Stratégie ----
 const CHAMPS_SETUP = [
   ['Aérodynamique', [['aeroAv', 'Aileron avant'], ['aeroAr', 'Aileron arrière']]],
-  ['Transmission', [['diffAccel', 'Différentiel accél. (%)'], ['diffFrein', 'Différentiel décél. (%)'], ['freinMoteur', 'Frein moteur']]],
+  ['Transmission', [['diffAccel', 'Différentiel accél. (%)'], ['diffFrein', 'Différentiel décél. (%)']]],
   ['Géométrie', [['carrossAv', 'Carrossage avant'], ['carrossAr', 'Carrossage arrière'], ['pinceAv', 'Pince avant'], ['pinceAr', 'Pince arrière']]],
   ['Suspension', [['suspAv', 'Suspension avant'], ['suspAr', 'Suspension arrière'], ['antiRoulisAv', 'Anti-roulis avant'], ['antiRoulisAr', 'Anti-roulis arrière'], ['hautAv', 'Hauteur avant'], ['hautAr', 'Hauteur arrière']]],
   ['Freins', [['pressionFreins', 'Pression (%)'], ['repartFreins', 'Répartition (%)']]],
