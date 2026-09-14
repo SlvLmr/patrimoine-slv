@@ -13,53 +13,101 @@ const BAREME = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 // Tracés : silhouettes SVG stylisées (viewBox 0 0 100 60), pas des relevés exacts
 const GP_2025 = [
   { id: 'aus', nom: 'Australie', circuit: 'Albert Park · Melbourne', iso: 'au', date: '16 mars',
-    trace: 'M15 45 Q10 38 14 32 Q20 24 30 22 Q40 20 48 15 Q56 10 66 12 Q76 14 82 20 Q88 26 84 32 Q78 38 68 38 Q60 38 54 42 Q46 48 34 48 Q22 48 15 45 Z' },
+    trace: 'M16 46 C8 42 8 34 15 31 C21 28 26 30 31 26 C36 22 34 16 42 13 C50 10 57 14 65 12 C72 10 78 7 87 10 C96 14 98 21 92 25 C86 29 78 25 72 29 C67 32 70 38 63 42 C56 46 47 42 38 46 C30 49 23 49 16 46 Z',
+    km: 5.278, tours: 58, virages: 14, drs: 4,
+    drsInfo: "4 zones — ligne droite des stands, T2→T3, T8→T9 et T10→T11. Le circuit le plus généreux du calendrier en DRS." },
   { id: 'chn', nom: 'Chine', circuit: 'Shanghai International', iso: 'cn', date: '23 mars',
-    trace: 'M20 48 Q12 44 14 36 Q16 28 26 26 Q36 24 38 18 Q40 12 32 12 Q26 12 26 18 Q26 24 34 26 L78 26 Q88 26 88 34 Q88 42 78 44 L30 50 Q24 50 20 48 Z' },
+    trace: 'M18 50 C9 48 7 41 13 37 L28 30 C35 26 37 19 32 15 C27 11 20 14 22 21 C24 27 33 27 40 25 L88 20 C97 19 99 27 91 30 L54 41 C44 44 30 53 18 50 Z',
+    km: 5.451, tours: 56, virages: 16, drs: 2,
+    drsInfo: "2 zones — l'immense ligne droite arrière (1,2 km, gros point de dépassement au bout) et la ligne des stands." },
   { id: 'jpn', nom: 'Japon', circuit: 'Suzuka', iso: 'jp', date: '6 avril',
-    trace: 'M18 44 Q10 38 16 30 Q22 22 34 24 Q46 26 54 20 Q60 14 70 14 Q82 14 84 24 Q86 34 74 34 Q62 34 56 28 Q50 22 42 30 Q34 38 44 42 Q54 46 66 42 L74 40 Q82 38 84 44 Q84 50 74 50 L30 50 Q22 50 18 44 Z' },
+    trace: 'M18 48 C9 43 10 33 20 29 L36 24 C43 22 46 16 53 12 C60 8 72 6 79 12 C86 18 82 27 73 27 C64 27 61 20 54 24 C47 28 44 35 36 39 L28 42 C23 44 25 48 32 48 L72 43 C81 41 87 46 80 51 L30 55 C21 57 26 51 18 48 Z',
+    km: 5.807, tours: 53, virages: 18, drs: 1,
+    drsInfo: "1 seule zone — ligne droite des stands. Dépassements rares : la qualif et l'undercut font la course." },
   { id: 'bhr', nom: 'Bahreïn', circuit: 'Sakhir', iso: 'bh', date: '13 avril',
-    trace: 'M16 46 L20 30 Q22 24 30 24 L44 24 L48 14 Q50 10 56 12 L64 16 Q70 18 68 24 L64 32 L78 34 Q86 36 84 42 Q82 48 72 48 L24 50 Q16 50 16 46 Z' },
+    trace: 'M15 51 L21 32 C22 28 25 26 29 26 L42 26 L46 13 C47 9 52 7 56 9 L62 13 C66 15 66 19 62 23 L56 29 L76 31 C82 31 84 35 82 39 L78 46 C76 50 72 52 66 52 L22 54 C17 55 14 54 15 51 Z',
+    km: 5.412, tours: 57, virages: 15, drs: 3,
+    drsInfo: "3 zones — ligne des stands (vers T1, gros freinage), T3→T4 et T10→T11. Dépassements faciles." },
   { id: 'sau', nom: 'Arabie saoudite', circuit: 'Djeddah Corniche', iso: 'sa', date: '20 avril',
-    trace: 'M12 42 Q10 36 18 34 L36 30 L40 24 L52 22 L56 16 Q60 12 66 14 Q72 16 70 22 L84 24 Q90 28 86 34 Q82 38 74 36 L60 40 L56 46 L40 44 L30 48 Q16 52 12 42 Z' },
+    trace: 'M9 46 C5 40 9 36 15 34 L32 29 L36 21 L47 18 L51 10 C53 6 59 4 63 8 C67 12 63 16 57 18 L82 14 C92 12 100 18 94 24 C90 28 82 26 74 28 L49 35 L45 43 L26 47 C18 51 13 52 9 46 Z',
+    km: 6.174, tours: 50, virages: 27, drs: 3,
+    drsInfo: "3 zones — dont la ligne des stands et la portion avant le dernier virage. Circuit le plus rapide du calendrier en moyenne." },
   { id: 'mia', nom: 'Miami', circuit: 'Miami International', iso: 'us', date: '4 mai',
-    trace: 'M14 40 Q12 32 22 30 L60 26 Q66 26 68 20 Q70 14 78 16 Q86 18 84 26 Q82 32 74 32 L70 38 Q66 44 56 42 L40 40 Q34 46 26 46 Q16 46 14 40 Z' },
+    trace: 'M13 43 C7 37 11 29 21 27 L55 22 C61 21 63 14 69 11 C75 8 85 8 89 14 C93 20 87 26 79 26 L71 28 C77 34 73 40 65 40 L49 38 C43 44 37 42 31 46 C23 50 19 49 13 43 Z',
+    km: 5.412, tours: 57, virages: 19, drs: 3,
+    drsInfo: "3 zones — dont la longue ligne arrière vers T17 (gros freinage) et la ligne des stands." },
   { id: 'emi', nom: 'Émilie-Romagne', circuit: 'Imola', iso: 'it', date: '18 mai',
-    trace: 'M14 44 Q10 38 18 34 L30 30 Q36 28 38 22 Q40 16 48 16 L62 18 Q70 18 72 24 L76 34 Q84 36 82 42 Q80 48 70 46 L26 48 Q18 48 14 44 Z' },
+    trace: 'M11 47 C5 43 7 37 15 33 L26 29 C32 27 34 21 38 17 C42 13 48 11 54 13 L68 17 C74 19 76 25 74 29 L84 33 C92 37 90 45 80 45 L58 43 L38 49 C28 53 17 51 11 47 Z',
+    km: 4.909, tours: 63, virages: 19, drs: 1,
+    drsInfo: "1 zone — ligne des stands vers le freinage de Tamburello. Piste étroite : difficile de doubler, l'undercut est roi." },
   { id: 'mon', nom: 'Monaco', circuit: 'Monte-Carlo', iso: 'mc', date: '25 mai',
-    trace: 'M16 42 Q14 36 22 34 L36 32 Q42 30 44 24 Q46 18 54 18 Q62 18 62 24 Q62 28 56 30 L66 34 Q74 36 78 32 Q84 28 86 34 Q88 40 80 42 L60 44 Q52 50 42 48 L24 46 Q18 46 16 42 Z' },
+    trace: 'M13 43 C9 39 11 35 17 33 L32 29 C38 27 40 21 44 17 C48 13 56 11 58 15 C60 19 54 21 50 23 L62 25 C68 25 72 21 78 21 C86 21 90 27 84 31 C80 34 74 31 68 33 L58 37 C52 43 42 41 36 43 L21 47 C15 48 15 45 13 43 Z',
+    km: 3.337, tours: 78, virages: 19, drs: 1,
+    drsInfo: "1 zone — ligne des stands, quasi inutile. On double au stand ou pas du tout : soigne la qualif et la fenêtre d'arrêt." },
   { id: 'esp', nom: 'Espagne', circuit: 'Barcelona-Catalunya', iso: 'es', date: '1 juin',
-    trace: 'M16 44 Q12 36 22 32 L38 28 Q44 26 50 20 Q56 14 64 16 Q74 18 72 26 Q70 32 62 32 L74 38 Q82 42 76 46 Q70 50 60 46 L30 48 Q20 50 16 44 Z' },
+    trace: 'M12 47 C6 43 8 37 16 33 L34 27 C40 25 44 19 50 15 C56 11 66 9 72 13 C78 17 74 23 66 25 L58 27 L76 31 C86 33 88 41 78 45 C70 47 64 43 56 45 L24 51 C16 53 14 49 12 47 Z',
+    km: 4.657, tours: 66, virages: 14, drs: 2,
+    drsInfo: "2 zones — ligne des stands et ligne arrière. Le DRS ne suffit pas toujours : l'aéro sale gêne derrière." },
   { id: 'can', nom: 'Canada', circuit: 'Gilles-Villeneuve · Montréal', iso: 'ca', date: '15 juin',
-    trace: 'M10 40 Q8 34 16 32 L66 20 Q74 18 80 22 Q88 26 84 32 Q80 36 72 34 L60 38 L68 40 Q76 42 72 46 Q68 50 58 46 L20 44 Q12 44 10 40 Z' },
+    trace: 'M7 41 C3 37 7 33 13 31 L67 17 C75 15 81 11 87 15 C93 19 89 25 81 25 L73 27 L85 31 C91 33 89 39 81 39 L57 37 L21 45 C13 47 9 45 7 41 Z',
+    km: 4.361, tours: 70, virages: 14, drs: 3,
+    drsInfo: "3 zones — dont la ligne droite du Casino vers la chicane finale (mur des champions). Beaucoup de dépassements." },
   { id: 'aut', nom: 'Autriche', circuit: 'Red Bull Ring · Spielberg', iso: 'at', date: '29 juin',
-    trace: 'M18 46 L26 24 Q28 18 36 18 L66 16 Q76 16 78 24 Q80 30 70 32 L36 44 Q26 50 18 46 Z' },
+    trace: 'M16 51 L26 23 C28 17 32 15 38 15 L76 11 C86 10 92 17 86 23 C82 27 74 25 68 29 L34 47 C26 53 20 55 16 51 Z',
+    km: 4.318, tours: 71, virages: 10, drs: 3,
+    drsInfo: "3 zones — les trois lignes droites du haut du circuit. Tour court, trafic permanent, DRS très puissant ici." },
   { id: 'gbr', nom: 'Grande-Bretagne', circuit: 'Silverstone', iso: 'gb', date: '6 juillet',
-    trace: 'M14 38 Q12 30 22 28 L34 26 Q40 24 42 18 Q44 12 54 12 Q64 12 64 20 Q64 26 56 28 L70 30 Q80 30 82 38 Q84 46 72 46 L48 44 Q40 50 30 48 Q18 46 14 38 Z' },
+    trace: 'M12 41 C6 35 10 27 20 25 L31 23 C37 22 39 15 45 12 C51 9 57 11 59 15 C61 19 55 23 49 23 L61 25 C67 25 71 19 79 19 C89 19 95 27 89 33 C85 37 77 35 71 37 L51 43 C41 49 31 47 23 45 C17 43 16 45 12 41 Z',
+    km: 5.891, tours: 52, virages: 18, drs: 2,
+    drsInfo: "2 zones — Wellington Straight et Hangar Straight. Les enchaînements Maggotts-Becketts se prennent à fond avec un bon train avant." },
   { id: 'bel', nom: 'Belgique', circuit: 'Spa-Francorchamps', iso: 'be', date: '27 juillet',
-    trace: 'M12 46 L20 30 Q24 22 32 20 L54 14 Q62 12 66 18 L84 38 Q90 44 82 48 L26 50 Q14 52 12 46 Z' },
+    trace: 'M10 51 L20 29 C22 23 26 19 32 17 L55 8 C61 5 67 6 71 12 L89 41 C93 47 89 53 81 53 L26 57 C14 58 6 57 10 51 Z',
+    km: 7.004, tours: 44, virages: 19, drs: 2,
+    drsInfo: "2 zones — la ligne de Kemmel après Eau Rouge (LE point de dépassement) et la ligne des stands. Aileron : compromis Kemmel / secteur 2." },
   { id: 'hun', nom: 'Hongrie', circuit: 'Hungaroring · Budapest', iso: 'hu', date: '3 août',
-    trace: 'M16 42 Q12 34 22 30 Q30 26 36 20 Q42 14 52 16 Q62 18 60 26 Q58 32 50 32 Q60 36 70 34 Q80 32 82 38 Q84 46 72 46 L28 48 Q18 48 16 42 Z' },
+    trace: 'M12 45 C6 39 10 31 20 29 C28 27 32 21 38 17 C44 13 52 13 56 17 C60 21 56 27 48 27 C56 31 64 29 72 27 C80 25 88 29 86 37 C84 43 74 45 66 43 L28 49 C20 51 16 49 12 45 Z',
+    km: 4.381, tours: 70, virages: 14, drs: 2,
+    drsInfo: "2 zones — ligne des stands et courte ligne vers T2. Doubler est dur : un « Monaco sans les murs », la stratégie fait tout." },
   { id: 'ned', nom: 'Pays-Bas', circuit: 'Zandvoort', iso: 'nl', date: '31 août',
-    trace: 'M18 44 Q12 38 18 32 Q24 26 34 26 Q40 26 44 20 Q48 14 58 14 Q70 14 72 22 Q74 30 64 32 L74 38 Q80 42 74 46 Q66 50 56 46 L28 48 Q20 48 18 44 Z' },
+    trace: 'M14 45 C6 41 6 33 14 29 C20 25 28 27 34 23 C40 19 40 11 50 9 C60 7 68 11 68 19 C68 25 60 27 54 27 L66 31 C74 33 76 41 68 45 C60 47 54 41 46 43 L26 49 C20 51 18 47 14 45 Z',
+    km: 4.259, tours: 72, virages: 14, drs: 2,
+    drsInfo: "2 zones — la dernière courbe relevée (18°) se prend à fond, DRS ouvert dans le banking vers la ligne des stands." },
   { id: 'ita', nom: 'Italie', circuit: 'Monza', iso: 'it', date: '7 septembre',
-    trace: 'M14 44 L20 22 Q22 16 30 16 L78 14 Q86 14 86 22 Q86 28 78 28 L40 32 L74 38 Q82 40 78 46 L24 48 Q14 50 14 44 Z' },
+    trace: 'M12 51 L20 17 C21 13 24 11 28 11 L86 7 C94 6 98 13 92 17 L86 21 L88 27 C88 31 84 33 78 33 L44 37 L76 41 C84 43 82 49 74 49 L20 55 C14 56 11 55 12 51 Z',
+    km: 5.793, tours: 53, virages: 11, drs: 2,
+    drsInfo: "2 zones — ligne des stands (freinage de la première chicane) et ligne arrière avant Parabolica. Aileron minimal obligatoire." },
   { id: 'aze', nom: 'Azerbaïdjan', circuit: 'Bakou City', iso: 'az', date: '21 septembre',
-    trace: 'M12 44 L16 30 Q18 26 24 26 L40 24 L42 16 L52 14 L54 22 L80 20 Q88 20 86 28 Q84 34 76 32 L70 42 Q66 48 56 46 L20 48 Q12 48 12 44 Z' },
+    trace: 'M8 47 L12 31 C13 27 16 25 20 25 L36 23 L38 15 L48 13 L50 21 L64 19 L66 11 L76 9 L78 19 L92 17 C100 16 102 23 96 27 L86 31 L78 43 C74 49 66 49 58 47 L18 51 C12 52 7 51 8 47 Z',
+    km: 6.003, tours: 51, virages: 20, drs: 2,
+    drsInfo: "2 zones — dont la ligne droite de 2,2 km le long de la mer Caspienne : aspiration + DRS = dépassements garantis." },
   { id: 'sgp', nom: 'Singapour', circuit: 'Marina Bay', iso: 'sg', date: '5 octobre',
-    trace: 'M14 42 L18 28 L30 26 L34 18 L48 16 L52 24 L72 22 L84 26 L80 36 L64 38 L60 46 L40 44 L24 48 L14 42 Z' },
+    trace: 'M10 45 L14 27 L26 25 L30 15 L44 13 L46 21 L62 19 L64 11 L78 9 L82 19 L94 23 L90 33 L74 35 L70 45 L50 43 L42 51 L22 49 L10 45 Z',
+    km: 4.94, tours: 62, virages: 19, drs: 3,
+    drsInfo: "3 zones sur ce circuit urbain. Chaleur et murs : la course la plus physique, safety car quasi garanti (planifie un arrêt flexible)." },
   { id: 'usa', nom: 'États-Unis', circuit: 'COTA · Austin', iso: 'us', date: '19 octobre',
-    trace: 'M16 44 Q12 36 20 32 L30 28 L34 16 Q36 10 44 14 L52 20 Q58 24 66 20 Q76 16 80 24 Q84 32 74 34 L62 36 Q70 42 62 46 L28 48 Q18 48 16 44 Z' },
+    trace: 'M14 49 C8 43 10 37 18 33 L30 29 L32 13 C33 7 40 5 44 11 L50 21 C54 27 62 23 70 19 C78 15 88 17 88 25 C88 31 80 33 72 33 L58 35 C66 41 62 47 52 47 L26 51 C18 53 16 51 14 49 Z',
+    km: 5.513, tours: 56, virages: 20, drs: 2,
+    drsInfo: "2 zones — la ligne arrière vers T12 (gros freinage) et la ligne des stands après la montée de T1." },
   { id: 'mex', nom: 'Mexique', circuit: 'Hermanos Rodríguez', iso: 'mx', date: '26 octobre',
-    trace: 'M14 42 L18 30 Q20 26 28 26 L74 22 Q84 22 84 30 Q84 36 74 36 L52 38 Q46 44 38 42 L34 48 L22 48 Q14 48 14 42 Z' },
+    trace: 'M10 47 L14 31 C15 27 18 25 24 25 L82 19 C92 18 96 25 90 29 C86 32 78 29 72 31 L56 35 C50 37 48 43 40 41 L36 47 C32 51 26 49 24 45 L18 49 C14 51 9 50 10 47 Z',
+    km: 4.304, tours: 71, virages: 17, drs: 3,
+    drsInfo: "3 zones — dont l'énorme ligne des stands (1,2 km). Altitude 2 200 m : moteur et freins souffrent, appui aéro réduit d'office." },
   { id: 'bra', nom: 'Brésil', circuit: 'Interlagos · São Paulo', iso: 'br', date: '9 novembre',
-    trace: 'M16 40 Q12 32 22 28 Q30 26 34 20 Q38 14 48 16 Q56 18 54 26 L64 24 Q74 22 78 28 Q82 36 72 40 L60 42 Q52 50 40 46 L24 46 Q18 44 16 40 Z' },
+    trace: 'M16 43 C8 39 8 31 16 27 C22 23 28 25 32 19 C36 13 44 9 52 11 C58 13 58 19 52 21 L64 19 C74 17 82 21 82 29 C82 35 74 37 66 37 L56 39 C48 47 36 45 28 43 C22 43 20 45 16 43 Z',
+    km: 4.309, tours: 71, virages: 15, drs: 2,
+    drsInfo: "2 zones — Reta Oposta et la ligne des stands après la montée finale. Anti-horaire, pluie fréquente : garde un setup Pluie prêt." },
   { id: 'las', nom: 'Las Vegas', circuit: 'Las Vegas Strip', iso: 'us', date: '22 novembre',
-    trace: 'M14 46 L18 36 Q20 32 28 32 L70 30 L74 18 Q76 12 84 14 Q90 16 86 24 L82 40 Q80 46 70 46 L22 50 Q14 50 14 46 Z' },
+    trace: 'M12 49 L16 37 C17 33 20 31 26 31 L72 29 L76 13 C78 7 86 5 90 11 C92 15 88 19 86 23 L82 41 C80 47 74 49 66 49 L20 53 C14 54 11 53 12 49 Z',
+    km: 6.201, tours: 50, virages: 17, drs: 2,
+    drsInfo: "2 zones — dont le Strip (1,9 km) vers le freinage de T14. Piste froide la nuit : chauffe des pneus difficile." },
   { id: 'qat', nom: 'Qatar', circuit: 'Losail', iso: 'qa', date: '30 novembre',
-    trace: 'M16 42 Q12 34 22 30 L36 26 Q44 24 50 18 Q56 12 66 14 Q76 16 74 24 Q72 30 62 30 L76 36 Q84 40 78 46 L28 48 Q18 48 16 42 Z' },
+    trace: 'M12 45 C6 39 10 31 20 29 L36 25 C44 23 48 17 56 13 C64 9 74 11 76 17 C78 23 70 27 62 27 L74 31 C84 33 86 41 76 45 C68 47 62 43 54 45 L26 49 C18 51 16 49 12 45 Z',
+    km: 5.419, tours: 57, virages: 16, drs: 1,
+    drsInfo: "1 zone — ligne des stands. Enchaînements rapides très exigeants pour les pneus : dégradation élevée, surveille les relais." },
   { id: 'abu', nom: 'Abou Dabi', circuit: 'Yas Marina', iso: 'ae', date: '7 décembre',
-    trace: 'M14 40 Q12 32 22 30 L34 28 L38 18 Q40 12 50 14 L58 18 Q64 20 62 26 L58 32 L74 30 Q84 30 84 38 Q84 46 72 46 L26 48 Q16 48 14 40 Z' },
+    trace: 'M10 43 C6 37 10 33 18 31 L34 27 L38 15 C40 9 48 7 52 13 L56 21 C58 25 56 29 50 31 L76 27 C86 25 92 31 88 37 C84 41 76 39 70 41 L58 43 C52 49 42 47 34 47 L18 47 C12 47 12 45 10 43 Z',
+    km: 5.281, tours: 58, virages: 16, drs: 2,
+    drsInfo: "2 zones — les deux longues lignes droites après l'épingle T7. Course de nuit, piste qui refroidit : la fenêtre pneus évolue." },
 ];
 
 // Drapeaux en images (les emoji drapeaux ne s'affichent pas sous Windows)
@@ -217,7 +265,7 @@ export function render(store) {
       <!-- Top bar -->
       <div class="flex flex-wrap items-center gap-3 pt-5 pb-6">
         <div>
-          <p class="f1-titre text-2xl sm:text-3xl leading-none">NIGHT&nbsp;SERIES</p>
+          <button id="f1-nom-serie" class="f1-titre text-2xl sm:text-3xl leading-none text-left uppercase" title="Renommer la série (nom commun aux deux pilotes)">${champ.nomSerie || 'NIGHT SERIES'}</button>
           <p class="f1-sous-titre text-[11px] tracking-[0.2em] mt-1">SAISON ${champ.saison} · DUEL PS5</p>
         </div>
         <div class="ml-auto flex items-center gap-2">
@@ -357,9 +405,12 @@ function vuePaddock(store) {
       ${drapeau(gp.iso, 'w-10 h-7')}
       <div class="flex-1 min-w-[180px]">
         <p class="f1-titre text-xl uppercase">${gp.nom}</p>
-        <p class="text-[10px] text-gray-500 uppercase tracking-widest">${gp.circuit} · ${gp.date} · fiche personnelle</p>
+        <p class="text-[10px] text-gray-500 uppercase tracking-widest">${gp.circuit} · ${gp.date} · ${gp.km} km · ${gp.virages} virages · ${gp.drs} zone${gp.drs > 1 ? 's' : ''} DRS</p>
       </div>
-      ${traceSvg(gp, 'w-28 h-16', '#ff2d95')}
+      <button data-f1-zoom="${gp.id}" class="text-center hover:scale-105 transition" title="Zoom : tracé, zones DRS, infos circuit">
+        ${traceSvg(gp, 'w-32 h-20 block mx-auto', '#ff2d95')}
+        <span class="text-[9px] uppercase tracking-wide" style="color:#b1a2d6">🔍 fiche circuit</span>
+      </button>
     </div>`;
 
   const ongletsVariantes = `
@@ -398,16 +449,26 @@ function vuePaddock(store) {
         <select data-f1-strat="depart" class="f1-input w-full mb-2">${PNEUS.map(p => `<option value="${p.value}" ${strat.depart === p.value ? 'selected' : ''}>${p.label}</option>`).join('')}</select>
         <div class="grid grid-cols-2 gap-2 mb-2">
           <div>
-            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Nombre d'arrêts</label>
-            <input data-f1-strat="arrets" type="text" inputmode="numeric" value="${strat.arrets ?? ''}" class="f1-input w-full">
+            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Plein d'essence (%)</label>
+            <input data-f1-strat="essence" type="text" inputmode="decimal" value="${strat.essence ?? ''}" class="f1-input w-full" placeholder="Ex: 105">
           </div>
           <div>
             <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Météo / température</label>
             <input data-f1-strat="meteo" type="text" value="${strat.meteo || ''}" class="f1-input w-full" placeholder="Sec, piste 34°">
           </div>
         </div>
-        <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Relais (composé + tours)</label>
-        <textarea data-f1-strat="relais" rows="3" class="f1-input w-full mb-2" placeholder="M 1-18 → H 19-44">${strat.relais || ''}</textarea>
+        <p class="f1-sous-titre text-[10px] tracking-[0.15em] mt-3 mb-1.5">ARRÊTS AUX STANDS</p>
+        ${[1, 2, 3].map(n => `
+        <div class="grid grid-cols-2 gap-2 mb-1.5">
+          <div>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Arrêt ${n} — tour</label>
+            <input data-f1-strat="a${n}Tour" type="text" inputmode="numeric" value="${strat['a' + n + 'Tour'] ?? ''}" class="f1-input w-full" placeholder="${n === 1 ? 'Ex: 18' : 'optionnel'}">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Pneus montés</label>
+            <select data-f1-strat="a${n}Pneu" class="f1-input w-full"><option value="">—</option>${PNEUS.map(p => `<option value="${p.value}" ${strat['a' + n + 'Pneu'] === p.value ? 'selected' : ''}>${p.label}</option>`).join('')}</select>
+          </div>
+        </div>`).join('')}
         <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">ERS / essence</label>
         <input data-f1-strat="ers" type="text" value="${strat.ers || ''}" class="f1-input w-full mb-2" placeholder="ERS hotlap T1, essence standard">
         <label class="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">Débrief après course</label>
@@ -483,6 +544,43 @@ function vuePalmares(store, champ) {
     <p class="text-[9px] text-gray-500 mt-2">Le champion entre au palmarès, les résultats repartent à zéro pour la saison ${champ.saison + 1}. Profils et setups conservés.</p>`;
 }
 
+// Fiche circuit plein écran : grand tracé, zones DRS, données clés
+function ouvrirFicheCircuit(gpId) {
+  const gp = GP_2025.find(g => g.id === gpId);
+  if (!gp) return;
+  document.getElementById('f1-zoom')?.remove();
+  const tuile = (l, v) => `<div class="rounded-lg p-2.5 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(160,130,220,0.25)">
+    <p class="f1-titre text-xl leading-none" style="color:#00e5ff">${v}</p>
+    <p class="text-[9px] uppercase tracking-wide mt-1" style="color:#b1a2d6">${l}</p></div>`;
+  const ov = document.createElement('div');
+  ov.id = 'f1-zoom';
+  ov.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto';
+  ov.style.cssText = "background:rgba(5,1,15,0.93);backdrop-filter:blur(6px);font-family:'Titillium Web',sans-serif";
+  ov.innerHTML = `
+    <div class="f1-carte w-full max-w-3xl p-5 my-auto">
+      <div class="flex items-center gap-3 mb-3">
+        ${drapeau(gp.iso, 'w-9 h-6')}
+        <div class="flex-1 min-w-0">
+          <p class="f1-titre text-2xl uppercase">${gp.nom}</p>
+          <p class="text-[11px] uppercase tracking-wide" style="color:#b1a2d6">${gp.circuit} · ${gp.date}</p>
+        </div>
+        <button id="f1-zoom-close" class="text-3xl leading-none px-2 hover:text-white" style="color:#b1a2d6">&times;</button>
+      </div>
+      ${traceSvg(gp, 'block w-full h-[300px]', '#00e5ff')}
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+        ${tuile('Longueur', gp.km + ' km')}
+        ${tuile('Tours', gp.tours)}
+        ${tuile('Virages', gp.virages)}
+        ${tuile('Zones DRS', gp.drs)}
+      </div>
+      <p class="text-[13px] leading-relaxed mt-3" style="color:#cec4e6"><b style="color:#7fe7f7">DRS · </b>${gp.drsInfo}</p>
+      <p class="text-[9px] mt-3" style="color:#8d7fb3">Tracé stylisé dessiné pour Night Series · données indicatives saison 2025.</p>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#f1-zoom-close').addEventListener('click', () => ov.remove());
+}
+
 // ============================================================
 // MOUNT
 // ============================================================
@@ -501,8 +599,23 @@ export function mount(store, navigate) {
   }
 
   document.getElementById('f1-retour')?.addEventListener('click', () => navigate('suivi-depenses'));
+
+  // Nom de la série (commun, synchronisé)
+  document.getElementById('f1-nom-serie')?.addEventListener('click', () => {
+    const c = getChamp(store);
+    promptModal('Nom de la série', c.nomSerie || 'NIGHT SERIES', (nom) => {
+      if (!nom || !nom.trim()) return;
+      const c2 = getChamp(store);
+      c2.nomSerie = nom.trim();
+      pousserChamp(store, c2);
+      navigate('f1');
+    }, { label: 'Ce nom est partagé entre les deux pilotes', placeholder: 'NIGHT SERIES' });
+  });
   document.querySelectorAll('[data-f1-tab]').forEach(btn => {
     btn.addEventListener('click', () => { ongletActif = btn.dataset.f1Tab; navigate('f1'); });
+  });
+  document.querySelectorAll('[data-f1-zoom]').forEach(btn => {
+    btn.addEventListener('click', () => ouvrirFicheCircuit(btn.dataset.f1Zoom));
   });
   document.querySelectorAll('[data-f1-gp-select]').forEach(btn => {
     btn.addEventListener('click', () => { gpActif = btn.dataset.f1GpSelect; varianteActive = null; navigate('f1'); });
@@ -595,8 +708,15 @@ export function mount(store, navigate) {
         cible.nom = data.nom || cible.nom;
         cible.tri = (data.tri || cible.tri).toUpperCase().slice(0, 3);
         cible.nat = document.getElementById('f1-nat')?.value || natIso(cible.nat);
-        cible.ecurie = document.getElementById('ecurie')?.value || cible.ecurie;
-        cible.couleur = document.getElementById('f1-couleur')?.value || cible.couleur;
+        const ancienneEcurie = cible.ecurie;
+        cible.ecurie = data.ecurie || cible.ecurie;
+        const couleurChoisie = document.getElementById('f1-couleur')?.value || '';
+        // Couleur : si l'écurie change et que le sélecteur n'a pas été retouché, on adopte la couleur de la nouvelle écurie
+        if (cible.ecurie !== ancienneEcurie && couleurChoisie.toLowerCase() === couleurPilote(p).toLowerCase()) {
+          cible.couleur = ecurieDe(cible.ecurie).couleur;
+        } else if (couleurChoisie) {
+          cible.couleur = couleurChoisie;
+        }
         cible.casque = document.getElementById('f1-casque')?.value || cible.casque;
         if (document.getElementById('f1-cest-moi')?.checked) {
           store.set('f1MonSlot', slot);
