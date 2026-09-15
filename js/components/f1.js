@@ -208,7 +208,7 @@ let _unsubShared = null;
 const surPageF1 = () => window.location.hash.slice(1) === 'f1';
 
 const DEFAUT_CHAMP = () => ({
-  saison: 2025,
+  saison: 1,
   updatedAt: '1970-01-01T00:00:00.000Z',
   pilotes: {
     p1: { nom: 'Sylvain', tri: 'SYL', ecurie: 'ferrari', nat: '🇫🇷', casque: '#E10600', email: '' },
@@ -219,7 +219,11 @@ const DEFAUT_CHAMP = () => ({
 
 function getChamp(store) {
   const c = store.get('f1Champ');
-  return c && c.pilotes ? c : DEFAUT_CHAMP();
+  if (!c || !c.pilotes) return DEFAUT_CHAMP();
+  // Migration : on numérote les saisons (S1, S2…) au lieu des années
+  if (c.saison > 100) c.saison = (c.historique || []).length + 1;
+  (c.historique || []).forEach((h, i) => { if (h.saison > 100) h.saison = i + 1; });
+  return c;
 }
 
 // Écrit localement ET pousse vers le document partagé (classement commun)
@@ -259,13 +263,13 @@ function getMonSlot(store) {
 
 const ptsPour = (pos) => (typeof pos === 'number' && pos >= 1 && pos <= 10) ? BAREME[pos - 1] : 0;
 
-function classement(champ) {
+function classementDe(resultats) {
   const t = {
     p1: { pts: 0, wins: 0, podiums: 0, courses: 0, poles: 0, mt: 0, dnf: 0 },
     p2: { pts: 0, wins: 0, podiums: 0, courses: 0, poles: 0, mt: 0, dnf: 0 },
   };
   GP_2025.forEach(gp => {
-    const r = champ.resultats[gp.id];
+    const r = resultats[gp.id];
     if (!r) return;
     ['p1', 'p2'].forEach(k => {
       const pos = r[k];
@@ -281,6 +285,8 @@ function classement(champ) {
   });
   return t;
 }
+
+const classement = (champ) => classementDe(champ.resultats || {});
 
 const posTxt = (pos) => pos === 'DNF' ? 'DNF' : (pos ? 'P' + pos : '—');
 
@@ -872,17 +878,90 @@ function vuePalmares(store, champ) {
       <div class="f1-bandeau px-4 py-2"><span class="f1-titre text-sm tracking-[0.15em]">PALMARÈS</span></div>
       ${historique.length === 0 ? `
       <p class="px-4 py-5 text-xs text-gray-500">Aucune saison terminée pour l'instant. Le premier titre s'écrira ici, en lettres néon.</p>` : historique.map(h => `
-      <div class="flex items-center gap-4 px-4 py-3 border-b border-white/5">
-        <span class="f1-titre text-2xl" style="color:#ffd54a;text-shadow:0 0 10px rgba(255,213,74,0.4)">${h.saison}</span>
+      <button data-f1-saison="${h.saison}" class="w-full flex items-center gap-4 px-4 py-3 border-b border-white/5 text-left hover:bg-white/5 transition">
+        <span class="f1-titre text-2xl" style="color:#ffd54a;text-shadow:0 0 10px rgba(255,213,74,0.4)">S${h.saison}</span>
         <div class="flex-1">
           <p class="f1-titre text-lg" style="color:${h.championCouleur || '#fff'}">🏆 ${h.championTri}</p>
           <p class="text-[10px] text-gray-500 uppercase tracking-wider">${h.score} · ${h.detail || ''}</p>
         </div>
-      </div>`).join('')}
+        <span class="text-[10px] uppercase tracking-wide" style="color:#8e8e9c">voir le détail ›</span>
+      </button>`).join('')}
     </div>
 
     <button id="f1-fin-saison" class="f1-bouton" style="background:linear-gradient(90deg,#7c3aed,#ff2d95)">🏁 Clôturer la saison ${champ.saison}</button>
     <p class="text-[9px] text-gray-500 mt-2">Le champion entre au palmarès, les résultats repartent à zéro pour la saison ${champ.saison + 1}. Profils et setups conservés.</p>`;
+}
+
+// Fiche d'une saison archivée : champion, stats complètes, résultats course par course
+function ouvrirSaisonArchivee(champ, numSaison) {
+  const h = (champ.historique || []).find(x => x.saison === numSaison);
+  if (!h) return;
+  const pil = h.pilotes || champ.pilotes;
+  const res = h.resultats || {};
+  const cl = classementDe(res);
+  const c1 = couleurPilote(pil.p1), c2 = couleurPilote(pil.p2);
+  let duels1 = 0, duels2 = 0;
+  GP_2025.forEach(gp => {
+    const r = res[gp.id];
+    if (!r || (r.p1 === undefined && r.p2 === undefined)) return;
+    const v1 = r.p1 === 'DNF' ? 99 : (r.p1 ?? 98);
+    const v2 = r.p2 === 'DNF' ? 99 : (r.p2 ?? 98);
+    if (v1 < v2) duels1++; else if (v2 < v1) duels2++;
+  });
+  const stat = (label, va, vb) => `
+    <div class="flex items-center gap-3 py-1.5 border-b border-white/5">
+      <span class="w-12 text-right f1-titre text-base" style="color:#fff;text-shadow:0 0 8px ${c1}">${va}</span>
+      <span class="flex-1 text-center text-[9px] uppercase tracking-widest" style="color:#aeaebc">${label}</span>
+      <span class="w-12 text-left f1-titre text-base" style="color:#fff;text-shadow:0 0 8px ${c2}">${vb}</span>
+    </div>`;
+  const chip = (slot, r) => {
+    const p = pil[slot];
+    const c = slot === 'p1' ? c1 : c2;
+    const pos = r[slot];
+    const couru = pos !== undefined && pos !== null && pos !== '';
+    return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${couru ? '' : 'opacity-30'}" style="background:${c}30;border:1px solid ${c}88;color:#fff">${p.tri} ${posTxt(pos)}${r.pole === slot ? ' · P' : ''}${r.mtour === slot ? ' · MT' : ''}</span>`;
+  };
+  const lignes = GP_2025.filter(gp => res[gp.id]).map(gp => {
+    const r = res[gp.id];
+    return `
+    <div class="flex items-center gap-2.5 px-3 py-1.5 border-b border-white/5">
+      ${drapeau(gp.iso, 'w-5 h-3.5')}
+      <span class="flex-1 text-[11px] font-bold text-gray-100 uppercase truncate">${gp.nom}</span>
+      ${chip('p1', r)}${chip('p2', r)}
+    </div>`;
+  }).join('');
+  document.getElementById('f1-zoom')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'f1-zoom';
+  ov.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto';
+  ov.style.cssText = "background:rgba(5,5,10,0.94);backdrop-filter:blur(6px);font-family:'Titillium Web',sans-serif";
+  ov.innerHTML = `
+    <div class="f1-carte w-full max-w-2xl p-5 my-auto max-h-[90vh] overflow-y-auto f1-scroll">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="f1-titre text-3xl" style="color:#ffd54a;text-shadow:0 0 12px rgba(255,213,74,0.4)">S${h.saison}</span>
+        <div class="flex-1 min-w-0">
+          <p class="f1-titre text-xl" style="color:${h.championCouleur || '#fff'}">🏆 ${h.championTri} champion</p>
+          <p class="text-[10px] uppercase tracking-wider" style="color:#aeaebc">${h.score}</p>
+        </div>
+        <button id="f1-saison-close" class="text-3xl leading-none px-2 hover:text-white" style="color:#aeaebc">&times;</button>
+      </div>
+      <div class="flex items-center justify-between px-1 mb-1">
+        <span class="f1-titre text-base" style="color:#fff;text-shadow:0 0 10px ${c1}">${pil.p1.tri}</span>
+        <span class="f1-titre text-base" style="color:#fff;text-shadow:0 0 10px ${c2}">${pil.p2.tri}</span>
+      </div>
+      ${stat('Points', cl.p1.pts, cl.p2.pts)}
+      ${stat('Victoires', cl.p1.wins, cl.p2.wins)}
+      ${stat('Poles', cl.p1.poles, cl.p2.poles)}
+      ${stat('Meilleurs tours', cl.p1.mt, cl.p2.mt)}
+      ${stat('Podiums', cl.p1.podiums, cl.p2.podiums)}
+      ${stat('DNF', cl.p1.dnf, cl.p2.dnf)}
+      ${stat('Duels gagnés', duels1, duels2)}
+      <p class="text-[10px] uppercase tracking-widest font-semibold mt-4 mb-1.5" style="color:#7fe7f7">RÉSULTATS · ${GP_2025.filter(gp => res[gp.id]).length} GP disputés</p>
+      <div>${lignes || '<p class="text-xs py-2" style="color:#8e8e9c">Aucun résultat enregistré sur cette saison.</p>'}</div>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#f1-saison-close').addEventListener('click', () => ov.remove());
 }
 
 // Fiche circuit plein écran : grand tracé, zones DRS, données clés
@@ -1322,6 +1401,10 @@ export function mount(store, navigate) {
   });
 
   // ---- Palmarès : clôture de saison ----
+  document.querySelectorAll('[data-f1-saison]').forEach(btn => {
+    btn.addEventListener('click', () => ouvrirSaisonArchivee(getChamp(store), Number(btn.dataset.f1Saison)));
+  });
+
   document.getElementById('f1-fin-saison')?.addEventListener('click', () => {
     const champ = getChamp(store);
     const cl = classement(champ);
@@ -1334,6 +1417,7 @@ export function mount(store, navigate) {
         c.historique = c.historique || [];
         c.historique.push({
           saison: c.saison,
+          pilotes: JSON.parse(JSON.stringify(c.pilotes)),
           championTri: ch.tri,
           championCouleur: couleurPilote(ch),
           score: `${cl.p1.pts} – ${cl.p2.pts} (${c.pilotes.p1.tri} / ${c.pilotes.p2.tri})`,
