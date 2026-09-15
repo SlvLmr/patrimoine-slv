@@ -10,8 +10,8 @@ import { getCurrentUser, saveSharedDoc, loadSharedDoc, subscribeSharedDoc, isCon
 
 const BAREME = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
-// Favicon propre à l'univers F1 : casque de course néon (dégradé cyan → magenta) sur fond nuit
-export const F1_FAVICON = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#00e5ff'/><stop offset='100%' stop-color='#ff2d95'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='#0d0221'/><rect x='1' y='1' width='30' height='30' rx='6' fill='none' stroke='url(#g)' stroke-opacity='0.55' stroke-width='1.2'/><path d='M4 18.5 C4 10.5 10 5.5 16.5 5.5 C23.5 5.5 28.5 11 28.5 17.5 L28.5 20.5 C28.5 22 27.4 23 25.7 23 L8.5 23 C5.7 23 4 21 4 19 Z' fill='url(#g)'/><path d='M17.2 11.2 L28.1 14.6 C28.4 15.6 28.5 16.6 28.5 17.5 L28.5 18.6 L20 18.6 C18.2 18.6 17 17.2 17.2 15.4 Z' fill='#0d0221'/><ellipse cx='10' cy='10.5' rx='3.4' ry='1.7' fill='#ffffff' fill-opacity='0.4' transform='rotate(-20 10 10.5)'/><rect x='5' y='26' width='15' height='1.8' rx='0.9' fill='#ff2d95'/><rect x='12' y='29' width='12' height='1.6' rx='0.8' fill='#00e5ff'/></svg>`);
+// Favicon de l'univers F1 : le logo F1 (F italique + 1 avec traînées de vitesse) sur fond black smoke
+export const F1_FAVICON = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='#0d0d12'/><rect x='1' y='1' width='30' height='30' rx='6' fill='none' stroke='#e10600' stroke-opacity='0.35' stroke-width='1'/><g fill='#e10600' transform='translate(3.2,9.3) scale(0.58)'><path d='M9.5 2 L30 2 L28.2 7 L14.6 7 L13 11.5 L25 11.5 L23.2 16.5 L11.3 16.5 L9.4 22 L4 22 Z'/><path d='M24.8 22 L26.6 22 L30.6 11 L28.8 11 Z'/><path d='M27.6 22 L29.4 22 L35 6.5 L33.2 6.5 Z'/><path d='M30.4 22 L37 22 L44 2 L36 2 Z'/></g></svg>`);
 
 // Tracés : silhouettes SVG stylisées (viewBox 0 0 100 60), pas des relevés exacts
 const GP_2025 = [
