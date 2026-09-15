@@ -2046,7 +2046,7 @@ export function mount(store, navigate) {
       const defaultColors = { saveback: { bg: 'amber', text: 'amber' }, roundup: { bg: 'red', text: 'red' }, interets: { bg: 'emerald', text: 'emerald' } };
       const curBg = (pc[feat] || defaultColors[feat] || {}).bg || 'gray';
       const curTx = (pc[feat] || defaultColors[feat] || {}).text || 'gray';
-      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue, 'number', 'step="0.01"')
+      const body = inputField('libelle', 'Libellé', currentLabel) + inputField('montant', 'Montant (€)', currentValue.toFixed(2), 'number', 'step="0.01"')
         + (feat === 'saveback' ? `
           <div class="rounded-lg bg-amber-500/5 border border-amber-500/15 p-3 mb-4">
             <p class="text-[11px] text-amber-300/90 font-semibold mb-2">Saveback automatique</p>
