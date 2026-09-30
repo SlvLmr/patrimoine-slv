@@ -1677,6 +1677,10 @@ export function mount(store, navigate) {
         // Sub-line snapshots
         meta: {
           soldePrevCIC, soldePrevTR,
+          // Bases comptes courants au moment de la clôture (pour afficher le
+          // vrai "début de mois" = base + report ; le déclôturage n'y touche pas)
+          baseCIC: baseSoldeCIC, baseTR: baseSoldeTR,
+          extraBase: {},
           soldeObligCIC: Number(soldeObligSnap.cic) || 0,
           restantInvestTR: Number(restInvSnap.tr) || 0,
           restantPEATR: Number(restPeaSnap.tr) || 0,
@@ -1710,6 +1714,7 @@ export function mount(store, navigate) {
       for (const bank of extraBanks) {
         archiveEntry['soldeFinal_' + bank.id] = extraFinals[bank.id];
         archiveEntry.meta.extraPrev[bank.id] = Number(soldePrecedent[bank.id]) || 0;
+        archiveEntry.meta.extraBase[bank.id] = Number(comptesCourants.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
         const extraObligStore = store.get('soldeObligatoire') || {};
         archiveEntry.meta.extraOblig[bank.id] = Number(extraObligStore[bank.id]) || 0;
       }
@@ -1721,6 +1726,10 @@ export function mount(store, navigate) {
       const newPrev = {
         cic: finalSoldeCIC - baseSoldeCIC,
         tr: finalSoldeTR - baseSoldeTR,
+        // Sans ces drapeaux, les migrations du render se rejouent et
+        // re-soustraient la base des comptes courants (perte du montant de la base)
+        _migrated: true,
+        _migratedTR: true,
       };
       for (const bank of extraBanks) {
         const baseExtra = Number(comptesCourants.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
@@ -3406,11 +3415,12 @@ export function mount(store, navigate) {
 
     const renderBankCol = (bankName, idx) => {
       const items = bankGroups[bankName] || [];
-      const soldeKey = idx === 0 ? 'soldeFinalCIC' : idx === 1 ? 'soldeFinalTR' : null;
-      const solde = soldeKey ? a[soldeKey] : a['soldeFinal_' + (extraBanks.find(b => b.name === bankName)?.id || '')];
-      const isPrimary = idx === 0;
-      const isSecondary = idx === 1;
-      const isExtra = idx >= 2;
+      // Identifier la colonne par le nom de banque, pas par l'index :
+      // COMPTES[0] est la banque secondaire (TR), pas la primaire
+      const isPrimary = bankName === bankNames.primary;
+      const isSecondary = bankName === bankNames.secondary;
+      const isExtra = !isPrimary && !isSecondary;
+      const solde = isPrimary ? a.soldeFinalCIC : isSecondary ? a.soldeFinalTR : a['soldeFinal_' + (extraBanks.find(b => b.name === bankName)?.id || '')];
       const m = a.meta || {};
       const extraBankObj = isExtra ? extraBanks.find(b => b.name === bankName) : null;
 
@@ -3423,11 +3433,11 @@ export function mount(store, navigate) {
 
       let subLines = '';
       if (isPrimary) {
-        subLines = subLine(m.lblSoldeDebutCIC || 'Solde début de mois', m.soldePrevCIC || 0);
+        subLines = subLine(m.lblSoldeDebutCIC || 'Solde début de mois', (Number(m.soldePrevCIC) || 0) + (Number(m.baseCIC) || 0));
         if (m.soldeObligCIC) subLines += subLine(m.lblSoldeObligCIC || 'Solde obligatoire', m.soldeObligCIC, 'text-amber-400');
         ((m.budgetPockets || {}).cic || []).forEach(p => { subLines += subLine(p.label, p.amount); });
       } else if (isSecondary) {
-        subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', m.soldePrevTR || 0);
+        subLines = subLine(m.lblSoldeDebutTR || 'Solde début de mois', (Number(m.soldePrevTR) || 0) + (Number(m.baseTR) || 0));
         const archPocketsTR = ((m.budgetPockets || {}).tr || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
         const soldeObligTR = (m.restantInvestTR || 0) + (m.restantPEATR || 0) + (m.budgetNDF || 0) + archPocketsTR;
         if (soldeObligTR) subLines += subLine(m.lblSoldeObligTR || 'Solde obligatoire fin de mois', soldeObligTR, 'text-accent-red');
@@ -3437,7 +3447,7 @@ export function mount(store, navigate) {
         if (m.budgetQuotidien) subLines += subLine(m.lblEnveloppe || 'Pocket 4', m.budgetQuotidien);
         ((m.budgetPockets || {}).tr || []).forEach(p => { subLines += subLine(p.label, p.amount); });
       } else if (isExtra && extraBankObj) {
-        const prevExtra = (m.extraPrev || {})[extraBankObj.id] || 0;
+        const prevExtra = (Number((m.extraPrev || {})[extraBankObj.id]) || 0) + (Number((m.extraBase || {})[extraBankObj.id]) || 0);
         const obligExtra = (m.extraOblig || {})[extraBankObj.id] || 0;
         subLines = subLine('Solde début de mois', prevExtra)
                  + subLine('Solde obligatoire', obligExtra, 'text-amber-400');
