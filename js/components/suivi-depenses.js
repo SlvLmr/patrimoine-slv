@@ -641,38 +641,15 @@ export function render(store) {
   if (!store.get('suiviDepenses')) store.set('suiviDepenses', []);
   if (!store.get('suiviRevenus')) store.set('suiviRevenus', []);
 
-  // Migration: fix soldeMoisPrecedent that was saved WITH baseSolde (old bug)
-  const _prev = store.get('soldeMoisPrecedent') || {};
-  if (_prev && !_prev._migrated) {
-    const _actifs = store.get('actifs') || {};
-    const _ccs = _actifs.comptesCourants || [];
-    const _baseCIC = Number(_ccs.find(c => c.id === 'cc-cic')?.solde) || 0;
-    const _baseTR = Number(_ccs.find(c => c.id === 'cc-trade')?.solde) || 0;
-    if (_prev.cic) _prev.cic = Number(_prev.cic) - _baseCIC;
-    if (_prev.tr) _prev.tr = Number(_prev.tr) - _baseTR;
-    for (const bank of (bankNames.extra || [])) {
-      if (_prev[bank.id]) _prev[bank.id] = Number(_prev[bank.id]) - (Number(_ccs.find(c => c.id === 'cc-' + bank.id)?.solde) || 0);
-    }
+  // Les migrations historiques de soldeMoisPrecedent sont retirées : elles se
+  // rejouaient après chaque clôture (drapeaux perdus) et re-soustrayaient la
+  // base des comptes courants. On pose seulement les drapeaux, pour qu'un
+  // appareil ayant encore l'ancien code en cache ne les rejoue jamais.
+  const _prev = store.get('soldeMoisPrecedent');
+  if (_prev && (!_prev._migrated || !_prev._migratedTR)) {
     _prev._migrated = true;
+    _prev._migratedTR = true;
     store.set('soldeMoisPrecedent', _prev);
-  }
-
-  // Migration v2: TR features were baked into soldePrev but not reset
-  // → subtract them from soldePrev and zero them out
-  const _prev2 = store.get('soldeMoisPrecedent') || {};
-  if (!_prev2._migratedTR) {
-    const _trF = store.get('trFeatures') || {};
-    const _trInt = Number(_trF.interets) || 0;
-    const _trRnd = Number(_trF.roundup) || 0;
-    if (_trInt || _trRnd) {
-      _prev2.tr = (Number(_prev2.tr) || 0) - _trInt + _trRnd;
-      _trF.interets = 0;
-      _trF.saveback = 0;
-      _trF.roundup = 0;
-      store.set('trFeatures', _trF);
-    }
-    _prev2._migratedTR = true;
-    store.set('soldeMoisPrecedent', _prev2);
   }
   // Init depenses mensuelles from defaults if not present
   if (!store.get('depensesMensuellesCIC')) {
