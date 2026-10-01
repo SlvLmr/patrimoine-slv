@@ -25,9 +25,23 @@ function saveCategories(store, type, list) {
 }
 
 const BANK_ICON_SVG = `<path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/>`;
-const BANK_ICON_PRIMARY = `<svg class="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
-const BANK_ICON_SECONDARY = `<svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
-const BANK_ICON_EXTRA = `<svg class="w-7 h-7 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
+const bankIconSvg = (couleur) => `<svg class="w-7 h-7" style="color:${couleur}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>`;
+const BANK_ICON_DEFAUTS = { cic: '#34d399', tr: '#ffffff' };
+const bankIconCouleur = (store, key) => ((store.get('bankIconColors') || {})[key]) || BANK_ICON_DEFAUTS[key] || '#f472b6';
+const PICTO_PRESETS = ['#34d399', '#22d3ee', '#60a5fa', '#a78bfa', '#f472b6', '#fb7185', '#f59e0b', '#facc15', '#ffffff', '#9ca3af'];
+// Ordre d'affichage des cartes banque ('tr', 'cic', ids des banques extra) ;
+// les banques absentes de la préférence sont ajoutées à la suite
+function ordreCartesBanques(store) {
+  const noms = store.getBankNames();
+  const defauts = ['tr', 'cic', ...((noms.extra || []).map(b => b.id))];
+  const sauve = store.get('bankCardOrder') || [];
+  const ordre = sauve.filter(k => defauts.includes(k));
+  defauts.forEach(k => { if (!ordre.includes(k)) ordre.push(k); });
+  return ordre;
+}
+const flechesBanque = (key) => `
+              <button data-bank-move="${key}::-1" class="text-gray-600 hover:text-accent-blue transition px-0.5 flex-shrink-0 leading-none" title="Déplacer à gauche">‹</button>
+              <button data-bank-move="${key}::1" class="text-gray-600 hover:text-accent-blue transition px-0.5 flex-shrink-0 leading-none" title="Déplacer à droite">›</button>`;
 const PENCIL_ICON = `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`;
 
 const AFFECTATIONS = [
@@ -951,6 +965,9 @@ export function render(store) {
 
   const noOps = opsCIC.length === 0 && opsTR.length === 0 && extraBankData.every(b => b.ops.length === 0) && archives.length === 0;
 
+  const ordreBanques = ordreCartesBanques(store);
+  const ordreDe = (k) => ordreBanques.indexOf(k) + 1;
+
   return `
     <div class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -988,12 +1005,13 @@ export function render(store) {
 
       <div class="grid grid-cols-1 ${extraBanks.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-3">
         <!-- Primary bank -->
-        <div class="card-dark rounded-xl overflow-hidden order-2">
+        <div class="card-dark rounded-xl overflow-hidden" style="order:${ordreDe('cic')}">
           <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
-            ${BANK_ICON_PRIMARY}
+            <button data-bank-color="cic" class="flex-shrink-0 hover:scale-110 transition" title="Couleur du picto">${bankIconSvg(bankIconCouleur(store, 'cic'))}</button>
             <div class="flex items-center gap-1.5 min-w-0">
               <p class="text-sm text-gray-400 whitespace-nowrap">${bankNames.primary}</p>
               <button data-rename-bank="primary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
+              ${flechesBanque('cic')}
             </div>
             <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeCIC)}</p>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
@@ -1095,12 +1113,13 @@ export function render(store) {
         </div>
 
         <!-- Secondary bank -->
-        <div class="card-dark rounded-xl overflow-hidden order-1">
+        <div class="card-dark rounded-xl overflow-hidden" style="order:${ordreDe('tr')}">
           <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
-            ${BANK_ICON_SECONDARY}
+            <button data-bank-color="tr" class="flex-shrink-0 hover:scale-110 transition" title="Couleur du picto">${bankIconSvg(bankIconCouleur(store, 'tr'))}</button>
             <div class="flex items-center gap-1.5 min-w-0">
               <p class="text-sm text-gray-400 whitespace-nowrap">${bankNames.secondary}</p>
               <button data-rename-bank="secondary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
+              ${flechesBanque('tr')}
             </div>
             <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeTR)}</p>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
@@ -1257,12 +1276,13 @@ export function render(store) {
 
         ${extraBankData.map(bank => `
         <!-- Extra bank: ${bank.name} -->
-        <div class="card-dark rounded-xl overflow-hidden order-3">
+        <div class="card-dark rounded-xl overflow-hidden" style="order:${ordreDe(bank.id)}">
           <div class="px-4 py-2.5 flex items-center gap-3 border-b border-dark-400/30">
-            ${BANK_ICON_EXTRA}
+            <button data-bank-color="${bank.id}" class="flex-shrink-0 hover:scale-110 transition" title="Couleur du picto">${bankIconSvg(bankIconCouleur(store, bank.id))}</button>
             <div class="flex items-center gap-1.5 min-w-0">
               <p class="text-sm text-gray-400 whitespace-nowrap">${bank.name}</p>
               <button data-rename-bank="extra-${bank.id}" class="text-gray-600 hover:text-cyan-400 transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
+              ${flechesBanque(bank.id)}
             </div>
             <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(bank.solde)}</p>
             <div class="flex items-center gap-2 flex-shrink-0">
@@ -1364,7 +1384,7 @@ export function render(store) {
 
         ${extraBanks.length === 0 ? `
         <!-- Add bank button -->
-        <div id="btn-add-bank" class="card-dark rounded-xl overflow-hidden order-4 flex flex-col items-center justify-center cursor-pointer hover:border-cyan-400/30 hover:bg-dark-600/20 transition min-h-[120px] border border-dashed border-dark-400/30">
+        <div id="btn-add-bank" class="card-dark rounded-xl overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:border-cyan-400/30 hover:bg-dark-600/20 transition min-h-[120px] border border-dashed border-dark-400/30" style="order:99">
           <svg class="w-10 h-10 text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
           </svg>
@@ -1844,6 +1864,56 @@ export function mount(store, navigate) {
         }
         navigate('suivi-depenses');
       });
+    });
+  });
+
+  // Couleur du picto banque
+  document.querySelectorAll('[data-bank-color]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.bankColor;
+      const actuelle = bankIconCouleur(store, key);
+      const body = `
+        <p class="text-sm text-gray-400 mb-3">Choisis la couleur du picto de cette banque.</p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          ${PICTO_PRESETS.map(c => `<button type="button" data-bic="${c}" class="w-8 h-8 rounded-full border-2 ${c.toLowerCase() === actuelle.toLowerCase() ? 'border-white' : 'border-transparent'} hover:border-white/60 transition" style="background:${c}"></button>`).join('')}
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="text-sm text-gray-400">Personnalisée</label>
+          <input type="color" id="bic-input" value="${actuelle}" class="w-10 h-8 bg-transparent border border-dark-400/50 rounded cursor-pointer">
+          <svg id="bic-preview" class="w-7 h-7 ml-auto" style="color:${actuelle}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${BANK_ICON_SVG}</svg>
+        </div>`;
+      openModal('Couleur du picto', body, () => {
+        const colors = store.get('bankIconColors') || {};
+        colors[key] = document.getElementById('bic-input')?.value || actuelle;
+        store.set('bankIconColors', colors);
+        navigate('suivi-depenses');
+      });
+      const inp = document.getElementById('bic-input');
+      const prev = document.getElementById('bic-preview');
+      inp?.addEventListener('input', () => { if (prev) prev.style.color = inp.value; });
+      document.querySelectorAll('[data-bic]').forEach(b => {
+        b.addEventListener('click', () => {
+          if (inp) inp.value = b.dataset.bic;
+          if (prev) prev.style.color = b.dataset.bic;
+          document.querySelectorAll('[data-bic]').forEach(x => { x.classList.remove('border-white'); x.classList.add('border-transparent'); });
+          b.classList.remove('border-transparent');
+          b.classList.add('border-white');
+        });
+      });
+    });
+  });
+
+  // Déplacer les blocs banque (gauche/droite)
+  document.querySelectorAll('[data-bank-move]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [key, dirS] = btn.dataset.bankMove.split('::');
+      const ordre = ordreCartesBanques(store);
+      const i = ordre.indexOf(key);
+      const j = i + Number(dirS);
+      if (i < 0 || j < 0 || j >= ordre.length) return;
+      [ordre[i], ordre[j]] = [ordre[j], ordre[i]];
+      store.set('bankCardOrder', ordre);
+      navigate('suivi-depenses');
     });
   });
 
