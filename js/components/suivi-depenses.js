@@ -1097,8 +1097,13 @@ export function render(store) {
               ${apportsCIC.map(d => {
                 const checked = apCicCoches.includes(d.id);
                 return `
-              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition">
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition cursor-grab active:cursor-grabbing apc-drag-row" draggable="true" data-drag-apc-id="${d.id}">
                 <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+                    <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                    <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+                  </svg>
                   <input type="checkbox" data-cic-apport="${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
                   <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-apc-edit="${d.id}">${d.nom}</span>
                 </div>
@@ -1334,8 +1339,13 @@ export function render(store) {
               ${bank.mensLignes.map(d => {
                 const checked = bank.mensCochees.includes(d.id);
                 return `
-              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition">
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition cursor-grab active:cursor-grabbing extra-mc-drag-row" draggable="true" data-drag-extra-mc="${bank.id}::${d.id}">
                 <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+                    <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                    <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+                  </svg>
                   <input type="checkbox" data-extra-mensuel="${bank.id}::${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
                   <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-extra-mc-edit="${bank.id}::${d.id}">${d.nom}</span>
                 </div>
@@ -1366,8 +1376,13 @@ export function render(store) {
               ${bank.apLignes.map(d => {
                 const checked = bank.apCoches.includes(d.id);
                 return `
-              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition">
+              <div class="flex items-center justify-between pl-4 pr-3 py-px hover:bg-dark-600/30 transition cursor-grab active:cursor-grabbing extra-ap-drag-row" draggable="true" data-drag-extra-ap="${bank.id}::${d.id}">
                 <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/>
+                    <circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/>
+                    <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
+                  </svg>
                   <input type="checkbox" data-extra-apport="${bank.id}::${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
                   <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-extra-ap-edit="${bank.id}::${d.id}">${d.nom}</span>
                 </div>
@@ -2729,6 +2744,62 @@ export function mount(store, navigate) {
       });
     });
   }
+
+  // Drag-and-drop reorder apports mensuels CIC
+  {
+    let draggedApcId = null;
+    document.querySelectorAll('.apc-drag-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => { draggedApcId = row.dataset.dragApcId; row.style.opacity = '0.4'; e.dataTransfer.effectAllowed = 'move'; });
+      row.addEventListener('dragend', () => { row.style.opacity = ''; document.querySelectorAll('.apc-drag-row').forEach(r => r.classList.remove('drag-over')); });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const targetId = row.dataset.dragApcId;
+        if (!draggedApcId || draggedApcId === targetId) return;
+        const list = store.get('apportsMensuelsCIC') || [];
+        const fromIdx = list.findIndex(d => d.id === draggedApcId);
+        const toIdx = list.findIndex(d => d.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = list.splice(fromIdx, 1);
+        list.splice(toIdx, 0, moved);
+        store.set('apportsMensuelsCIC', list);
+        navigate('suivi-depenses');
+      });
+    });
+  }
+
+  // Drag-and-drop reorder lignes récurrentes des banques supplémentaires
+  // (dépenses et apports ; le déplacement reste au sein de la même banque)
+  const wireExtraDrag = (selector, dataKey, storeKey) => {
+    let dragged = null;
+    document.querySelectorAll(selector).forEach(row => {
+      row.addEventListener('dragstart', (e) => { dragged = row.dataset[dataKey]; row.style.opacity = '0.4'; e.dataTransfer.effectAllowed = 'move'; });
+      row.addEventListener('dragend', () => { row.style.opacity = ''; document.querySelectorAll(selector).forEach(r => r.classList.remove('drag-over')); });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+      row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault(); row.classList.remove('drag-over');
+        const cible = row.dataset[dataKey];
+        if (!dragged || dragged === cible) return;
+        const [bankFrom, idFrom] = dragged.split('::');
+        const [bankTo, idTo] = cible.split('::');
+        if (bankFrom !== bankTo) return;
+        const toutes = store.get(storeKey) || {};
+        const list = toutes[bankFrom] || [];
+        const fromIdx = list.findIndex(d => d.id === idFrom);
+        const toIdx = list.findIndex(d => d.id === idTo);
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = list.splice(fromIdx, 1);
+        list.splice(toIdx, 0, moved);
+        toutes[bankFrom] = list;
+        store.set(storeKey, toutes);
+        navigate('suivi-depenses');
+      });
+    });
+  };
+  wireExtraDrag('.extra-mc-drag-row', 'dragExtraMc', 'mensuellesExtra');
+  wireExtraDrag('.extra-ap-drag-row', 'dragExtraAp', 'apportsExtra');
 
   // Delete monthly expense
   document.querySelectorAll('[data-mc-del]').forEach(btn => {
