@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261003d';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261003e';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur d'Intérêts Composés ─────────────────────────────────────────
@@ -378,8 +378,8 @@ function renderResults(r) {
       <div class="flex items-center justify-between">
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wider">Capital final</p>
-          <p class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">${formatCurrency(Math.round(r.capitalFinal))}</p>
-          <p class="text-xs text-gray-500 mt-1">soit ${formatCurrency(Math.round(r.capitalFinalReel))} en euros constants (après inflation)</p>
+          <p class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">${formatCurrency(r.capitalFinal)}</p>
+          <p class="text-xs text-gray-500 mt-1">soit ${formatCurrency(r.capitalFinalReel)} en euros constants (après inflation)</p>
         </div>
         <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
           <svg class="w-7 h-7 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,8 +389,8 @@ function renderResults(r) {
       </div>
     </div>
 
-    ${mc('Total versé', formatCurrency(Math.round(r.totalVerse)), 'text-accent-blue', 'Capital + versements')}
-    ${mc('Intérêts gagnés', formatCurrency(Math.round(r.totalInterets)), 'text-accent-amber', 'Intérêts composés')}
+    ${mc('Total versé', formatCurrency(r.totalVerse), 'text-accent-blue', 'Capital + versements')}
+    ${mc('Intérêts gagnés', formatCurrency(r.totalInterets), 'text-accent-amber', 'Intérêts composés')}
     ${mc('Multiplicateur', 'x ' + r.multiplicateur.toFixed(2), r.multiplicateur >= 2 ? 'text-accent-green' : 'text-gray-300', 'Capital final / versé')}
   `;
 }
@@ -502,10 +502,10 @@ function renderTable(r) {
   tbody.innerHTML = r.annees.map((a, i) => `
     <tr class="table-row ${i % 2 === 0 ? '' : 'table-row-alt'}">
       <td class="py-1.5 px-2 text-gray-400">${a.annee === 0 ? 'Début' : 'An ' + a.annee}</td>
-      <td class="py-1.5 px-2 text-right font-mono text-emerald-400">${formatCurrency(Math.round(a.capitalNominal))}</td>
-      <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrency(Math.round(a.totalVerse))}</td>
-      <td class="py-1.5 px-2 text-right font-mono text-amber-400">${formatCurrency(Math.round(a.interetsCumules))}</td>
-      <td class="py-1.5 px-2 text-right font-mono ${a.gainNet >= 0 ? 'text-accent-green' : 'text-red-400'}">${formatCurrency(Math.round(a.gainNet))}</td>
+      <td class="py-1.5 px-2 text-right font-mono text-emerald-400">${formatCurrency(a.capitalNominal)}</td>
+      <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrency(a.totalVerse)}</td>
+      <td class="py-1.5 px-2 text-right font-mono text-amber-400">${formatCurrency(a.interetsCumules)}</td>
+      <td class="py-1.5 px-2 text-right font-mono ${a.gainNet >= 0 ? 'text-accent-green' : 'text-red-400'}">${formatCurrency(a.gainNet)}</td>
     </tr>
   `).join('');
 }

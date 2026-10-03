@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, parseNumberInput, promptModal } from '../utils.js?v=20261003d';
+import { formatCurrency, formatCurrencyCents, parseNumberInput, promptModal } from '../utils.js?v=20261003e';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Auto : Crédit vs LOA vs LLD ─────────────────────────────────
@@ -462,8 +462,8 @@ function renderWinner(r) {
       <div>
         <p class="text-xs text-gray-500 uppercase tracking-wider">Option la plus économique</p>
         <p class="text-lg sm:text-xl font-bold text-${c}-400 mt-1">${best.label}</p>
-        <p class="text-sm text-gray-400 mt-1">Coût net : <span class="font-semibold text-gray-200">${formatCurrency(Math.round(best.coutTotal))}</span> sur ${r.mois} mois</p>
-        ${economy > 0 ? `<p class="text-xs text-accent-green mt-1">Économie de ${formatCurrency(Math.round(economy))} vs la pire option</p>` : ''}
+        <p class="text-sm text-gray-400 mt-1">Coût net : <span class="font-semibold text-gray-200">${formatCurrency(best.coutTotal)}</span> sur ${r.mois} mois</p>
+        ${economy > 0 ? `<p class="text-xs text-accent-green mt-1">Économie de ${formatCurrency(economy)} vs la pire option</p>` : ''}
       </div>
       <div class="w-14 h-14 rounded-2xl bg-${c}-500/10 flex items-center justify-center">
         <svg class="w-7 h-7 text-${c}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,8 +496,8 @@ function compareCard(label, color, total, mensuel, isBest) {
         <p class="text-xs text-gray-500 uppercase tracking-wider">${label}</p>
         ${isBest ? '<span class="text-[10px] text-accent-green bg-accent-green/10 px-1.5 py-0.5 rounded-full ml-auto">Meilleur</span>' : ''}
       </div>
-      <p class="text-lg font-bold text-${color}-400">${formatCurrency(Math.round(total))}</p>
-      <p class="text-xs text-gray-500">${formatCurrency(Math.round(mensuel))}/mois net</p>
+      <p class="text-lg font-bold text-${color}-400">${formatCurrency(total)}</p>
+      <p class="text-xs text-gray-500">${formatCurrency(mensuel)}/mois net</p>
     </div>
   `;
 }
@@ -509,7 +509,7 @@ function renderDetailTable(r, inp) {
   if (!tbody) return;
 
   const row = (label, credit, loa, lld, isCurrency = true) => {
-    const fmt = (v) => isCurrency ? formatCurrency(Math.round(v)) : v;
+    const fmt = (v) => isCurrency ? formatCurrency(v) : v;
     return `<tr class="table-row">
       <td class="py-2 px-2 text-gray-400 text-xs">${label}</td>
       <td class="py-2 px-2 text-center font-mono text-sm text-blue-400">${fmt(credit)}</td>

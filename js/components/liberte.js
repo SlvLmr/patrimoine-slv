@@ -1,4 +1,4 @@
-import { formatCurrency, computeProjection, showToast, conseilCardHtml } from '../utils.js?v=20261003d';
+import { formatCurrency, computeProjection, showToast, conseilCardHtml } from '../utils.js?v=20261003e';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================
@@ -152,7 +152,7 @@ function conseils(store, fire, annee) {
   if (moisMatelas < 3) {
     recos.push({ prio: 1, titre: `Matelas de sécurité : ${moisMatelas.toFixed(1)} mois de dépenses`, texte: `En dessous de 3 mois, un pépin (voiture, toiture, période sans revenu) t'obligerait à vendre des placements au mauvais moment. Vise 3 à 6 mois (${formatCurrency(depReelles * 3)} – ${formatCurrency(depReelles * 6)}) avant d'accélérer le DCA.` });
   } else if (moisMatelas > 12) {
-    recos.push({ prio: 2, titre: `${Math.round(moisMatelas)} mois de dépenses dorment sur tes livrets`, texte: `Au-delà de ~6 mois de matelas (${formatCurrency(depReelles * 6)}), l'excédent (${formatCurrency(Math.round(epargneTotal - depReelles * 6))}) perd du pouvoir d'achat face à l'inflation. Un transfert progressif vers le PEA le met au travail.` });
+    recos.push({ prio: 2, titre: `${Math.round(moisMatelas)} mois de dépenses dorment sur tes livrets`, texte: `Au-delà de ~6 mois de matelas (${formatCurrency(depReelles * 6)}), l'excédent (${formatCurrency(epargneTotal - depReelles * 6)}) perd du pouvoir d'achat face à l'inflation. Un transfert progressif vers le PEA le met au travail.` });
   } else {
     recos.push({ prio: 3, titre: `Matelas de sécurité : ${Math.round(moisMatelas)} mois ✓`, texte: 'Entre 3 et 12 mois de dépenses en réserve : tu peux investir sereinement sans risquer de vendre au mauvais moment.' });
   }
@@ -246,8 +246,8 @@ export function render(store) {
         </div>
         <div class="card-dark rounded-xl px-4 py-3.5">
           <p class="text-[10px] text-gray-500 uppercase tracking-widest">Capital nécessaire</p>
-          <p class="text-xl font-extrabold text-gray-100 tabular-nums mt-1">${formatCurrency(Math.round(dFire.necessaire))}</p>
-          <p class="text-[10px] text-gray-600 mt-0.5">${formatCurrency(Math.round(dFire.depenses / 12))}/mois ÷ ${swrPct.toString().replace('.', ',')} % de retrait</p>
+          <p class="text-xl font-extrabold text-gray-100 tabular-nums mt-1">${formatCurrency(dFire.necessaire)}</p>
+          <p class="text-[10px] text-gray-600 mt-0.5">${formatCurrency(dFire.depenses / 12)}/mois ÷ ${swrPct.toString().replace('.', ',')} % de retrait</p>
         </div>
         <div class="card-dark rounded-xl px-4 py-3.5">
           <p class="text-[10px] text-gray-500 uppercase tracking-widest">Ton capital ${anneeFire ? `en ${anneeFire}` : 'projeté'}</p>
@@ -310,7 +310,7 @@ export function render(store) {
           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <h2 class="text-base font-bold text-gray-300 uppercase tracking-wide">Ta rente, mode d'emploi</h2>
         </div>
-        <p class="text-xs text-gray-500 mb-4">Une année type ${anneeFire ? `en ${anneeFire}` : 'en fin de projection'} : couvrir ${formatCurrency(Math.round(anneeType.besoinNet))} de dépenses, en piochant dans le bon ordre.</p>
+        <p class="text-xs text-gray-500 mb-4">Une année type ${anneeFire ? `en ${anneeFire}` : 'en fin de projection'} : couvrir ${formatCurrency(anneeType.besoinNet)} de dépenses, en piochant dans le bon ordre.</p>
         <div class="overflow-x-auto">
           <table class="w-full text-xs min-w-[560px]">
             <thead class="text-gray-500 text-[10px] uppercase tracking-wide border-b border-dark-400/30">
@@ -328,18 +328,18 @@ export function render(store) {
               <tr>
                 <td class="py-2 px-2 text-gray-600">${i + 1}</td>
                 <td class="py-2 px-2 text-gray-200 font-medium whitespace-nowrap">${l.source}</td>
-                <td class="py-2 px-2 text-right text-gray-300 whitespace-nowrap">${formatCurrency(Math.round(l.brut))}</td>
-                <td class="py-2 px-2 text-right ${l.impots > 0.5 ? 'text-red-400' : 'text-gray-600'} whitespace-nowrap">${l.impots > 0.5 ? '−' + formatCurrency(Math.round(l.impots)) : '0 €'}</td>
-                <td class="py-2 px-2 text-right text-emerald-400 font-medium whitespace-nowrap">${formatCurrency(Math.round(l.net))}</td>
+                <td class="py-2 px-2 text-right text-gray-300 whitespace-nowrap">${formatCurrency(l.brut)}</td>
+                <td class="py-2 px-2 text-right ${l.impots > 0.5 ? 'text-red-400' : 'text-gray-600'} whitespace-nowrap">${l.impots > 0.5 ? '−' + formatCurrency(l.impots) : '0,00 €'}</td>
+                <td class="py-2 px-2 text-right text-emerald-400 font-medium whitespace-nowrap">${formatCurrency(l.net)}</td>
                 <td class="py-2 px-2 text-gray-500">${l.raison}</td>
               </tr>`).join('')}
             </tbody>
             <tfoot class="border-t border-dark-400/40">
               <tr class="font-semibold">
                 <td class="py-2 px-2" colspan="2"><span class="text-gray-300">Total</span></td>
-                <td class="py-2 px-2 text-right text-gray-200">${formatCurrency(Math.round(anneeType.totalBrut))}</td>
-                <td class="py-2 px-2 text-right text-red-400">−${formatCurrency(Math.round(anneeType.totalImpots))}</td>
-                <td class="py-2 px-2 text-right text-emerald-400">${formatCurrency(Math.round(anneeType.totalBrut - anneeType.totalImpots))}</td>
+                <td class="py-2 px-2 text-right text-gray-200">${formatCurrency(anneeType.totalBrut)}</td>
+                <td class="py-2 px-2 text-right text-red-400">−${formatCurrency(anneeType.totalImpots)}</td>
+                <td class="py-2 px-2 text-right text-emerald-400">${formatCurrency(anneeType.totalBrut - anneeType.totalImpots)}</td>
                 <td class="py-2 px-2"></td>
               </tr>
             </tfoot>

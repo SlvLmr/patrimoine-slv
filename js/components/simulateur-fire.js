@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261003d';
+import { formatCurrency, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261003e';
 import { createChart, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ─── FIRE Simulator ─────────────────────────────────────────────────────────
@@ -738,7 +738,7 @@ function renderTable(r) {
       <tr class="table-row ${rowClass}">
         <td class="py-1.5 px-2 text-gray-400">${currentYear + a.annee}</td>
         <td class="py-1.5 px-2 ${isFIRE ? 'text-orange-400 font-semibold' : 'text-gray-300'}">${a.age} ans${isFIRE ? ' 🔥' : ''}</td>
-        <td class="py-1.5 px-2 text-right font-mono ${a.capital >= r.nombreFIRE ? 'text-accent-green' : 'text-gray-300'}">${formatCurrency(Math.round(a.capital))}</td>
+        <td class="py-1.5 px-2 text-right font-mono ${a.capital >= r.nombreFIRE ? 'text-accent-green' : 'text-gray-300'}">${formatCurrency(a.capital)}</td>
         <td class="py-1.5 px-2 text-center">${phaseLabel}</td>
       </tr>
     `;

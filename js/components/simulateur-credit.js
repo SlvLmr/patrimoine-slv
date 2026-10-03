@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261003d';
+import { formatCurrency, formatCurrencyCents, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261003e';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur de Crédit Immobilier ─────────────────────────────────────────
@@ -587,25 +587,25 @@ function renderResults(r, inputs) {
     </div>
 
     <!-- Reste à vivre -->
-    ${metricCard('Reste à vivre', formatCurrency(Math.round(r.resteAVivre)) + '/mois', r.resteAVivre > 0 ? 'text-accent-green' : 'text-red-400', '')}
+    ${metricCard('Reste à vivre', formatCurrency(r.resteAVivre) + '/mois', r.resteAVivre > 0 ? 'text-accent-green' : 'text-red-400', '')}
 
     <!-- Montant emprunté -->
     ${metricCard('Montant emprunté', formatCurrency(r.montantEmprunte), 'text-gray-200', '')}
 
     <!-- Coût total du crédit -->
-    ${metricCard('Coût total intérêts', formatCurrency(Math.round(r.coutTotalCredit)), 'text-accent-amber', '')}
+    ${metricCard('Coût total intérêts', formatCurrency(r.coutTotalCredit), 'text-accent-amber', '')}
 
     <!-- Coût assurance -->
-    ${metricCard('Coût assurance', formatCurrency(Math.round(r.coutTotalAssurance)), 'text-accent-purple', '')}
+    ${metricCard('Coût assurance', formatCurrency(r.coutTotalAssurance), 'text-accent-purple', '')}
 
     <!-- Coût total global -->
-    ${metricCard('Coût total global', formatCurrency(Math.round(r.coutTotal)), 'text-red-400', 'Intérêts + assurance + frais')}
+    ${metricCard('Coût total global', formatCurrency(r.coutTotal), 'text-red-400', 'Intérêts + assurance + frais')}
 
     <!-- TAEG -->
     ${metricCard('TAEG estimé', (r.taeg * 100).toFixed(2) + ' %', 'text-accent-cyan', 'Taux tout compris')}
 
     <!-- Frais de notaire -->
-    ${metricCard('Frais de notaire', formatCurrency(Math.round(r.montantFraisNotaire)), 'text-gray-400', (inputs.fraisNotaire) + ' % du bien')}
+    ${metricCard('Frais de notaire', formatCurrency(r.montantFraisNotaire), 'text-gray-400', (inputs.fraisNotaire) + ' % du bien')}
   `;
 }
 
@@ -760,10 +760,10 @@ function renderTable(r) {
     tbody.innerHTML = r.annuel.map((a, i) => `
       <tr class="table-row ${i % 2 === 0 ? '' : 'table-row-alt'}">
         <td class="py-1.5 px-2 text-gray-400">An ${a.annee}</td>
-        <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrency(Math.round(a.capitalRembourse))}</td>
-        <td class="py-1.5 px-2 text-right font-mono text-amber-400">${formatCurrency(Math.round(a.interets))}</td>
-        <td class="py-1.5 px-2 text-right font-mono text-purple-400">${formatCurrency(Math.round(a.assurance))}</td>
-        <td class="py-1.5 px-2 text-right font-mono text-gray-300">${formatCurrency(Math.round(a.capitalRestant))}</td>
+        <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrency(a.capitalRembourse)}</td>
+        <td class="py-1.5 px-2 text-right font-mono text-amber-400">${formatCurrency(a.interets)}</td>
+        <td class="py-1.5 px-2 text-right font-mono text-purple-400">${formatCurrency(a.assurance)}</td>
+        <td class="py-1.5 px-2 text-right font-mono text-gray-300">${formatCurrency(a.capitalRestant)}</td>
       </tr>
     `).join('');
   } else {
@@ -773,7 +773,7 @@ function renderTable(r) {
         <td class="py-1.5 px-2 text-right font-mono text-blue-400">${formatCurrencyCents(e.capital)}</td>
         <td class="py-1.5 px-2 text-right font-mono text-amber-400">${formatCurrencyCents(e.interets)}</td>
         <td class="py-1.5 px-2 text-right font-mono text-purple-400">${formatCurrencyCents(e.assurance)}</td>
-        <td class="py-1.5 px-2 text-right font-mono text-gray-300">${formatCurrency(Math.round(e.capitalRestant))}</td>
+        <td class="py-1.5 px-2 text-right font-mono text-gray-300">${formatCurrency(e.capitalRestant)}</td>
       </tr>
     `).join('');
   }

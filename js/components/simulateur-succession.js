@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261003d';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261003e';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Succession Pro ───────────────────────────────────────────────
@@ -174,7 +174,7 @@ function compute(inp) {
 
     levers.push({
       id: 'demembrement', label: 'Démembrement immobilier',
-      desc: `Nue-propriété ${Math.round(np * 100)} % — ${formatCurrency(Math.round(valeurNP))} transmis`,
+      desc: `Nue-propriété ${Math.round(np * 100)} % — ${formatCurrency(valeurNP)} transmis`,
       color: 'amber',
       montantTransmis: valeurNP,
       exonere: exonereTotal,
@@ -715,17 +715,17 @@ function renderHero(r) {
   el.innerHTML = `
     <div class="card-dark rounded-xl p-4 bg-red-500/5 border border-red-500/10">
       <p class="text-xs text-gray-500 uppercase tracking-wider">Sans optimisation</p>
-      <p class="text-xl font-bold text-red-400 mt-1">${formatCurrency(Math.round(r.totalDroitsBrut))}</p>
+      <p class="text-xl font-bold text-red-400 mt-1">${formatCurrency(r.totalDroitsBrut)}</p>
       <p class="text-xs text-gray-600 mt-0.5">Taux effectif : ${(r.tauxImpositionBrut * 100).toFixed(1)} %</p>
     </div>
     <div class="card-dark rounded-xl p-4 bg-gradient-to-br from-green-500/5 to-emerald-500/5 border border-green-500/10">
       <p class="text-xs text-gray-500 uppercase tracking-wider">Avec optimisation</p>
-      <p class="text-xl font-bold text-accent-green mt-1">${formatCurrency(Math.round(Math.max(r.totalDroitsOptimise, 0)))}</p>
+      <p class="text-xl font-bold text-accent-green mt-1">${formatCurrency(Math.max(r.totalDroitsOptimise, 0))}</p>
       <p class="text-xs text-gray-600 mt-0.5">Taux effectif : ${(r.tauxImposition * 100).toFixed(1)} %</p>
     </div>
     <div class="card-dark rounded-xl p-4 bg-gradient-to-br from-accent-green/5 to-accent-cyan/5 border border-accent-green/10">
       <p class="text-xs text-gray-500 uppercase tracking-wider">Économie</p>
-      <p class="text-xl font-bold text-accent-cyan mt-1">${formatCurrency(Math.round(Math.max(r.economieGlobale, 0)))}</p>
+      <p class="text-xl font-bold text-accent-cyan mt-1">${formatCurrency(Math.max(r.economieGlobale, 0))}</p>
       <p class="text-xs text-accent-green/70 mt-0.5">${pctSaved.toFixed(0)} % de droits en moins</p>
     </div>
   `;
@@ -753,7 +753,7 @@ function renderLevers(r) {
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between gap-2">
             <h4 class="text-sm font-medium text-gray-300">${l.label}</h4>
-            <span class="text-sm font-bold text-accent-green flex-shrink-0">-${formatCurrency(Math.round(l.economie))}</span>
+            <span class="text-sm font-bold text-accent-green flex-shrink-0">-${formatCurrency(l.economie)}</span>
           </div>
           <p class="text-[11px] text-gray-600 mt-0.5">${l.desc}</p>
           <div class="mt-1.5 h-1 bg-dark-600 rounded-full overflow-hidden">
@@ -848,9 +848,9 @@ function renderWaterfall(r) {
               if (ctx.datasetIndex === 0) return null;
               const i = ctx.dataIndex;
               const w = r.waterfall[i];
-              if (i === 0) return ` Droits bruts : ${formatCurrency(Math.round(w.value))}`;
-              if (i === r.waterfall.length - 1) return ` Droits optimisés : ${formatCurrency(Math.round(w.value))}`;
-              return ` ${w.label} : -${formatCurrency(Math.round(Math.abs(w.value)))}`;
+              if (i === 0) return ` Droits bruts : ${formatCurrency(w.value)}`;
+              if (i === r.waterfall.length - 1) return ` Droits optimisés : ${formatCurrency(w.value)}`;
+              return ` ${w.label} : -${formatCurrency(Math.abs(w.value))}`;
             }
           }
         },
@@ -951,11 +951,11 @@ function renderReserve(r) {
     <div class="flex items-center gap-4 mb-3">
       <div class="flex-1 text-center">
         <p class="text-xs text-gray-500">Réserve</p>
-        <p class="text-sm font-bold text-blue-400">${pctReserve.toFixed(0)} % · ${formatCurrency(Math.round(r.reserveHereditaire))}</p>
+        <p class="text-sm font-bold text-blue-400">${pctReserve.toFixed(0)} % · ${formatCurrency(r.reserveHereditaire)}</p>
       </div>
       <div class="flex-1 text-center">
         <p class="text-xs text-gray-500">Quotité disponible</p>
-        <p class="text-sm font-bold text-amber-400">${pctDispo.toFixed(0)} % · ${formatCurrency(Math.round(r.patrimoineNet * qd))}</p>
+        <p class="text-sm font-bold text-amber-400">${pctDispo.toFixed(0)} % · ${formatCurrency(r.patrimoineNet * qd)}</p>
       </div>
     </div>
     <div class="h-5 rounded-full overflow-hidden flex bg-dark-600">

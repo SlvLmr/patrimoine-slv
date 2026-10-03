@@ -1,5 +1,5 @@
 import { getCurrentUser } from '../firebase-config.js';
-import { formatCurrency, confirmModal, showToast } from '../utils.js?v=20261003d';
+import { formatCurrency, confirmModal, showToast } from '../utils.js?v=20261003e';
 
 function getUserInfo(store) {
   return store.get('userInfo') || { prenom: '', nom: '', telephone: '', dateNaissance: '', photo: '' };

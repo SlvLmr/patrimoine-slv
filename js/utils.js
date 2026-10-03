@@ -1,10 +1,3 @@
-const currencyFormatter = new Intl.NumberFormat('fr-FR', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0
-});
-
 const currencyFormatterCents = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
   currency: 'EUR',
@@ -20,11 +13,10 @@ const percentFormatter = new Intl.NumberFormat('fr-FR', {
 
 const numberFormatter = new Intl.NumberFormat('fr-FR');
 
+// Règle d'affichage : tous les montants à 2 décimales, jamais arrondis à
+// l'euro. L'arrondi au centime neutralise le zéro négatif (pas de « -0,00 € »).
 export function formatCurrency(value) {
-  // Arrondi à la précision affichée d'abord : un -0 (ou -0,4 → -0) devient 0,
-  // jamais de « -0 € » à l'écran
-  const v = Math.round(value);
-  return currencyFormatter.format(v === 0 ? 0 : v);
+  return formatCurrencyCents(value);
 }
 
 export function formatCurrencyCents(value) {
