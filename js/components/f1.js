@@ -416,14 +416,21 @@ function vueChampionnat(store, champ) {
     else if (ecart === 0) statut = `<span class="f1-duel-statut" style="color:#ffd34d">égalité parfaite</span>`;
     else statut = `<span class="f1-duel-statut" style="color:#cfd3e6">récupérable en <b style="color:${cC}">${Math.ceil(ecart / 25)} GP</b> · ${ptsEnJeu} pts en jeu</span>`;
     const chev = (delai) => `<span class="f1-duel-chev" style="color:${cL};animation-delay:${delai}s">‹</span>`;
+    const chevrons = courues > 0 && ecart > 0 ? chev(0.36) + chev(0.18) + chev(0) : '';
+    const leaderLigne = courues === 0
+      ? `<p class="f1-duel-leader" style="color:#8d8da2">duel</p>`
+      : ecart === 0
+        ? `<p class="f1-duel-leader" style="color:#ffd34d;text-shadow:0 0 10px rgba(255,211,77,0.5)">⚔️ à égalité</p>`
+        : `<p class="f1-duel-leader" style="color:${cL};text-shadow:0 0 12px ${cL}88">👑 ${pL.tri} en tête</p>`;
     return `
     <div class="f1-carte f1-duel-bloc" style="--cl:${cL};--cc:${cC}">
-      <p class="f1-duel-label">écart</p>
-      <div class="flex items-center gap-1.5">
-        ${courues > 0 && ecart > 0 ? chev(0.36) + chev(0.18) + chev(0) : ''}
+      ${leaderLigne}
+      <div class="f1-duel-numrow">
+        <span>${chevrons}</span>
         <span class="f1-titre f1-duel-num" style="text-shadow:0 0 18px ${cL}99">${ecart}</span>
+        <span aria-hidden="true">${chevrons}</span>
       </div>
-      <p class="f1-duel-label" style="letter-spacing:0.2em">pts</p>
+      <p class="f1-duel-label" style="letter-spacing:0.2em">pts d'écart</p>
       <div class="f1-duel-barre"><span style="width:${pct}%;background:${cL};box-shadow:0 0 8px ${cL}"></span><span style="flex:1;background:${cC}55"></span></div>
       <p class="f1-duel-score">
         <b style="color:${cL}">${pL.tri}</b> <span style="color:#fff">${L.pts}</span>

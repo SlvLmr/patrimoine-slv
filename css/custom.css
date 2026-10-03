@@ -769,6 +769,22 @@ summary[style*="list-style:none"]::-webkit-details-marker {
   color: #8d8da2;
 }
 .f1-duel-num { font-size: 44px; line-height: 1; }
+.f1-duel-leader {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 12px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.16em;
+}
+/* Grille symétrique : le chiffre reste au centre exact, les chevrons de
+   droite (miroir invisible) équilibrent ceux qui pointent vers le leader */
+.f1-duel-numrow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+}
+.f1-duel-numrow > span:first-child { justify-self: end; }
+.f1-duel-numrow > span:last-child { justify-self: start; visibility: hidden; }
 .f1-duel-chev {
   font-family: 'Titillium Web', sans-serif;
   font-size: 27px; font-weight: 900; line-height: 1;
