@@ -694,3 +694,37 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 .f1-posbtn { min-width: 34px; padding: 5px 3px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); font-size: 11px; font-weight: 700; color: #cbd5e1; background: rgba(255,255,255,0.05); transition: all .1s; cursor: pointer; }
 .f1-posbtn:hover { border-color: var(--pc); color: #fff; }
 .f1-posbtn-on { background: var(--pc); border-color: var(--pc); color: #0b0b10; box-shadow: 0 0 10px var(--pc); }
+
+/* Plaques de résultat du calendrier F1 (--pc = couleur du pilote) */
+.f1-cal-plaque {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-left: 3px solid var(--pc);
+  min-width: 132px;
+}
+.f1-cal-win {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--pc);
+  box-shadow: 0 0 12px -4px var(--pc);
+}
+.f1-cal-tri { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; width: 28px; flex-shrink: 0; }
+.f1-cal-pos {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; height: 20px; padding: 0 4px; flex-shrink: 0;
+  border-radius: 5px; font-size: 11px; font-weight: 800; letter-spacing: 0.02em;
+}
+.f1-cal-pts { font-size: 11px; font-weight: 700; color: #eceaf4; margin-left: auto; min-width: 24px; text-align: right; }
+.f1-cal-pip {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 15px; min-width: 15px; padding: 0 3px; border-radius: 4px; flex-shrink: 0;
+  font-size: 8px; font-weight: 800; color: #fff; letter-spacing: 0.04em;
+}
+.f1-cal-mini { min-width: 108px; padding: 2px 6px 2px 5px; gap: 4px; }
+.f1-cal-mini .f1-cal-pos { min-width: 28px; height: 17px; font-size: 10px; }
+.f1-cal-mini .f1-cal-tri { font-size: 9px; width: 24px; }
+.f1-cal-mini .f1-cal-pts { font-size: 10px; min-width: 20px; }

@@ -290,6 +290,32 @@ const classement = (champ) => classementDe(champ.resultats || {});
 
 const posTxt = (pos) => pos === 'DNF' ? 'DNF' : (pos ? 'P' + pos : '—');
 
+// Plaque de résultat façon graphiques TV : badge position médaillé (or/argent/
+// bronze, DNF rouge), points en clair, pastilles pole (cyan) / meilleur tour
+// (violet, convention F1), halo couleur pilote pour le vainqueur du duel
+const MEDAILLE_POS = { 1: ['#ffd34d', '#201500'], 2: ['#dde2ea', '#14171f'], 3: ['#e59a56', '#1f1002'] };
+const plaqueResultat = (pilote, pos, { pts = 0, pole = false, mt = false, win = false, compact = false, couleur = null } = {}) => {
+  const coul = couleur || couleurPilote(pilote);
+  const couru = pos !== undefined && pos !== null && pos !== '';
+  let badge;
+  if (!couru) badge = '<span class="f1-cal-pos" style="background:#26263a;color:#70708a">—</span>';
+  else if (pos === 'DNF') badge = '<span class="f1-cal-pos" style="background:#e10600;color:#fff">DNF</span>';
+  else {
+    const med = MEDAILLE_POS[Number(pos)];
+    badge = med
+      ? `<span class="f1-cal-pos" style="background:linear-gradient(145deg,${med[0]},${med[0]}c9);color:${med[1]}">P${pos}</span>`
+      : `<span class="f1-cal-pos" style="background:#3c3c52;color:#f2f2fa">P${pos}</span>`;
+  }
+  return `<span class="f1-cal-plaque${win ? ' f1-cal-win' : ''}${couru ? '' : ' opacity-40'}${compact ? ' f1-cal-mini' : ''}" style="--pc:${coul}">
+    <span class="f1-cal-tri" style="color:${coul}">${pilote.tri}</span>
+    ${badge}
+    ${pole ? '<span class="f1-cal-pip" style="background:#00b7d4" title="Pole position">P</span>' : ''}
+    ${mt ? '<span class="f1-cal-pip" style="background:#9333ea" title="Meilleur tour">MT</span>' : ''}
+    <span class="f1-cal-pts">${pts > 0 ? `+${pts}` : ''}</span>
+  </span>`;
+};
+const rangDuel = (pos) => pos === 'DNF' ? 900 : (typeof pos === 'number' ? pos : 999);
+
 // ============================================================
 // RENDER
 // ============================================================
@@ -376,15 +402,13 @@ function vueChampionnat(store, champ) {
 
   const lignesGP = GP_2025.map((gp, i) => {
     const r = champ.resultats[gp.id] || {};
-    const chipRes = (slot) => {
-      const p = champ.pilotes[slot];
-      const e = { ...ecurieDe(p.ecurie), couleur: couleurPilote(p) };
-      const pos = r[slot];
-      const couru = pos !== undefined && pos !== null && pos !== '';
-      return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold ${couru ? '' : 'opacity-40'}"
-        style="background:${e.couleur}30;border:1px solid ${e.couleur}99;color:#ffffff">
-        ${p.tri} ${posTxt(pos)}${couru && ptsPour(pos) > 0 ? ` · +${ptsPour(pos)}` : ''}${r.pole === slot ? ' · P' : ''}${r.mtour === slot ? ' · MT' : ''}</span>`;
-    };
+    const v1 = rangDuel(r.p1), v2 = rangDuel(r.p2);
+    const chipRes = (slot) => plaqueResultat(champ.pilotes[slot], r[slot], {
+      pts: ptsPour(r[slot]),
+      pole: r.pole === slot,
+      mt: r.mtour === slot,
+      win: slot === 'p1' ? (v1 < v2 && v1 < 900) : (v2 < v1 && v2 < 900),
+    });
     const dispute = r.p1 !== undefined || r.p2 !== undefined;
     return `
     <button data-f1-gp-resultat="${gp.id}" class="w-full flex items-center gap-3 px-3 sm:px-4 py-2 text-left transition hover:bg-white/5 ${i % 2 ? 'bg-white/[0.02]' : ''}">
@@ -408,7 +432,11 @@ function vueChampionnat(store, champ) {
     <div class="f1-carte overflow-hidden">
       <div class="f1-bandeau px-4 py-2 flex items-center justify-between">
         <span class="f1-titre text-sm tracking-[0.15em]">CALENDRIER · ${GP_2025.length} GP</span>
-        <span class="text-[9px] uppercase tracking-widest text-white/70">clique une course pour saisir le résultat</span>
+        <span class="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-white/80">
+          <span class="f1-cal-pip" style="background:#00b7d4">P</span> pole
+          <span class="f1-cal-pip ml-1" style="background:#9333ea">MT</span> meilleur tour
+          <span class="hidden md:inline text-white/60">· clique une course pour saisir le résultat</span>
+        </span>
       </div>
       <div class="divide-y divide-white/5">${lignesGP}</div>
     </div>`;
@@ -915,11 +943,15 @@ function ouvrirSaisonArchivee(champ, numSaison) {
       <span class="w-12 text-left f1-titre text-base" style="color:#fff;text-shadow:0 0 8px ${c2}">${vb}</span>
     </div>`;
   const chip = (slot, r) => {
-    const p = pil[slot];
-    const c = slot === 'p1' ? c1 : c2;
-    const pos = r[slot];
-    const couru = pos !== undefined && pos !== null && pos !== '';
-    return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${couru ? '' : 'opacity-30'}" style="background:${c}30;border:1px solid ${c}88;color:#fff">${p.tri} ${posTxt(pos)}${r.pole === slot ? ' · P' : ''}${r.mtour === slot ? ' · MT' : ''}</span>`;
+    const v1 = rangDuel(r.p1), v2 = rangDuel(r.p2);
+    return plaqueResultat(pil[slot], r[slot], {
+      pts: ptsPour(r[slot]),
+      pole: r.pole === slot,
+      mt: r.mtour === slot,
+      win: slot === 'p1' ? (v1 < v2 && v1 < 900) : (v2 < v1 && v2 < 900),
+      compact: true,
+      couleur: slot === 'p1' ? c1 : c2,
+    });
   };
   const lignes = GP_2025.filter(gp => res[gp.id]).map(gp => {
     const r = res[gp.id];
