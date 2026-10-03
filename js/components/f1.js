@@ -294,6 +294,9 @@ const posTxt = (pos) => pos === 'DNF' ? 'DNF' : (pos ? 'P' + pos : '—');
 // bronze, DNF rouge), points en clair, pastilles pole (cyan) / meilleur tour
 // (violet, convention F1), halo couleur pilote pour le vainqueur du duel
 const MEDAILLE_POS = { 1: '#ffd34d', 2: '#dde4ee', 3: '#e8a35c' };
+// Pictos pole (fusée cyan) et meilleur tour (chrono violet), teintés + halo
+const ICO_POLE = `<svg viewBox="0 0 24 24" fill="currentColor" style="color:#7ff2ff;filter:drop-shadow(0 0 3px rgba(0,229,255,0.8))"><path d="M12 2.5s4.5 2.04 4.5 10.5c0 2.49-1.04 5.57-1.6 7H9.1c-.56-1.43-1.6-4.51-1.6-7C7.5 4.54 12 2.5 12 2.5zm2 8.5a2 2 0 10-4 0 2 2 0 004 0zM7.83 14.35L6 16.18V20l3-1.5c-.52-1.25-.93-2.63-1.17-4.15zm8.34 0c-.24 1.52-.65 2.9-1.17 4.15L18 20v-3.82l-1.83-1.83z"/></svg>`;
+const ICO_MT = `<svg viewBox="0 0 24 24" fill="currentColor" style="color:#d8b4fe;filter:drop-shadow(0 0 3px rgba(168,85,247,0.8))"><path d="M15 1H9v2h6V1zm4.03 5.39l1.42-1.42-1.42-1.42-1.41 1.42A8.96 8.96 0 0012 4a9 9 0 109 9c0-2.12-.74-4.07-1.97-5.61zM12 20a7 7 0 117-7 7 7 0 01-7 7zm-1-11v5h2V9h-2z"/></svg>`;
 const plaqueResultat = (pilote, pos, { pts = 0, pole = false, mt = false, win = false, compact = false, couleur = null } = {}) => {
   const coul = couleur || couleurPilote(pilote);
   const couru = pos !== undefined && pos !== null && pos !== '';
@@ -307,7 +310,7 @@ const plaqueResultat = (pilote, pos, { pts = 0, pole = false, mt = false, win = 
   return `<span class="f1-cal-plaque${win ? ' f1-cal-win' : ''}${couru ? '' : ' opacity-40'}${compact ? ' f1-cal-mini' : ''}" style="--pc:${coul}">
     <span class="f1-cal-tri">${pilote.tri}</span>
     ${posHtml}
-    <span class="f1-cal-marques">${pole ? '<b class="f1-cal-pole" title="Pole position">P</b>' : ''}${mt ? '<b class="f1-cal-mt" title="Meilleur tour">MT</b>' : ''}</span>
+    <span class="f1-cal-marques">${pole ? `<span title="Pole position">${ICO_POLE}</span>` : ''}${mt ? `<span title="Meilleur tour">${ICO_MT}</span>` : ''}</span>
     <span class="f1-cal-pts">${couru && pts > 0 ? `+${pts}` : ''}</span>
   </span>`;
 };
@@ -465,9 +468,9 @@ function vueChampionnat(store, champ) {
     <div class="f1-carte overflow-hidden">
       <div class="f1-bandeau px-4 py-2 flex items-center justify-between">
         <span class="f1-titre text-sm tracking-[0.15em]">CALENDRIER · ${GP_2025.length} GP</span>
-        <span class="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-white/80" style="font-family:'Titillium Web',sans-serif">
-          <b style="color:#7ff2ff;text-shadow:0 0 6px rgba(0,229,255,0.6)">P</b> pole
-          <b class="ml-1" style="color:#d8b4fe;text-shadow:0 0 6px rgba(168,85,247,0.6)">MT</b> meilleur tour
+        <span class="f1-cal-marques flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-white/80" style="font-family:'Titillium Web',sans-serif">
+          ${ICO_POLE} pole
+          <span class="ml-1 inline-flex">${ICO_MT}</span> meilleur tour
           <span class="hidden md:inline text-white/60">· clique une course pour saisir le résultat</span>
         </span>
       </div>

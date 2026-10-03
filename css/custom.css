@@ -738,14 +738,20 @@ summary[style*="list-style:none"]::-webkit-details-marker {
   font-size: 15px; font-weight: 900; letter-spacing: 0.03em;
   line-height: 1;
 }
-.f1-cal-marques { display: inline-flex; gap: 5px; margin-left: 1px; }
-.f1-cal-pole { color: #7ff2ff; font-size: 10.5px; font-weight: 900; text-shadow: 0 0 7px rgba(0, 229, 255, 0.6); }
-.f1-cal-mt { color: #d8b4fe; font-size: 10.5px; font-weight: 900; text-shadow: 0 0 7px rgba(168, 85, 247, 0.6); }
-.f1-cal-pts { margin-left: auto; font-size: 12.5px; font-weight: 700; color: #d6dae8; min-width: 28px; text-align: right; }
+.f1-cal-marques { display: inline-flex; align-items: center; gap: 4px; margin-left: 1px; }
+.f1-cal-marques svg { width: 13px; height: 13px; flex-shrink: 0; }
+.f1-cal-pts {
+  margin-left: auto;
+  font-size: 15px; font-weight: 900; letter-spacing: 0.02em;
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.28);
+  min-width: 32px; text-align: right;
+}
 .f1-cal-mini { height: 23px; min-width: 128px; padding-right: 7px; }
 .f1-cal-mini .f1-cal-tri { width: 36px; font-size: 10px; }
 .f1-cal-mini .f1-cal-pos { min-width: 36px; font-size: 13px; }
-.f1-cal-mini .f1-cal-pts { font-size: 11px; min-width: 22px; }
+.f1-cal-mini .f1-cal-pts { font-size: 12px; min-width: 24px; }
+.f1-cal-mini .f1-cal-marques svg { width: 11px; height: 11px; }
 
 /* Bloc duel central du championnat F1 */
 .f1-duel-bloc {
