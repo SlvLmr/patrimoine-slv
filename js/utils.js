@@ -21,11 +21,15 @@ const percentFormatter = new Intl.NumberFormat('fr-FR', {
 const numberFormatter = new Intl.NumberFormat('fr-FR');
 
 export function formatCurrency(value) {
-  return currencyFormatter.format(value);
+  // Arrondi à la précision affichée d'abord : un -0 (ou -0,4 → -0) devient 0,
+  // jamais de « -0 € » à l'écran
+  const v = Math.round(value);
+  return currencyFormatter.format(v === 0 ? 0 : v);
 }
 
 export function formatCurrencyCents(value) {
-  return currencyFormatterCents.format(value);
+  const v = Math.round(value * 100) / 100;
+  return currencyFormatterCents.format(v === 0 ? 0 : v);
 }
 
 export function formatPercent(value) {
