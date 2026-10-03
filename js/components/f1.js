@@ -453,14 +453,14 @@ function vueChampionnat(store, champ) {
     });
     const dispute = r.p1 !== undefined || r.p2 !== undefined;
     return `
-    <button data-f1-gp-resultat="${gp.id}" class="w-full flex items-center gap-3 px-3 sm:px-4 py-2 text-left transition hover:bg-white/5 ${i % 2 ? 'bg-white/[0.02]' : ''}">
+    <button data-f1-gp-resultat="${gp.id}" class="f1-cal-ligne w-full flex items-center gap-3 px-3 sm:px-4 py-2 text-left transition hover:bg-white/5 ${i % 2 ? 'bg-white/[0.02]' : ''}">
       <span class="f1-titre text-sm w-7 text-right flex-shrink-0" style="color:${dispute ? '#00e5ff' : '#4b3a6b'}">${String(i + 1).padStart(2, '0')}</span>
       ${drapeau(gp.iso, 'w-7 h-5')}
       <div class="flex-1 min-w-0">
         <p class="text-[13px] font-bold text-gray-100 uppercase tracking-wide truncate">${gp.nom}</p>
         <p class="text-[10px] text-gray-500 truncate">${gp.circuit} · ${gp.date}</p>
       </div>
-      <div class="flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
+      <div class="f1-cal-plaques flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
         ${chipRes('p1')}${chipRes('p2')}
       </div>
     </button>`;
@@ -999,9 +999,9 @@ function ouvrirSaisonArchivee(champ, numSaison) {
   const lignes = GP_2025.filter(gp => res[gp.id]).map(gp => {
     const r = res[gp.id];
     return `
-    <div class="flex items-center gap-2.5 px-3 py-1.5 border-b border-white/5">
+    <div class="f1-arch-ligne flex items-center gap-2.5 px-3 py-1.5 border-b border-white/5">
       ${drapeau(gp.iso, 'w-5 h-3.5')}
-      <span class="flex-1 text-[11px] font-bold text-gray-100 uppercase truncate">${gp.nom}</span>
+      <span class="flex-1 min-w-0 text-[11px] font-bold text-gray-100 uppercase truncate">${gp.nom}</span>
       ${chip('p1', r)}${chip('p2', r)}
     </div>`;
   }).join('');

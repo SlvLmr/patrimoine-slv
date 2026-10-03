@@ -747,6 +747,16 @@ summary[style*="list-style:none"]::-webkit-details-marker {
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.28);
   min-width: 32px; text-align: right;
 }
+/* Mobile : les plaques passent sous le nom du GP, à deux par ligne pleine
+   largeur, au lieu de déborder à droite */
+@media (max-width: 639px) {
+  .f1-cal-ligne { flex-wrap: wrap; row-gap: 6px; padding-top: 9px; padding-bottom: 9px; }
+  .f1-cal-plaques { flex-basis: 100%; flex-shrink: 1; }
+  .f1-cal-plaques .f1-cal-plaque { flex: 1 1 0; min-width: 0; }
+  .f1-arch-ligne { flex-wrap: wrap; row-gap: 5px; }
+  .f1-arch-ligne .f1-cal-plaque { flex: 1 1 40%; min-width: 0; }
+}
+
 .f1-cal-mini { height: 23px; min-width: 128px; padding-right: 7px; }
 .f1-cal-mini .f1-cal-tri { width: 36px; font-size: 10px; }
 .f1-cal-mini .f1-cal-pos { min-width: 36px; font-size: 13px; }
