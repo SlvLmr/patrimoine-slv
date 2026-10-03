@@ -807,3 +807,34 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 }
 .f1-duel-titre-ok { color: #ffd34d; text-shadow: 0 0 10px rgba(255, 211, 77, 0.5); }
 .f1-duel-reste { font-size: 9px; color: #6d6d85; text-transform: uppercase; letter-spacing: 0.15em; }
+
+/* Mobile : bandeau compact pleine largeur entre les deux cartes empilées,
+   chiffre à gauche, infos à droite, barre en pied ; chevrons vers le haut
+   (le leader est la carte au-dessus) */
+@media (max-width: 639px) {
+  .f1-duel-bloc {
+    max-width: none;
+    flex-basis: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "num leader"
+      "num score"
+      "label statut"
+      "barre barre";
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 3px;
+    padding: 10px 16px 12px;
+  }
+  .f1-duel-leader { grid-area: leader; justify-self: start; }
+  .f1-duel-numrow { grid-area: num; width: auto; grid-template-columns: auto auto; gap: 5px; }
+  .f1-duel-numrow > span:last-child { display: none; }
+  .f1-duel-num { font-size: 32px; }
+  .f1-duel-chev { display: inline-block; transform: rotate(90deg); font-size: 20px; }
+  .f1-duel-label { grid-area: label; justify-self: center; margin-top: -2px; }
+  .f1-duel-score { grid-area: score; justify-self: start; margin-top: 0; font-size: 13px; }
+  .f1-duel-statut { grid-area: statut; justify-self: start; text-align: left; margin-top: 0; }
+  .f1-duel-barre { grid-area: barre; margin-top: 5px; }
+  .f1-duel-reste { display: none; }
+}
