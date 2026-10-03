@@ -293,25 +293,22 @@ const posTxt = (pos) => pos === 'DNF' ? 'DNF' : (pos ? 'P' + pos : '—');
 // Plaque de résultat façon graphiques TV : badge position médaillé (or/argent/
 // bronze, DNF rouge), points en clair, pastilles pole (cyan) / meilleur tour
 // (violet, convention F1), halo couleur pilote pour le vainqueur du duel
-const MEDAILLE_POS = { 1: ['#ffd34d', '#201500'], 2: ['#dde2ea', '#14171f'], 3: ['#e59a56', '#1f1002'] };
+const MEDAILLE_POS = { 1: '#ffd34d', 2: '#dde4ee', 3: '#e8a35c' };
 const plaqueResultat = (pilote, pos, { pts = 0, pole = false, mt = false, win = false, compact = false, couleur = null } = {}) => {
   const coul = couleur || couleurPilote(pilote);
   const couru = pos !== undefined && pos !== null && pos !== '';
-  let badge;
-  if (!couru) badge = '<span class="f1-cal-pos" style="background:#26263a;color:#70708a">—</span>';
-  else if (pos === 'DNF') badge = '<span class="f1-cal-pos" style="background:#e10600;color:#fff">DNF</span>';
+  let posHtml;
+  if (!couru) posHtml = '<span class="f1-cal-pos" style="color:#5a5a72">—</span>';
+  else if (pos === 'DNF') posHtml = '<span class="f1-cal-pos" style="color:#ff4d5a;text-shadow:0 0 9px rgba(255,45,60,0.55)">DNF</span>';
   else {
     const med = MEDAILLE_POS[Number(pos)];
-    badge = med
-      ? `<span class="f1-cal-pos" style="background:linear-gradient(145deg,${med[0]},${med[0]}c9);color:${med[1]}">P${pos}</span>`
-      : `<span class="f1-cal-pos" style="background:#3c3c52;color:#f2f2fa">P${pos}</span>`;
+    posHtml = `<span class="f1-cal-pos" style="color:${med || '#f4f4fb'}${med ? `;text-shadow:0 0 10px ${med}66` : ''}">P${pos}</span>`;
   }
   return `<span class="f1-cal-plaque${win ? ' f1-cal-win' : ''}${couru ? '' : ' opacity-40'}${compact ? ' f1-cal-mini' : ''}" style="--pc:${coul}">
-    <span class="f1-cal-tri" style="color:${coul}">${pilote.tri}</span>
-    ${badge}
-    ${pole ? '<span class="f1-cal-pip" style="background:#00b7d4" title="Pole position">P</span>' : ''}
-    ${mt ? '<span class="f1-cal-pip" style="background:#9333ea" title="Meilleur tour">MT</span>' : ''}
-    <span class="f1-cal-pts">${pts > 0 ? `+${pts}` : ''}</span>
+    <span class="f1-cal-tri">${pilote.tri}</span>
+    ${posHtml}
+    <span class="f1-cal-marques">${pole ? '<b class="f1-cal-pole" title="Pole position">P</b>' : ''}${mt ? '<b class="f1-cal-mt" title="Meilleur tour">MT</b>' : ''}</span>
+    <span class="f1-cal-pts">${couru && pts > 0 ? `+${pts}` : ''}</span>
   </span>`;
 };
 const rangDuel = (pos) => pos === 'DNF' ? 900 : (typeof pos === 'number' ? pos : 999);
@@ -393,11 +390,46 @@ function vueChampionnat(store, champ) {
           <span>🍾 ${s.podiums} podium${s.podiums > 1 ? 's' : ''}</span>
           <span>💥 ${s.dnf} DNF</span>
           <span>🏁 ${s.courses} course${s.courses > 1 ? 's' : ''}</span>
-          ${rang === 2 ? `<span style="color:#ff9dc4">+${ecart} pts d'écart</span>` : ''}
         </div>
         <p class="text-[9px] text-gray-600 mt-2">Modifier mon profil pilote →</p>
       </div>
     </button>`;
+  };
+
+  // Bloc central du duel : écart animé, barre de forces, verdict dynamique
+  const blocDuel = () => {
+    const L = cl[ordre[0]], C = cl[ordre[1]];
+    const pL = champ.pilotes[ordre[0]], pC = champ.pilotes[ordre[1]];
+    const cL = couleurPilote(pL), cC = couleurPilote(pC);
+    const courues = GP_2025.filter(gp => { const r = champ.resultats[gp.id]; return r && (r.p1 !== undefined || r.p2 !== undefined); }).length;
+    const restantes = GP_2025.length - courues;
+    const ptsEnJeu = restantes * 25;
+    const total = L.pts + C.pts;
+    const pct = total > 0 ? Math.round(L.pts / total * 100) : 50;
+    const mathOk = courues > 0 && ecart > ptsEnJeu;
+    let statut;
+    if (courues === 0) statut = `<span class="f1-duel-statut" style="color:#9fe8f5">le duel peut commencer</span>`;
+    else if (mathOk) statut = `<span class="f1-duel-statut f1-duel-titre-ok">🏆 titre mathématiquement acquis</span>`;
+    else if (ecart === 0) statut = `<span class="f1-duel-statut" style="color:#ffd34d">égalité parfaite</span>`;
+    else statut = `<span class="f1-duel-statut" style="color:#cfd3e6">récupérable en <b style="color:${cC}">${Math.ceil(ecart / 25)} GP</b> · ${ptsEnJeu} pts en jeu</span>`;
+    const chev = (delai) => `<span class="f1-duel-chev" style="color:${cL};animation-delay:${delai}s">‹</span>`;
+    return `
+    <div class="f1-carte f1-duel-bloc" style="--cl:${cL};--cc:${cC}">
+      <p class="f1-duel-label">écart</p>
+      <div class="flex items-center gap-1.5">
+        ${courues > 0 && ecart > 0 ? chev(0.36) + chev(0.18) + chev(0) : ''}
+        <span class="f1-titre f1-duel-num" style="text-shadow:0 0 18px ${cL}99">${ecart}</span>
+      </div>
+      <p class="f1-duel-label" style="letter-spacing:0.2em">pts</p>
+      <div class="f1-duel-barre"><span style="width:${pct}%;background:${cL};box-shadow:0 0 8px ${cL}"></span><span style="flex:1;background:${cC}55"></span></div>
+      <p class="f1-duel-score">
+        <b style="color:${cL}">${pL.tri}</b> <span style="color:#fff">${L.pts}</span>
+        <span style="color:#6d6d85">—</span>
+        <span style="color:#fff">${C.pts}</span> <b style="color:${cC}">${pC.tri}</b>
+      </p>
+      ${statut}
+      ${restantes > 0 ? `<p class="f1-duel-reste">${restantes} GP restant${restantes > 1 ? 's' : ''}</p>` : `<p class="f1-duel-reste">saison terminée</p>`}
+    </div>`;
   };
 
   const lignesGP = GP_2025.map((gp, i) => {
@@ -427,14 +459,15 @@ function vueChampionnat(store, champ) {
   return `
     <div class="flex flex-wrap gap-3 mb-6">
       ${cartePilote(ordre[0], 1)}
+      ${blocDuel()}
       ${cartePilote(ordre[1], 2)}
     </div>
     <div class="f1-carte overflow-hidden">
       <div class="f1-bandeau px-4 py-2 flex items-center justify-between">
         <span class="f1-titre text-sm tracking-[0.15em]">CALENDRIER · ${GP_2025.length} GP</span>
-        <span class="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-white/80">
-          <span class="f1-cal-pip" style="background:#00b7d4">P</span> pole
-          <span class="f1-cal-pip ml-1" style="background:#9333ea">MT</span> meilleur tour
+        <span class="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-white/80" style="font-family:'Titillium Web',sans-serif">
+          <b style="color:#7ff2ff;text-shadow:0 0 6px rgba(0,229,255,0.6)">P</b> pole
+          <b class="ml-1" style="color:#d8b4fe;text-shadow:0 0 6px rgba(168,85,247,0.6)">MT</b> meilleur tour
           <span class="hidden md:inline text-white/60">· clique une course pour saisir le résultat</span>
         </span>
       </div>

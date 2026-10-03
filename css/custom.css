@@ -695,36 +695,93 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 .f1-posbtn:hover { border-color: var(--pc); color: #fff; }
 .f1-posbtn-on { background: var(--pc); border-color: var(--pc); color: #0b0b10; box-shadow: 0 0 10px var(--pc); }
 
-/* Plaques de résultat du calendrier F1 (--pc = couleur du pilote) */
+/* Plaques de résultat du calendrier F1 — style timing tower (--pc = couleur pilote).
+   L'inclinaison skewX donne l'italique racing, pas de contre-skew. */
 .f1-cal-plaque {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px 4px 6px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-left: 3px solid var(--pc);
-  min-width: 132px;
+  height: 27px;
+  min-width: 152px;
+  padding-right: 9px;
+  transform: skewX(-12deg);
+  border-radius: 4px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.028));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  font-family: 'Titillium Web', sans-serif;
 }
 .f1-cal-win {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: var(--pc);
-  box-shadow: 0 0 12px -4px var(--pc);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  border-color: rgba(255, 255, 255, 0.22);
 }
-.f1-cal-tri { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; width: 28px; flex-shrink: 0; }
+.f1-cal-win::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--pc), transparent);
+  box-shadow: 0 0 8px var(--pc);
+}
+.f1-cal-tri {
+  align-self: stretch;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; flex-shrink: 0;
+  background: var(--pc);
+  color: #fff;
+  font-size: 12px; font-weight: 900; letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
 .f1-cal-pos {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 32px; height: 20px; padding: 0 4px; flex-shrink: 0;
-  border-radius: 5px; font-size: 11px; font-weight: 800; letter-spacing: 0.02em;
+  min-width: 44px;
+  text-align: center;
+  font-size: 15px; font-weight: 900; letter-spacing: 0.03em;
+  line-height: 1;
 }
-.f1-cal-pts { font-size: 11px; font-weight: 700; color: #eceaf4; margin-left: auto; min-width: 24px; text-align: right; }
-.f1-cal-pip {
-  display: inline-flex; align-items: center; justify-content: center;
-  height: 15px; min-width: 15px; padding: 0 3px; border-radius: 4px; flex-shrink: 0;
-  font-size: 8px; font-weight: 800; color: #fff; letter-spacing: 0.04em;
+.f1-cal-marques { display: inline-flex; gap: 5px; margin-left: 1px; }
+.f1-cal-pole { color: #7ff2ff; font-size: 10.5px; font-weight: 900; text-shadow: 0 0 7px rgba(0, 229, 255, 0.6); }
+.f1-cal-mt { color: #d8b4fe; font-size: 10.5px; font-weight: 900; text-shadow: 0 0 7px rgba(168, 85, 247, 0.6); }
+.f1-cal-pts { margin-left: auto; font-size: 12.5px; font-weight: 700; color: #d6dae8; min-width: 28px; text-align: right; }
+.f1-cal-mini { height: 23px; min-width: 128px; padding-right: 7px; }
+.f1-cal-mini .f1-cal-tri { width: 36px; font-size: 10px; }
+.f1-cal-mini .f1-cal-pos { min-width: 36px; font-size: 13px; }
+.f1-cal-mini .f1-cal-pts { font-size: 11px; min-width: 22px; }
+
+/* Bloc duel central du championnat F1 */
+.f1-duel-bloc {
+  flex: 1 1 190px;
+  min-width: 180px;
+  max-width: 250px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  padding: 14px 16px;
 }
-.f1-cal-mini { min-width: 108px; padding: 2px 6px 2px 5px; gap: 4px; }
-.f1-cal-mini .f1-cal-pos { min-width: 28px; height: 17px; font-size: 10px; }
-.f1-cal-mini .f1-cal-tri { font-size: 9px; width: 24px; }
-.f1-cal-mini .f1-cal-pts { font-size: 10px; min-width: 20px; }
+.f1-duel-label {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: #8d8da2;
+}
+.f1-duel-num { font-size: 44px; line-height: 1; }
+.f1-duel-chev {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 27px; font-weight: 900; line-height: 1;
+  animation: f1chev 1.3s infinite;
+}
+@keyframes f1chev { 0%, 100% { opacity: 0.12; } 35% { opacity: 1; } }
+.f1-duel-barre {
+  display: flex; width: 100%; height: 6px;
+  border-radius: 99px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  margin-top: 4px;
+  transform: skewX(-12deg);
+}
+.f1-duel-score { font-family: 'Titillium Web', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.05em; margin-top: 2px; }
+.f1-duel-statut {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  text-align: center; margin-top: 2px;
+}
+.f1-duel-titre-ok { color: #ffd34d; text-shadow: 0 0 10px rgba(255, 211, 77, 0.5); }
+.f1-duel-reste { font-size: 9px; color: #6d6d85; text-transform: uppercase; letter-spacing: 0.15em; }
