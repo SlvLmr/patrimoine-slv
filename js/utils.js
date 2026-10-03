@@ -19,6 +19,20 @@ export function formatCurrency(value) {
   return formatCurrencyCents(value);
 }
 
+const currencyFormatterEntier = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0
+});
+
+// Exception voulue : Projection patrimoine et Liberté financière affichent à
+// l'euro supérieur (elles importent formatCurrencyEuro sous le nom formatCurrency)
+export function formatCurrencyEuro(value) {
+  const v = Math.ceil(value);
+  return currencyFormatterEntier.format(v === 0 ? 0 : v);
+}
+
 export function formatCurrencyCents(value) {
   const v = Math.round(value * 100) / 100;
   return currencyFormatterCents.format(v === 0 ? 0 : v);

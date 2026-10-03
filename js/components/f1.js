@@ -1,4 +1,4 @@
-import { openModal, inputField, selectField, getFormData, showToast, showModalError, confirmModal, promptModal } from '../utils.js?v=20261003e';
+import { openModal, inputField, selectField, getFormData, showToast, showModalError, confirmModal, promptModal } from '../utils.js?v=20261003f';
 import { getCurrentUser, saveSharedDoc, loadSharedDoc, subscribeSharedDoc, isConfigured } from '../firebase-config.js';
 
 // ============================================================

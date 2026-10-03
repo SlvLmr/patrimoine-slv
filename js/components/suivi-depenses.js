@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261003e';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261003f';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',

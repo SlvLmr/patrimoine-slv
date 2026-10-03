@@ -1,4 +1,4 @@
-import { formatCurrency, computeProjection, showToast, conseilCardHtml } from '../utils.js?v=20261003e';
+import { formatCurrencyEuro as formatCurrency, computeProjection, showToast, conseilCardHtml } from '../utils.js?v=20261003f';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================
@@ -329,7 +329,7 @@ export function render(store) {
                 <td class="py-2 px-2 text-gray-600">${i + 1}</td>
                 <td class="py-2 px-2 text-gray-200 font-medium whitespace-nowrap">${l.source}</td>
                 <td class="py-2 px-2 text-right text-gray-300 whitespace-nowrap">${formatCurrency(l.brut)}</td>
-                <td class="py-2 px-2 text-right ${l.impots > 0.5 ? 'text-red-400' : 'text-gray-600'} whitespace-nowrap">${l.impots > 0.5 ? '−' + formatCurrency(l.impots) : '0,00 €'}</td>
+                <td class="py-2 px-2 text-right ${l.impots > 0.5 ? 'text-red-400' : 'text-gray-600'} whitespace-nowrap">${l.impots > 0.5 ? '−' + formatCurrency(l.impots) : '0 €'}</td>
                 <td class="py-2 px-2 text-right text-emerald-400 font-medium whitespace-nowrap">${formatCurrency(l.net)}</td>
                 <td class="py-2 px-2 text-gray-500">${l.raison}</td>
               </tr>`).join('')}
