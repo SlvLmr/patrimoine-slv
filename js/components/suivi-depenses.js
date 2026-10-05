@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261003f';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261005a';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -3443,19 +3443,30 @@ export function mount(store, navigate) {
           `).join('')}
         </div>
       </div>
+      ${paiementFieldHtml('cb')}
       ${pocketSelectHtml(ndfPockets)}
     `;
     openModal('Ajouter une NDF', body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       data.compte = document.querySelector('input[name="compte"]:checked')?.value || bankNames.secondary;
+      data.paiement = document.querySelector('input[name="paiement"]:checked')?.value || 'cb';
       data.categorie = 'NDF';
       if (!(Number(data.montant) > 0)) { showModalError('Indique un montant supérieur à 0.'); return false; }
       const pocketId = document.getElementById('pocket-select')?.value || 'aucun';
       const items = store.get('suiviDepenses') || [];
-      items.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data });
+      const op = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data };
+      // Une NDF payée par CB sur Trade Republic est éligible Saveback/Round-up
+      if (savebackEligible(op.paiement, op.compte, bankNames.secondary)) {
+        const sb = crediterSaveback(store, op.montant);
+        if (sb > 0) op.sb = sb;
+        const ru = crediterRoundup(store, op.montant);
+        if (ru > 0) op.ru = ru;
+      }
+      items.unshift(op);
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
-      showToast('NDF ajoutée ✓', 'success', 2000);
+      const bonus = [op.sb ? `Saveback +${op.sb.toFixed(2).replace('.', ',')} €` : '', op.ru ? `Round-up ${op.ru.toFixed(2).replace('.', ',')} € investis` : ''].filter(Boolean).join(' · ');
+      showToast(bonus ? `NDF ajoutée ✓ · ${bonus}` : 'NDF ajoutée ✓', 'success', 2500);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);
