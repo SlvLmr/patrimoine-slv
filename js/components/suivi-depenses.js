@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261007a';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261007b';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -647,6 +647,9 @@ const DCA_MENSUELS_TR = [];
 const REVENUS_MENSUELS_TR = [];
 
 
+// Décomposition des soldes par banque, posée au render pour le modal d'audit
+let _auditSoldes = null;
+
 export function render(store) {
   _activeStore = store;
   const bankNames = store.getBankNames();
@@ -915,6 +918,45 @@ export function render(store) {
     return { ...bank, ccId, baseSolde, prevSolde, obligSolde, solde, ops, lblPrev, lblOblig, pocketItems: bankPocketItems, mensLignes, mensCochees, totalMensCoche, apLignes, apCoches, totalApCoche };
   });
 
+  // Audit des soldes : décomposition exacte du calcul, affichée au clic sur le montant
+  _auditSoldes = {
+    cic: {
+      banque: bankNames.primary, total: soldeCIC, lignes: [
+        ['Solde de base (compte courant actif)', baseSoldeCIC],
+        ['Report du mois précédent', soldePrevCIC],
+        [`Revenus ponctuels (${revenus.filter(r => r.compte === bankNames.primary).length})`, revCIC],
+        [`Dépenses ponctuelles (${items.filter(i => i.compte === bankNames.primary).length})`, -depCIC],
+        ['Dépenses mensuelles cochées', -totalCochees],
+        ['Apports mensuels cochés', totalApportsCIC],
+      ],
+    },
+    tr: {
+      banque: bankNames.secondary, total: soldeTR, lignes: [
+        ['Solde de base (compte courant actif)', baseSoldeTR],
+        ['Report du mois précédent', soldePrevTR],
+        [`Revenus ponctuels (${revenus.filter(r => r.compte === bankNames.secondary).length})`, revTR],
+        [`Tuile ${lblInterets}`, trInterets],
+        [`Dépenses ponctuelles (${items.filter(i => i.compte === bankNames.secondary).length})`, -depTR],
+        [`Tuile ${lblRoundup}`, -trRoundup],
+        ['DCA & investissements cochés', -totalDcaConfirmed],
+        ['Apports mensuels cochés', totalRevConfirmed],
+        ['Abonnements cochés', -totalPrelevConfirmed],
+      ],
+    },
+  };
+  for (const b of extraBankData) {
+    _auditSoldes[b.id] = {
+      banque: b.name, total: b.solde, lignes: [
+        ['Solde de base (compte courant actif)', b.baseSolde],
+        ['Report du mois précédent', b.prevSolde],
+        [`Revenus ponctuels (${b.ops.filter(o => o.type === 'revenu').length})`, b.ops.filter(o => o.type === 'revenu').reduce((s, o) => s + (Number(o.montant) || 0), 0)],
+        [`Dépenses ponctuelles (${b.ops.filter(o => o.type === 'depense').length})`, -b.ops.filter(o => o.type === 'depense').reduce((s, o) => s + (Number(o.montant) || 0), 0)],
+        ['Dépenses mensuelles cochées', -b.totalMensCoche],
+        ['Apports mensuels cochés', b.totalApCoche],
+      ],
+    };
+  }
+
   // Archive data
   const archives = store.get('archiveDepenses') || [];
 
@@ -1013,7 +1055,7 @@ export function render(store) {
               <button data-rename-bank="primary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
               ${flechesBanque('cic')}
             </div>
-            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeCIC)}</p>
+            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap cursor-pointer hover:text-accent-blue transition" data-audit-solde="cic" title="Voir le détail du calcul du solde">${formatCurrencyCents(soldeCIC)}</p>
             <button data-edit-solde="cc-cic" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="cic">
@@ -1126,7 +1168,7 @@ export function render(store) {
               <button data-rename-bank="secondary" class="text-gray-600 hover:text-accent-blue transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
               ${flechesBanque('tr')}
             </div>
-            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(soldeTR)}</p>
+            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap cursor-pointer hover:text-accent-blue transition" data-audit-solde="tr" title="Voir le détail du calcul du solde">${formatCurrencyCents(soldeTR)}</p>
             <button data-edit-solde="cc-trade" class="text-xs text-gray-500 hover:text-accent-blue transition px-2 py-1 rounded hover:bg-dark-600/50 flex-shrink-0">Modifier</button>
           </div>
           <div class="flex items-center justify-between px-3 py-0.5 bg-dark-700/40 border-b border-dark-400/20 cursor-pointer hover:bg-dark-600/30 transition" data-edit-prev="tr">
@@ -1289,7 +1331,7 @@ export function render(store) {
               <button data-rename-bank="extra-${bank.id}" class="text-gray-600 hover:text-cyan-400 transition p-0.5 rounded hover:bg-dark-600/50 flex-shrink-0" title="Renommer">${PENCIL_ICON}</button>
               ${flechesBanque(bank.id)}
             </div>
-            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap">${formatCurrencyCents(bank.solde)}</p>
+            <p class="text-lg font-bold text-gray-100 ml-auto whitespace-nowrap cursor-pointer hover:text-cyan-400 transition" data-audit-solde="${bank.id}" title="Voir le détail du calcul du solde">${formatCurrencyCents(bank.solde)}</p>
             <div class="flex items-center gap-2 flex-shrink-0">
               <button data-edit-solde="${bank.ccId}" class="text-xs text-gray-500 hover:text-cyan-400 transition px-2 py-1 rounded hover:bg-dark-600/50">Modifier</button>
               <button data-remove-bank="${bank.id}" class="text-xs text-gray-500 hover:text-accent-red transition px-2 py-1 rounded hover:bg-dark-600/50" title="Supprimer cette banque">✕</button>
@@ -1879,6 +1921,27 @@ export function mount(store, navigate) {
         }
         navigate('suivi-depenses');
       });
+    });
+  });
+
+  // Audit du solde : décomposition exacte du calcul (clic sur le montant d'une carte)
+  document.querySelectorAll('[data-audit-solde]').forEach(el => {
+    el.addEventListener('click', () => {
+      const a = (_auditSoldes || {})[el.dataset.auditSolde];
+      if (!a) return;
+      const ligne = (lbl, v, gras = false) => `
+        <div class="flex items-center justify-between px-3 py-1.5 ${gras ? 'bg-dark-700/50' : ''} ${!gras && Math.abs(v) < 0.005 ? 'opacity-40' : ''}">
+          <span class="text-xs ${gras ? 'font-semibold text-gray-200' : 'text-gray-400'}">${lbl}</span>
+          <span class="text-sm ${gras ? 'font-bold text-gray-100' : `font-medium ${v < -0.005 ? 'text-red-400' : v > 0.005 ? 'text-emerald-400' : 'text-gray-500'}`}">${v > 0.005 && !gras ? '+' : ''}${formatCurrencyCents(v)}</span>
+        </div>`;
+      const body = `
+        <p class="text-xs text-gray-500 mb-3">Le solde affiché est exactement la somme de ces lignes. Compare chacune à ton relevé réel : celle qui diverge est la cause de l'écart.</p>
+        <div class="divide-y divide-dark-400/20 rounded-lg border border-dark-400/30 overflow-hidden">
+          ${a.lignes.map(([lbl, v]) => ligne(lbl, v)).join('')}
+          ${ligne('Solde affiché', a.total, true)}
+        </div>
+        ${el.dataset.auditSolde === 'tr' ? `<p class="text-[10px] text-gray-600 mt-3">Le Saveback n'apparaît pas ici : offert par Trade Republic, il n'entre jamais dans le solde.</p>` : ''}`;
+      openModal(`Détail du solde — ${a.banque}`, body, () => {});
     });
   });
 

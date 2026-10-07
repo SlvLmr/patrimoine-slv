@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261007a';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261007b';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Succession Pro ───────────────────────────────────────────────

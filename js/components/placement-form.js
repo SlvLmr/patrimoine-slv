@@ -1,4 +1,4 @@
-import { inputField, selectField, getFormData, openModal } from '../utils.js?v=20261007a';
+import { inputField, selectField, getFormData, openModal } from '../utils.js?v=20261007b';
 
 export const ENVELOPPES = [
   { value: 'PEA', label: 'PEA' },
