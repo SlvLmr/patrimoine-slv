@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261005a';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261007a';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -2327,8 +2327,11 @@ export function mount(store, navigate) {
       if (savebackEligible(op.paiement, op.compte, bankNames.secondary)) {
         const sb = crediterSaveback(store, op.montant);
         if (sb > 0) op.sb = sb;
-        const ru = crediterRoundup(store, op.montant);
-        if (ru > 0) op.ru = ru;
+        // Pas de Round-up sur les NDF (Saveback seul)
+        if ((op.categorie || '').toLowerCase() !== 'ndf') {
+          const ru = crediterRoundup(store, op.montant);
+          if (ru > 0) op.ru = ru;
+        }
       }
       items.unshift(op);
       store.set('suiviDepenses', items);
@@ -2413,8 +2416,11 @@ export function mount(store, navigate) {
           if (savebackEligible(item.paiement, item.compte, bankNames.secondary)) {
             const sb = crediterSaveback(store, item.montant);
             if (sb > 0) item.sb = sb;
-            const ru = crediterRoundup(store, item.montant);
-            if (ru > 0) item.ru = ru;
+            // Pas de Round-up sur les NDF (Saveback seul)
+            if ((item.categorie || '').toLowerCase() !== 'ndf') {
+              const ru = crediterRoundup(store, item.montant);
+              if (ru > 0) item.ru = ru;
+            }
           }
           store.set('suiviDepenses', items);
           // Apply new pocket deduction if assigned
@@ -3456,17 +3462,16 @@ export function mount(store, navigate) {
       const items = store.get('suiviDepenses') || [];
       const op = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), pocket: pocketId !== 'aucun' ? pocketId : undefined, ...data };
       // Une NDF payée par CB sur Trade Republic est éligible Saveback/Round-up
+      // NDF CB sur Trade Republic : Saveback uniquement, pas de Round-up
+      // (une NDF est remboursée, elle ne déclenche pas d'arrondi investi)
       if (savebackEligible(op.paiement, op.compte, bankNames.secondary)) {
         const sb = crediterSaveback(store, op.montant);
         if (sb > 0) op.sb = sb;
-        const ru = crediterRoundup(store, op.montant);
-        if (ru > 0) op.ru = ru;
       }
       items.unshift(op);
       store.set('suiviDepenses', items);
       deductFromPocket(store, bankNames, data.compte, pocketId, data.montant);
-      const bonus = [op.sb ? `Saveback +${op.sb.toFixed(2).replace('.', ',')} €` : '', op.ru ? `Round-up ${op.ru.toFixed(2).replace('.', ',')} € investis` : ''].filter(Boolean).join(' · ');
-      showToast(bonus ? `NDF ajoutée ✓ · ${bonus}` : 'NDF ajoutée ✓', 'success', 2500);
+      showToast(op.sb ? `NDF ajoutée ✓ · Saveback +${op.sb.toFixed(2).replace('.', ',')} €` : 'NDF ajoutée ✓', 'success', 2500);
       navigate('suivi-depenses');
     });
     setupPocketBankSync(store, bankNames);

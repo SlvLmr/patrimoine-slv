@@ -1,6 +1,6 @@
-import { getConseilsTransmission } from './hypotheses.js?v=20261005a';
-import { getConseilsLiberte } from './liberte.js?v=20261005a';
-import { getConseilsContrats } from './contrats.js?v=20261005a';
+import { getConseilsTransmission } from './hypotheses.js?v=20261007a';
+import { getConseilsLiberte } from './liberte.js?v=20261007a';
+import { getConseilsContrats } from './contrats.js?v=20261007a';
 
 // ============================================================
 // LE CONSEILLER — le tableau de bord des décisions : agrège les
