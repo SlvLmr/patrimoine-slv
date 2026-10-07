@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261007b';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261007c';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur d'Intérêts Composés ─────────────────────────────────────────

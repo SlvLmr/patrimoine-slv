@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261007b';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261007c';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -1940,8 +1940,24 @@ export function mount(store, navigate) {
           ${a.lignes.map(([lbl, v]) => ligne(lbl, v)).join('')}
           ${ligne('Solde affiché', a.total, true)}
         </div>
-        ${el.dataset.auditSolde === 'tr' ? `<p class="text-[10px] text-gray-600 mt-3">Le Saveback n'apparaît pas ici : offert par Trade Republic, il n'entre jamais dans le solde.</p>` : ''}`;
+        ${el.dataset.auditSolde === 'tr' ? `<p class="text-[10px] text-gray-600 mt-3">Le Saveback n'apparaît pas ici : offert par Trade Republic, il n'entre jamais dans le solde.</p>` : ''}
+        <button type="button" id="btn-voir-journal" class="mt-3 text-[11px] text-gray-500 hover:text-accent-blue transition">📓 Journal des écritures de ce navigateur</button>`;
       openModal(`Détail du solde — ${a.banque}`, body, () => {});
+      document.getElementById('btn-voir-journal')?.addEventListener('click', () => {
+        const j = (store.getJournal ? store.getJournal() : []).slice().reverse().slice(0, 150);
+        const lignes = j.map(e => `
+          <div class="px-2 py-1 border-b border-dark-400/10 ${e.src === 'distant' ? 'bg-amber-500/10' : ''}">
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] uppercase ${e.src === 'distant' ? 'text-amber-400 font-bold' : 'text-gray-600'}">${e.src === 'distant' ? 'sync' : 'local'}</span>
+              <span class="text-[9px] text-gray-500">${new Date(e.t).toLocaleString('fr-FR')}</span>
+              <span class="text-[10px] text-gray-300 font-medium">${e.k}</span>
+            </div>
+            <p class="text-[10px] text-gray-400 break-all">${e.r}</p>
+          </div>`).join('') || '<p class="text-xs text-gray-500 px-2 py-3">Journal vide — il se remplit à partir de maintenant.</p>';
+        openModal('Journal des écritures', `
+          <p class="text-xs text-gray-500 mb-2">Chaque modification des données de solde est tracée ici (sur ce navigateur uniquement, rien n'est envoyé). Une ligne <b class="text-amber-400">SYNC</b> = un autre appareil a réécrit ces données via la synchronisation. Si une ligne SYNC change un solde alors que tu n'avais rien fait sur l'autre appareil, c'est l'écrasement qu'on cherche — avec l'heure exacte et l'avant/après.</p>
+          <div class="max-h-[50vh] overflow-y-auto rounded-lg border border-dark-400/30">${lignes}</div>`, () => {});
+      });
     });
   });
 

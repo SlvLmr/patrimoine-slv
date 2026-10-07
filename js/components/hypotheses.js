@@ -1,4 +1,4 @@
-import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal, conseilCardHtml } from '../utils.js?v=20261007b';
+import { formatCurrency, openModal, computeProjection, getPlacementGroupKey, confirmModal, conseilCardHtml } from '../utils.js?v=20261007c';
 
 // ============================================================================
 // HYPOTHÈSES — Plan théorique éditable

@@ -1,5 +1,5 @@
 import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud, discoverProfilesFromCloud, subscribeToProfile } from './firebase-config.js';
-import { showToast } from './utils.js?v=20261007b';
+import { showToast } from './utils.js?v=20261007c';
 
 
 const PROFILES_KEY = 'patrimoine-slv-profiles';
@@ -11,6 +11,36 @@ const DEVICE_ID = sessionStorage.getItem('_slv_device') || (() => {
   sessionStorage.setItem('_slv_device', id);
   return id;
 })();
+
+// ---- Journal local des écritures (boîte noire, par navigateur, jamais synchronisé) ----
+// Trace toute modification des données qui composent les soldes, qu'elle soit
+// locale (action utilisateur) ou distante (synchro d'un autre appareil), pour
+// prendre en flagrant délit un écrasement par un instantané périmé.
+const JOURNAL_KEY = 'patrimoine-slv-journal';
+const JOURNAL_WATCH = ['soldeMoisPrecedent', 'trFeatures', 'actifs', 'suiviDepenses', 'suiviRevenus', 'trRecurringConfirmed', 'cicMensuellesCochees', 'cicApportsCoches', 'extraMensuellesCochees', 'extraApportsCoches', 'archiveDepenses'];
+function _journalResume(state, key) {
+  try {
+    const v = state?.[key];
+    if (v === undefined || v === null) return '∅';
+    if (key === 'suiviDepenses' || key === 'suiviRevenus') {
+      const tot = v.reduce((s, o) => s + (Number(o.montant) || 0), 0);
+      return `${v.length} op · ${(Math.round(tot * 100) / 100).toFixed(2)} €`;
+    }
+    if (key === 'trFeatures') return `int=${Number(v.interets) || 0} sb=${Number(v.saveback) || 0} ru=${Number(v.roundup) || 0}`;
+    if (key === 'soldeMoisPrecedent') return Object.entries(v).filter(([k]) => !k.startsWith('_')).map(([k, x]) => `${k}=${Math.round((Number(x) || 0) * 100) / 100}`).join(' ');
+    if (key === 'actifs') return (v.comptesCourants || []).map(c => `${c.id}=${Number(c.solde) || 0}`).join(' ') || 'cc vides';
+    if (key === 'archiveDepenses') return `${v.length} mois archivés`;
+    return `${JSON.stringify(v).length} caractères`;
+  } catch { return '?'; }
+}
+function _journalLog(src, cle, resume) {
+  try {
+    const j = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]');
+    j.push({ t: new Date().toISOString(), src, k: cle, r: resume });
+    while (j.length > 400) j.shift();
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(j));
+  } catch {}
+}
 
 // Track cloud sync status
 let _cloudSyncPending = 0;
@@ -561,6 +591,11 @@ const Store = {
     }
     obj[keys[keys.length - 1]] = value;
     saveState(this._profileId, this._state);
+    if (JOURNAL_WATCH.includes(keys[0])) _journalLog('local', path, _journalResume(this._state, keys[0]));
+  },
+
+  getJournal() {
+    try { return JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]'); } catch { return []; }
   },
 
   addItem(path, item) {
@@ -898,9 +933,16 @@ const Store = {
 
       try {
         const remoteState = JSON.parse(docData.data);
+        // Journal : noter ce que l'instantané distant change sur les clés de solde
+        const avant = {};
+        JOURNAL_WATCH.forEach(k => { avant[k] = _journalResume(this._state, k); });
         // Update localStorage and in-memory state
         localStorage.setItem(getStorageKey(subscribedProfileId), JSON.stringify(remoteState));
         this._state = loadState(subscribedProfileId);
+        JOURNAL_WATCH.forEach(k => {
+          const apres = _journalResume(this._state, k);
+          if (apres !== avant[k]) _journalLog('distant', k, `${avant[k]}  →  ${apres}`);
+        });
         localStorage.setItem('patrimoine-slv-last-sync', new Date().toISOString());
         if (_onRemoteChangeCallback) _onRemoteChangeCallback();
       } catch (e) {
