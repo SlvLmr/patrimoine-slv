@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261007c';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261102a';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -2204,6 +2204,13 @@ export function mount(store, navigate) {
             ${inputField('produit', 'Produit cible', trFeatures.savebackProduit || '', 'text', 'placeholder="Ex: Bitcoin, ETF MSCI World, action…"')}
             ${inputField('isin', 'ISIN (optionnel)', trFeatures.savebackIsin || '', 'text', 'placeholder="Ex: IE00B4L5Y983"')}
           </div>` : '')
+        + (feat === 'interets' ? `
+          <div class="rounded-lg bg-emerald-500/5 border border-emerald-500/15 p-3 mb-4">
+            <p class="text-[11px] text-emerald-300/90 font-semibold mb-2">Versement réel Trade Republic</p>
+            <p class="text-[10px] text-gray-500 leading-relaxed mb-2">Pour rester au centime près : saisis dans « Montant » le chiffre <b class="text-gray-400">exactement versé par TR</b> (ligne « Intérêts » de début de mois dans l'appli). Une estimation ne peut pas tomber juste — TR calcule sur ton solde quotidien réel et les jours exacts du mois.</p>
+            <p class="text-[10px] text-gray-400 mb-3">Estimation indicative du mois en cours : <b id="int-estime" class="text-emerald-300">…</b> <span class="text-gray-600">(solde actuel × taux × jours écoulés ÷ 365)</span></p>
+            ${inputField('taux', 'Taux annuel (%)', (Number(trFeatures.interetsTaux) || 0.02) * 100, 'number', 'step="0.01"')}
+          </div>` : '')
         + (feat === 'roundup' ? `
           <div class="rounded-lg bg-red-500/5 border border-red-500/15 p-3 mb-4">
             <p class="text-[11px] text-red-300/90 font-semibold mb-2">Round-up automatique</p>
@@ -2244,6 +2251,9 @@ export function mount(store, navigate) {
           trFeatures.roundupIsin = (data.isin || '').trim().toUpperCase();
           if (trFeatures.roundupProduit) trFeatures.lblRoundup = `Round-up${trFeatures.roundupBoost > 1 ? ' x' + trFeatures.roundupBoost : ''} → ${trFeatures.roundupProduit}`;
         }
+        if (feat === 'interets' && data.taux !== undefined) {
+          trFeatures.interetsTaux = (Number(data.taux) || 2) / 100;
+        }
         store.set('trFeatures', trFeatures);
         const bgVal = document.querySelector('input[name="color_bg"]:checked')?.value || curBg;
         const txVal = document.querySelector('input[name="color_text"]:checked')?.value || curTx;
@@ -2252,6 +2262,14 @@ export function mount(store, navigate) {
         store.set('pocketColors', colors);
         navigate('suivi-depenses');
       });
+      if (feat === 'interets') {
+        // Estimation indicative : solde TR hors tuile × taux × jours écoulés du mois ÷ 365
+        const base = ((_auditSoldes || {}).tr?.total || 0) - currentValue;
+        const taux = Number(trFeatures.interetsTaux) || 0.02;
+        const est = base * taux * new Date().getDate() / 365;
+        const elEst = document.getElementById('int-estime');
+        if (elEst) elEst.textContent = formatCurrencyCents(Math.max(0, est));
+      }
     });
   });
 

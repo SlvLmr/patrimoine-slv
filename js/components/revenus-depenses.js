@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20261007c';
+import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20261102a';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 const DEPENSE_TYPES = [
