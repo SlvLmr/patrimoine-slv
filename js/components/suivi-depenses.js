@@ -1,4 +1,4 @@
-import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261111a';
+import { formatCurrencyCents, formatDate, openModal, inputField, selectField, getFormData, confirmModal, promptModal, showToast, showModalError } from '../utils.js?v=20261111b';
 
 const DEFAULT_CATEGORIES = [
   'Alimentation', 'Achats divers', 'Santé', 'Vêtements',
@@ -108,6 +108,47 @@ function paiementFieldHtml(selected = 'cb') {
         </label>`).join('')}
     </div>
   </div>`;
+}
+
+// ---- Changements programmés « à partir du mois prochain » sur les lignes récurrentes ----
+// Le mois en cours reste intact : le nouveau montant (ou la suppression) est
+// appliqué par la clôture ; la déclôture restaure l'état d'avant clôture.
+function prochainFieldHtml(item) {
+  if (!item) return '';
+  const a = item.prochainMontant;
+  return `
+  <div class="rounded-lg bg-cyan-500/5 border border-cyan-500/15 p-3 mb-4">
+    <p class="text-[11px] text-cyan-300/90 font-semibold mb-1">À partir du mois prochain</p>
+    <p class="text-[10px] text-gray-500 mb-2">Le mois en cours ne bouge pas : le changement s'applique à la clôture (prêt soldé, nouveau loyer, hausse d'abonnement…).</p>
+    ${inputField('prochainMontant', 'Nouveau montant (€) — laisser vide si inchangé', a !== undefined && a !== null ? a : '', 'number', 'step="0.01"')}
+    <div class="flex items-center gap-2">
+      <input type="checkbox" id="field-supprimerProchain" ${item.supprimerProchain ? 'checked' : ''} class="w-4 h-4 rounded bg-dark-800 border-dark-400/50 text-red-500 focus:ring-red-500/40">
+      <label for="field-supprimerProchain" class="text-xs text-gray-300">Supprimer cette ligne à partir du mois prochain</label>
+    </div>
+  </div>`;
+}
+
+function lireProchainDepuisModal(item) {
+  const v = document.getElementById('field-prochainMontant')?.value;
+  if (v !== undefined && v !== null && v !== '') item.prochainMontant = Number(v) || 0;
+  else delete item.prochainMontant;
+  if (document.getElementById('field-supprimerProchain')?.checked) item.supprimerProchain = true;
+  else delete item.supprimerProchain;
+}
+
+function badgeProchain(item) {
+  if (item.supprimerProchain) return ' <span class="text-[9px] text-red-400/90 whitespace-nowrap" title="Supprimée à partir du mois prochain">■ dernier mois</span>';
+  if (item.prochainMontant !== undefined && item.prochainMontant !== null) return ` <span class="text-[9px] text-cyan-300/90 whitespace-nowrap" title="Nouveau montant à partir du mois prochain">→ ${formatCurrencyCents(Number(item.prochainMontant) || 0)}</span>`;
+  return '';
+}
+
+function appliquerChangementsProgrammes(liste) {
+  return (liste || []).filter(l => !l.supprimerProchain).map(l => {
+    if (l.prochainMontant === undefined || l.prochainMontant === null) return l;
+    const n = { ...l, montant: Number(l.prochainMontant) || 0 };
+    delete n.prochainMontant;
+    return n;
+  });
 }
 
 const savebackEligible = (paiement, compte, trName) => paiement === 'cb' && compte === trName;
@@ -1111,7 +1152,7 @@ export function render(store) {
                     <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                   </svg>
                   <input type="checkbox" data-cic-mensuel="${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
-                  <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>
+                  <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-mc-edit="${d.id}">${d.nom}</span>${badgeProchain(d)}
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <span class="text-[11px] font-medium ${checked ? 'text-gray-600' : 'text-gray-100'} cursor-pointer" data-mc-edit="${d.id}">${formatCurrencyCents(d.montant)}</span>
@@ -1147,7 +1188,7 @@ export function render(store) {
                     <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                   </svg>
                   <input type="checkbox" data-cic-apport="${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
-                  <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-apc-edit="${d.id}">${d.nom}</span>
+                  <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-apc-edit="${d.id}">${d.nom}</span>${badgeProchain(d)}
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <span class="text-[11px] font-medium ${checked ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-apc-edit="${d.id}">+${formatCurrencyCents(d.montant)}</span>
@@ -1230,7 +1271,7 @@ export function render(store) {
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
                   <input type="checkbox" data-tr-prelev-recurring="${p.id}" ${confirmed ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-orange-500 focus:ring-orange-500/40 cursor-pointer">
-                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-prelev-edit="${p.id}">${p.nom}</span>
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-prelev-edit="${p.id}">${p.nom}</span>${badgeProchain(p)}
                   ${pocketLabel ? `<span class="text-[9px] text-gray-600">${pocketLabel}</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
@@ -1269,7 +1310,7 @@ export function render(store) {
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
                   <input type="checkbox" data-tr-dca-recurring="${d.id}" ${confirmed ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-blue-500 focus:ring-blue-500/40 cursor-pointer">
-                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-dca-edit="${d.id}">${d.nom}</span>${badgeProchain(d)}
                   ${dcaPocketLabel ? `<span class="text-[9px] text-gray-600">${dcaPocketLabel}</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
@@ -1308,7 +1349,7 @@ export function render(store) {
                 <div class="flex items-center gap-2 min-w-0">
                   <svg class="w-3 h-4 text-gray-600 flex-shrink-0 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></svg>
                   <input type="checkbox" data-tr-rev-recurring="${r.id}" ${confirmed ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
-                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>
+                  <span class="text-[11px] ${confirmed ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-tr-rev-edit="${r.id}">${r.nom}</span>${badgeProchain(r)}
                   ${revPocketLabel ? `<span class="text-[9px] text-gray-600">${revPocketLabel}</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
@@ -1389,7 +1430,7 @@ export function render(store) {
                     <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                   </svg>
                   <input type="checkbox" data-extra-mensuel="${bank.id}::${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-amber focus:ring-accent-amber/40 cursor-pointer">
-                  <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-extra-mc-edit="${bank.id}::${d.id}">${d.nom}</span>
+                  <span class="text-[11px] ${checked ? 'text-gray-500 line-through' : 'text-gray-200'} cursor-pointer" data-extra-mc-edit="${bank.id}::${d.id}">${d.nom}</span>${badgeProchain(d)}
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <span class="text-[11px] font-medium ${checked ? 'text-gray-600' : 'text-gray-100'} cursor-pointer" data-extra-mc-edit="${bank.id}::${d.id}">${formatCurrencyCents(d.montant)}</span>
@@ -1426,7 +1467,7 @@ export function render(store) {
                     <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                   </svg>
                   <input type="checkbox" data-extra-apport="${bank.id}::${d.id}" ${checked ? 'checked' : ''} ${monthIsClosed ? 'disabled' : ''} class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-emerald-500 focus:ring-emerald-500/40 cursor-pointer">
-                  <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-extra-ap-edit="${bank.id}::${d.id}">${d.nom}</span>
+                  <span class="text-[11px] ${checked ? 'text-gray-200' : 'text-gray-500 line-through'} cursor-pointer" data-extra-ap-edit="${bank.id}::${d.id}">${d.nom}</span>${badgeProchain(d)}
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                   <span class="text-[11px] font-medium ${checked ? 'text-emerald-400' : 'text-gray-600 line-through'} cursor-pointer" data-extra-ap-edit="${bank.id}::${d.id}">+${formatCurrencyCents(d.montant)}</span>
@@ -1810,6 +1851,20 @@ export function mount(store, navigate) {
       trF.saveback = 0;
       trF.roundup = 0;
       store.set('trFeatures', trF);
+
+      // Changements programmés « à partir du mois prochain » : appliqués ici,
+      // après les snapshots d'archive (la déclôture peut donc les défaire)
+      store.set('depensesMensuellesCIC', appliquerChangementsProgrammes(store.get('depensesMensuellesCIC')));
+      store.set('apportsMensuelsCIC', appliquerChangementsProgrammes(store.get('apportsMensuelsCIC')));
+      store.set('dcaMensuelsTR', appliquerChangementsProgrammes(store.get('dcaMensuelsTR')));
+      store.set('revenusMensuelsTR', appliquerChangementsProgrammes(store.get('revenusMensuelsTR')));
+      store.set('prelevementsTR', appliquerChangementsProgrammes(store.get('prelevementsTR')));
+      const mensExProg = store.get('mensuellesExtra') || {};
+      Object.keys(mensExProg).forEach(k => { mensExProg[k] = appliquerChangementsProgrammes(mensExProg[k]); });
+      store.set('mensuellesExtra', mensExProg);
+      const apExProg = store.get('apportsExtra') || {};
+      Object.keys(apExProg).forEach(k => { apExProg[k] = appliquerChangementsProgrammes(apExProg[k]); });
+      store.set('apportsExtra', apExProg);
 
       showToast(`Mois de ${label} clôturé ✓`, 'success', 3500);
       _bilanApresCloture = monthKey;
@@ -2663,12 +2718,14 @@ export function mount(store, navigate) {
         ${inputField('nom', 'Nom', dep.nom)}
         ${inputField('montant', 'Montant (€)', dep.montant, 'number', '0.01')}
         ${paiementFieldHtml(dep.paiement || 'prelevement')}
+        ${prochainFieldHtml(dep)}
       `;
       openModal('Modifier la dépense mensuelle', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         dep.nom = data.nom || dep.nom;
         dep.montant = Number(data.montant) || dep.montant;
         dep.paiement = document.querySelector('input[name="paiement"]:checked')?.value || dep.paiement || 'prelevement';
+        lireProchainDepuisModal(dep);
         store.set('mensuellesExtra', all);
         navigate('suivi-depenses');
       });
@@ -2703,10 +2760,12 @@ export function mount(store, navigate) {
       ${inputField('nom', 'Nom', existant?.nom || '', 'text', 'placeholder="Ex: Salaire, Pension, Apport…"')}
       ${inputField('montant', 'Montant (€)', existant?.montant || '', 'number', '0.01')}
       ${paiementFieldHtml(existant?.paiement || 'virement')}
+      ${existant ? prochainFieldHtml(existant) : ''}
     `;
     openModal(titre, body, () => {
       const data = getFormData(document.getElementById('modal-body'));
       if (!data.nom || !data.montant) return;
+      if (existant) lireProchainDepuisModal(existant);
       onSave({
         nom: data.nom,
         montant: Number(data.montant),
@@ -2805,12 +2864,14 @@ export function mount(store, navigate) {
         ${inputField('nom', 'Nom', dep.nom)}
         ${inputField('montant', 'Montant (€)', dep.montant, 'number', '0.01')}
         ${paiementFieldHtml(dep.paiement || 'prelevement')}
+        ${prochainFieldHtml(dep)}
       `;
       openModal('Modifier la dépense mensuelle', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         dep.nom = data.nom || dep.nom;
         dep.montant = Number(data.montant) || dep.montant;
         dep.paiement = document.querySelector('input[name="paiement"]:checked')?.value || dep.paiement || 'prelevement';
+        lireProchainDepuisModal(dep);
         store.set('depensesMensuellesCIC', list);
         navigate('suivi-depenses');
       });
@@ -2994,6 +3055,7 @@ export function mount(store, navigate) {
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
         ${paiementFieldHtml(item.paiement || 'investissement')}
         ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
+        ${prochainFieldHtml(item)}
       `;
       openModal('Modifier le DCA', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -3015,6 +3077,7 @@ export function mount(store, navigate) {
           allConf[mk] = conf;
           store.set('trRecurringConfirmed', allConf);
         }
+        lireProchainDepuisModal(item);
         store.set('dcaMensuelsTR', list);
         navigate('suivi-depenses');
       });
@@ -3034,6 +3097,7 @@ export function mount(store, navigate) {
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
         ${paiementFieldHtml(item.paiement || 'virement')}
         ${pocketSelectHtml(pockets, item.pocket || 'aucun', 'Ajouter au pocket')}
+        ${prochainFieldHtml(item)}
       `;
       openModal('Modifier le revenu mensuel', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -3051,6 +3115,7 @@ export function mount(store, navigate) {
           if (oldPocket) deductFromPocket(store, bankNames, bankNames.secondary, oldPocket, oldMontant);
           if (item.pocket) deductFromPocket(store, bankNames, bankNames.secondary, item.pocket, -item.montant);
         }
+        lireProchainDepuisModal(item);
         store.set('revenusMensuelsTR', list);
         navigate('suivi-depenses');
       });
@@ -3210,6 +3275,7 @@ export function mount(store, navigate) {
         ${inputField('montant', 'Montant (€)', item.montant, 'number', '0.01')}
         ${paiementFieldHtml(item.paiement || 'prelevement')}
         ${pocketSelectHtml(pockets, item.pocket || 'aucun')}
+        ${prochainFieldHtml(item)}
       `;
       openModal('Modifier le prélèvement', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
@@ -3231,6 +3297,7 @@ export function mount(store, navigate) {
           allConf[mk] = conf;
           store.set('trRecurringConfirmed', allConf);
         }
+        lireProchainDepuisModal(item);
         store.set('prelevementsTR', list);
         navigate('suivi-depenses');
       });
@@ -3802,6 +3869,15 @@ export function mount(store, navigate) {
           store.set('trFeatures', trF);
           // 4. Pockets restaurés tels qu'au moment de la clôture
           if (meta.budgetPockets) store.set('budgetPockets', JSON.parse(JSON.stringify(meta.budgetPockets)));
+          // 4b. Lignes récurrentes restaurées telles qu'avant la clôture
+          // (défait les changements programmés que la clôture avait appliqués)
+          if (a.depMensuelles) store.set('depensesMensuellesCIC', JSON.parse(JSON.stringify(a.depMensuelles)));
+          if (a.dcaTR) store.set('dcaMensuelsTR', JSON.parse(JSON.stringify(a.dcaTR)));
+          if (a.revMensuelsTR) store.set('revenusMensuelsTR', JSON.parse(JSON.stringify(a.revMensuelsTR)));
+          if (a.prelevTR) store.set('prelevementsTR', JSON.parse(JSON.stringify(a.prelevTR)));
+          if (meta.apportsCIC) store.set('apportsMensuelsCIC', JSON.parse(JSON.stringify(meta.apportsCIC)));
+          if (meta.mensuellesExtra) store.set('mensuellesExtra', JSON.parse(JSON.stringify(meta.mensuellesExtra)));
+          if (meta.apportsExtra) store.set('apportsExtra', JSON.parse(JSON.stringify(meta.apportsExtra)));
           // 5. Les coches des mois postérieurs sont forcément nées après la clôture : on les efface
           const allConf = store.get('trRecurringConfirmed') || {};
           Object.keys(allConf).forEach(k => { if (k > mois) delete allConf[k]; });
