@@ -525,13 +525,14 @@ export function computeProjection(store, overrides = {}) {
     dureeRestanteMois: Number(e.dureeRestanteMois) || 0
   }));
 
+  // moisParAn : prélèvements sur 10/11 mois (taxe foncière, énergie) lissés sur 12
   const revenusMensuels = state.revenus.filter(i => !i.informatif).reduce((s, i) => {
     const montant = Number(i.montantMensuel) || 0;
-    return s + (i.frequence === 'Annuel' ? montant / 12 : montant);
+    return s + (i.frequence === 'Annuel' ? montant / 12 : montant * ((Number(i.moisParAn) || 12) / 12));
   }, 0);
   const depensesMensuelles = state.depenses.reduce((s, i) => {
     const montant = Number(i.montantMensuel) || 0;
-    return s + (i.frequence === 'Annuel' ? montant / 12 : montant);
+    return s + (i.frequence === 'Annuel' ? montant / 12 : montant * ((Number(i.moisParAn) || 12) / 12));
   }, 0);
 
   // Trade Republic features: saveback (1% CB → BTC) & round-up (arrondi → CTO)
@@ -540,7 +541,7 @@ export function computeProjection(store, overrides = {}) {
     .filter(d => d.typeDepense !== 'Investissement')
     .reduce((s, d) => {
       const m = Number(d.montantMensuel) || 0;
-      return s + (d.frequence === 'Annuel' ? m / 12 : m);
+      return s + (d.frequence === 'Annuel' ? m / 12 : m * ((Number(d.moisParAn) || 12) / 12));
     }, 0);
   const trSavebackPct = params.trSavebackPct || 0.01;
   const trRoundupPct = params.trRoundupPct || 0.03;

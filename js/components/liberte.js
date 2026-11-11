@@ -1,4 +1,4 @@
-import { formatCurrencyEuro as formatCurrency, computeProjection, showToast, conseilCardHtml } from '../utils.js?v=20261102a';
+import { formatCurrencyEuro as formatCurrency, computeProjection, showToast, conseilCardHtml } from '../utils.js?v=20261111a';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================

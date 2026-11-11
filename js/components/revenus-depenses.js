@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20261102a';
+import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20261111a';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 const DEPENSE_TYPES = [
@@ -15,7 +15,30 @@ const FREQ_OPTIONS = [
 
 function getMensuelLisse(item) {
   const montant = Number(item.montantMensuel) || 0;
-  return item.frequence === 'Annuel' ? montant / 12 : montant;
+  if (item.frequence === 'Annuel') return montant / 12;
+  // Prélèvements sur 10 ou 11 mois (taxe foncière, mensualités énergie) :
+  // le lissé répartit le coût réel annuel sur 12 mois
+  const mois = Number(item.moisParAn) || 12;
+  return montant * mois / 12;
+}
+
+function moisParAnFieldHtml(selected = 12) {
+  return `
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Prélevé sur</label>
+      <div class="flex gap-2">
+        ${[12, 11, 10].map(m => `
+        <label class="flex-1 text-center cursor-pointer px-3 py-2 rounded-lg border border-dark-400/50 bg-dark-800 hover:border-accent-amber/40 has-[:checked]:border-accent-amber has-[:checked]:bg-accent-amber/10 transition">
+          <input type="radio" name="moisParAn" value="${m}" ${m === selected ? 'checked' : ''} class="sr-only">
+          <span class="text-xs text-gray-200 font-medium">${m} mois</span>
+        </label>`).join('')}
+      </div>
+      <p class="text-[10px] text-gray-500 mt-1.5">Ex. taxe foncière : 10 mois (janv.–oct.) · mensualités Engie : souvent 11 + régularisation. Le lissé et l'annuel s'ajustent automatiquement. Ignoré en fréquence annuelle.</p>
+    </div>`;
+}
+
+function getMoisParAnFromModal() {
+  return Number(document.querySelector('input[name="moisParAn"]:checked')?.value) || 12;
 }
 
 function getDepensesByType(depenses, typeKey) {
@@ -79,12 +102,13 @@ function setupMontantSync() {
   if (!mEl || !lEl || !aEl) return;
 
   const round2 = v => Math.round(v * 100) / 100;
+  const moisSel = () => Number(document.querySelector('input[name="moisParAn"]:checked')?.value) || 12;
 
   mEl.addEventListener('input', () => {
     const v = parseFloat(mEl.value) || 0;
     if (freqEl) freqEl.value = 'Mensuel';
-    lEl.value = v || '';
-    aEl.value = v ? round2(v * 12) : '';
+    lEl.value = v ? round2(v * moisSel() / 12) : '';
+    aEl.value = v ? round2(v * moisSel()) : '';
   });
 
   aEl.addEventListener('input', () => {
@@ -99,8 +123,18 @@ function setupMontantSync() {
     const freq = freqEl?.value || 'Mensuel';
     aEl.value = v ? round2(v * 12) : '';
     if (freq === 'Mensuel') {
-      mEl.value = v || '';
+      mEl.value = v ? round2(v * 12 / moisSel()) : '';
     }
+  });
+
+  document.querySelectorAll('input[name="moisParAn"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const freq = freqEl?.value || 'Mensuel';
+      if (freq !== 'Mensuel') return;
+      const v = parseFloat(mEl.value) || 0;
+      lEl.value = v ? round2(v * moisSel() / 12) : '';
+      aEl.value = v ? round2(v * moisSel()) : '';
+    });
   });
 
   if (freqEl) {
@@ -171,7 +205,7 @@ function renderDepenseBlock(g) {
                   <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
                 </svg>
                 <p class="text-xs text-gray-200 truncate">${d.nom}</p>
-                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · An' : ''}</p>
+                <p class="text-[10px] font-light text-gray-500 flex-shrink-0">${d.categorie || 'Autre'}${d.frequence === 'Annuel' ? ' · An' : ''}${d.frequence !== 'Annuel' && Number(d.moisParAn) && Number(d.moisParAn) !== 12 ? ` · <span class="text-accent-amber/80">${d.moisParAn} mois</span>` : ''}</p>
               </div>
               <span class="text-xs text-right whitespace-nowrap ${mensuel > 0 ? 'text-gray-100 font-medium' : 'text-gray-600'}">${formatCurrencyCents(mensuel)}</span>
               <span class="text-xs text-right whitespace-nowrap ${d.frequence === 'Annuel' ? 'text-accent-amber font-medium' : 'text-gray-400'}">${formatCurrencyCents(lisse)}</span>
@@ -557,9 +591,10 @@ export function mount(store, navigate) {
 
     function val(item) {
       const m = Number(item.montantMensuel) || 0;
+      const mois = Number(item.moisParAn) || 12;
       if (mode === 'mensuel') return item.frequence === 'Annuel' ? 0 : m;
-      if (mode === 'lisse') return item.frequence === 'Annuel' ? m / 12 : m;
-      return (item.frequence === 'Annuel' ? m : m * 12); // annuel
+      if (mode === 'lisse') return item.frequence === 'Annuel' ? m / 12 : m * mois / 12;
+      return (item.frequence === 'Annuel' ? m : m * mois); // annuel
     }
 
     // Column 0: Revenue sources
@@ -1000,11 +1035,13 @@ export function mount(store, navigate) {
         ${inputField('nom', 'Libellé', '', 'text', 'placeholder="Ex: Loyer"')}
         ${selectField('categorie', 'Catégorie', depCategories)}
         ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, 'Mensuel')}
+        ${moisParAnFieldHtml(12)}
         ${montantFields('', '', '')}
       `;
       openModal(`Ajouter — ${DEPENSE_TYPES.find(t => t.key === typeDepense)?.label || 'Dépense'}`, body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         data.montantMensuel = getMontantFromModal();
+        data.moisParAn = getMoisParAnFromModal();
         data.typeDepense = typeDepense;
         store.addItem('depenses', data);
         navigate('revenus-depenses');
@@ -1020,19 +1057,22 @@ export function mount(store, navigate) {
       if (!item) return;
       const montant = Number(item.montantMensuel) || 0;
       const freq = item.frequence || 'Mensuel';
+      const moisItem = freq === 'Annuel' ? 12 : (Number(item.moisParAn) || 12);
       const mensuel = freq === 'Annuel' ? 0 : montant;
-      const lisse = freq === 'Annuel' ? Math.round(montant / 12 * 100) / 100 : montant;
-      const annuel = freq === 'Annuel' ? montant : montant * 12;
+      const lisse = freq === 'Annuel' ? Math.round(montant / 12 * 100) / 100 : Math.round(montant * moisItem / 12 * 100) / 100;
+      const annuel = freq === 'Annuel' ? montant : Math.round(montant * moisItem * 100) / 100;
       const body = `
         ${inputField('nom', 'Libellé', item.nom)}
         ${selectField('categorie', 'Catégorie', depCategories, item.categorie)}
         ${selectField('typeDepense', 'Type de dépense', depTypeOptions, item.typeDepense || 'Fixe')}
         ${selectField('frequence', 'Fréquence', FREQ_OPTIONS, freq)}
+        ${moisParAnFieldHtml(moisItem)}
         ${montantFields(mensuel, lisse, annuel)}
       `;
       openModal('Modifier la dépense', body, () => {
         const data = getFormData(document.getElementById('modal-body'));
         data.montantMensuel = getMontantFromModal();
+        data.moisParAn = getMoisParAnFromModal();
         store.updateItem('depenses', id, data);
         navigate('revenus-depenses');
       });
