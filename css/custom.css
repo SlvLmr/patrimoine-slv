@@ -9,12 +9,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3a3a44;
+  background: #CFC6B1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #48484f;
+  background: #B9AE94;
 }
 
 /* Smooth transitions */
@@ -33,6 +33,7 @@
 }
 
 #sidebar.sidebar-collapsed #sidebar-logo .logo-with-bars,
+#sidebar.sidebar-collapsed #sidebar-logo .logo-horizon,
 #sidebar.sidebar-collapsed #profile-switcher span,
 #sidebar.sidebar-collapsed #profile-switcher svg:last-child,
 #sidebar.sidebar-collapsed #nav-links .nav-label,
@@ -143,42 +144,41 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Dark card glass effect */
+/* Carte crème : blanc cassé, ombre douce bleutée */
 .card-dark {
-  background:
-    linear-gradient(135deg, rgba(201, 167, 108, 0.02) 0%, transparent 40%, rgba(155, 124, 184, 0.02) 100%),
-    #1c1c26;
-  border: 1px solid rgba(42, 42, 52, 0.5);
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  background: #FFFDF8;
+  border: 1px solid rgba(189, 181, 162, 0.45);
+  box-shadow: 0 10px 28px rgba(30, 45, 66, 0.07), 0 1px 3px rgba(30, 45, 66, 0.05);
 }
 
 /* Design System — Reusable component classes */
 
 /* Row item (livret, bien immo, opération, paramètre…) */
 .row-item {
-  background: rgba(22, 22, 30, 0.5);
-  border: 1px solid rgba(42, 42, 52, 0.25);
+  background: rgba(243, 238, 227, 0.55);
+  border: 1px solid rgba(189, 181, 162, 0.35);
   border-radius: 0.5rem;
   padding: 0.625rem 1rem;
   transition: border-color 0.15s;
 }
 .row-item:hover {
-  border-color: rgba(42, 42, 52, 0.5);
+  border-color: rgba(176, 122, 25, 0.45);
 }
 
 /* Standard input field */
 .input-field {
-  background: rgba(16, 16, 22, 0.7);
-  border: 1px solid rgba(42, 42, 52, 0.35);
+  background: #FFFFFF;
+  border: 1px solid rgba(189, 181, 162, 0.55);
   border-radius: 0.5rem;
   padding: 0.375rem 0.625rem;
   font-size: 0.8125rem;
-  color: #e5e7eb;
+  color: #22344C;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .input-field:focus {
-  border-color: rgba(74, 222, 128, 0.5);
+  border-color: rgba(31, 74, 125, 0.55);
+  box-shadow: 0 0 0 3px rgba(31, 74, 125, 0.10);
 }
 
 /* Inline editable text (names) */
@@ -187,16 +187,16 @@ input[type="number"] {
   border: none;
   border-bottom: 1px solid transparent;
   font-size: 0.875rem;
-  color: #d1d5db;
+  color: #22344C;
   outline: none;
   transition: border-color 0.15s;
   padding: 0.125rem 0;
 }
 .input-inline:hover {
-  border-bottom-color: rgba(52, 52, 62, 0.5);
+  border-bottom-color: rgba(189, 181, 162, 0.7);
 }
 .input-inline:focus {
-  border-bottom-color: rgba(74, 222, 128, 0.7);
+  border-bottom-color: rgba(176, 122, 25, 0.8);
 }
 
 /* Dashed "add" button */
@@ -216,8 +216,8 @@ input[type="number"] {
   background: transparent;
 }
 .btn-add:hover {
-  color: #4ade80;
-  border-color: rgba(74, 222, 128, 0.4);
+  color: #B07A19;
+  border-color: rgba(176, 122, 25, 0.5);
 }
 
 /* Delete button (hover-only visibility) */
@@ -244,8 +244,8 @@ input[type="number"] {
 
 /* Info/disclaimer box */
 .info-box {
-  background: rgba(22, 22, 30, 0.5);
-  border: 1px solid rgba(42, 42, 52, 0.3);
+  background: rgba(243, 238, 227, 0.6);
+  border: 1px solid rgba(189, 181, 162, 0.4);
   border-radius: 0.75rem;
   padding: 0.75rem;
 }
@@ -254,7 +254,7 @@ input[type="number"] {
 .table-header {
   position: sticky;
   top: 0;
-  background: #1c1c26;
+  background: #FBF8F0;
   z-index: 1;
 }
 .table-header th {
@@ -613,20 +613,106 @@ summary[style*="list-style:none"]::-webkit-details-marker {
 .btn-secondary {
   display: inline-flex; align-items: center; gap: 0.45rem;
   padding: 0.4rem 0.85rem; border-radius: 0.5rem;
-  font-size: 0.8125rem; font-weight: 500; color: #d1d5db;
-  background: rgb(var(--dark-600) / 0.55);
-  border: 1px solid rgb(var(--dark-400) / 0.35);
+  font-size: 0.8125rem; font-weight: 500; color: #33465F;
+  background: #FFFDF8;
+  border: 1px solid rgba(189, 181, 162, 0.55);
+  box-shadow: 0 1px 2px rgba(30, 45, 66, 0.05);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.btn-secondary:hover { background: rgb(var(--dark-600)); color: #f3f4f6; border-color: rgb(var(--dark-300) / 0.5); }
+.btn-secondary:hover { background: #F7F2E7; color: #16263C; border-color: rgba(176, 122, 25, 0.45); }
 .btn-ghost {
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.3rem 0.6rem; border-radius: 0.5rem;
-  font-size: 0.72rem; font-weight: 500; color: #9ca3af;
+  font-size: 0.72rem; font-weight: 500; color: #6E7E93;
   transition: color 0.15s, background 0.15s;
 }
-.btn-ghost:hover { color: #e5e7eb; background: rgb(var(--dark-600) / 0.5); }
+.btn-ghost:hover { color: #16263C; background: rgba(232, 224, 207, 0.6); }
 .btn-dot { width: 0.45rem; height: 0.45rem; border-radius: 9999px; flex-shrink: 0; display: inline-block; }
+
+/* ============================================================
+   THÈME HORIZON CRÈME
+   Les gris Tailwind étaient pensés pour fond sombre (100 = clair) :
+   on inverse la hiérarchie vers une encre bleue sur crème. Préfixés
+   « body » pour passer devant le CSS généré par Tailwind.
+   ============================================================ */
+body .text-gray-100 { color: #16263C; }
+body .text-gray-200 { color: #22344C; }
+body .text-gray-300 { color: #31445F; }
+body .text-gray-400 { color: #51627A; }
+body .text-gray-500 { color: #6E7E93; }
+body .text-gray-600 { color: #93A0B1; }
+
+/* Bouton d'action principal — doré */
+.btn-or {
+  background: linear-gradient(135deg, #E9B145 0%, #C9891B 100%);
+  color: #2A1F05;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(201, 137, 27, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border: none;
+  transition: filter 0.15s, transform 0.1s;
+}
+.btn-or:hover { filter: brightness(1.06); }
+.btn-or:active { transform: translateY(1px); }
+
+/* ---- Sidebar : verre bleu nuit, liseré doré ---- */
+#sidebar {
+  background:
+    radial-gradient(ellipse 130% 36% at 50% -4%, rgba(240, 196, 98, 0.10), transparent 60%),
+    radial-gradient(ellipse 100% 50% at 50% 115%, rgba(64, 128, 186, 0.20), transparent 65%),
+    linear-gradient(176deg, rgba(10, 28, 50, 0.97) 0%, rgba(15, 44, 74, 0.97) 52%, rgba(21, 58, 93, 0.97) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(240, 196, 98, 0.16);
+  box-shadow: 4px 0 24px rgba(12, 32, 56, 0.18);
+}
+#sidebar .text-gray-100 { color: #F2F5FA; }
+#sidebar .text-gray-200 { color: #E2E9F2; }
+#sidebar .text-gray-300 { color: #C6D3E3; }
+#sidebar .text-gray-400 { color: #A5BAD3; }
+#sidebar .text-gray-500 { color: #88A0BD; }
+#sidebar .text-gray-600 { color: #6E89A9; }
+#sidebar .text-gray-700 { color: rgba(236, 242, 249, 0.38); }
+#sidebar .border-dark-400\/20 { border-color: rgba(240, 196, 98, 0.12); }
+#sidebar a[data-nav]:hover { background: rgba(244, 239, 228, 0.08); color: #F0C462; }
+#sidebar a[data-nav].bg-dark-600 { background: rgba(244, 239, 228, 0.12); }
+#sidebar .text-accent-green { color: #F0C462; }
+#sidebar .bg-gradient-to-r { background: linear-gradient(90deg, transparent, rgba(240, 196, 98, 0.25), transparent); }
+#sidebar [class*="hover:bg-dark"]:hover { background-color: rgba(244, 239, 228, 0.1); }
+#sidebar-collapse-btn {
+  background: #FFFDF8;
+  color: #51627A;
+  border-color: rgba(189, 181, 162, 0.6);
+}
+#sidebar-collapse-btn:hover { color: #16263C; background: #F7F2E7; }
+
+/* ---- Logo Horizon : lettrine Bodoni ivoire, soleil d'or sur l'horizon ---- */
+.logo-horizon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  user-select: none;
+}
+.logo-horizon-nom {
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.85rem;
+  letter-spacing: 0.045em;
+  line-height: 1;
+  color: #F4EFE4;
+  text-shadow: 0 1px 10px rgba(240, 196, 98, 0.18);
+}
+.logo-horizon-trait { width: 138px; height: 12px; display: block; }
+.logo-horizon-sm { gap: 3px; }
+.logo-horizon-sm .logo-horizon-nom { font-size: 1.1rem; text-shadow: none; }
+.logo-horizon-sm .logo-horizon-trait { width: 86px; height: 9px; }
+#mobile-logo .logo-horizon-nom { color: #16263C; }
+#sidebar .logo-icon { color: #F4EFE4; }
+
+/* Le monde F1 reste sombre : y rétablir les gris clairs du texte */
+.f1-monde .text-gray-100 { color: #f5f5fa; }
+.f1-monde .text-gray-200 { color: #e9e9f1; }
+.f1-monde .text-gray-300 { color: #d9d9e4; }
 
 /* ============================================================
    PADDOCK F1 — univers synthwave, totalement décorrélé d'Horizon

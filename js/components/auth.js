@@ -8,7 +8,7 @@ function renderLoginScreen() {
         <div class="text-center mb-8">
           <div class="logo-with-bars logo-with-bars-lg justify-center mb-3">
             <span class="logo-bar logo-bar-left"></span>
-            <h1 class="text-3xl font-bold logo-gradient-text logo-text-halo logo-heartbeat" style="letter-spacing:-0.5px"><span style="font-family:'Bodoni Moda',Georgia,serif">H</span>orizon</h1>
+            <h1 class="text-3xl font-bold logo-horizon-nom" style="color:#16263C">Horizon</h1>
             <span class="logo-bar logo-bar-right"></span>
           </div>
           <p class="text-gray-500 text-sm">Simulateur patrimonial</p>

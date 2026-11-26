@@ -132,7 +132,7 @@ export function openModal(title, bodyHtml, onConfirm) {
       </div>
       <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3 flex-shrink-0">
         <button id="modal-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500">Annuler</button>
-        <button id="modal-confirm" class="px-5 py-2 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium">Confirmer</button>
+        <button id="modal-confirm" class="px-5 py-2 btn-or rounded-lg transition">Confirmer</button>
       </div>
     </div>
   `;
@@ -184,7 +184,7 @@ export function confirmModal(title, message, onOk, { danger = true, okLabel = nu
       </div>
       <div class="px-4 pb-4 flex justify-end gap-3">
         <button id="cf-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
-        <button id="cf-ok" class="px-5 py-2 ${danger ? 'bg-red-500/80 hover:bg-red-500' : 'bg-gradient-to-r from-accent-green to-accent-blue hover:opacity-90'} text-white rounded-lg transition font-medium text-sm">${okLabel || (danger ? 'Supprimer' : 'Confirmer')}</button>
+        <button id="cf-ok" class="px-5 py-2 ${danger ? 'bg-red-500/80 hover:bg-red-500 text-white font-medium' : 'btn-or'} rounded-lg transition text-sm">${okLabel || (danger ? 'Supprimer' : 'Confirmer')}</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -217,7 +217,7 @@ export function promptModal(title, defaultValue, onConfirm, { label = '', placeh
       </div>
       <div class="p-4 border-t border-dark-400/50 flex justify-end gap-3">
         <button id="prompt-cancel" class="px-4 py-2 text-gray-400 hover:text-gray-200 transition rounded-lg hover:bg-dark-500 text-sm">Annuler</button>
-        <button id="prompt-confirm" class="px-5 py-2 bg-gradient-to-r from-accent-green to-accent-blue text-white rounded-lg hover:opacity-90 transition font-medium text-sm">Confirmer</button>
+        <button id="prompt-confirm" class="px-5 py-2 btn-or rounded-lg transition text-sm">Confirmer</button>
       </div>
     </div>`;
   document.body.appendChild(modal);

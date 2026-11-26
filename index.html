@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Horizon — Simulateur Patrimonial</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%23a34fde'/><stop offset='35%25' stop-color='%23f14fa0'/><stop offset='70%25' stop-color='%23ff7a59'/><stop offset='100%25' stop-color='%23fdba4d'/></linearGradient><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%23fdba4d' stop-opacity='0.3'/><stop offset='100%25' stop-color='%23a34fde' stop-opacity='0'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='%23141619'/><rect x='1' y='1' width='30' height='30' rx='6' fill='none' stroke='url(%23g)' stroke-opacity='0.15' stroke-width='0.5'/><path d='M9 7 L9 25 L12.5 25 L12.5 17.5 L19.5 17.5 L19.5 25 L23 25 L23 7 L19.5 7 L19.5 14 L12.5 14 L12.5 7 Z' fill='url(%23g)'/><rect x='8' y='26' width='16' height='1' rx='0.5' fill='url(%23g)' opacity='0.3'/></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='or' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%23F0C462'/><stop offset='100%25' stop-color='%23C9891B'/></linearGradient><linearGradient id='tr' x1='0' y1='0' x2='1' y2='0'><stop offset='0%25' stop-color='%23F0C462' stop-opacity='0'/><stop offset='30%25' stop-color='%23F0C462'/><stop offset='70%25' stop-color='%23F0C462'/><stop offset='100%25' stop-color='%23F0C462' stop-opacity='0'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='%230C2038'/><rect x='1' y='1' width='30' height='30' rx='6' fill='none' stroke='%23F0C462' stroke-opacity='0.22' stroke-width='0.6'/><path d='M9.5 21 A6.5 6.5 0 0 1 22.5 21 Z' fill='url(%23or)'/><rect x='4' y='20.7' width='24' height='1.1' rx='0.55' fill='url(%23tr)'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,700;6..96,800;6..96,900&display=swap" rel="stylesheet">
@@ -15,25 +15,28 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-  <link rel="stylesheet" href="css/custom.css?v=20261003d">
-  <script type="module" src="js/app.js?v=20261111b"></script>
+  <link rel="stylesheet" href="css/custom.css?v=20261126a">
+  <script type="module" src="js/app.js?v=20261126a"></script>
   <style>
     :root {
-      --dark-900: 26 26 34;
-      --dark-800: 34 34 48;
-      --dark-700: 44 44 58;
-      --dark-600: 53 53 66;
-      --dark-500: 66 66 79;
-      --dark-400: 82 82 94;
-      --dark-300: 104 104 116;
-      --accent-green: 192 132 252;
-      --accent-red: 255 71 87;
-      --accent-blue: 107 138 174;
-      --accent-purple: 155 124 184;
-      --accent-amber: 216 180 254;
-      --accent-cyan: 94 163 163;
-      --body-bg: #1a1a22;
-      --body-text: #e5e7eb;
+      /* Horizon Crème — l'échelle « dark » devient une échelle de neutres clairs :
+         900 fond de page, 800 surface des cartes, 700 encarts, 600 survols,
+         400 bordures. Les composants n'ont pas changé, seule la palette. */
+      --dark-900: 243 238 227;
+      --dark-800: 255 253 248;
+      --dark-700: 241 235 222;
+      --dark-600: 232 224 207;
+      --dark-500: 214 204 182;
+      --dark-400: 189 181 162;
+      --dark-300: 150 144 129;
+      --accent-green: 17 122 87;
+      --accent-red: 186 56 66;
+      --accent-blue: 31 74 125;
+      --accent-purple: 107 72 153;
+      --accent-amber: 176 122 25;
+      --accent-cyan: 14 116 144;
+      --body-bg: #F3EEE3;
+      --body-text: #22344C;
     }
 
   </style>

@@ -1,26 +1,26 @@
-import { Store } from './store.js?v=20261111b';
+import { Store } from './store.js?v=20261126a';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
-import * as RevenusDepenses from './components/revenus-depenses.js?v=20261111b';
-import * as Projection from './components/projection.js?v=20261111b';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20261111b';
-import * as PortefeuilleLive from './components/portefeuille-live.js?v=20261111b';
-import * as Contrats from './components/contrats.js?v=20261111b';
-import * as Liberte from './components/liberte.js?v=20261111b';
-import * as Conseiller from './components/conseiller.js?v=20261111b';
-import * as Compte from './components/compte.js?v=20261111b';
-import * as Repartition from './components/repartition.js?v=20261111b';
-import * as SimulateurFire from './components/simulateur-fire.js?v=20261111b';
-import * as SimulateurCredit from './components/simulateur-credit.js?v=20261111b';
-import * as SimulateurInterets from './components/simulateur-interets.js?v=20261111b';
-import * as SimulateurAuto from './components/simulateur-auto.js?v=20261111b';
-import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20261111b';
-import * as Hypotheses from './components/hypotheses.js?v=20261111b';
-import * as SimulateurSuccession from './components/simulateur-succession.js?v=20261111b';
-import * as F1 from './components/f1.js?v=20261111b';
-import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20261111b';
-import { showToast, promptModal, confirmModal } from './utils.js?v=20261111b';
+import * as RevenusDepenses from './components/revenus-depenses.js?v=20261126a';
+import * as Projection from './components/projection.js?v=20261126a';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20261126a';
+import * as PortefeuilleLive from './components/portefeuille-live.js?v=20261126a';
+import * as Contrats from './components/contrats.js?v=20261126a';
+import * as Liberte from './components/liberte.js?v=20261126a';
+import * as Conseiller from './components/conseiller.js?v=20261126a';
+import * as Compte from './components/compte.js?v=20261126a';
+import * as Repartition from './components/repartition.js?v=20261126a';
+import * as SimulateurFire from './components/simulateur-fire.js?v=20261126a';
+import * as SimulateurCredit from './components/simulateur-credit.js?v=20261126a';
+import * as SimulateurInterets from './components/simulateur-interets.js?v=20261126a';
+import * as SimulateurAuto from './components/simulateur-auto.js?v=20261126a';
+import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20261126a';
+import * as Hypotheses from './components/hypotheses.js?v=20261126a';
+import * as SimulateurSuccession from './components/simulateur-succession.js?v=20261126a';
+import * as F1 from './components/f1.js?v=20261126a';
+import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20261126a';
+import { showToast, promptModal, confirmModal } from './utils.js?v=20261126a';
 
 // Auto-configure Google Drive Client ID
 setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
@@ -616,12 +616,18 @@ function initLogo() {
   const logoContainer = document.getElementById('sidebar-logo');
   if (logoContainer) {
     logoContainer.innerHTML = `
-      <div class="logo-with-bars" style="cursor:pointer">
-        <span class="logo-bar logo-bar-left"></span>
-        <h1 style="letter-spacing:-0.5px" class="logo-text text-4xl font-bold text-center logo-gradient-text logo-text-halo logo-heartbeat"><span style="font-family:'Bodoni Moda',Georgia,serif">H</span>orizon</h1>
-        <span class="logo-bar logo-bar-right"></span>
+      <div class="logo-horizon" style="cursor:pointer">
+        <h1 class="logo-horizon-nom">Horizon</h1>
+        <svg class="logo-horizon-trait" viewBox="0 0 140 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lgor1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0C462"/><stop offset="100%" stop-color="#C9891B"/></linearGradient>
+            <linearGradient id="lgtr1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#F0C462" stop-opacity="0"/><stop offset="30%" stop-color="#F0C462"/><stop offset="70%" stop-color="#F0C462"/><stop offset="100%" stop-color="#F0C462" stop-opacity="0"/></linearGradient>
+          </defs>
+          <path d="M63 9 A7 7 0 0 1 77 9 Z" fill="url(#lgor1)"/>
+          <rect x="2" y="8.6" width="136" height="1" rx="0.5" fill="url(#lgtr1)"/>
+        </svg>
       </div>
-      <span style="font-family:'Bodoni Moda',Georgia,serif;cursor:pointer" class="logo-icon hidden text-2xl font-bold logo-gradient-text">H</span>
+      <span style="font-family:'Bodoni Moda',Georgia,serif;cursor:pointer" class="logo-icon hidden text-2xl font-bold">H</span>
     `;
     logoContainer.style.cursor = 'pointer';
     logoContainer.addEventListener('click', () => navigate('suivi-depenses'));
@@ -630,10 +636,16 @@ function initLogo() {
   const mobileLogo = document.getElementById('mobile-logo');
   if (mobileLogo) {
     mobileLogo.innerHTML = `
-      <div class="logo-with-bars logo-with-bars-sm" style="cursor:pointer">
-        <span class="logo-bar logo-bar-left"></span>
-        <span style="letter-spacing:-0.5px" class="text-lg font-bold logo-gradient-text logo-text-halo logo-heartbeat"><span style="font-family:'Bodoni Moda',Georgia,serif">H</span>orizon</span>
-        <span class="logo-bar logo-bar-right"></span>
+      <div class="logo-horizon logo-horizon-sm" style="cursor:pointer">
+        <span class="logo-horizon-nom">Horizon</span>
+        <svg class="logo-horizon-trait" viewBox="0 0 140 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lgor2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E9B145"/><stop offset="100%" stop-color="#B07A19"/></linearGradient>
+            <linearGradient id="lgtr2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#C9891B" stop-opacity="0"/><stop offset="30%" stop-color="#C9891B"/><stop offset="70%" stop-color="#C9891B"/><stop offset="100%" stop-color="#C9891B" stop-opacity="0"/></linearGradient>
+          </defs>
+          <path d="M63 9 A7 7 0 0 1 77 9 Z" fill="url(#lgor2)"/>
+          <rect x="2" y="8.6" width="136" height="1" rx="0.5" fill="url(#lgtr2)"/>
+        </svg>
       </div>
     `;
     mobileLogo.addEventListener('click', () => navigate('suivi-depenses'));
