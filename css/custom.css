@@ -724,6 +724,9 @@ body .text-gray-600 { color: #93A0B1; }
 .logo-horizon-sm .logo-horizon-nom { font-size: 1.1rem; text-shadow: none; }
 .logo-horizon-sm .logo-horizon-trait { width: 86px; height: 9px; }
 #mobile-logo .logo-horizon-nom { color: #16263C; }
+/* Le i d'Horizon : italique et or, clin d'oeil au soleil du logo */
+.logo-i { font-style: italic; font-weight: 600; color: #E9B145; padding: 0 0.01em; }
+#mobile-logo .logo-i, .logo-i-sombre { color: #C9891B; }
 #sidebar .logo-icon { color: #F4EFE4; }
 
 /* Pictos d'en-tete de page : exit la lavande, ecrin bleu encre */

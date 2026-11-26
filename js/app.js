@@ -617,7 +617,7 @@ function initLogo() {
   if (logoContainer) {
     logoContainer.innerHTML = `
       <div class="logo-horizon" style="cursor:pointer">
-        <h1 class="logo-horizon-nom">Horizon</h1>
+        <h1 class="logo-horizon-nom">Hor<span class="logo-i">i</span>zon</h1>
         <svg class="logo-horizon-trait" viewBox="0 0 140 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="lgor1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0C462"/><stop offset="100%" stop-color="#C9891B"/></linearGradient>
@@ -637,7 +637,7 @@ function initLogo() {
   if (mobileLogo) {
     mobileLogo.innerHTML = `
       <div class="logo-horizon logo-horizon-sm" style="cursor:pointer">
-        <span class="logo-horizon-nom">Horizon</span>
+        <span class="logo-horizon-nom">Hor<span class="logo-i">i</span>zon</span>
         <svg class="logo-horizon-trait" viewBox="0 0 140 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="lgor2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E9B145"/><stop offset="100%" stop-color="#B07A19"/></linearGradient>
