@@ -1035,7 +1035,7 @@ export function render(store) {
             <circle cx="9" cy="18" r="2"/><circle cx="15" cy="18" r="2"/>
           </svg>
           ${icon}
-          <span class="text-[11px] text-gray-500 w-14 flex-shrink-0">${formatDate(op.date)}</span>
+          <span class="text-[11px] text-gray-500 w-[4.4rem] flex-shrink-0">${formatDate(op.date)}</span>
           <span class="text-[11px] text-gray-200 truncate">${op.description || '—'}</span>
           ${op.categorie ? `<span class="text-[9px] font-light text-gray-500 flex-shrink-0">${op.categorie}</span>` : ''}
         </div>
