@@ -726,6 +726,16 @@ body .text-gray-600 { color: #93A0B1; }
 #mobile-logo .logo-horizon-nom { color: #16263C; }
 #sidebar .logo-icon { color: #F4EFE4; }
 
+/* Pictos d'en-tete de page : exit la lavande, ecrin bleu encre */
+body .bg-gradient-to-br.from-indigo-500\/20.to-purple-500\/20 {
+  background-image: none;
+  background-color: rgba(31, 74, 125, 0.10);
+  border: 1px solid rgba(31, 74, 125, 0.16);
+}
+body .bg-gradient-to-br.from-indigo-500\/20.to-purple-500\/20 svg {
+  color: #1F4A7D;
+}
+
 /* ---- Typo de marque : Fraunces pour les titres (esprit éditorial) ---- */
 #main-content :is(h1, h2).font-bold {
   font-family: 'Fraunces', Georgia, serif;
