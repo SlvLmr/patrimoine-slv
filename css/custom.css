@@ -646,17 +646,17 @@ body .text-gray-600 { color: #93A0B1; }
 #app-modal > div,
 #app-confirm-modal > div,
 #app-prompt-modal > div {
-  background: #F6F0E2;
+  background: #EFE7D3;
   border-color: rgba(176, 122, 25, 0.22);
   box-shadow: 0 24px 60px rgba(12, 32, 56, 0.25);
 }
 #app-modal .bg-dark-800,
 #app-prompt-modal .bg-dark-800 {
-  background-color: #FCF8EE;
+  background-color: #F8F2E2;
 }
 #app-modal .input-field,
 #app-prompt-modal .input-field {
-  background: #FCF8EE;
+  background: #F8F2E2;
 }
 
 /* Bouton d'action principal — doré */
