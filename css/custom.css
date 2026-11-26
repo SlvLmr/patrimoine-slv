@@ -17,6 +17,8 @@
   background: #B9AE94;
 }
 
+::selection { background: rgba(233, 177, 69, 0.3); }
+
 /* Smooth transitions */
 * {
   scroll-behavior: smooth;
@@ -208,8 +210,8 @@ input[type="number"] {
   gap: 0.5rem;
   padding: 0.5rem;
   font-size: 0.75rem;
-  color: #6b7280;
-  border: 1px dashed rgba(52, 52, 62, 0.3);
+  color: #6E7E93;
+  border: 1px dashed rgba(189, 181, 162, 0.55);
   border-radius: 0.5rem;
   transition: all 0.15s;
   cursor: pointer;
@@ -264,20 +266,20 @@ input[type="number"] {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid rgba(42, 42, 52, 0.3);
+  border-bottom: 1px solid rgba(189, 181, 162, 0.5);
   white-space: nowrap;
 }
 
 /* Table row with hover */
 .table-row {
-  border-bottom: 1px solid rgba(42, 42, 52, 0.15);
+  border-bottom: 1px solid rgba(189, 181, 162, 0.3);
   transition: background-color 0.15s;
 }
 .table-row:hover {
-  background: rgba(42, 42, 52, 0.15);
+  background: rgba(232, 224, 207, 0.45);
 }
 .table-row-alt {
-  background: rgba(22, 22, 30, 0.3);
+  background: rgba(243, 238, 227, 0.5);
 }
 
 /* Gradient text */
@@ -313,7 +315,7 @@ input[type="number"] {
 /* Heritage net worth display */
 /* Progress bar */
 .progress-bar {
-  background: rgba(56, 56, 66, 0.6);
+  background: rgba(222, 213, 193, 0.8);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -476,8 +478,9 @@ input[type="number"] {
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  background: rgba(55, 55, 68, 0.98);
-  border: 1px solid rgba(90, 90, 105, 0.6);
+  background: rgba(252, 248, 238, 0.98);
+  border: 1px solid rgba(176, 122, 25, 0.35);
+  box-shadow: 0 8px 24px rgba(30, 45, 66, 0.15);
   border-radius: 8px;
   padding: 8px 10px;
   min-width: 170px;
@@ -551,19 +554,19 @@ summary[style*="list-style:none"]::-webkit-details-marker {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #0ea5e9;
-  border: 3px solid #1e293b;
+  background: #C9891B;
+  border: 3px solid #FFFDF8;
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 1px 6px rgba(201, 137, 27, 0.45);
 }
 #strat-proj-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #0ea5e9;
-  border: 3px solid #1e293b;
+  background: #C9891B;
+  border: 3px solid #FFFDF8;
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 1px 6px rgba(201, 137, 27, 0.45);
 }
 
 /* ─── Mobile adjustments ──────────────────────────────────────────────────── */
