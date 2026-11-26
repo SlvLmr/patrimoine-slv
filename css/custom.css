@@ -677,9 +677,9 @@ body .text-gray-600 { color: #93A0B1; }
 /* ---- Sidebar : verre bleu nuit, liseré doré ---- */
 #sidebar {
   background:
-    radial-gradient(ellipse 130% 36% at 50% -4%, rgba(240, 196, 98, 0.10), transparent 60%),
-    radial-gradient(ellipse 100% 50% at 50% 115%, rgba(64, 128, 186, 0.20), transparent 65%),
-    linear-gradient(176deg, rgba(10, 28, 50, 0.97) 0%, rgba(15, 44, 74, 0.97) 52%, rgba(21, 58, 93, 0.97) 100%);
+    radial-gradient(ellipse 130% 36% at 50% -4%, rgba(240, 196, 98, 0.13), transparent 60%),
+    radial-gradient(ellipse 110% 55% at 50% 115%, rgba(64, 160, 235, 0.40), transparent 68%),
+    linear-gradient(176deg, rgba(9, 30, 63, 0.97) 0%, rgba(18, 56, 112, 0.97) 48%, rgba(27, 88, 160, 0.97) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid rgba(240, 196, 98, 0.16);
