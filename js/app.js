@@ -620,10 +620,8 @@ function initLogo() {
         <h1 class="logo-horizon-nom">Hor<span class="logo-i">i</span>zon</h1>
         <svg class="logo-horizon-trait" viewBox="0 0 140 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="lgor1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F0C462"/><stop offset="100%" stop-color="#C9891B"/></linearGradient>
             <linearGradient id="lgtr1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#F0C462" stop-opacity="0"/><stop offset="30%" stop-color="#F0C462"/><stop offset="70%" stop-color="#F0C462"/><stop offset="100%" stop-color="#F0C462" stop-opacity="0"/></linearGradient>
           </defs>
-          <path d="M63 9 A7 7 0 0 1 77 9 Z" fill="url(#lgor1)"/>
           <rect x="2" y="8.6" width="136" height="1" rx="0.5" fill="url(#lgtr1)"/>
         </svg>
       </div>
@@ -640,10 +638,8 @@ function initLogo() {
         <span class="logo-horizon-nom">Hor<span class="logo-i">i</span>zon</span>
         <svg class="logo-horizon-trait" viewBox="0 0 140 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="lgor2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E9B145"/><stop offset="100%" stop-color="#B07A19"/></linearGradient>
             <linearGradient id="lgtr2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#C9891B" stop-opacity="0"/><stop offset="30%" stop-color="#C9891B"/><stop offset="70%" stop-color="#C9891B"/><stop offset="100%" stop-color="#C9891B" stop-opacity="0"/></linearGradient>
           </defs>
-          <path d="M63 9 A7 7 0 0 1 77 9 Z" fill="url(#lgor2)"/>
           <rect x="2" y="8.6" width="136" height="1" rx="0.5" fill="url(#lgtr2)"/>
         </svg>
       </div>
