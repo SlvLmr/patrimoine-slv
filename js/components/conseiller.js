@@ -74,7 +74,7 @@ export function render(store) {
   return `
     <div class="space-y-6">
       <!-- ═ HÉRO ═ -->
-      <div class="card-dark rounded-xl overflow-hidden" style="background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(26,26,34,0) 45%, rgba(168,85,247,0.06) 100%);">
+      <div class="card-dark rounded-xl overflow-hidden" style="background: linear-gradient(135deg, rgba(31,74,125,0.07) 0%, rgba(255,253,248,0) 45%, rgba(176,122,25,0.06) 100%);">
         <div class="p-5 sm:p-6">
           <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
             <div class="flex items-center gap-3 flex-1">
@@ -112,7 +112,7 @@ export function render(store) {
                 const p = PRIO[r.prio] || PRIO[3];
                 return `
               <button class="cons-nav group text-left rounded-xl border border-dark-400/25 hover:border-dark-300/50 transition-all p-4 relative overflow-hidden" data-nav-to="${r.src.nav}"
-                style="background: linear-gradient(160deg, ${p.color}14 0%, rgba(26,26,34,0.4) 55%);">
+                style="background: linear-gradient(160deg, ${p.color}14 0%, rgba(255,253,248,0.92) 55%);">
                 <span class="absolute -right-2 -top-4 text-[64px] font-black leading-none select-none" style="color:${p.color};opacity:0.09">${i + 1}</span>
                 <div class="flex items-center gap-2 mb-2">
                   ${badgePrio(r.prio)}

@@ -361,7 +361,7 @@ export function mount(store, navigate) {
       type: 'doughnut',
       data: {
         labels: alloc.map(a => a.label),
-        datasets: [{ data: alloc.map(a => a.value), backgroundColor: alloc.map(a => a.color), borderColor: 'rgba(26,26,34,0.9)', borderWidth: 2, hoverOffset: 6 }]
+        datasets: [{ data: alloc.map(a => a.value), backgroundColor: alloc.map(a => a.color), borderColor: '#FFFDF8', borderWidth: 2, hoverOffset: 6 }]
       },
       options: {
         cutout: '62%',
