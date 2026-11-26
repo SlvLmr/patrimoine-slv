@@ -47,22 +47,23 @@ export const ASSET_COLORS = {
   'Autre':         { color: '#9ca3af', text: 'text-gray-400',    bg: 'bg-gray-500/15',    bgSoft: 'bg-gray-500/5',    border: 'border-gray-500/30',    borderSoft: 'border-gray-500/20',    dot: 'bg-gray-400' },
 };
 
+// Horizon Crème : camaïeu de bleus encre + or, structure beige discrète
 export const COLORS = {
-  immobilier: '#7c3aed',
-  placements: '#c084fc',
-  epargne: '#e9d5ff',
-  dette: '#ff4757',
-  patrimoine: '#e9d5ff',
-  revenus: '#c084fc',
-  depenses: '#ff4757',
-  primary: '#c084fc',
-  secondary: '#9b7cb8',
-  grid: 'rgba(72, 72, 82, 0.25)',
-  gridText: '#7a7a88',
-  actions: '#d8b4fe',
-  etf: '#c084fc',
-  crypto: '#f59e0b',
-  obligations: '#6b8aae'
+  immobilier: '#1F4A7D',
+  placements: '#3E6FA8',
+  epargne: '#7FA3CC',
+  dette: '#BA3842',
+  patrimoine: '#1F4A7D',
+  revenus: '#117A57',
+  depenses: '#BA3842',
+  primary: '#1F4A7D',
+  secondary: '#B07A19',
+  grid: 'rgba(90, 80, 60, 0.14)',
+  gridText: '#6E7E93',
+  actions: '#B07A19',
+  etf: '#3E6FA8',
+  crypto: '#C2410C',
+  obligations: '#0E7490'
 };
 
 // Warm gradient pairs for charts
@@ -78,8 +79,8 @@ export const GRADIENT_PAIRS = [
 ];
 
 export const PALETTE = [
-  '#c084fc', '#d8b4fe', '#9b7cb8', '#6b8aae', '#e9d5ff',
-  '#5ea3a3', '#f59e0b', '#a855f7', '#7c3aed', '#e9d5ff'
+  '#1F4A7D', '#3E6FA8', '#7FA3CC', '#B07A19', '#0E7490',
+  '#117A57', '#7e22ce', '#be185d', '#C2410C', '#475569'
 ];
 
 // Vivid, high-contrast palette for multi-line charts (no green/red)
@@ -92,7 +93,7 @@ export const VIVID_PALETTE = [
   '#f97316', // orange
   '#6366f1', // indigo
   '#14b8a6', // teal
-  '#eab308', // yellow
+  '#a16207', // jaune foncé (lisible sur crème)
   '#8b5cf6', // violet
 ];
 
@@ -146,15 +147,15 @@ export function createChart(canvasId, config) {
           pointStyle: 'circle',
           boxWidth: 8,
           boxHeight: 8,
-          color: '#e5e7eb',
+          color: '#33465F',
           font: { size: 12, family: 'Inter' }
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(30, 30, 40, 0.95)',
-        titleColor: '#e9d5ff',
-        bodyColor: '#a0a0a5',
-        borderColor: 'rgba(72, 72, 82, 0.6)',
+        backgroundColor: 'rgba(252, 248, 238, 0.97)',
+        titleColor: '#16263C',
+        bodyColor: '#51627A',
+        borderColor: 'rgba(176, 122, 25, 0.35)',
         borderWidth: 1,
         titleFont: { size: 13, family: 'Inter', weight: '600' },
         bodyFont: { size: 12, family: 'Inter' },

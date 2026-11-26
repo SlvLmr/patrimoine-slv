@@ -702,7 +702,7 @@ body .text-gray-600 { color: #93A0B1; }
 }
 #sidebar-collapse-btn:hover { color: #16263C; background: #F7F2E7; }
 
-/* ---- Logo Horizon : lettrine Bodoni ivoire, soleil d'or sur l'horizon ---- */
+/* ---- Logo Horizon : Fraunces ivoire, soleil d'or sur l'horizon ---- */
 .logo-horizon {
   display: flex;
   flex-direction: column;
@@ -711,10 +711,10 @@ body .text-gray-600 { color: #93A0B1; }
   user-select: none;
 }
 .logo-horizon-nom {
-  font-family: 'Bodoni Moda', Georgia, serif;
-  font-weight: 700;
-  font-size: 1.85rem;
-  letter-spacing: 0.045em;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.9rem;
+  letter-spacing: 0.025em;
   line-height: 1;
   color: #F4EFE4;
   text-shadow: 0 1px 10px rgba(240, 196, 98, 0.18);
@@ -725,6 +725,53 @@ body .text-gray-600 { color: #93A0B1; }
 .logo-horizon-sm .logo-horizon-trait { width: 86px; height: 9px; }
 #mobile-logo .logo-horizon-nom { color: #16263C; }
 #sidebar .logo-icon { color: #F4EFE4; }
+
+/* ---- Typo de marque : Fraunces pour les titres (esprit éditorial) ---- */
+#main-content :is(h1, h2).font-bold {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.012em;
+}
+#app-modal h3, #app-confirm-modal h3, #app-prompt-modal h3 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+#main-content { font-variant-numeric: tabular-nums; }
+
+/* ---- Couleurs Tailwind -400/-300 pensées pour fond sombre : versions denses sur creme ---- */
+body .text-emerald-400 { color: #047857; }
+body .text-red-400 { color: #b91c1c; }
+body .text-amber-400 { color: #b45309; }
+body .text-purple-400 { color: #7e22ce; }
+body .text-blue-400 { color: #1d4ed8; }
+body .text-cyan-400 { color: #0e7490; }
+body .text-pink-400 { color: #be185d; }
+body .text-orange-400 { color: #c2410c; }
+body .text-teal-400 { color: #0f766e; }
+body .text-indigo-400 { color: #4338ca; }
+body .text-yellow-400 { color: #a16207; }
+body .text-lime-400 { color: #4d7c0f; }
+body .text-rose-400 { color: #be123c; }
+body .text-sky-400 { color: #0369a1; }
+body .text-green-400 { color: #15803d; }
+body .text-violet-400 { color: #6d28d9; }
+body .text-slate-400 { color: #475569; }
+body .text-amber-300 { color: #b45309; }
+body .text-emerald-300 { color: #047857; }
+body .text-red-300 { color: #b91c1c; }
+body .text-cyan-300 { color: #0e7490; }
+body .text-amber-300\/90 { color: rgba(180, 83, 9, 0.95); }
+body .text-cyan-300\/90 { color: rgba(14, 116, 144, 0.95); }
+body .text-emerald-300\/90 { color: rgba(4, 120, 87, 0.95); }
+body .text-red-300\/90 { color: rgba(185, 28, 28, 0.95); }
+body .text-indigo-300\/90 { color: rgba(67, 56, 202, 0.95); }
+body .text-pink-300\/70 { color: rgba(190, 24, 93, 0.8); }
+body .text-pink-300\/50 { color: rgba(190, 24, 93, 0.6); }
+
+body .hover\:text-gray-100:hover { color: #0E1C30; }
+body .hover\:text-gray-200:hover { color: #16263C; }
+body .hover\:text-gray-300:hover { color: #22344C; }
 
 /* Le monde F1 reste sombre : y rétablir les gris clairs du texte */
 .f1-monde .text-gray-100 { color: #f5f5fa; }

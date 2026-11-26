@@ -1,5 +1,5 @@
 import { isConfigured, getCurrentUser, saveToCloud, loadFromCloud, saveProfilesToCloud, loadProfilesFromCloud, discoverProfilesFromCloud, subscribeToProfile } from './firebase-config.js';
-import { showToast } from './utils.js?v=20261126a';
+import { showToast } from './utils.js?v=20261126b';
 
 
 const PROFILES_KEY = 'patrimoine-slv-profiles';

@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput } from '../utils.js?v=20261126a';
+import { formatCurrency, parseNumberInput } from '../utils.js?v=20261126b';
 
 // ─── Simulateur Salaire : Brut → Net ────────────────────────────────────────
 // Calculates net salary from gross based on French social contributions.
@@ -143,7 +143,7 @@ export function render() {
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs text-gray-500">Temps de travail</label>
-            <span id="sal-tp-val" class="text-sm font-semibold text-white">100 %</span>
+            <span id="sal-tp-val" class="text-sm font-semibold text-gray-100">100 %</span>
           </div>
           <input id="sal-tp" type="range" min="10" max="100" step="5" value="100"
             class="w-full h-1.5 rounded-full appearance-none bg-dark-600 accent-accent-green cursor-pointer" />
@@ -159,7 +159,7 @@ export function render() {
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs text-gray-500">Prélèvement à la source</label>
-            <span id="sal-pas-val" class="text-sm font-semibold text-white">0 %</span>
+            <span id="sal-pas-val" class="text-sm font-semibold text-gray-100">0 %</span>
           </div>
           <input id="sal-pas" type="range" min="0" max="45" step="0.5" value="0"
             class="w-full h-1.5 rounded-full appearance-none bg-dark-600 accent-accent-green cursor-pointer" />

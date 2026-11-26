@@ -1,26 +1,26 @@
-import { Store } from './store.js?v=20261126a';
+import { Store } from './store.js?v=20261126b';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
-import * as RevenusDepenses from './components/revenus-depenses.js?v=20261126a';
-import * as Projection from './components/projection.js?v=20261126a';
-import * as SuiviDepenses from './components/suivi-depenses.js?v=20261126a';
-import * as PortefeuilleLive from './components/portefeuille-live.js?v=20261126a';
-import * as Contrats from './components/contrats.js?v=20261126a';
-import * as Liberte from './components/liberte.js?v=20261126a';
-import * as Conseiller from './components/conseiller.js?v=20261126a';
-import * as Compte from './components/compte.js?v=20261126a';
-import * as Repartition from './components/repartition.js?v=20261126a';
-import * as SimulateurFire from './components/simulateur-fire.js?v=20261126a';
-import * as SimulateurCredit from './components/simulateur-credit.js?v=20261126a';
-import * as SimulateurInterets from './components/simulateur-interets.js?v=20261126a';
-import * as SimulateurAuto from './components/simulateur-auto.js?v=20261126a';
-import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20261126a';
-import * as Hypotheses from './components/hypotheses.js?v=20261126a';
-import * as SimulateurSuccession from './components/simulateur-succession.js?v=20261126a';
-import * as F1 from './components/f1.js?v=20261126a';
-import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20261126a';
-import { showToast, promptModal, confirmModal } from './utils.js?v=20261126a';
+import * as RevenusDepenses from './components/revenus-depenses.js?v=20261126b';
+import * as Projection from './components/projection.js?v=20261126b';
+import * as SuiviDepenses from './components/suivi-depenses.js?v=20261126b';
+import * as PortefeuilleLive from './components/portefeuille-live.js?v=20261126b';
+import * as Contrats from './components/contrats.js?v=20261126b';
+import * as Liberte from './components/liberte.js?v=20261126b';
+import * as Conseiller from './components/conseiller.js?v=20261126b';
+import * as Compte from './components/compte.js?v=20261126b';
+import * as Repartition from './components/repartition.js?v=20261126b';
+import * as SimulateurFire from './components/simulateur-fire.js?v=20261126b';
+import * as SimulateurCredit from './components/simulateur-credit.js?v=20261126b';
+import * as SimulateurInterets from './components/simulateur-interets.js?v=20261126b';
+import * as SimulateurAuto from './components/simulateur-auto.js?v=20261126b';
+import * as SimulateurSalaire from './components/simulateur-salaire.js?v=20261126b';
+import * as Hypotheses from './components/hypotheses.js?v=20261126b';
+import * as SimulateurSuccession from './components/simulateur-succession.js?v=20261126b';
+import * as F1 from './components/f1.js?v=20261126b';
+import { saveToDrive, loadFromDrive, listDriveFiles, isGdriveConfigured, setClientId } from './gdrive.js?v=20261126b';
+import { showToast, promptModal, confirmModal } from './utils.js?v=20261126b';
 
 // Auto-configure Google Drive Client ID
 setClientId('594473713679-k6olf2a2ig455b7b6ilpjgq9anoircao.apps.googleusercontent.com');
@@ -627,7 +627,7 @@ function initLogo() {
           <rect x="2" y="8.6" width="136" height="1" rx="0.5" fill="url(#lgtr1)"/>
         </svg>
       </div>
-      <span style="font-family:'Bodoni Moda',Georgia,serif;cursor:pointer" class="logo-icon hidden text-2xl font-bold">H</span>
+      <span style="font-family:'Fraunces',Georgia,serif;cursor:pointer" class="logo-icon hidden text-2xl font-bold">H</span>
     `;
     logoContainer.style.cursor = 'pointer';
     logoContainer.addEventListener('click', () => navigate('suivi-depenses'));
