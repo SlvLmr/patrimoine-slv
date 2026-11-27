@@ -677,20 +677,20 @@ body .text-gray-600 { color: #93A0B1; }
 /* ---- Sidebar : verre bleu nuit, liseré doré ---- */
 #sidebar {
   background:
-    radial-gradient(ellipse 130% 36% at 50% -4%, rgba(240, 196, 98, 0.13), transparent 60%),
-    radial-gradient(ellipse 110% 55% at 50% 115%, rgba(64, 160, 235, 0.40), transparent 68%),
-    linear-gradient(176deg, rgba(9, 30, 63, 0.97) 0%, rgba(18, 56, 112, 0.97) 48%, rgba(27, 88, 160, 0.97) 100%);
+    radial-gradient(ellipse 130% 36% at 50% -4%, rgba(240, 196, 98, 0.12), transparent 60%),
+    radial-gradient(ellipse 110% 55% at 50% 115%, rgba(176, 148, 255, 0.42), transparent 68%),
+    linear-gradient(176deg, rgba(34, 20, 56, 0.97) 0%, rgba(58, 36, 104, 0.97) 48%, rgba(96, 66, 160, 0.97) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid rgba(240, 196, 98, 0.16);
-  box-shadow: 4px 0 24px rgba(12, 32, 56, 0.18);
+  box-shadow: 4px 0 24px rgba(34, 20, 56, 0.20);
 }
-#sidebar .text-gray-100 { color: #F2F5FA; }
-#sidebar .text-gray-200 { color: #E2E9F2; }
-#sidebar .text-gray-300 { color: #C6D3E3; }
-#sidebar .text-gray-400 { color: #A5BAD3; }
-#sidebar .text-gray-500 { color: #88A0BD; }
-#sidebar .text-gray-600 { color: #6E89A9; }
+#sidebar .text-gray-100 { color: #F5F2FC; }
+#sidebar .text-gray-200 { color: #E8E2F5; }
+#sidebar .text-gray-300 { color: #CFC4E8; }
+#sidebar .text-gray-400 { color: #B2A4D8; }
+#sidebar .text-gray-500 { color: #9887C4; }
+#sidebar .text-gray-600 { color: #7F6DAD; }
 #sidebar .text-gray-700 { color: rgba(236, 242, 249, 0.38); }
 #sidebar .border-dark-400\/20 { border-color: rgba(240, 196, 98, 0.12); }
 #sidebar a[data-nav]:hover { background: rgba(244, 239, 228, 0.08); color: #F0C462; }
