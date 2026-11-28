@@ -7,10 +7,8 @@ function renderLoginScreen() {
         <!-- Logo -->
         <div class="text-center mb-8">
           <div class="logo-with-bars logo-with-bars-lg justify-center mb-3">
-            <span class="logo-bar logo-bar-left"></span>
             <h1 class="text-3xl font-bold logo-horizon-nom" style="color:#16263C">Hor<span class="logo-i logo-i-sombre">i</span>zon</h1>
-            <span class="logo-bar logo-bar-right"></span>
-          </div>
+            </div>
           <p class="text-gray-500 text-sm">Simulateur patrimonial</p>
         </div>
 
@@ -50,7 +48,7 @@ function renderAuthCard() {
             placeholder="••••••••">
         </div>
         <button type="submit" id="login-btn"
-          class="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 hover:opacity-90 transition flex items-center justify-center gap-2">
+          class="w-full py-3 rounded-xl text-sm font-semibold btn-or transition flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
           </svg>
@@ -73,7 +71,7 @@ function renderAuthCard() {
             placeholder="ton@email.com">
         </div>
         <button type="submit" id="reset-btn"
-          class="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 hover:opacity-90 transition flex items-center justify-center gap-2">
+          class="w-full py-3 rounded-xl text-sm font-semibold btn-or transition flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
@@ -107,7 +105,7 @@ function renderAuthCard() {
             placeholder="••••••••">
         </div>
         <button type="submit" id="register-btn"
-          class="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-green to-accent-amber text-dark-900 hover:opacity-90 transition flex items-center justify-center gap-2">
+          class="w-full py-3 rounded-xl text-sm font-semibold btn-or transition flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
           </svg>

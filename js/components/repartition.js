@@ -73,6 +73,10 @@ export function render(store) {
               <input type="checkbox" id="rep-immo-toggle" checked class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-purple focus:ring-accent-purple/40">
               Immobilier inclus
             </label>
+            <label class="flex items-center gap-1.5 text-[11px] text-gray-500 cursor-pointer select-none">
+              <input type="checkbox" id="rep-epargne-toggle" checked class="w-3.5 h-3.5 rounded border-dark-400 bg-dark-900 text-accent-cyan focus:ring-accent-cyan/40">
+              Épargne incluse
+            </label>
             <div class="flex gap-1">
               <button class="rep-preset btn-ghost" data-years="0">Aujourd'hui</button>
               <button class="rep-preset btn-ghost" data-years="5">+5 ans</button>
@@ -343,6 +347,7 @@ export function mount(store, navigate) {
 
   // ── Donuts de répartition (aujourd'hui / année choisie) ──
   let includeImmo = true;
+  let includeEpargne = true;
 
   function allocationFromSnap(snap) {
     const items = [];
@@ -350,7 +355,7 @@ export function mount(store, navigate) {
     Object.entries(det).forEach(([gk, v]) => {
       if (v > 0) items.push({ label: gk, value: v, color: (ASSET_COLORS[gk] || ASSET_COLORS['Autre']).color });
     });
-    if ((snap.epargne || 0) > 0) items.push({ label: 'Épargne', value: snap.epargne, color: '#38bdf8' });
+    if (includeEpargne && (snap.epargne || 0) > 0) items.push({ label: 'Épargne', value: snap.epargne, color: '#38bdf8' });
     if (includeImmo && (snap.immobilier || 0) > 0) items.push({ label: 'Immobilier', value: snap.immobilier, color: '#f43f5e' });
     items.sort((a, b) => b.value - a.value);
     return items;
@@ -430,6 +435,13 @@ export function mount(store, navigate) {
 
   document.getElementById('rep-immo-toggle')?.addEventListener('change', (e) => {
     includeImmo = e.target.checked;
+    const sliderEl = document.getElementById('rep-slider');
+    updateDonutNow();
+    updateDonutFuture(sliderEl ? parseInt(sliderEl.value) : 0);
+  });
+
+  document.getElementById('rep-epargne-toggle')?.addEventListener('change', (e) => {
+    includeEpargne = e.target.checked;
     const sliderEl = document.getElementById('rep-slider');
     updateDonutNow();
     updateDonutFuture(sliderEl ? parseInt(sliderEl.value) : 0);
