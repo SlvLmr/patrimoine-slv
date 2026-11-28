@@ -1,6 +1,6 @@
-import { getConseilsTransmission } from './hypotheses.js?v=20261128h';
-import { getConseilsLiberte } from './liberte.js?v=20261128h';
-import { getConseilsContrats } from './contrats.js?v=20261128h';
+import { getConseilsTransmission } from './hypotheses.js?v=20261128k';
+import { getConseilsLiberte } from './liberte.js?v=20261128k';
+import { getConseilsContrats } from './contrats.js?v=20261128k';
 
 // ============================================================
 // LE CONSEILLER — le tableau de bord des décisions : agrège les
@@ -17,7 +17,7 @@ const SOURCES = [
   },
   {
     id: 'transmission', nav: 'hypotheses', titre: 'Transmission', court: 'Transmission',
-    accent: '#1F4A7D',
+    accent: '#3A567A',
     icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7',
     get: getConseilsTransmission,
   },
@@ -74,7 +74,7 @@ export function render(store) {
   return `
     <div class="space-y-6">
       <!-- ═ HÉRO ═ -->
-      <div class="card-dark rounded-xl overflow-hidden" style="background: linear-gradient(135deg, rgba(31,74,125,0.07) 0%, rgba(255,253,248,0) 45%, rgba(176,122,25,0.06) 100%);">
+      <div class="card-dark rounded-xl overflow-hidden" style="background: linear-gradient(135deg, rgba(58,86,122,0.06) 0%, rgba(252,251,249,0) 45%, rgba(185,160,92,0.06) 100%);">
         <div class="p-5 sm:p-6">
           <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
             <div class="flex items-center gap-3 flex-1">

@@ -1,10 +1,10 @@
-import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20261128h';
+import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20261128k';
 import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin, ASSET_COLORS } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261128h';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261128k';
 
 // Color map for envelope groups
 const GROUP_COLORS = ASSET_COLORS;
-const DEFAULT_GROUP = { color: '#1F4A7D', bg: 'bg-blue-500/10', text: 'text-accent-blue', border: 'border-blue-500/30' };
+const DEFAULT_GROUP = { color: '#3A567A', bg: 'bg-blue-500/10', text: 'text-accent-blue', border: 'border-blue-500/30' };
 
 // Distinct colors for individual action cards & donut slices
 const ACTION_CARD_COLORS = [
@@ -89,7 +89,7 @@ export function render(store) {
         <div class="flex items-center gap-4 mb-1">
           <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
             class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer"
-            style="accent-color: #B07A19;">
+            style="accent-color: #B9A05C;">
           <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
             <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
             <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
@@ -219,7 +219,7 @@ export function mount(store, navigate) {
   const currentYear = new Date().getFullYear();
   let groupKeys = snapshots.groupKeys || [];
   const ageFinAnnee = params.ageFinAnnee || 43;
-  const CHILD_FLOW_COLORS = ['#1F4A7D', '#0E7490', '#B07A19', '#be185d'];
+  const CHILD_FLOW_COLORS = ['#3A567A', '#2B6B7A', '#947A36', '#9C4668'];
 
   function refresh() {
     snapshots = computeProjection(store);
@@ -356,7 +356,7 @@ export function mount(store, navigate) {
       if (v > 0) items.push({ label: gk, value: v, color: (ASSET_COLORS[gk] || ASSET_COLORS['Autre']).color });
     });
     if (includeEpargne && (snap.epargne || 0) > 0) items.push({ label: 'Épargne', value: snap.epargne, color: '#38bdf8' });
-    if (includeImmo && (snap.immobilier || 0) > 0) items.push({ label: 'Immobilier', value: snap.immobilier, color: '#C2410C' });
+    if (includeImmo && (snap.immobilier || 0) > 0) items.push({ label: 'Immobilier', value: snap.immobilier, color: '#A85A2E' });
     items.sort((a, b) => b.value - a.value);
     return items;
   }
@@ -366,7 +366,7 @@ export function mount(store, navigate) {
       type: 'doughnut',
       data: {
         labels: alloc.map(a => a.label),
-        datasets: [{ data: alloc.map(a => a.value), backgroundColor: alloc.map(a => a.color), borderColor: '#FFFDF8', borderWidth: 2, hoverOffset: 6 }]
+        datasets: [{ data: alloc.map(a => a.value), backgroundColor: alloc.map(a => a.color), borderColor: '#FCFBF9', borderWidth: 2, hoverOffset: 6 }]
       },
       options: {
         cutout: '62%',
@@ -688,7 +688,7 @@ export function mount(store, navigate) {
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       line.setAttribute('d', d);
-      line.setAttribute('stroke', '#3D5878');
+      line.setAttribute('stroke', '#555E6B');
       line.setAttribute('stroke-width', '1');
       line.setAttribute('fill', 'none');
       line.setAttribute('opacity', '0.45');
@@ -999,7 +999,7 @@ export function mount(store, navigate) {
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       line.setAttribute('d', d);
-      line.setAttribute('stroke', '#3D5878');
+      line.setAttribute('stroke', '#555E6B');
       line.setAttribute('stroke-width', '1');
       line.setAttribute('fill', 'none');
       line.setAttribute('opacity', '0.45');

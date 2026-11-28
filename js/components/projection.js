@@ -1,7 +1,7 @@
-import { formatCurrencyEuro as formatCurrency, formatPercent, computeProjection, computeMicroInvestMoyennes, findPlacementCible, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20261128h';
+import { formatCurrencyEuro as formatCurrency, formatPercent, computeProjection, computeMicroInvestMoyennes, findPlacementCible, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20261128k';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE, ASSET_COLORS } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261128h';
-import * as ProjectionEnfants from './projection-enfants.js?v=20261128h';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261128k';
+import * as ProjectionEnfants from './projection-enfants.js?v=20261128k';
 import { calculerFiscaliteDonation } from '../fiscal.js';
 
 // Coche « micro-investissements » : remonte les moyennes Saveback / Round-up des mois clôturés dans la projection
@@ -56,7 +56,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20261128h';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20261128k';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -1824,7 +1824,7 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
-      const { exportProjectionPDF } = await import('../export-pdf.js?v=20261128h');
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=20261128k');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);
@@ -1910,8 +1910,8 @@ export function mount(store, navigate) {
     datasets.push({
       label: 'Total liquidités nettes',
       data: snapshots.map(s => s.totalLiquiditesNettes),
-      borderColor: '#7FA3CC',
-      backgroundColor: createVerticalGradient(ctx2d, '#7FA3CC', 0.25, 0.02),
+      borderColor: '#8FA3B8',
+      backgroundColor: createVerticalGradient(ctx2d, '#8FA3B8', 0.25, 0.02),
       fill: true,
       tension: 0.45,
       pointRadius: 0,

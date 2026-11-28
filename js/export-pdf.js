@@ -43,16 +43,16 @@ function fmtPct(v) {
 }
 
 // Horizon Crème
-const DARK_BG = [243, 238, 227];    // fond de page crème
-const CARD_BG = [255, 253, 248];    // cartes blanc cassé
-const ROW_ALT = [247, 242, 231];    // lignes alternées
-const TEXT_LIGHT = [22, 38, 60];     // encre
-const TEXT_DIM = [110, 126, 147];    // encre atténuée
-const ACCENT_GREEN = [17, 122, 87];
-const ACCENT_AMBER = [176, 122, 25];
-const ACCENT_ORANGE = [194, 65, 12];
-const ACCENT_LILAC = [31, 74, 125];
-const BORDER = [189, 181, 162];
+const DARK_BG = [240, 238, 233];    // fond grège
+const CARD_BG = [252, 251, 249];    // cartes
+const ROW_ALT = [245, 243, 238];    // lignes alternées
+const TEXT_LIGHT = [31, 36, 43];     // encre graphite
+const TEXT_DIM = [124, 130, 140];    // encre atténuée
+const ACCENT_GREEN = [47, 107, 79];
+const ACCENT_AMBER = [148, 122, 54];
+const ACCENT_ORANGE = [168, 90, 46];
+const ACCENT_LILAC = [58, 86, 122];
+const BORDER = [173, 170, 161];
 
 export async function exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey) {
   await ensureLibs();
@@ -242,7 +242,7 @@ export async function exportProjectionPDF(store, computeProjection, formatCurren
     doc.setFontSize(8.5);
     fireKpis.forEach((k, i) => {
       const x = margin + i * ((pageW - 2 * margin) / 4);
-      doc.setFillColor(247, 233, 203);
+      doc.setFillColor(240, 234, 214);
       doc.roundedRect(x, y, (pageW - 2 * margin) / 4 - 3, 5, 1, 1, 'F');
       doc.setTextColor(...TEXT_DIM);
       doc.text(k[0], x + 2, y + 3.5);

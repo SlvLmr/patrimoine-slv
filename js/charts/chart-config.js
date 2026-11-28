@@ -49,21 +49,21 @@ export const ASSET_COLORS = {
 
 // Horizon Crème : camaïeu de bleus encre + or, structure beige discrète
 export const COLORS = {
-  immobilier: '#1F4A7D',
-  placements: '#3E6FA8',
-  epargne: '#7FA3CC',
-  dette: '#BA3842',
-  patrimoine: '#1F4A7D',
-  revenus: '#117A57',
-  depenses: '#BA3842',
-  primary: '#1F4A7D',
-  secondary: '#B07A19',
-  grid: 'rgba(90, 80, 60, 0.14)',
-  gridText: '#6E7E93',
-  actions: '#B07A19',
-  etf: '#3E6FA8',
-  crypto: '#C2410C',
-  obligations: '#0E7490'
+  immobilier: '#3A567A',
+  placements: '#5C7899',
+  epargne: '#8FA3B8',
+  dette: '#8F3A44',
+  patrimoine: '#3A567A',
+  revenus: '#2F6B4F',
+  depenses: '#8F3A44',
+  primary: '#3A567A',
+  secondary: '#947A36',
+  grid: 'rgba(80, 80, 70, 0.12)',
+  gridText: '#7C828C',
+  actions: '#947A36',
+  etf: '#5C7899',
+  crypto: '#A85A2E',
+  obligations: '#2B6B7A'
 };
 
 // Warm gradient pairs for charts
@@ -79,8 +79,8 @@ export const GRADIENT_PAIRS = [
 ];
 
 export const PALETTE = [
-  '#1F4A7D', '#3E6FA8', '#7FA3CC', '#B07A19', '#0E7490',
-  '#117A57', '#7e22ce', '#be185d', '#C2410C', '#475569'
+  '#3A567A', '#5C7899', '#8FA3B8', '#947A36', '#2B6B7A',
+  '#2F6B4F', '#5C4C8A', '#9C4668', '#A85A2E', '#555E6B'
 ];
 
 // Vivid, high-contrast palette for multi-line charts (no green/red)
@@ -147,15 +147,15 @@ export function createChart(canvasId, config) {
           pointStyle: 'circle',
           boxWidth: 8,
           boxHeight: 8,
-          color: '#33465F',
+          color: '#39414C',
           font: { size: 12, family: 'Inter' }
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(252, 248, 238, 0.97)',
-        titleColor: '#16263C',
-        bodyColor: '#51627A',
-        borderColor: 'rgba(176, 122, 25, 0.35)',
+        backgroundColor: 'rgba(252, 251, 249, 0.97)',
+        titleColor: '#1F242B',
+        bodyColor: '#555E6B',
+        borderColor: 'rgba(185, 160, 92, 0.4)',
         borderWidth: 1,
         titleFont: { size: 13, family: 'Inter', weight: '600' },
         bodyFont: { size: 12, family: 'Inter' },

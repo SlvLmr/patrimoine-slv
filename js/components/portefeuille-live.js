@@ -306,7 +306,7 @@ export function render(store) {
               <div class="flex items-center justify-between mb-0.5">
                 <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
               </div>
-              <p class="text-sm font-bold text-center whitespace-nowrap" style="color:#8A5B0C">${fmt(env.total)}</p>
+              <p class="text-sm font-bold text-center whitespace-nowrap" style="color:#947A36">${fmt(env.total)}</p>
             </div>`;
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
@@ -357,13 +357,13 @@ export function render(store) {
                 <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
                   <div class="flex items-center justify-between mb-1">
                     <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
-                    <p class="text-sm font-bold whitespace-nowrap" style="color:#8A5B0C">${fmt(e.total)}</p>
+                    <p class="text-sm font-bold whitespace-nowrap" style="color:#947A36">${fmt(e.total)}</p>
                   </div>
                   <div class="space-y-1 border-t border-dark-400/20 pt-1">
                     ${e.lignes.map(d => `
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1.5 min-w-0">
-                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#8A5B0C55"></div>
+                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#947A3655"></div>
                         <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
                       </div>
                       <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}</span>
@@ -375,10 +375,10 @@ export function render(store) {
                     ${e.dcaCumul.map(d => `
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1.5 min-w-0">
-                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#8A5B0C55"></div>
+                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#947A3655"></div>
                         <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
                       </div>
-                      <span class="text-[10px] font-medium flex-shrink-0 ml-2" style="color:#8A5B0C">${fmt(d.cumul)}</span>
+                      <span class="text-[10px] font-medium flex-shrink-0 ml-2" style="color:#947A36">${fmt(d.cumul)}</span>
                     </div>`).join('')}
                   </div>` : ''}
                 </div>`).join('')}
@@ -458,7 +458,7 @@ export function render(store) {
               ${env.id === 'enfants' ? enfantsParEnfant.map(e => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-400 font-semibold">${e.prenom}</span>
-                <span class="text-[10px] font-semibold" style="color:#8A5B0C">${fmt(e.total)}</span>
+                <span class="text-[10px] font-semibold" style="color:#947A36">${fmt(e.total)}</span>
               </div>
               ${e.lignes.map(d => `
               <div class="flex items-center justify-between pl-6 mt-0.5">
@@ -468,7 +468,7 @@ export function render(store) {
               ${e.dcaCumul.map(d => `
               <div class="flex items-center justify-between pl-6 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom} <span class="text-[9px] text-gray-600">(DCA cumulé)</span></span>
-                <span class="text-[10px] font-medium flex-shrink-0" style="color:#8A5B0C">${fmt(d.cumul)}</span>
+                <span class="text-[10px] font-medium flex-shrink-0" style="color:#947A36">${fmt(d.cumul)}</span>
               </div>`).join('')}`).join('') : items.length > 0 ? items.map(p => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${p.nom}</span>
@@ -606,14 +606,14 @@ export function mount() {
     // Level 1 → 2: Patrimoine → Liquidités + Investissements + Immobilier
     drawConnectors('ptf-svg-L1-svg', 'ptf-svg-L1',
       ['ptf-card-liq', 'ptf-card-inv', 'ptf-card-immo'],
-      ['#3D5878', '#3D5878', '#3D5878'],
+      ['#555E6B', '#555E6B', '#555E6B'],
       ['glow-indigo', 'glow-amber', 'glow-brown']
     );
 
     // Level 2 → 3 Left: Liquidités → Comptes Courants + Épargne
     drawConnectors('ptf-svg-L2L-svg', 'ptf-svg-L2L',
       ['ptf-card-cc', 'ptf-card-ep'],
-      ['#3D5878', '#3D5878'],
+      ['#555E6B', '#555E6B'],
       ['glow-indigo2', 'glow-indigo2']
     );
 
@@ -621,7 +621,7 @@ export function mount() {
     const bankCardIds = [...document.querySelectorAll('[id^="ptf-card-bank-"]')].map(el => el.id);
     drawConnectors('ptf-svg-L3LL-svg', 'ptf-svg-L3LL',
       bankCardIds,
-      bankCardIds.map(() => '#3D5878'),
+      bankCardIds.map(() => '#555E6B'),
       bankCardIds.map(() => 'glow-indigo3a')
     );
 
@@ -630,7 +630,7 @@ export function mount() {
     if (epCards.length > 0) {
       drawConnectors('ptf-svg-L3LR-svg', 'ptf-svg-L3LR',
         epCards,
-        epCards.map(() => '#3D5878'),
+        epCards.map(() => '#555E6B'),
         epCards.map(() => 'glow-indigo3b')
       );
     }
@@ -640,7 +640,7 @@ export function mount() {
     if (envCards.length > 0) {
       drawConnectors('ptf-svg-L2C-svg', 'ptf-svg-L2C',
         envCards,
-        envCards.map(() => '#3D5878'),
+        envCards.map(() => '#555E6B'),
         envCards.map(() => 'glow-purple2')
       );
     }
@@ -650,7 +650,7 @@ export function mount() {
     if (peaSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-pea-svg', 'ptf-svg-L3C-pea',
         peaSubCards,
-        peaSubCards.map(() => '#3D5878'),
+        peaSubCards.map(() => '#555E6B'),
         peaSubCards.map(() => 'glow-purple3'),
         'ptf-card-pea'
       );
@@ -661,7 +661,7 @@ export function mount() {
     if (enfSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-enf-svg', 'ptf-svg-L3C-enf',
         enfSubCards,
-        enfSubCards.map(() => '#3D5878'),
+        enfSubCards.map(() => '#555E6B'),
         enfSubCards.map(() => 'glow-amber4'),
         'ptf-card-enfants'
       );
