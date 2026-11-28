@@ -1,7 +1,7 @@
-import { formatCurrencyEuro as formatCurrency, formatPercent, computeProjection, computeMicroInvestMoyennes, findPlacementCible, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20261126b';
+import { formatCurrencyEuro as formatCurrency, formatPercent, computeProjection, computeMicroInvestMoyennes, findPlacementCible, inputField, selectField, getFormData, getPlacementGroupKey, openModal, confirmModal, showToast } from '../utils.js?v=20261128d';
 import { createChart, COLORS, createVerticalGradient, VIVID_PALETTE, ASSET_COLORS } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261126b';
-import * as ProjectionEnfants from './projection-enfants.js?v=20261126b';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261128d';
+import * as ProjectionEnfants from './projection-enfants.js?v=20261128d';
 import { calculerFiscaliteDonation } from '../fiscal.js';
 
 // Coche « micro-investissements » : remonte les moyennes Saveback / Round-up des mois clôturés dans la projection
@@ -56,7 +56,7 @@ function openHeritageModal(store, navigate, editItem = null, targetPage = 'proje
     navigate(targetPage);
   });
 }
-import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20261126b';
+import { getEnfants, childAge, CHILD_COLORS } from './projection-enfants.js?v=20261128d';
 
 // ─── Unified tab bar (Moi + enfants + Comparatif) ─────────────────────────
 
@@ -120,7 +120,7 @@ export function render(store) {
   const rendementPlacements = params.rendementPlacements || {};
   const placements = (store.getAll().actifs?.placements || []);
   const PFU_RATE = params.tauxPFU || 0.314;
-  const PS_RATE = params.tauxPS || 0.186;
+  const PS_RATE = params.tauxPS || 0.172;
   const AV_IR = params.tauxAVIR || 0.075;
   const heritageItems = store.get('heritage') || [];
   const capitalTransfers = params.capitalTransfers || [];
@@ -1824,7 +1824,7 @@ export function mount(store, navigate) {
     btn.disabled = true;
     btn.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> PDF...';
     try {
-      const { exportProjectionPDF } = await import('../export-pdf.js?v=20261126c');
+      const { exportProjectionPDF } = await import('../export-pdf.js?v=20261128d');
       await exportProjectionPDF(store, computeProjection, formatCurrency, getPlacementGroupKey);
     } catch (err) {
       console.error('PDF export error:', err);

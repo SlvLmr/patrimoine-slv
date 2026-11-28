@@ -608,7 +608,7 @@ export function computeProjection(store, overrides = {}) {
   let cumulInterets = 0;
   let fraisCumules = 0;
   const PFU_RATE = params.tauxPFU || 0.314;  // Prélèvement Forfaitaire Unique: 12.8% IR + 18.6% PS (2026)
-  const PS_RATE = params.tauxPS || 0.186;   // Prélèvements sociaux seuls (PEA > 5 ans, PEE) (2026)
+  const PS_RATE = params.tauxPS || 0.172;   // Prélèvements sociaux (CSG/CRDS/solidarité) — 17,2 %
   // AV : transmission au décès (jamais de rachat) → gains exonérés d'IR,
   // seuls les prélèvements sociaux (PS_RATE) sont dus au dénouement
 
