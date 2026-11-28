@@ -105,7 +105,7 @@ test("projection : l'Assurance Vie est taxée aux prélèvements sociaux seuls",
       placements: [{ id: 'av1', nom: 'AV Linxea', enveloppe: 'AV', categorie: 'Obligation', valeur: 50000, dcaMensuel: 0 }],
       immobilier: [], epargne: [], comptesCourants: [],
     },
-    parametres: { projectionYears: 15, tauxPS: 0.186 },
+    parametres: { projectionYears: 15, tauxPSAV: 0.186 },
   });
   const snaps = computeProjection(store);
   const last = snaps[snaps.length - 1];

@@ -608,7 +608,8 @@ export function computeProjection(store, overrides = {}) {
   let cumulInterets = 0;
   let fraisCumules = 0;
   const PFU_RATE = params.tauxPFU || 0.314;  // Prélèvement Forfaitaire Unique: 12.8% IR + 18.6% PS (2026)
-  const PS_RATE = params.tauxPS || 0.172;   // Prélèvements sociaux (CSG/CRDS/solidarité) — 17,2 %
+  const PS_RATE = params.tauxPS || 0.186;   // PS sur revenus du capital (CSG relevée, 2026) — PEA > 5 ans, PEE
+  const AV_PS_RATE = params.tauxPSAV || 0.172; // PS assurance vie au dénouement (inchangés)
   // AV : transmission au décès (jamais de rachat) → gains exonérés d'IR,
   // seuls les prélèvements sociaux (PS_RATE) sont dus au dénouement
 
@@ -626,7 +627,7 @@ export function computeProjection(store, overrides = {}) {
     if (isAV) {
       // Transmission au décès (jamais de rachat) : gains exonérés d'IR,
       // seuls les prélèvements sociaux sont dus au dénouement du contrat
-      return PS_RATE;
+      return AV_PS_RATE;
     }
     if (isPEE) {
       return PS_RATE;
