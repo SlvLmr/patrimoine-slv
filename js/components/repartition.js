@@ -997,24 +997,6 @@ export function mount(store, navigate) {
     cards.forEach(({ cx, color }) => {
       const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
 
-      const glow2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      glow2.setAttribute('d', d);
-      glow2.setAttribute('stroke', color);
-      glow2.setAttribute('stroke-width', '6');
-      glow2.setAttribute('fill', 'none');
-      glow2.setAttribute('opacity', '0.15');
-      glow2.setAttribute('filter', 'url(#glow-flow)');
-      svg.appendChild(glow2);
-
-      const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      glow.setAttribute('d', d);
-      glow.setAttribute('stroke', color);
-      glow.setAttribute('stroke-width', '3');
-      glow.setAttribute('fill', 'none');
-      glow.setAttribute('opacity', '0.35');
-      glow.setAttribute('filter', 'url(#glow-flow)');
-      svg.appendChild(glow);
-
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       line.setAttribute('d', d);
       line.setAttribute('stroke', '#3D5878');
@@ -1023,24 +1005,8 @@ export function mount(store, navigate) {
       line.setAttribute('opacity', '0.45');
       svg.appendChild(line);
 
-      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      dot.setAttribute('cx', cx);
-      dot.setAttribute('cy', h);
-      dot.setAttribute('r', '2.5');
-      dot.setAttribute('fill', color);
-      dot.setAttribute('opacity', '0.7');
-      svg.appendChild(dot);
     });
 
-    if (cards.length > 0) {
-      const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      topDot.setAttribute('cx', mid);
-      topDot.setAttribute('cy', '0');
-      topDot.setAttribute('r', '3');
-      topDot.setAttribute('fill', '#c084fc');
-      topDot.setAttribute('opacity', '0.8');
-      svg.appendChild(topDot);
-    }
   }
 
   function updateTable(dcaByPlacement, snap, totalPlacements, calYear) {
