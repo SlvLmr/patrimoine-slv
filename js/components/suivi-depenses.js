@@ -1254,7 +1254,7 @@ export function render(store) {
                 <span class="text-[10px] text-gray-500">${confirmedPrelevIds.length}/${prelevTR.length}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[11px] font-medium text-orange-400">-${formatCurrencyCents(totalPrelevConfirmed)}</span>
+                <span class="text-[11px] font-medium text-orange-400">${totalPrelevConfirmed > 0 ? "-" : ""}${formatCurrencyCents(totalPrelevConfirmed)}</span>
                 <button id="btn-add-prelev-tr" class="text-orange-400 hover:text-orange-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
@@ -1293,7 +1293,7 @@ export function render(store) {
                 <span class="text-[10px] text-gray-500">${confirmedDcaIds.length}/${dcaTR.length}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[11px] font-medium text-blue-400">-${formatCurrencyCents(totalDcaConfirmed)}</span>
+                <span class="text-[11px] font-medium text-blue-400">${totalDcaConfirmed > 0 ? "-" : ""}${formatCurrencyCents(totalDcaConfirmed)}</span>
                 <button id="btn-add-dca-tr" class="text-blue-400 hover:text-blue-400/80 text-[11px] font-bold transition ml-2" title="Ajouter">+</button>
               </div>
             </div>
