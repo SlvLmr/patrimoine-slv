@@ -1,6 +1,6 @@
-import { getConseilsTransmission } from './hypotheses.js?v=20261128d';
-import { getConseilsLiberte } from './liberte.js?v=20261128d';
-import { getConseilsContrats } from './contrats.js?v=20261128d';
+import { getConseilsTransmission } from './hypotheses.js?v=20261128h';
+import { getConseilsLiberte } from './liberte.js?v=20261128h';
+import { getConseilsContrats } from './contrats.js?v=20261128h';
 
 // ============================================================
 // LE CONSEILLER — le tableau de bord des décisions : agrège les
@@ -17,7 +17,7 @@ const SOURCES = [
   },
   {
     id: 'transmission', nav: 'hypotheses', titre: 'Transmission', court: 'Transmission',
-    accent: '#c084fc',
+    accent: '#1F4A7D',
     icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7',
     get: getConseilsTransmission,
   },

@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError, conseilCardHtml } from '../utils.js?v=20261128d';
+import { formatCurrencyCents, openModal, inputField, selectField, getFormData, confirmModal, showToast, showModalError, conseilCardHtml } from '../utils.js?v=20261128h';
 import { createChart } from '../charts/chart-config.js';
 
 // ============================================================
@@ -289,13 +289,13 @@ const TYPES_CONTRAT = [
   { value: 'mrh', label: 'Habitation (MRH)', color: '#fb923c' },
   { value: 'auto', label: 'Auto / moto', color: '#60a5fa' },
   { value: 'sante', label: 'Santé / mutuelle', color: '#34d399' },
-  { value: 'prevoyance', label: 'Prévoyance', color: '#c084fc' },
+  { value: 'prevoyance', label: 'Prévoyance', color: '#7e22ce' },
   { value: 'emprunteur', label: 'Emprunteur', color: '#f472b6' },
   { value: 'gav', label: 'Accidents de la vie (GAV)', color: '#f87171' },
   { value: 'pj', label: 'Protection juridique', color: '#fbbf24' },
   { value: 'scolaire', label: 'Scolaire', color: '#22d3ee' },
   { value: 'materiel', label: 'Matériel / équipement', color: '#a3e635' },
-  { value: 'voyage', label: 'Voyage / carte bancaire', color: '#818cf8' },
+  { value: 'voyage', label: 'Voyage / carte bancaire', color: '#4f46e5' },
   { value: 'autre', label: 'Autre', color: '#9ca3af' },
 ];
 

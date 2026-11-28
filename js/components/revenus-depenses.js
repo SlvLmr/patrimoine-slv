@@ -1,4 +1,4 @@
-import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20261128d';
+import { formatCurrencyCents, openModal, getFormData, inputField, selectField, confirmModal } from '../utils.js?v=20261128h';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 const DEPENSE_TYPES = [
@@ -471,6 +471,7 @@ export function mount(store, navigate) {
   const doughnutGlowPlugin = {
     id: 'doughnutGlow',
     afterDatasetDraw(chart) {
+      return; // halo désactivé — charte sobre
       const meta = chart.getDatasetMeta(0);
       const ctx = chart.ctx;
       ctx.save();
@@ -628,7 +629,7 @@ export function mount(store, navigate) {
   function drawSankeyInto(svg, W, H, mode, showLabels = true, fontScale = 1) {
     const data = buildSankeyData(mode);
     if (data.totalRevenu <= 0) {
-      svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#6b6b75" font-size="12">Aucun revenu à afficher</text>';
+      svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#6E7E93" font-size="12">Aucun revenu à afficher</text>';
       return;
     }
 
@@ -703,7 +704,7 @@ export function mount(store, navigate) {
     let budgetInY = budgetNode.y;
     srcNodes.forEach((src, i) => {
       const gid = `sg-${i}`;
-      addGradient(gid, '#6366f1', '#818cf8');
+      addGradient(gid, '#3D5878', '#6B87A8');
       const bh = maxVal > 0 ? (src.value / maxVal) * budgetNode.h : src.h;
       body += `<path d="${flowPath(src.x + nodeW, src.y, src.h, budgetNode.x, budgetInY, bh)}" fill="url(#${gid})"/>`;
       budgetInY += bh;
@@ -713,7 +714,7 @@ export function mount(store, navigate) {
     let budgetOutY = budgetNode.y;
     grpNodes.forEach((grp, i) => {
       const gid = `bg-${i}`;
-      addGradient(gid, '#c084fc', grp.color);
+      addGradient(gid, '#1F4A7D', grp.color);
       const bh = maxVal > 0 ? (grp.value / maxVal) * budgetNode.h : grp.h;
       body += `<path d="${flowPath(budgetNode.x + nodeW, budgetOutY, bh, grp.x, grp.y, grp.h)}" fill="url(#${gid})"/>`;
       budgetOutY += bh;
@@ -737,24 +738,24 @@ export function mount(store, navigate) {
 
     // Sources (label inside/right of bar)
     srcNodes.forEach(n => {
-      body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="#6366f1"/>`;
-      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#d1d5db" font-size="${fs(11)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="#3D5878"/>`;
+      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#33465F" font-size="${fs(11)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     // Budget (label inside/right of bar)
-    body += `<rect x="${budgetNode.x}" y="${budgetNode.y}" width="${nodeW}" height="${budgetNode.h}" rx="3" fill="#c084fc"/>`;
-    if (showLabels) body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#e9d5ff" font-size="${fs(12)}" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
+    body += `<rect x="${budgetNode.x}" y="${budgetNode.y}" width="${nodeW}" height="${budgetNode.h}" rx="3" fill="#1F4A7D"/>`;
+    if (showLabels) body += `<text x="${budgetNode.x + nodeW + labelPad}" y="${budgetNode.y + budgetNode.h / 2}" dominant-baseline="central" fill="#33465F" font-size="${fs(12)}" font-weight="600" font-family="Inter, sans-serif">Budget: ${fmtV(budgetNode.value)}</text>`;
 
     // Groups (label left of bar)
     grpNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="3" fill="${n.color}"/>`;
-      if (showLabels) body += `<text x="${n.x - labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" text-anchor="end" fill="#d1d5db" font-size="${fs(11)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x - labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" text-anchor="end" fill="#33465F" font-size="${fs(11)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     // Items (label right of bar + small color square)
     itemNodes.forEach(n => {
       body += `<rect x="${n.x}" y="${n.y}" width="${nodeW}" height="${n.h}" rx="2" fill="${n.color}"/>`;
-      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#9ca3af" font-size="${fs(10)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
+      if (showLabels) body += `<text x="${n.x + nodeW + labelPad}" y="${n.y + n.h / 2}" dominant-baseline="central" fill="#6E7E93" font-size="${fs(10)}" font-family="Inter, sans-serif">${n.label}: ${fmtV(n.value)}</text>`;
     });
 
     svg.innerHTML = `<defs>${defs}</defs>${body}`;

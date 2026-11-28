@@ -1,10 +1,10 @@
-import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20261128d';
+import { formatCurrency, formatPercent, computeProjection, getPlacementGroupKey, openModal, getFormData, confirmModal } from '../utils.js?v=20261128h';
 import { createChart, VIVID_PALETTE, GRADIENT_PAIRS, createVerticalGradient, createSliceGradient, legendStrikethroughPlugin, ASSET_COLORS } from '../charts/chart-config.js';
-import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261128d';
+import { openAddPlacementModal, openEditPlacementModal } from './placement-form.js?v=20261128h';
 
 // Color map for envelope groups
 const GROUP_COLORS = ASSET_COLORS;
-const DEFAULT_GROUP = { color: '#6366f1', bg: 'bg-indigo-500/15', text: 'text-indigo-400', border: 'border-indigo-500/30' };
+const DEFAULT_GROUP = { color: '#1F4A7D', bg: 'bg-blue-500/10', text: 'text-accent-blue', border: 'border-blue-500/30' };
 
 // Distinct colors for individual action cards & donut slices
 const ACTION_CARD_COLORS = [
@@ -89,7 +89,7 @@ export function render(store) {
         <div class="flex items-center gap-4 mb-1">
           <input type="range" id="rep-slider" min="0" max="${years}" value="0" step="1"
             class="flex-1 h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer"
-            style="accent-color: #c084fc;">
+            style="accent-color: #B07A19;">
           <div class="flex items-center gap-2 flex-shrink-0 min-w-[120px] justify-end">
             <span id="rep-year-label" class="text-lg font-bold text-accent-amber">${currentYear}</span>
             <span id="rep-age-label" class="text-sm text-gray-500">(${params.ageFinAnnee || 43} ans)</span>
@@ -219,7 +219,7 @@ export function mount(store, navigate) {
   const currentYear = new Date().getFullYear();
   let groupKeys = snapshots.groupKeys || [];
   const ageFinAnnee = params.ageFinAnnee || 43;
-  const CHILD_FLOW_COLORS = ['#a855f7', '#06b6d4', '#f59e0b', '#ec4899'];
+  const CHILD_FLOW_COLORS = ['#1F4A7D', '#0E7490', '#B07A19', '#be185d'];
 
   function refresh() {
     snapshots = computeProjection(store);
@@ -356,7 +356,7 @@ export function mount(store, navigate) {
       if (v > 0) items.push({ label: gk, value: v, color: (ASSET_COLORS[gk] || ASSET_COLORS['Autre']).color });
     });
     if (includeEpargne && (snap.epargne || 0) > 0) items.push({ label: 'Épargne', value: snap.epargne, color: '#38bdf8' });
-    if (includeImmo && (snap.immobilier || 0) > 0) items.push({ label: 'Immobilier', value: snap.immobilier, color: '#f43f5e' });
+    if (includeImmo && (snap.immobilier || 0) > 0) items.push({ label: 'Immobilier', value: snap.immobilier, color: '#C2410C' });
     items.sort((a, b) => b.value - a.value);
     return items;
   }
@@ -685,40 +685,18 @@ export function mount(store, navigate) {
     cards.forEach(({ cx, color }) => {
       const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
 
-      const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      glow.setAttribute('d', d);
-      glow.setAttribute('stroke', color);
-      glow.setAttribute('stroke-width', '4');
-      glow.setAttribute('fill', 'none');
-      glow.setAttribute('opacity', '0.2');
-      glow.setAttribute('filter', 'url(#glow-actions)');
-      svg.appendChild(glow);
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       line.setAttribute('d', d);
-      line.setAttribute('stroke', color);
-      line.setAttribute('stroke-width', '1.5');
+      line.setAttribute('stroke', '#3D5878');
+      line.setAttribute('stroke-width', '1');
       line.setAttribute('fill', 'none');
-      line.setAttribute('opacity', '0.6');
+      line.setAttribute('opacity', '0.45');
       svg.appendChild(line);
 
-      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      dot.setAttribute('cx', cx);
-      dot.setAttribute('cy', h);
-      dot.setAttribute('r', '2');
-      dot.setAttribute('fill', color);
-      dot.setAttribute('opacity', '0.7');
-      svg.appendChild(dot);
     });
 
     if (cards.length > 0) {
-      const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      topDot.setAttribute('cx', mid);
-      topDot.setAttribute('cy', '0');
-      topDot.setAttribute('r', '2.5');
-      topDot.setAttribute('fill', '#f59e0b');
-      topDot.setAttribute('opacity', '0.8');
-      svg.appendChild(topDot);
     }
   }
 
@@ -1039,10 +1017,10 @@ export function mount(store, navigate) {
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       line.setAttribute('d', d);
-      line.setAttribute('stroke', color);
-      line.setAttribute('stroke-width', '1.5');
+      line.setAttribute('stroke', '#3D5878');
+      line.setAttribute('stroke-width', '1');
       line.setAttribute('fill', 'none');
-      line.setAttribute('opacity', '0.6');
+      line.setAttribute('opacity', '0.45');
       svg.appendChild(line);
 
       const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');

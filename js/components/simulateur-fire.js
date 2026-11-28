@@ -1,4 +1,4 @@
-import { formatCurrency, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261128d';
+import { formatCurrency, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261128h';
 import { createChart, createVerticalGradient, COLORS } from '../charts/chart-config.js';
 
 // ─── FIRE Simulator ─────────────────────────────────────────────────────────
@@ -677,9 +677,9 @@ function renderChart(r) {
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(11,11,15,0.95)',
-          titleColor: '#e9d5ff',
-          bodyColor: '#a0a0a5',
+          backgroundColor: 'rgba(252,248,238,0.97)',
+          titleColor: '#16263C',
+          bodyColor: '#51627A',
           borderColor: 'rgba(56,56,63,0.6)',
           borderWidth: 1,
           padding: 12,

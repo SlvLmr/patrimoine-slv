@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261128d';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261128h';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur d'Intérêts Composés ─────────────────────────────────────────
@@ -477,9 +477,9 @@ function renderChart(r) {
           labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, color: '#e5e7eb', font: { size: 12, family: 'Inter' } },
         },
         tooltip: {
-          backgroundColor: 'rgba(11,11,15,0.95)',
-          titleColor: '#e9d5ff',
-          bodyColor: '#a0a0a5',
+          backgroundColor: 'rgba(252,248,238,0.97)',
+          titleColor: '#16263C',
+          bodyColor: '#51627A',
           borderColor: 'rgba(56,56,63,0.6)',
           borderWidth: 1,
           padding: 12,

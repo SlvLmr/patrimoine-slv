@@ -1,4 +1,4 @@
-import { formatCurrency, formatCurrencyCents, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261128d';
+import { formatCurrency, formatCurrencyCents, formatPercent, parseNumberInput, promptModal } from '../utils.js?v=20261128h';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur de Crédit Immobilier ─────────────────────────────────────────
@@ -647,7 +647,7 @@ function renderStackedChart(r) {
         {
           label: 'Assurance',
           data: r.annuel.map(a => Math.round(a.assurance)),
-          backgroundColor: '#a855f7',
+          backgroundColor: '#7e22ce',
           borderRadius: 2,
         }
       ]
@@ -679,9 +679,9 @@ function renderStackedChart(r) {
           labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, color: '#e5e7eb', font: { size: 12, family: 'Inter' } }
         },
         tooltip: {
-          backgroundColor: 'rgba(11,11,15,0.95)',
-          titleColor: '#e9d5ff',
-          bodyColor: '#a0a0a5',
+          backgroundColor: 'rgba(252,248,238,0.97)',
+          titleColor: '#16263C',
+          bodyColor: '#51627A',
           borderColor: 'rgba(56,56,63,0.6)',
           borderWidth: 1,
           padding: 12,
@@ -715,7 +715,7 @@ function renderPieChart(r) {
           Math.round(r.montantFraisNotaire),
           Math.round(r.coutTotal - r.coutTotalCredit - r.coutTotalAssurance - r.montantFraisNotaire),
         ],
-        backgroundColor: ['#3b82f6', '#f59e0b', '#a855f7', '#06b6d4', '#6366f1'],
+        backgroundColor: ['#3b82f6', '#f59e0b', '#7e22ce', '#06b6d4', '#4f46e5'],
         borderWidth: 0,
         hoverOffset: 8,
       }]
@@ -730,9 +730,9 @@ function renderPieChart(r) {
           labels: { padding: 14, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, color: '#e5e7eb', font: { size: 12, family: 'Inter' } }
         },
         tooltip: {
-          backgroundColor: 'rgba(11,11,15,0.95)',
-          titleColor: '#e9d5ff',
-          bodyColor: '#a0a0a5',
+          backgroundColor: 'rgba(252,248,238,0.97)',
+          titleColor: '#16263C',
+          bodyColor: '#51627A',
           borderColor: 'rgba(56,56,63,0.6)',
           borderWidth: 1,
           padding: 12,

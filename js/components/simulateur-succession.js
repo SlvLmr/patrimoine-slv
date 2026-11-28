@@ -1,4 +1,4 @@
-import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261128d';
+import { formatCurrency, parseNumberInput, promptModal } from '../utils.js?v=20261128h';
 import { createChart, COLORS } from '../charts/chart-config.js';
 
 // ─── Simulateur Succession Pro ───────────────────────────────────────────────
@@ -386,8 +386,8 @@ function calculerDroitsMarginaux(montant, base) {
 }
 
 function leverColor(name) {
-  const map = { amber: '#f59e0b', purple: '#a855f7', cyan: '#06b6d4', blue: '#3b82f6', green: '#22c55e', teal: '#14b8a6', indigo: '#6366f1' };
-  return map[name] || '#6366f1';
+  const map = { amber: '#f59e0b', purple: '#7e22ce', cyan: '#06b6d4', blue: '#3b82f6', green: '#22c55e', teal: '#14b8a6', indigo: '#4f46e5' };
+  return map[name] || '#4f46e5';
 }
 
 // ─── Render ──────────────────────────────────────────────────────────────────
@@ -841,7 +841,7 @@ function renderWaterfall(r) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(11,11,15,0.95)', titleColor: '#e9d5ff', bodyColor: '#a0a0a5',
+          backgroundColor: 'rgba(252,248,238,0.97)', titleColor: '#16263C', bodyColor: '#51627A',
           borderColor: 'rgba(56,56,63,0.6)', borderWidth: 1, padding: 12, cornerRadius: 10,
           callbacks: {
             label: (ctx) => {
