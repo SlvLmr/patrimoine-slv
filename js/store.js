@@ -639,12 +639,18 @@ const Store = {
     const revCIC = revenus.filter(r => r.compte === bankNames.primary).reduce((s, r) => s + (Number(r.montant) || 0), 0);
     const depCIC = items.filter(i => i.compte === bankNames.primary).reduce((s, i) => s + (Number(i.montant) || 0), 0);
 
-    const now = new Date();
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    // Même clé de mois « effective » que Vie quotidienne : on saute les mois déjà clôturés
     const archives = this._state.archiveDepenses || [];
-    const monthIsClosed = archives.some(a => a.mois === monthKey);
+    const d = new Date();
+    d.setDate(1);
+    let monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    while (archives.some(a => a.mois === monthKey)) {
+      d.setMonth(d.getMonth() + 1);
+      monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+    const prevDate = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    const monthIsClosed = false;
     const prevMonthIsClosed = archives.some(a => a.mois === prevMonthKey);
     const depMensuelles = this._state.depensesMensuellesCIC || [];
     const cicCochees = this._state.cicMensuellesCochees || {};
@@ -671,20 +677,38 @@ const Store = {
       + dcaTR.filter(d => (trConfirmedPrev.expenses || []).includes(d.id)).reduce((s, d) => s + d.montant, 0);
     const totalRevConfirmed = (monthIsClosed ? 0 : revMensuelsTR.filter(r => (trConfirmedThisMonth.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0))
       + revMensuelsTR.filter(r => (trConfirmedPrev.revenues || []).includes(r.id)).reduce((s, r) => s + r.montant, 0);
+    const prelevTR = this._state.prelevementsTR || [];
+    const totalPrelevConfirmed = (monthIsClosed ? 0 : prelevTR.filter(p => (trConfirmedThisMonth.prelevements || []).includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0))
+      + prelevTR.filter(p => (trConfirmedPrev.prelevements || []).includes(p.id)).reduce((s, p) => s + (Number(p.montant) || 0), 0);
+
+    // Apports mensuels CIC cochés
+    const apportsCIC = this._state.apportsMensuelsCIC || [];
+    const apCicCoches = monthIsClosed ? [] : ((this._state.cicApportsCoches || {})[monthKey] || []);
+    const totalApportsCIC = apportsCIC.filter(x => apCicCoches.includes(x.id)).reduce((s, x) => s + (Number(x.montant) || 0), 0);
 
     const result = {
-      cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees,
-      tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed
+      cic: baseCIC + prevCIC + revCIC - depCIC - totalCochees + totalApportsCIC,
+      tr: baseTR + prevTR + revTR + trInterets - depTR - trRoundup - totalDcaConfirmed + totalRevConfirmed - totalPrelevConfirmed
     };
 
-    // Extra banks
+    // Extra banks (mensuelles et apports cochés inclus, comme en Vie quotidienne)
     const extraBanks = bankNames.extra || [];
+    const mensuellesExtraAll = this._state.mensuellesExtra || {};
+    const extraCocheesAll = this._state.extraMensuellesCochees || {};
+    const apportsExtraAll = this._state.apportsExtra || {};
+    const extraApCochesAll = this._state.extraApportsCoches || {};
     for (const bank of extraBanks) {
       const baseExtra = Number(comptes.find(c => c.id === 'cc-' + bank.id)?.solde) || 0;
       const prevExtra = Number(soldePrecedent[bank.id]) || 0;
       const revExtra = revenus.filter(r => r.compte === bank.name).reduce((s, r) => s + (Number(r.montant) || 0), 0);
       const depExtra = items.filter(i => i.compte === bank.name).reduce((s, i) => s + (Number(i.montant) || 0), 0);
-      result[bank.id] = baseExtra + prevExtra + revExtra - depExtra;
+      const mensLignes = mensuellesExtraAll[bank.id] || [];
+      const mensCochees = monthIsClosed ? [] : ((extraCocheesAll[monthKey] || {})[bank.id] || []);
+      const totalMensCoche = mensLignes.filter(x => mensCochees.includes(x.id)).reduce((s, x) => s + (Number(x.montant) || 0), 0);
+      const apLignes = apportsExtraAll[bank.id] || [];
+      const apCoches = monthIsClosed ? [] : ((extraApCochesAll[monthKey] || {})[bank.id] || []);
+      const totalApCoche = apLignes.filter(x => apCoches.includes(x.id)).reduce((s, x) => s + (Number(x.montant) || 0), 0);
+      result[bank.id] = baseExtra + prevExtra + revExtra - depExtra - totalMensCoche + totalApCoche;
     }
 
     return result;

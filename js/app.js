@@ -1,11 +1,11 @@
-import { Store } from './store.js?v=20261126b';
+import { Store } from './store.js?v=20261128a';
 import { isConfigured, loadFirebaseSDK, onAuth, getCurrentUser, logout as firebaseLogout, testCloudConnection } from './firebase-config.js';
 import { destroyAllCharts } from './charts/chart-config.js';
 import { renderLoginScreen, mountLoginScreen, renderUserBar } from './components/auth.js';
 import * as RevenusDepenses from './components/revenus-depenses.js?v=20261126b';
 import * as Projection from './components/projection.js?v=20261126c';
 import * as SuiviDepenses from './components/suivi-depenses.js?v=20261126c';
-import * as PortefeuilleLive from './components/portefeuille-live.js?v=20261126b';
+import * as PortefeuilleLive from './components/portefeuille-live.js?v=20261128a';
 import * as Contrats from './components/contrats.js?v=20261126b';
 import * as Liberte from './components/liberte.js?v=20261126b';
 import * as Conseiller from './components/conseiller.js?v=20261126c';

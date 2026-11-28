@@ -568,9 +568,9 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds, sourceId) {
     const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     glow.setAttribute('d', d);
     glow.setAttribute('stroke', color);
-    glow.setAttribute('stroke-width', '3');
+    glow.setAttribute('stroke-width', '2.5');
     glow.setAttribute('fill', 'none');
-    glow.setAttribute('opacity', '0.35');
+    glow.setAttribute('opacity', '0.14');
     glow.setAttribute('filter', `url(#${filter})`);
     svg.appendChild(glow);
 
@@ -578,9 +578,9 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds, sourceId) {
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     line.setAttribute('d', d);
     line.setAttribute('stroke', color);
-    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke-width', '1.2');
     line.setAttribute('fill', 'none');
-    line.setAttribute('opacity', '0.6');
+    line.setAttribute('opacity', '0.55');
     svg.appendChild(line);
 
     // Bottom dot
@@ -597,9 +597,9 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds, sourceId) {
   const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   topDot.setAttribute('cx', mid);
   topDot.setAttribute('cy', '0');
-  topDot.setAttribute('r', '2.5');
+  topDot.setAttribute('r', '2');
   topDot.setAttribute('fill', colors[0]);
-  topDot.setAttribute('opacity', '0.7');
+  topDot.setAttribute('opacity', '0.55');
   svg.appendChild(topDot);
 }
 
@@ -638,35 +638,35 @@ function drawStraightConnector(svgId, wrapId, cardId, color, filterId) {
   const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   glow.setAttribute('d', d);
   glow.setAttribute('stroke', color);
-  glow.setAttribute('stroke-width', '3');
+  glow.setAttribute('stroke-width', '2.5');
   glow.setAttribute('fill', 'none');
-  glow.setAttribute('opacity', '0.35');
+  glow.setAttribute('opacity', '0.14');
   glow.setAttribute('filter', `url(#${filterId})`);
   svg.appendChild(glow);
 
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   line.setAttribute('d', d);
   line.setAttribute('stroke', color);
-  line.setAttribute('stroke-width', '1.5');
+  line.setAttribute('stroke-width', '1.2');
   line.setAttribute('fill', 'none');
-  line.setAttribute('opacity', '0.6');
+  line.setAttribute('opacity', '0.55');
   svg.appendChild(line);
 
   // Dots
   const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   topDot.setAttribute('cx', mid);
   topDot.setAttribute('cy', '0');
-  topDot.setAttribute('r', '2.5');
+  topDot.setAttribute('r', '2');
   topDot.setAttribute('fill', color);
-  topDot.setAttribute('opacity', '0.7');
+  topDot.setAttribute('opacity', '0.55');
   svg.appendChild(topDot);
 
   const botDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   botDot.setAttribute('cx', cx);
   botDot.setAttribute('cy', h);
-  botDot.setAttribute('r', '2.5');
+  botDot.setAttribute('r', '2');
   botDot.setAttribute('fill', color);
-  botDot.setAttribute('opacity', '0.7');
+  botDot.setAttribute('opacity', '0.55');
   svg.appendChild(botDot);
 }
 
@@ -675,14 +675,14 @@ export function mount() {
     // Level 1 → 2: Patrimoine → Liquidités + Investissements + Immobilier
     drawConnectors('ptf-svg-L1-svg', 'ptf-svg-L1',
       ['ptf-card-liq', 'ptf-card-inv', 'ptf-card-immo'],
-      ['#6366f1', '#c084fc', '#f43f5e'],
+      ['#B07A19', '#1F4A7D', '#C2410C'],
       ['glow-indigo', 'glow-amber', 'glow-brown']
     );
 
     // Level 2 → 3 Left: Liquidités → Comptes Courants + Épargne
     drawConnectors('ptf-svg-L2L-svg', 'ptf-svg-L2L',
       ['ptf-card-cc', 'ptf-card-ep'],
-      ['#6366f1', '#6366f1'],
+      ['#B07A19', '#B07A19'],
       ['glow-indigo2', 'glow-indigo2']
     );
 
@@ -690,7 +690,7 @@ export function mount() {
     const bankCardIds = [...document.querySelectorAll('[id^="ptf-card-bank-"]')].map(el => el.id);
     drawConnectors('ptf-svg-L3LL-svg', 'ptf-svg-L3LL',
       bankCardIds,
-      bankCardIds.map(() => '#6366f1'),
+      bankCardIds.map(() => '#B07A19'),
       bankCardIds.map(() => 'glow-indigo3a')
     );
 
@@ -699,7 +699,7 @@ export function mount() {
     if (epCards.length > 0) {
       drawConnectors('ptf-svg-L3LR-svg', 'ptf-svg-L3LR',
         epCards,
-        epCards.map(() => '#6366f1'),
+        epCards.map(() => '#B07A19'),
         epCards.map(() => 'glow-indigo3b')
       );
     }
@@ -709,7 +709,7 @@ export function mount() {
     if (envCards.length > 0) {
       drawConnectors('ptf-svg-L2C-svg', 'ptf-svg-L2C',
         envCards,
-        envCards.map(() => '#c084fc'),
+        envCards.map(() => '#1F4A7D'),
         envCards.map(() => 'glow-purple2')
       );
     }
@@ -719,7 +719,7 @@ export function mount() {
     if (peaSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-pea-svg', 'ptf-svg-L3C-pea',
         peaSubCards,
-        peaSubCards.map(() => '#c084fc'),
+        peaSubCards.map(() => '#1F4A7D'),
         peaSubCards.map(() => 'glow-purple3'),
         'ptf-card-pea'
       );
@@ -730,7 +730,7 @@ export function mount() {
     if (enfSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-enf-svg', 'ptf-svg-L3C-enf',
         enfSubCards,
-        enfSubCards.map(() => '#d9a520'),
+        enfSubCards.map(() => '#B07A19'),
         enfSubCards.map(() => 'glow-amber4'),
         'ptf-card-enfants'
       );
