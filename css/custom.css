@@ -22,7 +22,7 @@
 /* Grain discret sur le fond crème : structure et matière */
 body {
   background-color: var(--body-bg);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.62' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
 }
 
 /* Le bouton de repli ne doit jamais dépasser sur mobile (demi-pastille fantôme) */
@@ -688,27 +688,27 @@ body .text-gray-600 { color: #93A0B1; }
 /* ---- Sidebar : verre bleu nuit, liseré doré ---- */
 #sidebar {
   background:
-    radial-gradient(ellipse 120% 40% at 20% -5%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(ellipse 110% 55% at 50% 115%, rgba(201, 137, 27, 0.38), transparent 68%),
-    linear-gradient(174deg, rgba(248, 238, 207, 0.96) 0%, rgba(240, 215, 154, 0.96) 50%, rgba(228, 186, 98, 0.96) 100%);
+    radial-gradient(ellipse 120% 45% at 85% 110%, rgba(255, 225, 140, 0.45), transparent 60%),
+    radial-gradient(ellipse 100% 40% at 10% -5%, rgba(90, 52, 8, 0.40), transparent 55%),
+    linear-gradient(165deg, rgba(138, 91, 12, 0.97) 0%, rgba(201, 137, 27, 0.97) 52%, rgba(233, 177, 69, 0.97) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid rgba(176, 122, 25, 0.35);
-  box-shadow: 4px 0 24px rgba(136, 98, 28, 0.16);
+  border-right: 1px solid rgba(255, 230, 170, 0.4);
+  box-shadow: 4px 0 24px rgba(107, 68, 8, 0.25);
 }
-#sidebar .text-gray-100 { color: #2B1F08; }
-#sidebar .text-gray-200 { color: #3A2B0D; }
-#sidebar .text-gray-300 { color: #4E3B16; }
-#sidebar .text-gray-400 { color: #6B5323; }
-#sidebar .text-gray-500 { color: #82683B; }
-#sidebar .text-gray-600 { color: #977E52; }
-#sidebar .text-gray-700 { color: rgba(60, 44, 12, 0.45); }
-#sidebar .border-dark-400\/20 { border-color: rgba(107, 83, 35, 0.22); }
-#sidebar a[data-nav]:hover { background: rgba(255, 255, 255, 0.45); color: #16263C; }
-#sidebar a[data-nav].bg-dark-600 { background: rgba(22, 38, 60, 0.92); box-shadow: 0 2px 8px rgba(22, 38, 60, 0.3); }
-#sidebar .text-accent-green { color: #F7F1E2; }
-#sidebar .bg-gradient-to-r { background: linear-gradient(90deg, transparent, rgba(107, 83, 35, 0.3), transparent); }
-#sidebar [class*="hover:bg-dark"]:hover { background-color: rgba(255, 255, 255, 0.45); }
+#sidebar .text-gray-100 { color: #FFFBF0; }
+#sidebar .text-gray-200 { color: #FDF5E2; }
+#sidebar .text-gray-300 { color: #FBEED2; }
+#sidebar .text-gray-400 { color: #F3DFAE; }
+#sidebar .text-gray-500 { color: #EAD193; }
+#sidebar .text-gray-600 { color: rgba(255, 241, 210, 0.75); }
+#sidebar .text-gray-700 { color: rgba(255, 244, 214, 0.4); }
+#sidebar .border-dark-400\/20 { border-color: rgba(255, 230, 170, 0.25); }
+#sidebar a[data-nav]:hover { background: rgba(255, 253, 246, 0.18); color: #FFFBF0; }
+#sidebar a[data-nav].bg-dark-600 { background: rgba(255, 253, 246, 0.94); box-shadow: 0 2px 10px rgba(70, 42, 4, 0.35); }
+#sidebar .text-accent-green { color: #6B4408; }
+#sidebar .bg-gradient-to-r { background: linear-gradient(90deg, transparent, rgba(255, 230, 170, 0.35), transparent); }
+#sidebar [class*="hover:bg-dark"]:hover { background-color: rgba(255, 253, 246, 0.16); }
 #sidebar-collapse-btn {
   background: #FFFDF8;
   color: #51627A;
@@ -732,8 +732,9 @@ body .text-gray-600 { color: #93A0B1; }
   line-height: 1;
   color: #2B1F08;
 }
-#sidebar .logo-i { color: #8A5B0C; }
-#sidebar .logo-horizon-trait { filter: brightness(0.6) saturate(1.1); }
+#sidebar .logo-i { color: #FFE194; }
+#sidebar .logo-horizon-nom { color: #FFF9EC; }
+#sidebar .logo-horizon-trait { filter: brightness(1.3) saturate(0.85); opacity: 0.9; }
 .logo-horizon-trait { width: 138px; height: 12px; display: block; }
 .logo-horizon-sm { gap: 3px; }
 .logo-horizon-sm .logo-horizon-nom { font-size: 1.1rem; text-shadow: none; }
@@ -742,7 +743,7 @@ body .text-gray-600 { color: #93A0B1; }
 /* Le i d'Horizon : italique et or, clin d'oeil au soleil du logo */
 .logo-i { font-style: italic; font-weight: 600; color: #E9B145; padding: 0 0.01em; }
 #mobile-logo .logo-i, .logo-i-sombre { color: #C9891B; }
-#sidebar .logo-icon { color: #2B1F08; }
+#sidebar .logo-icon { color: #FFF9EC; }
 
 /* Pictos d'en-tete de page : exit la lavande, ecrin bleu encre */
 body .bg-gradient-to-br.from-indigo-500\/20.to-purple-500\/20 {
