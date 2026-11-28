@@ -140,7 +140,7 @@ export function render(store) {
       <div class="mb-4">
         <h2 class="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
             </svg>
           </div>
@@ -180,13 +180,13 @@ export function render(store) {
         <div id="ptf-card-liq" class="card-dark rounded-xl sm:rounded-2xl p-2 sm:p-3">
           <div class="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
             <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
               </svg>
             </div>
             <p class="text-[10px] sm:text-sm text-gray-500 uppercase tracking-wider font-bold">Liquidités</p>
           </div>
-          <p class="text-base sm:text-xl font-bold text-indigo-400 mb-1 text-center">${fmt(totalLiquidites)}</p>
+          <p class="text-base sm:text-xl font-bold text-accent-blue mb-1 text-center">${fmt(totalLiquidites)}</p>
         </div>
 
         <!-- Investissements -->
@@ -206,13 +206,13 @@ export function render(store) {
         <div id="ptf-card-immo" class="card-dark rounded-xl sm:rounded-2xl p-2 sm:p-3">
           <div class="flex items-center gap-1 sm:gap-2 mb-1">
             <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-lg bg-rose-700/15 flex items-center justify-center flex-shrink-0">
-              <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-2 h-2 sm:w-2.5 sm:h-2.5 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
             </div>
             <p class="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider font-bold">Immo.</p>
           </div>
-          <p class="text-sm sm:text-lg font-bold text-rose-400 mb-1 text-center">${fmt(totalImmo)}</p>
+          <p class="text-sm sm:text-lg font-bold text-accent-blue mb-1 text-center">${fmt(totalImmo)}</p>
           <div class="hidden sm:block space-y-1 mt-1 border-t border-dark-400/20 pt-1">
             ${immobilier.length > 0 ? immobilier.map(i => `
             <div class="flex items-center justify-center gap-1.5">
@@ -240,17 +240,17 @@ export function render(store) {
           <div id="ptf-L3L" class="grid grid-cols-2 gap-2">
             <div id="ptf-card-cc" class="card-dark rounded-xl p-3">
               <div class="flex items-center gap-1.5 mb-1">
-                <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                <svg class="w-3 h-3 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                 <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Comptes courants</p>
               </div>
-              <p class="text-base font-bold text-indigo-400 text-center">${fmt(totalCC)}</p>
+              <p class="text-base font-bold text-accent-blue text-center">${fmt(totalCC)}</p>
             </div>
             <div id="ptf-card-ep" class="card-dark rounded-xl p-3">
               <div class="flex items-center gap-1.5 mb-1">
-                <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <svg class="w-3 h-3 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Épargne</p>
               </div>
-              <p class="text-base font-bold text-indigo-400 text-center">${fmt(totalEpargne)}</p>
+              <p class="text-base font-bold text-accent-blue text-center">${fmt(totalEpargne)}</p>
             </div>
           </div>
           <!-- SVG CC → CIC + TR  |  Épargne → comptes épargne -->
@@ -273,7 +273,7 @@ export function render(store) {
               ${bankCards.map((b, i) => `
               <div id="ptf-card-bank-${i}" class="card-dark rounded-xl p-1.5 overflow-hidden">
                 <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${b.label}</p>
-                <p class="text-xs font-bold text-indigo-400 text-center whitespace-nowrap">${fmt(b.solde)}</p>
+                <p class="text-xs font-bold text-accent-blue text-center whitespace-nowrap">${fmt(b.solde)}</p>
               </div>`).join('')}
             </div>
             <!-- Sous Épargne -->
@@ -281,7 +281,7 @@ export function render(store) {
               ${epargne.length > 0 ? epargne.map((e, idx) => `
               <div id="ptf-card-ep-${idx}" class="card-dark rounded-xl p-2.5">
                 <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5 font-semibold truncate">${e.nom}</p>
-                <p class="text-sm font-bold text-indigo-400 text-center">${fmt(Number(e.solde) || 0)}</p>
+                <p class="text-sm font-bold text-accent-blue text-center">${fmt(Number(e.solde) || 0)}</p>
               </div>`).join('') : '<div class="card-dark rounded-xl p-2.5"><p class="text-[9px] text-gray-600">Aucun</p></div>'}
             </div>
           </div>
@@ -306,7 +306,7 @@ export function render(store) {
               <div class="flex items-center justify-between mb-0.5">
                 <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold whitespace-nowrap">${env.label}</p>
               </div>
-              <p class="text-sm font-bold text-center whitespace-nowrap" style="color:#d9a520">${fmt(env.total)}</p>
+              <p class="text-sm font-bold text-center whitespace-nowrap" style="color:#8A5B0C">${fmt(env.total)}</p>
             </div>`;
               return `
             <details id="ptf-card-${env.id}" class="card-dark rounded-xl p-2 group/env" ${env.id === 'pea' ? 'open' : ''}>
@@ -357,13 +357,13 @@ export function render(store) {
                 <div id="ptf-card-enf-${i}" class="card-dark rounded-xl p-2">
                   <div class="flex items-center justify-between mb-1">
                     <p class="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">${e.prenom}</p>
-                    <p class="text-sm font-bold whitespace-nowrap" style="color:#d9a520">${fmt(e.total)}</p>
+                    <p class="text-sm font-bold whitespace-nowrap" style="color:#8A5B0C">${fmt(e.total)}</p>
                   </div>
                   <div class="space-y-1 border-t border-dark-400/20 pt-1">
                     ${e.lignes.map(d => `
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1.5 min-w-0">
-                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#d9a52080"></div>
+                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#8A5B0C55"></div>
                         <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
                       </div>
                       <span class="text-[10px] text-gray-300 font-medium flex-shrink-0 ml-2">${fmt(d.montant)}</span>
@@ -375,10 +375,10 @@ export function render(store) {
                     ${e.dcaCumul.map(d => `
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1.5 min-w-0">
-                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#d9a52080"></div>
+                        <div class="w-1 h-1 rounded-full flex-shrink-0" style="background:#8A5B0C55"></div>
                         <span class="text-[10px] text-gray-400 truncate">${d.nom}</span>
                       </div>
-                      <span class="text-[10px] font-medium flex-shrink-0 ml-2" style="color:#d9a520">${fmt(d.cumul)}</span>
+                      <span class="text-[10px] font-medium flex-shrink-0 ml-2" style="color:#8A5B0C">${fmt(d.cumul)}</span>
                     </div>`).join('')}
                   </div>` : ''}
                 </div>`).join('')}
@@ -400,19 +400,19 @@ export function render(store) {
           <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
             <div class="flex items-center gap-2">
               <div class="w-5 h-5 rounded-lg bg-indigo-500/15 flex items-center justify-center">
-                <svg class="w-2.5 h-2.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                <svg class="w-2.5 h-2.5 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
               </div>
               <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Liquidités</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-indigo-400">${fmt(totalLiquidites)}</span>
+              <span class="text-sm font-bold text-accent-blue">${fmt(totalLiquidites)}</span>
               <svg class="w-3 h-3 text-gray-600 transition-transform group-open/mob:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
           </summary>
           <div class="px-3 pb-3 space-y-2">
             <div class="flex items-center justify-between text-xs text-gray-500 border-b border-dark-400/20 pb-1.5">
               <span>Comptes courants</span>
-              <span class="text-indigo-400 font-medium">${fmt(totalCC)}</span>
+              <span class="text-accent-blue font-medium">${fmt(totalCC)}</span>
             </div>
             ${bankCards.map(b => `
             <div class="flex items-center justify-between pl-3">
@@ -421,7 +421,7 @@ export function render(store) {
             </div>`).join('')}
             <div class="flex items-center justify-between text-xs text-gray-500 border-t border-dark-400/20 pt-1.5">
               <span>Épargne</span>
-              <span class="text-indigo-400 font-medium">${fmt(totalEpargne)}</span>
+              <span class="text-accent-blue font-medium">${fmt(totalEpargne)}</span>
             </div>
             ${epargne.map(e => `
             <div class="flex items-center justify-between pl-3">
@@ -458,7 +458,7 @@ export function render(store) {
               ${env.id === 'enfants' ? enfantsParEnfant.map(e => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-400 font-semibold">${e.prenom}</span>
-                <span class="text-[10px] font-semibold" style="color:#d9a520">${fmt(e.total)}</span>
+                <span class="text-[10px] font-semibold" style="color:#8A5B0C">${fmt(e.total)}</span>
               </div>
               ${e.lignes.map(d => `
               <div class="flex items-center justify-between pl-6 mt-0.5">
@@ -468,7 +468,7 @@ export function render(store) {
               ${e.dcaCumul.map(d => `
               <div class="flex items-center justify-between pl-6 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${d.nom} <span class="text-[9px] text-gray-600">(DCA cumulé)</span></span>
-                <span class="text-[10px] font-medium flex-shrink-0" style="color:#d9a520">${fmt(d.cumul)}</span>
+                <span class="text-[10px] font-medium flex-shrink-0" style="color:#8A5B0C">${fmt(d.cumul)}</span>
               </div>`).join('')}`).join('') : items.length > 0 ? items.map(p => `
               <div class="flex items-center justify-between pl-3 mt-0.5">
                 <span class="text-[10px] text-gray-500 truncate mr-2">${p.nom}</span>
@@ -485,12 +485,12 @@ export function render(store) {
           <summary class="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none" style="list-style:none">
             <div class="flex items-center gap-2">
               <div class="w-5 h-5 rounded-lg bg-rose-700/15 flex items-center justify-center">
-                <svg class="w-2.5 h-2.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <svg class="w-2.5 h-2.5 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
               </div>
               <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Immobilier</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-rose-400">${fmt(totalImmo)}</span>
+              <span class="text-sm font-bold text-accent-blue">${fmt(totalImmo)}</span>
               <svg class="w-3 h-3 text-gray-600 transition-transform group-open/imm:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
           </summary>
@@ -508,7 +508,7 @@ export function render(store) {
         <div class="card-dark rounded-xl px-3 py-2.5 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <div class="w-5 h-5 rounded-lg bg-red-500/15 flex items-center justify-center">
-              <svg class="w-2.5 h-2.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+              <svg class="w-2.5 h-2.5 text-accent-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
             </div>
             <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Dettes</span>
           </div>
@@ -554,53 +554,18 @@ function drawConnectors(svgId, wrapId, cardIds, colors, filterIds, sourceId) {
     const filter = filterIds[i % filterIds.length];
     const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
 
-    // Outer glow
-    const glow2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    glow2.setAttribute('d', d);
-    glow2.setAttribute('stroke', color);
-    glow2.setAttribute('stroke-width', '6');
-    glow2.setAttribute('fill', 'none');
-    glow2.setAttribute('opacity', '0.15');
-    glow2.setAttribute('filter', `url(#${filter})`);
-    svg.appendChild(glow2);
-
-    // Inner glow
-    const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    glow.setAttribute('d', d);
-    glow.setAttribute('stroke', color);
-    glow.setAttribute('stroke-width', '2.5');
-    glow.setAttribute('fill', 'none');
-    glow.setAttribute('opacity', '0.14');
-    glow.setAttribute('filter', `url(#${filter})`);
-    svg.appendChild(glow);
 
     // Line
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     line.setAttribute('d', d);
     line.setAttribute('stroke', color);
-    line.setAttribute('stroke-width', '1.2');
+    line.setAttribute('stroke-width', '1');
     line.setAttribute('fill', 'none');
-    line.setAttribute('opacity', '0.55');
+    line.setAttribute('opacity', '0.45');
     svg.appendChild(line);
 
-    // Bottom dot
-    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    dot.setAttribute('cx', cx);
-    dot.setAttribute('cy', h);
-    dot.setAttribute('r', '2.5');
-    dot.setAttribute('fill', color);
-    dot.setAttribute('opacity', '0.7');
-    svg.appendChild(dot);
   });
 
-  // Top dot
-  const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  topDot.setAttribute('cx', mid);
-  topDot.setAttribute('cy', '0');
-  topDot.setAttribute('r', '2');
-  topDot.setAttribute('fill', colors[0]);
-  topDot.setAttribute('opacity', '0.55');
-  svg.appendChild(topDot);
 }
 
 // Straight vertical connector (single child)
@@ -624,50 +589,16 @@ function drawStraightConnector(svgId, wrapId, cardId, color, filterId) {
 
   const d = `M ${mid} 0 C ${mid} ${h * 0.55}, ${cx} ${h * 0.55}, ${cx} ${h}`;
 
-  // Outer glow
-  const glow2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  glow2.setAttribute('d', d);
-  glow2.setAttribute('stroke', color);
-  glow2.setAttribute('stroke-width', '6');
-  glow2.setAttribute('fill', 'none');
-  glow2.setAttribute('opacity', '0.15');
-  glow2.setAttribute('filter', `url(#${filterId})`);
-  svg.appendChild(glow2);
 
-  // Inner glow
-  const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  glow.setAttribute('d', d);
-  glow.setAttribute('stroke', color);
-  glow.setAttribute('stroke-width', '2.5');
-  glow.setAttribute('fill', 'none');
-  glow.setAttribute('opacity', '0.14');
-  glow.setAttribute('filter', `url(#${filterId})`);
-  svg.appendChild(glow);
 
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   line.setAttribute('d', d);
   line.setAttribute('stroke', color);
-  line.setAttribute('stroke-width', '1.2');
+  line.setAttribute('stroke-width', '1');
   line.setAttribute('fill', 'none');
-  line.setAttribute('opacity', '0.55');
+  line.setAttribute('opacity', '0.45');
   svg.appendChild(line);
 
-  // Dots
-  const topDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  topDot.setAttribute('cx', mid);
-  topDot.setAttribute('cy', '0');
-  topDot.setAttribute('r', '2');
-  topDot.setAttribute('fill', color);
-  topDot.setAttribute('opacity', '0.55');
-  svg.appendChild(topDot);
-
-  const botDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  botDot.setAttribute('cx', cx);
-  botDot.setAttribute('cy', h);
-  botDot.setAttribute('r', '2');
-  botDot.setAttribute('fill', color);
-  botDot.setAttribute('opacity', '0.55');
-  svg.appendChild(botDot);
 }
 
 export function mount() {
@@ -675,14 +606,14 @@ export function mount() {
     // Level 1 → 2: Patrimoine → Liquidités + Investissements + Immobilier
     drawConnectors('ptf-svg-L1-svg', 'ptf-svg-L1',
       ['ptf-card-liq', 'ptf-card-inv', 'ptf-card-immo'],
-      ['#B07A19', '#1F4A7D', '#C2410C'],
+      ['#3D5878', '#3D5878', '#3D5878'],
       ['glow-indigo', 'glow-amber', 'glow-brown']
     );
 
     // Level 2 → 3 Left: Liquidités → Comptes Courants + Épargne
     drawConnectors('ptf-svg-L2L-svg', 'ptf-svg-L2L',
       ['ptf-card-cc', 'ptf-card-ep'],
-      ['#B07A19', '#B07A19'],
+      ['#3D5878', '#3D5878'],
       ['glow-indigo2', 'glow-indigo2']
     );
 
@@ -690,7 +621,7 @@ export function mount() {
     const bankCardIds = [...document.querySelectorAll('[id^="ptf-card-bank-"]')].map(el => el.id);
     drawConnectors('ptf-svg-L3LL-svg', 'ptf-svg-L3LL',
       bankCardIds,
-      bankCardIds.map(() => '#B07A19'),
+      bankCardIds.map(() => '#3D5878'),
       bankCardIds.map(() => 'glow-indigo3a')
     );
 
@@ -699,7 +630,7 @@ export function mount() {
     if (epCards.length > 0) {
       drawConnectors('ptf-svg-L3LR-svg', 'ptf-svg-L3LR',
         epCards,
-        epCards.map(() => '#B07A19'),
+        epCards.map(() => '#3D5878'),
         epCards.map(() => 'glow-indigo3b')
       );
     }
@@ -709,7 +640,7 @@ export function mount() {
     if (envCards.length > 0) {
       drawConnectors('ptf-svg-L2C-svg', 'ptf-svg-L2C',
         envCards,
-        envCards.map(() => '#1F4A7D'),
+        envCards.map(() => '#3D5878'),
         envCards.map(() => 'glow-purple2')
       );
     }
@@ -719,7 +650,7 @@ export function mount() {
     if (peaSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-pea-svg', 'ptf-svg-L3C-pea',
         peaSubCards,
-        peaSubCards.map(() => '#1F4A7D'),
+        peaSubCards.map(() => '#3D5878'),
         peaSubCards.map(() => 'glow-purple3'),
         'ptf-card-pea'
       );
@@ -730,7 +661,7 @@ export function mount() {
     if (enfSubCards.length > 0) {
       drawConnectors('ptf-svg-L3C-enf-svg', 'ptf-svg-L3C-enf',
         enfSubCards,
-        enfSubCards.map(() => '#B07A19'),
+        enfSubCards.map(() => '#3D5878'),
         enfSubCards.map(() => 'glow-amber4'),
         'ptf-card-enfants'
       );
