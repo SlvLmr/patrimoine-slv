@@ -688,27 +688,27 @@ body .text-gray-600 { color: #93A0B1; }
 /* ---- Sidebar : verre bleu nuit, liseré doré ---- */
 #sidebar {
   background:
-    radial-gradient(ellipse 120% 45% at 85% 110%, rgba(255, 225, 140, 0.45), transparent 60%),
-    radial-gradient(ellipse 100% 40% at 10% -5%, rgba(90, 52, 8, 0.40), transparent 55%),
-    linear-gradient(165deg, rgba(138, 91, 12, 0.97) 0%, rgba(201, 137, 27, 0.97) 52%, rgba(233, 177, 69, 0.97) 100%);
+    radial-gradient(ellipse 85% 40% at 95% -5%, rgba(255, 226, 186, 0.8), transparent 60%),
+    radial-gradient(ellipse 80% 40% at -5% 105%, rgba(235, 180, 160, 0.4), transparent 60%),
+    linear-gradient(170deg, rgba(253, 249, 243, 0.97) 0%, rgba(248, 232, 218, 0.97) 45%, rgba(239, 210, 187, 0.97) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid rgba(255, 230, 170, 0.4);
-  box-shadow: 4px 0 24px rgba(107, 68, 8, 0.25);
+  border-right: 1px solid rgba(200, 150, 110, 0.35);
+  box-shadow: 4px 0 24px rgba(120, 90, 60, 0.14);
 }
-#sidebar .text-gray-100 { color: #FFFBF0; }
-#sidebar .text-gray-200 { color: #FDF5E2; }
-#sidebar .text-gray-300 { color: #FBEED2; }
-#sidebar .text-gray-400 { color: #F3DFAE; }
-#sidebar .text-gray-500 { color: #EAD193; }
-#sidebar .text-gray-600 { color: rgba(255, 241, 210, 0.75); }
-#sidebar .text-gray-700 { color: rgba(255, 244, 214, 0.4); }
-#sidebar .border-dark-400\/20 { border-color: rgba(255, 230, 170, 0.25); }
-#sidebar a[data-nav]:hover { background: rgba(255, 253, 246, 0.18); color: #FFFBF0; }
-#sidebar a[data-nav].bg-dark-600 { background: rgba(255, 253, 246, 0.94); box-shadow: 0 2px 10px rgba(70, 42, 4, 0.35); }
-#sidebar .text-accent-green { color: #6B4408; }
-#sidebar .bg-gradient-to-r { background: linear-gradient(90deg, transparent, rgba(255, 230, 170, 0.35), transparent); }
-#sidebar [class*="hover:bg-dark"]:hover { background-color: rgba(255, 253, 246, 0.16); }
+#sidebar .text-gray-100 { color: #2E2013; }
+#sidebar .text-gray-200 { color: #3B2A1A; }
+#sidebar .text-gray-300 { color: #5E4330; }
+#sidebar .text-gray-400 { color: #7E6148; }
+#sidebar .text-gray-500 { color: #97795F; }
+#sidebar .text-gray-600 { color: #A8826A; }
+#sidebar .text-gray-700 { color: rgba(90, 65, 40, 0.4); }
+#sidebar .border-dark-400\/20 { border-color: rgba(170, 130, 95, 0.25); }
+#sidebar a[data-nav]:hover { background: rgba(32, 50, 74, 0.07); color: #20324A; }
+#sidebar a[data-nav].bg-dark-600 { background: rgba(32, 50, 74, 0.92); box-shadow: 0 2px 10px rgba(32, 50, 74, 0.3); }
+#sidebar .text-accent-green { color: #F7F1E8; }
+#sidebar .bg-gradient-to-r { background: linear-gradient(90deg, transparent, rgba(179, 84, 30, 0.3), transparent); }
+#sidebar [class*="hover:bg-dark"]:hover { background-color: rgba(32, 50, 74, 0.07); }
 #sidebar-collapse-btn {
   background: #FFFDF8;
   color: #51627A;
@@ -732,9 +732,9 @@ body .text-gray-600 { color: #93A0B1; }
   line-height: 1;
   color: #2B1F08;
 }
-#sidebar .logo-i { color: #FFE194; }
-#sidebar .logo-horizon-nom { color: #FFF9EC; }
-#sidebar .logo-horizon-trait { filter: brightness(1.3) saturate(0.85); opacity: 0.9; }
+#sidebar .logo-i { color: #B3541E; }
+#sidebar .logo-horizon-nom { color: #35251A; }
+#sidebar .logo-horizon-trait { filter: brightness(0.78) saturate(1.1); }
 .logo-horizon-trait { width: 138px; height: 12px; display: block; }
 .logo-horizon-sm { gap: 3px; }
 .logo-horizon-sm .logo-horizon-nom { font-size: 1.1rem; text-shadow: none; }
@@ -743,7 +743,7 @@ body .text-gray-600 { color: #93A0B1; }
 /* Le i d'Horizon : italique et or, clin d'oeil au soleil du logo */
 .logo-i { font-style: italic; font-weight: 600; color: #E9B145; padding: 0 0.01em; }
 #mobile-logo .logo-i, .logo-i-sombre { color: #C9891B; }
-#sidebar .logo-icon { color: #FFF9EC; }
+#sidebar .logo-icon { color: #35251A; }
 
 /* Pictos d'en-tete de page : exit la lavande, ecrin bleu encre */
 body .bg-gradient-to-br.from-indigo-500\/20.to-purple-500\/20 {
